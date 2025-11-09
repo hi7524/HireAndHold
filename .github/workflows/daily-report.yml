@@ -18,9 +18,15 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Create daily report script
+      - name: Create and run daily report script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          cat > daily-report.js << 'SCRIPTEOF'
+          node << 'NODESCRIPT'
           const https = require('https');
 
           async function makeRequest(options, postData) {
@@ -42,17 +48,12 @@ jobs:
             });
           }
 
-          function getKSTDate() {
+          function formatDateForTitle() {
             const now = new Date();
             const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
-            return kst;
-          }
-
-          function formatDateForTitle() {
-            const date = getKSTDate();
-            const yy = String(date.getFullYear()).slice(2);
-            const mm = String(date.getMonth() + 1).padStart(2, '0');
-            const dd = String(date.getDate()).padStart(2, '0');
+            const yy = String(kst.getFullYear()).slice(2);
+            const mm = String(kst.getMonth() + 1).padStart(2, '0');
+            const dd = String(kst.getDate()).padStart(2, '0');
             return yy + '.' + mm + '.' + dd;
           }
 
@@ -64,7 +65,6 @@ jobs:
 
           async function fetchIssuesWithActivity(owner, repo, token) {
             const since = get24HoursAgo();
-            
             const options = {
               hostname: 'api.github.com',
               path: '/repos/' + owner + '/' + repo + '/issues?state=all&since=' + since + '&per_page=100',
@@ -75,14 +75,12 @@ jobs:
                 'Accept': 'application/vnd.github.v3+json'
               }
             };
-
             const issues = await makeRequest(options);
             return issues.filter(issue => !issue.pull_request);
           }
 
           async function fetchIssueComments(owner, repo, issueNumber, token) {
             const since = get24HoursAgo();
-            
             const options = {
               hostname: 'api.github.com',
               path: '/repos/' + owner + '/' + repo + '/issues/' + issueNumber + '/comments?since=' + since,
@@ -93,13 +91,11 @@ jobs:
                 'Accept': 'application/vnd.github.v3+json'
               }
             };
-
             return await makeRequest(options);
           }
 
           async function categorizeIssues(issues, owner, repo, token) {
             const since = new Date(get24HoursAgo());
-            
             const categorized = {
               completed: [],
               new: [],
@@ -114,71 +110,43 @@ jobs:
 
               if (issue.state === 'closed' && closedAt && closedAt > since) {
                 categorized.completed.push(issue);
-              }
-              else if (createdAt > since) {
+              } else if (createdAt > since) {
                 categorized.new.push(issue);
-              }
-              else if (updatedAt > since && issue.state === 'open') {
+              } else if (updatedAt > since && issue.state === 'open') {
                 const comments = await fetchIssueComments(owner, repo, issue.number, token);
-                
                 if (comments.length > 0) {
-                  categorized.discussed.push({
-                    ...issue,
-                    recent_comments_count: comments.length
-                  });
+                  categorized.discussed.push({...issue, recent_comments_count: comments.length});
                 } else {
                   categorized.updated.push(issue);
                 }
               }
             }
-
             return categorized;
           }
 
           async function generateSummaryWithGemini(categorized) {
             const apiKey = process.env.GEMINI_API_KEY;
-            
             let prompt = "다음은 GitHub 프로젝트의 지난 24시간 동안의 활동 내역입니다. ";
-            prompt += "전체적인 진행 상황을 3-4문단으로 요약해주세요. 완료된 작업, 새로운 이슈, 진행 중인 작업을 중심으로 작성해주세요.\n\n";
-            
-            prompt += "## 완료된 이슈 (" + categorized.completed.length + "건)\n";
-            prompt += categorized.completed.map(issue => "- [#" + issue.number + "] " + issue.title).join("\n") + "\n\n";
-            
-            prompt += "## 새로 생성된 이슈 (" + categorized.new.length + "건)\n";
-            prompt += categorized.new.map(issue => "- [#" + issue.number + "] " + issue.title).join("\n") + "\n\n";
-            
-            prompt += "## 업데이트된 이슈 (" + categorized.updated.length + "건)\n";
-            prompt += categorized.updated.map(issue => "- [#" + issue.number + "] " + issue.title).join("\n") + "\n\n";
-            
-            prompt += "## 활발한 논의 (" + categorized.discussed.length + "건)\n";
-            prompt += categorized.discussed.map(issue => "- [#" + issue.number + "] " + issue.title + " (댓글 " + issue.recent_comments_count + "개)").join("\n") + "\n\n";
-            
-            prompt += "요약:";
+            prompt += "전체적인 진행 상황을 3-4문단으로 요약해주세요.";
+            prompt += "\n\n완료: " + categorized.completed.length;
+            prompt += "\n신규: " + categorized.new.length;
+            prompt += "\n업데이트: " + categorized.updated.length;
+            prompt += "\n논의: " + categorized.discussed.length;
 
             const options = {
               hostname: 'generativelanguage.googleapis.com',
               path: '/v1beta/models/gemini-pro:generateContent?key=' + apiKey,
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              }
+              headers: {'Content-Type': 'application/json'}
             };
 
-            const requestBody = JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: prompt
-                }]
-              }]
-            });
-
             try {
-              const response = await makeRequest(options, requestBody);
-              
+              const response = await makeRequest(options, JSON.stringify({
+                contents: [{parts: [{text: prompt}]}]
+              }));
               if (response.candidates && response.candidates[0]) {
                 return response.candidates[0].content.parts[0].text.trim();
               }
-              
               return '오늘의 활동을 요약할 수 없습니다.';
             } catch (error) {
               console.error('Gemini API Error:', error);
@@ -188,42 +156,33 @@ jobs:
 
           async function createNotionPage(title, content, categorized) {
             const token = process.env.NOTION_TOKEN;
-            
             const children = [];
             
             children.push({
               object: 'block',
               type: 'heading_2',
-              heading_2: {
-                rich_text: [{ type: 'text', text: { content: '📊 오늘의 활동 요약' } }]
-              }
+              heading_2: {rich_text: [{type: 'text', text: {content: '📊 오늘의 활동 요약'}}]}
             });
-            
             children.push({
               object: 'block',
               type: 'paragraph',
-              paragraph: {
-                rich_text: [{ type: 'text', text: { content: content } }]
-              }
+              paragraph: {rich_text: [{type: 'text', text: {content: content}}]}
             });
 
             if (categorized.completed.length > 0) {
               children.push({
                 object: 'block',
                 type: 'heading_2',
-                heading_2: {
-                  rich_text: [{ type: 'text', text: { content: '✅ 완료된 이슈 (' + categorized.completed.length + '건)' } }]
-                }
+                heading_2: {rich_text: [{type: 'text', text: {content: '✅ 완료 (' + categorized.completed.length + '건)'}}]}
               });
-
               for (const issue of categorized.completed) {
                 children.push({
                   object: 'block',
                   type: 'bulleted_list_item',
                   bulleted_list_item: {
                     rich_text: [
-                      { type: 'text', text: { content: '[#' + issue.number + '] ' + issue.title + ' - ' } },
-                      { type: 'text', text: { content: '바로가기' }, link: { url: issue.html_url } }
+                      {type: 'text', text: {content: '[#' + issue.number + '] ' + issue.title + ' - '}},
+                      {type: 'text', text: {content: '바로가기'}, link: {url: issue.html_url}}
                     ]
                   }
                 });
@@ -234,64 +193,16 @@ jobs:
               children.push({
                 object: 'block',
                 type: 'heading_2',
-                heading_2: {
-                  rich_text: [{ type: 'text', text: { content: '🆕 새로 생성된 이슈 (' + categorized.new.length + '건)' } }]
-                }
+                heading_2: {rich_text: [{type: 'text', text: {content: '🆕 신규 (' + categorized.new.length + '건)'}}]}
               });
-
               for (const issue of categorized.new) {
                 children.push({
                   object: 'block',
                   type: 'bulleted_list_item',
                   bulleted_list_item: {
                     rich_text: [
-                      { type: 'text', text: { content: '[#' + issue.number + '] ' + issue.title + ' - ' } },
-                      { type: 'text', text: { content: '바로가기' }, link: { url: issue.html_url } }
-                    ]
-                  }
-                });
-              }
-            }
-
-            if (categorized.updated.length > 0) {
-              children.push({
-                object: 'block',
-                type: 'heading_2',
-                heading_2: {
-                  rich_text: [{ type: 'text', text: { content: '🔄 진행 중인 이슈 업데이트 (' + categorized.updated.length + '건)' } }]
-                }
-              });
-
-              for (const issue of categorized.updated) {
-                children.push({
-                  object: 'block',\n                  type: 'bulleted_list_item',
-                  bulleted_list_item: {
-                    rich_text: [
-                      { type: 'text', text: { content: '[#' + issue.number + '] ' + issue.title + ' - ' } },
-                      { type: 'text', text: { content: '바로가기' }, link: { url: issue.html_url } }
-                    ]
-                  }
-                });
-              }
-            }
-
-            if (categorized.discussed.length > 0) {
-              children.push({
-                object: 'block',
-                type: 'heading_2',
-                heading_2: {
-                  rich_text: [{ type: 'text', text: { content: '💬 활발한 논의 (' + categorized.discussed.length + '건)' } }]
-                }
-              });
-
-              for (const issue of categorized.discussed) {
-                children.push({
-                  object: 'block',
-                  type: 'bulleted_list_item',
-                  bulleted_list_item: {
-                    rich_text: [
-                      { type: 'text', text: { content: '[#' + issue.number + '] ' + issue.title + ' (댓글 ' + issue.recent_comments_count + '개) - ' } },
-                      { type: 'text', text: { content: '바로가기' }, link: { url: issue.html_url } }
+                      {type: 'text', text: {content: '[#' + issue.number + '] ' + issue.title + ' - '}},
+                      {type: 'text', text: {content: '바로가기'}, link: {url: issue.html_url}}
                     ]
                   }
                 });
@@ -310,12 +221,8 @@ jobs:
             };
 
             const requestBody = JSON.stringify({
-              parent: { type: 'workspace' },
-              properties: {
-                title: {
-                  title: [{ type: 'text', text: { content: title } }]
-                }
-              },
+              parent: {type: 'workspace'},
+              properties: {title: {title: [{type: 'text', text: {content: title}}]}},
               children: children
             });
 
@@ -329,52 +236,28 @@ jobs:
           }
 
           async function main() {
-            console.log('🚀 일간보고 생성 시작...\n');
-
+            console.log('🚀 일간보고 생성 시작');
             const owner = process.env.REPO_OWNER;
             const repo = process.env.REPO_NAME;
             const token = process.env.GITHUB_TOKEN;
 
-            console.log('📁 Repository: ' + owner + '/' + repo);
-            console.log('📅 날짜: ' + formatDateForTitle() + '\n');
-
-            console.log('1️⃣ GitHub 이슈 조회 중...');
             const issues = await fetchIssuesWithActivity(owner, repo, token);
-            console.log('   ✅ 총 ' + issues.length + '개의 활동된 이슈 발견\n');
+            console.log('✅ 이슈 조회: ' + issues.length + '건');
 
-            console.log('2️⃣ 이슈 분류 중...');
             const categorized = await categorizeIssues(issues, owner, repo, token);
-            console.log('   ✅ 완료: ' + categorized.completed.length + '건');
-            console.log('   ✅ 신규: ' + categorized.new.length + '건');
-            console.log('   ✅ 업데이트: ' + categorized.updated.length + '건');
-            console.log('   ✅ 논의: ' + categorized.discussed.length + '건\n');
+            console.log('✅ 완료:' + categorized.completed.length + ' 신규:' + categorized.new.length);
 
-            console.log('3️⃣ AI 요약 생성 중...');
             const summary = await generateSummaryWithGemini(categorized);
-            console.log('   ✅ 요약 생성 완료\n');
+            console.log('✅ AI 요약 완료');
 
-            console.log('4️⃣ Notion 페이지 생성 중...');
             const title = formatDateForTitle() + ' 일간보고';
-            
             const page = await createNotionPage(title, summary, categorized);
-            console.log('   ✅ Notion 페이지 생성 완료');
-            console.log('   📄 페이지 ID: ' + page.id);
-            console.log('   🔗 URL: ' + page.url + '\n');
-
-            console.log('✨ 일간보고 생성 완료!');
+            console.log('✅ Notion 페이지: ' + page.url);
+            console.log('✨ 완료!');
           }
 
           main().catch(error => {
             console.error('❌ Error:', error);
             process.exit(1);
           });
-          SCRIPTEOF
-
-      - name: Generate daily report
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          REPO_OWNER: ${{ github.repository_owner }}
-          REPO_NAME: ${{ github.event.repository.name }}
-        run: node daily-report.js
+          NODESCRIPT
