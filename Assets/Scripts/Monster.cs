@@ -14,62 +14,62 @@ public class Monster : MonoBehaviour, IDamagable
 
     private bool isAttacking = false;
 
-    void Start()
-    {
-        currentHp = maxHp;
-        nextAttackTIime = 0f;
-        targetWall = GameObject.FindWithTag("Wall").transform;
-    }
+    // void Start()
+    // {
+    //     currentHp = maxHp;
+    //     nextAttackTIime = 0f;
+    //     targetWall = GameObject.FindWithTag("Wall").transform;
+    // }
 
-    void Update()
-    {
-        if (targetWall == null) return;
+    // void Update()
+    // {
+    //     if (targetWall == null) return;
 
-        if (!isAttacking)
-        {
-            MoveTowardsWall();
-        }
-        else
-        {
-            TryAttackWall();
-        }
-    }
+    //     if (!isAttacking)
+    //     {
+    //         MoveTowardsWall();
+    //     }
+    //     else
+    //     {
+    //         TryAttackWall();
+    //     }
+    // }
 
-    private void MoveTowardsWall()
-    {
+    // private void MoveTowardsWall()
+    // {
       
-        if (targetWall == null)
-        {
-            return;
-        }
+    //     if (targetWall == null)
+    //     {
+    //         return;
+    //     }
 
-        transform.position = Vector3.MoveTowards(transform.position, targetWall.position, Time.deltaTime * speed);
+    //     transform.position = Vector3.MoveTowards(transform.position, targetWall.position, Time.deltaTime * speed);
 
-        if (Vector3.Distance(transform.position, targetWall.position) <= attackRange)
-        {
-            isAttacking = true;
-            TryAttackWall();
-        }
+    //     if (Vector3.Distance(transform.position, targetWall.position) <= attackRange)
+    //     {
+    //         isAttacking = true;
+    //         TryAttackWall();
+    //     }
       
-    }
+    // }
 
-    private void TryAttackWall()
-    {
-        if(Time.time >= nextAttackTIime)
-        {
-            AttackWall();
-            nextAttackTIime = Time.time + attackCooldown;
-        }
-    }
+    // private void TryAttackWall()
+    // {
+    //     if(Time.time >= nextAttackTIime)
+    //     {
+    //         AttackWall();
+    //         nextAttackTIime = Time.time + attackCooldown;
+    //     }
+    // }
 
-    private void AttackWall()
-    {
-        IDamagable wall = targetWall.GetComponent<IDamagable>();
-        if(wall != null)
-        {
-            wall.TakeDamage(attackDamage);
-        }
-    }
+    // private void AttackWall()
+    // {
+    //     IDamagable wall = targetWall.GetComponent<IDamagable>();
+    //     if(wall != null)
+    //     {
+    //         wall.TakeDamage(attackDamage);
+    //     }
+    // }
 
     public void Die()
     {
