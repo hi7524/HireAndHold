@@ -221,7 +221,7 @@ jobs:
             };
 
             const requestBody = JSON.stringify({
-              parent: {type: 'workspace'},
+              parent: {page_id: '2a61378de7e580c49ba4e9f324d3ef7d'},
               properties: {title: {title: [{type: 'text', text: {content: title}}]}},
               children: children
             });
