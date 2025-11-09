@@ -1,0 +1,197 @@
+name: Issue Notification with AI Summary
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  notify-slack:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create notification script
+        run: |
+          cat > notify.js << 'EOF'
+          const https = require('https');
+
+          async function makeRequest(options, postData) {
+            return new Promise((resolve, reject) => {
+              const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => {
+                  try {
+                    resolve(JSON.parse(data));
+                  } catch (e) {
+                    resolve(data);
+                  }
+                });
+              });
+              req.on('error', reject);
+              if (postData) req.write(postData);
+              req.end();
+            });
+          }
+
+          async function summarizeWithGemini(issueTitle, issueBody) {
+            const apiKey = process.env.GEMINI_API_KEY;
+            
+            const prompt = `다음 GitHub 이슈를 한 줄로 요약해주세요. 핵심 내용만 간결하게 작성해주세요.
+
+          제목: ${issueTitle}
+          내용: ${issueBody}
+
+          요약:`;
+
+            const options = {
+              hostname: 'generativelanguage.googleapis.com',
+              path: `/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            };
+
+            const requestBody = JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: prompt
+                }]
+              }]
+            });
+
+            try {
+              const response = await makeRequest(options, requestBody);
+              
+              if (response.candidates && response.candidates[0]) {
+                const summary = response.candidates[0].content.parts[0].text.trim();
+                return summary;
+              }
+              
+              return '요약 생성 실패';
+            } catch (error) {
+              console.error('Gemini API Error:', error);
+              return '요약 생성 중 오류 발생';
+            }
+          }
+
+          async function sendSlackNotification(summary, issueData) {
+            const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+            const url = new URL(webhookUrl);
+            
+            const assignee = issueData.assignee 
+              ? issueData.assignee 
+              : '할당되지 않음';
+
+            const message = {
+              blocks: [
+                {
+                  type: "header",
+                  text: {
+                    type: "plain_text",
+                    text: "🎯 새로운 이슈가 생성되었습니다"
+                  }
+                },
+                {
+                  type: "section",
+                  fields: [
+                    {
+                      type: "mrkdwn",
+                      text: `*제목:*\n${issueData.title}`
+                    },
+                    {
+                      type: "mrkdwn",
+                      text: `*요약:*\n${summary}`
+                    }
+                  ]
+                },
+                {
+                  type: "section",
+                  fields: [
+                    {
+                      type: "mrkdwn",
+                      text: `*담당자:*\n${assignee}`
+                    },
+                    {
+                      type: "mrkdwn",
+                      text: `*작성자:*\n${issueData.author}`
+                    }
+                  ]
+                },
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: `*내용:*\n${issueData.body.substring(0, 500)}${issueData.body.length > 500 ? '...' : ''}`
+                  }
+                },
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: `<${issueData.url}|이슈 바로가기 →>`
+                  }
+                }
+              ]
+            };
+
+            const options = {
+              hostname: url.hostname,
+              path: url.pathname + url.search,
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            };
+
+            try {
+              await makeRequest(options, JSON.stringify(message));
+              console.log('Slack notification sent successfully');
+            } catch (error) {
+              console.error('Slack notification error:', error);
+              throw error;
+            }
+          }
+
+          async function main() {
+            const issueData = {
+              title: process.env.ISSUE_TITLE,
+              body: process.env.ISSUE_BODY || '내용 없음',
+              author: process.env.ISSUE_AUTHOR,
+              assignee: process.env.ISSUE_ASSIGNEE,
+              url: process.env.ISSUE_URL
+            };
+
+            console.log('Generating AI summary...');
+            const summary = await summarizeWithGemini(issueData.title, issueData.body);
+            
+            console.log('Sending Slack notification...');
+            await sendSlackNotification(summary, issueData);
+            
+            console.log('Process completed successfully');
+          }
+
+          main().catch(error => {
+            console.error('Error:', error);
+            process.exit(1);
+          });
+          EOF
+
+      - name: Generate summary and notify
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          ISSUE_ASSIGNEE: ${{ github.event.issue.assignee.login }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+        run: node notify.js
