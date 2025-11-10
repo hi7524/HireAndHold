@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -12,12 +13,13 @@ public class DataTable_String : DataTable
 
     private readonly Dictionary<string, string> dictionary = new Dictionary<string, string>();
 
-    public override void Load(string filename)
+    public override async UniTask LoadAsync(string filename)
     {
         dictionary.Clear();
 
         var path = string.Format(FormatPath, filename);
-        var textAsset = Addressables.LoadAssetAsync<TextAsset>(path).WaitForCompletion();
+        var textAsset = await Addressables.LoadAssetAsync<TextAsset>(path).ToUniTask();
+
         var list = LoadCSV<Data>(textAsset.text);
         
         foreach (var item in list)
