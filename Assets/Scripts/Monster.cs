@@ -59,20 +59,30 @@ public class Monster : MonoBehaviour, IDamagable
             return;
         }
 
-        transform.position = Vector3.MoveTowards(transform.position, targetWall.position, Time.deltaTime * speed);
+        transform.Translate(Vector3.down * speed * Time.deltaTime);
 
         SeparateFromOthers();
+    }
 
-        if (Vector3.Distance(transform.position, targetWall.position) <= attackRange)
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Wall"))
         {
-            isAttacking = true;
-            TryAttackWall();
+            Wall wall = other.GetComponent<Wall>();
+
+            if (wall != null)
+            {
+                wall.TakeDamage(attackDamage);
+                isAttacking = true;
+                TryAttackWall();
+            }
         }
     }
 
     private void SeparateFromOthers()
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 0.5f);
+
         foreach (var hit in hits)
         {
             if (hit.gameObject == gameObject)
@@ -80,15 +90,14 @@ public class Monster : MonoBehaviour, IDamagable
                 continue;
             }
 
-
             if (hit.CompareTag("Monster"))
             {
                 Vector3 dir = transform.position - hit.transform.position;
                 float distance = dir.magnitude;
 
-                if (distance < 0.5f && distance > 0f)
+                if (distance < 0.4f && distance > 0.1f)
                 {
-                    transform.position += dir.normalized * (0.5f - distance) * 0.5f;
+                    transform.position += dir.normalized * (0.4f - distance) * 0.25f;
                 }
             }
         }

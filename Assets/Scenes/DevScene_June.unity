@@ -423,8 +423,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   poolManager: {fileID: 1632719291}
   monsterKey: Monster
-  spawninterval: 1
+  spawnInterval: 2
   spawnPoint: {fileID: 807986306}
+  rushInterval: 30
+  rushDuration: 10
+  rushSpawnInterval: 0.2
+  rushMaxSpawnCount: 30
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -486,6 +490,7 @@ GameObject:
   - component: {fileID: 897469848}
   - component: {fileID: 897469847}
   - component: {fileID: 897469850}
+  - component: {fileID: 897469851}
   m_Layer: 0
   m_Name: Wall
   m_TagString: Wall
@@ -505,7 +510,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 706f98fc84ac45744b3224a6839fb76f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHp: 1000
+  maxHp: 999999
   currentHp: 0
 --- !u!212 &897469848
 SpriteRenderer:
@@ -571,8 +576,8 @@ Transform:
   m_GameObject: {fileID: 897469846}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.07, y: -2.0149, z: -0.03215464}
-  m_LocalScale: {x: 4.6151567, y: 0.59018624, z: 1}
+  m_LocalPosition: {x: 0.0713, y: -2.0149, z: -0.03215464}
+  m_LocalScale: {x: 4.860551, y: 0.59018624, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -607,7 +612,7 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
@@ -623,6 +628,33 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!50 &897469851
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 897469846}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &1180917958
 GameObject:
   m_ObjectHideFlags: 0
@@ -864,8 +896,8 @@ MonoBehaviour:
     maxSize: 10
   - key: Monster
     prefab: {fileID: 4668959578009461119, guid: e14b8908d91af1749929a11ccf2d6f82, type: 3}
-    defaultCapacity: 100
-    maxSize: 100
+    defaultCapacity: 2000
+    maxSize: 2000
 --- !u!4 &1632719292
 Transform:
   m_ObjectHideFlags: 0
