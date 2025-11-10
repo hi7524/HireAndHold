@@ -1,23 +1,40 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public static class DataTableManager
 {
     private static readonly Dictionary<string, DataTable> tables = new Dictionary<string, DataTable>();
 
-    static DataTableManager()
+    public static async UniTask Init()
     {
-        Init();
+        await LoadAllTablesAsync();
+        Debug.Log("DataTableManager initialized");
     }
 
-    private static void Init()
+    private static async UniTask LoadAllTablesAsync()
     {
-        var stringTable = new DataTable_String();
-        stringTable.Load(DataTableIds.String);
-        tables.Add(DataTableIds.String, stringTable);
+        // 모든 테이블을 병렬로 로드
+        var loadTasks = new List<UniTask>
+        {
+            LoadTableAsync<DataTable_String>(DataTableIds.String),
+            // 다른 테이블들 추가
+            // LoadTableAsync<DataTable_Item>(DataTableIds.Item),
+            // LoadTableAsync<DataTable_Character>(DataTableIds.Character),
+        };
+
+        await UniTask.WhenAll(loadTasks);
+    }
+
+    private static async UniTask LoadTableAsync<T>(string id) where T : DataTable, new()
+    {
+        var table = new T();
+        await table.LoadAsync(id);
+        tables.Add(id, table);
     }
 
     public static DataTable_String StringTable => Get<DataTable_String>(DataTableIds.String);
+    //
 
     public static T Get<T>(string id) where T : DataTable
     {
