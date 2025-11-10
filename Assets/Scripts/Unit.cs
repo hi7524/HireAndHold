@@ -5,7 +5,7 @@ public class Unit : MonoBehaviour
     [SerializeField] private float attackRange = 1.0f;
     [SerializeField] private float attackInterval = 1.0f;
     [SerializeField] private float attackDamage = 5;
-    [SerializeField] GameObject projectilePrf;
+    [SerializeField] private UnitProjectile projectilePrf;
 
     private Monster attackTarget;
     private float lastAttackTime;
@@ -50,9 +50,9 @@ public class Unit : MonoBehaviour
     private void Attack(Monster target)
     {
         var projectile = Instantiate(projectilePrf);
-        
-        target.TakeDamage(attackDamage);
-        Debug.Log(attackTarget);
+        projectile.SetDamage(attackDamage);
+        projectile.SetTarget(target);
+        projectile.Launch();
     }
 
     // 사거리 시각화

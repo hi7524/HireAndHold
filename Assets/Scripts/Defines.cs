@@ -8,6 +8,7 @@ public static class DataTableIds
 public static class Tags
 {
     // public static readonly string GameController = "GameController";
+    public static readonly string Monster = "Monster";
 }
 
 public static class AudioMixerParams
