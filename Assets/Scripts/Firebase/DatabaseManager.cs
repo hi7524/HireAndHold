@@ -1,4 +1,5 @@
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 public class DatabaseManager : MonoBehaviour
 {
@@ -21,39 +22,78 @@ public class DatabaseManager : MonoBehaviour
         }
     }
 
-    public async void CreatePlayerData(string userId, PlayerData data)
+    // Example methods for CRUD operations on PlayerData
+    public async UniTask<bool> CreatePlayerDataAsync(string userId, PlayerData data)
     {
-        string path = $"users/{userId}";
-        bool success = await database.CreateDataAsync(path, data);
-        Debug.Log($"Create success: {success}");
-    }
-
-    public async void ReadPlayerData(string userId)
-    {
-        string path = $"users/{userId}";
-        var (data, success) = await database.GetDataAsync<PlayerData>(path);
-        if (success)
+        try
         {
-            Debug.Log($"Player name: {data.name}, score: {data.score}");
+            string path = $"users/{userId}";
+            bool success = await database.CreateDataAsync(path, data);
+            Debug.Log($"Create success: {success}");
+            return success;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"CreatePlayerData Error: {ex.Message}");
+            return false;
         }
     }
 
-    public async void UpdatePlayerScore(string userId, int newScore)
+    public async UniTask<(PlayerData data, bool success)> ReadPlayerDataAsync(string userId)
     {
-        string path = $"users/{userId}";
-        var (data, success) = await database.GetDataAsync<PlayerData>(path);
-        if (success)
+        try
         {
-            data.score = newScore;
-            await database.UpdateDataAsync(path, data);
+            string path = $"users/{userId}";
+            var (data, success) = await database.GetDataAsync<PlayerData>(path);
+            if (success)
+            {
+                Debug.Log($"Player name: {data.name}, score: {data.score}");
+            }
+            return (data, success);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"ReadPlayerData Error: {ex.Message}");
+            return (default(PlayerData), false);
         }
     }
 
-    public async void DeletePlayerData(string userId)
+    public async UniTask<bool> UpdatePlayerScoreAsync(string userId, int newScore)
     {
-        string path = $"users/{userId}";
-        bool success = await database.DeleteDataAsync(path);
-        Debug.Log($"Delete success: {success}");
+        try
+        {
+            string path = $"users/{userId}";
+            var (data, success) = await database.GetDataAsync<PlayerData>(path);
+            if (success)
+            {
+                data.score = newScore;
+                bool updateSuccess = await database.UpdateDataAsync(path, data);
+                Debug.Log($"Update success: {updateSuccess}");
+                return updateSuccess;
+            }
+            return false;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"UpdatePlayerScore Error: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async UniTask<bool> DeletePlayerDataAsync(string userId)
+    {
+        try
+        {
+            string path = $"users/{userId}";
+            bool success = await database.DeleteDataAsync(path);
+            Debug.Log($"Delete success: {success}");
+            return success;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"DeletePlayerData Error: {ex.Message}");
+            return false;
+        }
     }
 }
 
