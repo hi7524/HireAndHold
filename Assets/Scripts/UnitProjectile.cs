@@ -3,7 +3,7 @@ using UnityEngine;
 public class UnitProjectile : MonoBehaviour
 {
     [SerializeField] private float lifeTime = 3f;
-    [SerializeField] private float launchSpeed = 3f;
+    [SerializeField] private float launchSpeed = 5f;
 
     private float damage;
     private Monster target;
@@ -33,7 +33,7 @@ public class UnitProjectile : MonoBehaviour
         if (target != null)
         {
             Vector2 direction = (target.transform.position - transform.position).normalized;
-            rb.AddForce(transform.up * launchSpeed, ForceMode2D.Impulse);
+            rb.AddForce(direction * launchSpeed, ForceMode2D.Impulse);
         }
     }
 
