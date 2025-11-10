@@ -49,7 +49,7 @@ public class Unit : MonoBehaviour
     // 타겟 공격
     private void Attack(Monster target)
     {
-        var projectile = Instantiate(projectilePrf);
+        var projectile = Instantiate(projectilePrf, transform.position, Quaternion.identity);
         projectile.SetDamage(attackDamage);
         projectile.SetTarget(target);
         projectile.Launch();
