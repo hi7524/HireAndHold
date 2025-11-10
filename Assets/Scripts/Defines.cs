@@ -3,6 +3,9 @@ using UnityEngine;
 public static class DataTableIds
 {
     public static readonly string String = "StringTable";
+    public static readonly string Stage = "StageTable";
+    public static readonly string Monster = "MonsterTable";
+    public static readonly string Wave = "WaveTable";
 }
 
 public static class Tags
