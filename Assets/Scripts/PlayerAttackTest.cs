@@ -3,12 +3,12 @@ using UnityEngine;
 
 public class PlayerAttackTest : MonoBehaviour
 {
-    [SerializeField] private GameObject projectilePrefab;
+    [SerializeField] private ObjectPoolManager poolManager;
+    [SerializeField] private string projectileKey = "Projectile";
     [SerializeField] private Transform firePoint;
     [SerializeField] private float fireCooldown = 0.2f;
 
     private float nextFireTime;
-
 
     private void Update()
     {
@@ -28,11 +28,13 @@ public class PlayerAttackTest : MonoBehaviour
 
     private void Fire(Transform target)
     {
-        GameObject projectileGo = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-        Projectile projectile = projectileGo.GetComponent<Projectile>();
+        GameObject projectileGo = poolManager.Get(projectileKey);
+        projectileGo.transform.position = firePoint.position;
 
+        Projectile projectile = projectileGo.GetComponent<Projectile>();
         if (projectile != null)
         {
+            projectile.Initialize(poolManager, projectileKey);
             projectile.SetTarget(target);
         }
     }
