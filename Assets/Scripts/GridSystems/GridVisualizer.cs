@@ -7,14 +7,19 @@ public class GridVisualizer : MonoBehaviour
     [SerializeField] private float cellSize = 1f;
     [SerializeField] private float space = 0.1f;
 
+    public GridLayoutData GetLayoutData() => layoutData;
+
 
     private void Start()
     {
         VisualizeGridData(layoutData);
     }
 
-    private void VisualizeGridData(GridLayoutData data)
+    public void VisualizeGridData(GridLayoutData data)
     {
+        if (data == null || gridCellPrf == null)
+            return;
+
         for (int i = 0; i < data.width; i++)
         {
             for (int j = 0; j < data.height; j++)
@@ -33,6 +38,21 @@ public class GridVisualizer : MonoBehaviour
                 );
 
                 cell.transform.localScale = new Vector3(cellSize, cellSize, 1f);
+            }
+        }
+    }
+
+    public void ClearGrid()
+    {
+        while (transform.childCount > 0)
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(transform.GetChild(0).gameObject);
+            }
+            else
+            {
+                DestroyImmediate(transform.GetChild(0).gameObject);
             }
         }
     }
