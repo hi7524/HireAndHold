@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
@@ -6,6 +6,9 @@ public class Unit : MonoBehaviour
     [SerializeField] private float attackInterval = 1.0f;
     [SerializeField] private float attackDamage = 5;
     [SerializeField] private UnitProjectile projectilePrf;
+
+    [SerializeField] private ObjectPoolManager poolManager;
+    [SerializeField] private string projectileKey = "Projectile";
 
     private Monster attackTarget;
     private float lastAttackTime;
@@ -32,7 +35,8 @@ public class Unit : MonoBehaviour
         foreach (var coll in colliders)
         {
             Monster monster = coll.GetComponent<Monster>();
-            if (monster != null)
+
+            if (monster != null && !monster.IsDead)
             {
                 float distance = Vector3.Distance(transform.position, coll.transform.position);
                 if (distance < minDis)
@@ -49,10 +53,25 @@ public class Unit : MonoBehaviour
     // 타겟 공격
     private void Attack(Monster target)
     {
-        var projectile = Instantiate(projectilePrf, transform.position, Quaternion.identity);
-        projectile.SetDamage(attackDamage);
-        projectile.SetTarget(target);
-        projectile.Launch();
+        //var projectile = Instantiate(projectilePrf, transform.position, Quaternion.identity);
+        //projectile.SetDamage(attackDamage);
+        //projectile.SetTarget(target);
+
+        //projectile.Launch();
+
+        // Pool 반환용 연결
+        GameObject projectileObj = poolManager.Get(projectileKey);
+        projectileObj.transform.position = transform.position;
+        projectileObj.transform.rotation = Quaternion.identity;
+
+        UnitProjectile projectile = projectileObj.GetComponent<UnitProjectile>();
+        if (projectile != null)
+        {
+            projectile.Initialize(poolManager, projectileKey); 
+            projectile.SetDamage(attackDamage);
+            projectile.SetTarget(target.transform);
+            projectile.Launch();
+        }
     }
 
     // 사거리 시각화

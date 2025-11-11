@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using DG.Tweening;
 
@@ -6,12 +6,11 @@ using DG.Tweening;
 public class Experience : MonoBehaviour
 {
     [SerializeField] float moveTime = 5f;
+    [SerializeField] private int expAmount = 5;
 
     private ExperienceCollector expCollector;
-
     private bool isMoving = false;
     private Vector3 targetPos;
-
 
     public void SetExpCollecter(ExperienceCollector expCollector)
     {
@@ -36,8 +35,13 @@ public class Experience : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log("경험치 증가");
-        gameObject.SetActive(false);
+        Wall wall = collision.GetComponent<Wall>();
+        if (wall != null)
+        {
+            wall.TakeExp(expAmount);
+            gameObject.SetActive(false);
+            Debug.Log($"경험치 {expAmount} 획득");
+        }
     }
     
     private void OnDisable()

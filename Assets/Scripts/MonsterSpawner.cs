@@ -5,29 +5,32 @@ using System;
 
 public class MonsterSpawner : MonoBehaviour
 {
-    //pool
     [SerializeField] private ObjectPoolManager poolManager;
     [SerializeField] private string monsterKey = "Monster";
+    [SerializeField] private string bossKey = "BossMonster"; 
 
-    //basic spawn
     [SerializeField] private float spawnInterval = 1f;
     [SerializeField] private Transform spawnPoint;
+    [SerializeField] private float horizontalRange = 2f;
+
+    [SerializeField] private float rushInterval = 150f;
+    [SerializeField] private float rushDuration = 30f;
+    [SerializeField] private float rushSpawnInterval = 0.2f;
+
+    [SerializeField] private WindowUI bossClearUI;
+
+    private int maxSpawnCount;
     private int currentSpawnCount = 0;
     private bool spawning = false;
-    private int maxSpawnCount;
-    private float horizontalRange = 2f;
-
-    //monster rush
-    [SerializeField] private float rushInterval = 10f;   
-    [SerializeField] private float rushDuration = 30f;    
-    [SerializeField] private float rushSpawnInterval = 0.2f;
-    [SerializeField] private int rushMaxSpawnCount = 100; 
-
-
     private bool isRushing = false;
+    private bool bossSpawned = false;
+
+    private int bossSpawnCount = 0;
     private float elapsedTime = 0f;
     private float nextRushTime;
+
     private CancellationTokenSource cts;
+    private Monster currentBoss;
 
     private void Start()
     {
@@ -49,74 +52,73 @@ public class MonsterSpawner : MonoBehaviour
         elapsedTime += Time.deltaTime;
     }
 
-    public void StopSpawning()
-    {
-        spawning = false; 
-    }
     public void StartSpawning(CancellationToken token)
     {
         spawning = true;
         SpawnLoopAsync(token).Forget();
     }
 
-    private void OnDestroy()
-    {
-        cts.Cancel();
-        cts.Dispose();
-    }
     private async UniTaskVoid SpawnLoopAsync(CancellationToken token)
     {
-        try
+        while (!token.IsCancellationRequested)
         {
-            while (!token.IsCancellationRequested)
+            if (!spawning || bossSpawned)
             {
-                if (spawning && currentSpawnCount < maxSpawnCount)
-                {
-                    SpawnMonsters();
-                    currentSpawnCount++;
-                }
-
-                float interval = isRushing ? rushSpawnInterval : spawnInterval;
-                await UniTask.Delay(TimeSpan.FromSeconds(interval), cancellationToken: token);
+                await UniTask.Yield();
+                continue;
             }
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        catch (Exception ex)
-        {
-            Debug.LogException(ex);
+
+            if (currentSpawnCount < maxSpawnCount)
+            {
+                SpawnMonsters();
+                currentSpawnCount++;
+            }
+
+            float interval = isRushing ? rushSpawnInterval : spawnInterval;
+            await UniTask.Delay(TimeSpan.FromSeconds(interval), cancellationToken: token);
         }
     }
 
     private async UniTaskVoid RushLoopAsync(CancellationToken token)
     {
-        try
+        while (!token.IsCancellationRequested)
         {
-            while (!token.IsCancellationRequested)
+            float waitTime = Mathf.Max(0, nextRushTime - elapsedTime);
+            await UniTask.Delay(TimeSpan.FromSeconds(waitTime), cancellationToken: token);
+
+            StartRush();
+            await UniTask.Delay(TimeSpan.FromSeconds(rushDuration), cancellationToken: token);
+            EndRush();
+
+            if (!bossSpawned && bossSpawnCount < 3)
             {
-                float waitTime = Mathf.Max(0, nextRushTime - elapsedTime);
-                await UniTask.Delay(TimeSpan.FromSeconds(waitTime), cancellationToken: token);
+                await SpawnBossAsync(token);
+                bossSpawnCount++;
+            }
 
-                StartRush(rushMaxSpawnCount);
-                await UniTask.Delay(TimeSpan.FromSeconds(rushDuration), cancellationToken: token);
-                EndRush();
-
+            if (bossSpawnCount == 1)
+            {
                 nextRushTime += rushInterval;
             }
+            else if (bossSpawnCount == 2)
+            {
+                nextRushTime += 600f;
+            }
+            else
+            {
+                Debug.Log("나올 보스 이제 없음, 완료");
+                break;
+            }
         }
-        catch (OperationCanceledException) { }
     }
 
-
-    public void StartRush(int rushMaxSpawn)
+    private void StartRush()
     {
         isRushing = true;
-        currentSpawnCount = 0; 
-        maxSpawnCount = rushMaxSpawn;
+        currentSpawnCount = 0;
     }
 
-    public void EndRush()
+    private void EndRush()
     {
         isRushing = false;
         currentSpawnCount = 0;
@@ -125,9 +127,9 @@ public class MonsterSpawner : MonoBehaviour
     private void SpawnMonsters()
     {
         GameObject monsters = poolManager.Get(monsterKey);
-        if(monsters == null)
+        if (monsters == null)
         {
-            Debug.Log("Monster 가 풀에 없음");
+            Debug.Log("Monster 풀 비어있음");
             return;
         }
 
@@ -135,15 +137,51 @@ public class MonsterSpawner : MonoBehaviour
         spawnPos.x += UnityEngine.Random.Range(-horizontalRange, horizontalRange);
 
         Monster monster = monsters.GetComponent<Monster>();
-
         monster.transform.position = spawnPos;
-        monster.transform.rotation = spawnPoint.rotation;
+        monster.Initialize(poolManager, monsterKey);
+    }
 
-        
-        if (monster != null)
+    private async UniTask SpawnBossAsync(CancellationToken token)
+    {
+        bossSpawned = true;
+        spawning = false;
+
+        Debug.Log($"보스 {bossSpawnCount + 1} 등장");
+
+        await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: token);
+
+        GameObject bossObj = poolManager.Get(bossKey);
+        if (bossObj == null)
         {
-            monster.Initialize(poolManager, monsterKey);
-
+            Debug.Log("보스 풀 비어있음");
+            bossSpawned = false;
+            spawning = true;
+            return;
         }
+
+        Vector3 spawnPos = spawnPoint.position;
+        spawnPos.x += UnityEngine.Random.Range(-horizontalRange, horizontalRange);
+
+        currentBoss = bossObj.GetComponent<Monster>();
+        currentBoss.transform.position = spawnPos;
+        currentBoss.Initialize(poolManager, bossKey, boss: true);
+
+        await WaitUntilBossDead(token);
+
+        Debug.Log("보스 사망");
+        bossSpawned = false;
+        spawning = true;
+    }
+
+    private async UniTask WaitUntilBossDead(CancellationToken token)
+    {
+        while (currentBoss != null && currentBoss.gameObject.activeSelf && !token.IsCancellationRequested)
+        {
+            await UniTask.Yield();
+        }
+
+        bossClearUI.Show();
+
+        await UniTask.WaitUntil(() => Time.timeScale > 0f, cancellationToken: token);
     }
 }

@@ -102,12 +102,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7a199c139c45f6479c10400a447c41c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHp: 200
+  maxHp: 30
   currentHp: 0
-  speed: 2
+  speed: 1
   attackDamage: 10
   attackRange: 0.6
   attackCooldown: 0.5
+  collector: {fileID: 0}
+  expPrefab: {fileID: 451080174845656977, guid: 64909d2d5bc2e2348a7bc5748565556d, type: 3}
 --- !u!50 &1700367696202662363
 Rigidbody2D:
   serializedVersion: 5

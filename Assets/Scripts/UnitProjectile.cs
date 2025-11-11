@@ -1,60 +1,67 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class UnitProjectile : MonoBehaviour
 {
     [SerializeField] private float lifeTime = 3f;
-    [SerializeField] private float launchSpeed = 3f;
+    [SerializeField] private float speed = 7f;
 
+    private ObjectPoolManager poolManager;
+    private string poolKey;
     private float damage;
-    private Monster target;
+    private Vector2 direction;
     private float spawnTime;
     private Rigidbody2D rb;
 
+    public void Initialize(ObjectPoolManager manager, string key)
+    {
+        poolManager = manager;
+        poolKey = key;
+    }
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
     }
 
-    public void SetDamage(float damage)
+    public void SetDamage(float dmg)
     {
-        this.damage = damage;
+        damage = dmg;
     }
 
-    public void SetTarget(Monster monster)
+    public void SetTarget(Transform target)
     {
-        target = monster;
+        if (target != null)
+        {
+            direction = (target.position - transform.position).normalized;
+        }
+        else
+        {
+            direction = transform.up;
+        }
     }
 
     public void Launch()
     {
         spawnTime = Time.time;
-
-        if (target != null)
-        {
-            Vector2 direction = (target.transform.position - transform.position).normalized;
-            rb.AddForce(transform.up * launchSpeed, ForceMode2D.Impulse);
-        }
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (Time.time >= spawnTime + lifeTime)
         {
-            rb.linearVelocity = Vector2.zero;
             gameObject.SetActive(false);
+            return;
         }
-    }
 
+        rb.MovePosition(rb.position + direction * speed * Time.fixedDeltaTime);
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (target != null &&
-            collision.gameObject.CompareTag(Tags.Monster) &&
-            collision.gameObject == target.gameObject)
+        Monster m = collision.GetComponent<Monster>();
+        if (m != null && !m.IsDead)
         {
-            target.TakeDamage(damage);
-            rb.linearVelocity = Vector2.zero;
+            m.TakeDamage(damage);
             gameObject.SetActive(false);
         }
     }

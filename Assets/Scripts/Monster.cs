@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+﻿using UnityEditor;
+using UnityEngine;
 
 public class Monster : MonoBehaviour, IDamagable
 {
     [SerializeField] private float maxHp;
     [SerializeField] private float currentHp;
-    [SerializeField] private float speed;
+    [SerializeField] public float speed;
     [SerializeField] private float attackDamage;
     [SerializeField] private float attackRange;
     [SerializeField] private float attackCooldown;
@@ -14,9 +15,15 @@ public class Monster : MonoBehaviour, IDamagable
     private float nextAttackTime;
     private Transform targetWall;
 
-    private bool isAttacking = false;
-    private bool isDead = false; 
+    [SerializeField] private string expKey = "Exp";
 
+    private bool isAttacking = false;
+    private bool isDead = false;
+
+    public bool IsDead => isDead;
+
+    //boss
+    private bool isBoss = false;
     public float CurrentHp => currentHp;
 
     void Start()
@@ -26,13 +33,28 @@ public class Monster : MonoBehaviour, IDamagable
         targetWall = GameObject.FindWithTag("Wall")?.transform;
     }
 
-    public void Initialize(ObjectPoolManager manager, string key)
+    public void Initialize(ObjectPoolManager manager, string key, bool boss = false)
     {
         poolManager = manager;
         poolKey = key;
         isDead = false;
         currentHp = maxHp;
         isAttacking = false;
+
+        isBoss = boss;
+
+        if (isBoss)
+        {
+            maxHp *= 3f;
+            currentHp = maxHp;
+            speed *= 0.7f;
+            attackDamage *= 2f;
+            transform.localScale = transform.localScale * 3f;
+        }
+        else
+        {
+            transform.localScale = transform.localScale * 1;
+        }
     }
 
     void Update()
@@ -141,7 +163,6 @@ public class Monster : MonoBehaviour, IDamagable
         {
             Die();
         }
-            
     }
 
     public void Die()
@@ -151,7 +172,9 @@ public class Monster : MonoBehaviour, IDamagable
             return;
         }
 
-            isDead = true;
+        isDead = true;
+
+        ExpItemSpawned();
 
         if (poolManager != null)
         {
@@ -162,4 +185,31 @@ public class Monster : MonoBehaviour, IDamagable
             Destroy(gameObject);
         }
     }
+
+    public void ExpItemSpawned()
+    {
+        if (poolManager == null)
+        {
+            return;
+        }
+
+
+        GameObject expObj = poolManager.Get("Exp");
+
+        if (expObj != null)
+        {
+            expObj.transform.position = transform.position;
+
+            Experience exp = expObj.GetComponent<Experience>();
+            if (exp != null)
+            {
+                ExperienceCollector collector = GameObject.FindWithTag("Collector")?.GetComponent<ExperienceCollector>();
+                if (collector != null)
+                {
+                    exp.SetExpCollecter(collector);
+                }
+            }
+        }
+    }
+
 }
