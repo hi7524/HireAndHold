@@ -11,6 +11,7 @@ public class UnitProjectile : MonoBehaviour
     private Vector2 direction;
     private float spawnTime;
     private Rigidbody2D rb;
+    private Transform target;
 
     public void Initialize(ObjectPoolManager manager, string key)
     {
@@ -59,7 +60,7 @@ public class UnitProjectile : MonoBehaviour
             return;
         }
 
-        rb.MovePosition(rb.position + direction * speed * Time.fixedDeltaTime);
+        rb.MovePosition(rb.position + direction * launchSpeed * Time.fixedDeltaTime);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
