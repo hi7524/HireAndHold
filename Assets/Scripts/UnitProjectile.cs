@@ -3,7 +3,7 @@
 public class UnitProjectile : MonoBehaviour
 {
     [SerializeField] private float lifeTime = 3f;
-    [SerializeField] private float speed = 7f;
+    [SerializeField] private float launchSpeed = 5f;
 
     private ObjectPoolManager poolManager;
     private string poolKey;
@@ -43,6 +43,12 @@ public class UnitProjectile : MonoBehaviour
     public void Launch()
     {
         spawnTime = Time.time;
+
+        if (target != null)
+        {
+            Vector2 direction = (target.transform.position - transform.position).normalized;
+            rb.AddForce(direction * launchSpeed, ForceMode2D.Impulse);
+        }
     }
 
     private void FixedUpdate()

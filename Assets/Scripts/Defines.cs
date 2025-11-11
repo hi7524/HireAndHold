@@ -6,6 +6,7 @@ public static class DataTableIds
     public static readonly string Stage = "StageTable";
     public static readonly string Monster = "MonsterTable";
     public static readonly string Wave = "WaveTable";
+    public static readonly string UnitCatlog = "UnitCatlogTable";
 }
 
 public static class Tags
@@ -19,4 +20,9 @@ public static class AudioMixerParams
     public static readonly string Master = "Master";
     public static readonly string Bgm = "BGM";
     public static readonly string Sfx = "SFX";
+}
+
+public static class AnimParams
+{
+    public static readonly int IsActive = Animator.StringToHash("IsActive");
 }
