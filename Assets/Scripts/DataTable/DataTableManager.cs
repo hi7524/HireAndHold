@@ -21,6 +21,7 @@ public static class DataTableManager
             LoadTableAsync<DataTable_Stage>(DataTableIds.Stage),
             LoadTableAsync<DataTable_Monster>(DataTableIds.Monster),
             LoadTableAsync<DataTable_Wave>(DataTableIds.Wave),
+            LoadTableAsync<DataTable_UnitCatlog>(DataTableIds.UnitCatlog),
             // 다른 테이블들 추가
             // LoadTableAsync<DataTable_Item>(DataTableIds.Item),
             // LoadTableAsync<DataTable_Character>(DataTableIds.Character),
@@ -40,6 +41,7 @@ public static class DataTableManager
     public static DataTable_Stage StageTable => Get<DataTable_Stage>(DataTableIds.Stage);
     public static DataTable_Monster MonsterTable => Get<DataTable_Monster>(DataTableIds.Monster);
     public static DataTable_Wave WaveTable => Get<DataTable_Wave>(DataTableIds.Wave);
+    public static DataTable_UnitCatlog UnitCatlogTable => Get<DataTable_UnitCatlog>(DataTableIds.UnitCatlog);
 
     public static T Get<T>(string id) where T : DataTable
     {
