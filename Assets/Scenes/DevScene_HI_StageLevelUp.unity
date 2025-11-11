@@ -680,8 +680,8 @@ GameObject:
   - component: {fileID: 306575729}
   - component: {fileID: 306575732}
   - component: {fileID: 306575731}
-  - component: {fileID: 306575733}
   - component: {fileID: 306575734}
+  - component: {fileID: 306575735}
   m_Layer: 5
   m_Name: DragTestImg
   m_TagString: Untagged
@@ -746,19 +746,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306575728}
   m_CullTransparentMesh: 1
---- !u!114 &306575733
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 306575728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d28cb88546068104ea0c4df7ed967cbf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  requireDropZone: 1
 --- !u!212 &306575734
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -814,6 +801,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &306575735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306575728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 981470a379cce55459d12f7381a2531e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requireDropZone: 1
+  createUnitID: 1000
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -4949,6 +4950,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6561f96ba6b40f84e95cf098ca28513d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  testUnitPrf: {fileID: 5969133922857625763, guid: 2eb55e5fb99746b419e89da9f42ca363, type: 3}
   acceptAllDraggables: 1
 --- !u!1 &2084958828
 GameObject:

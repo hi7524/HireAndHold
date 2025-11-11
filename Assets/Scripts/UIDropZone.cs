@@ -13,11 +13,18 @@ public class UIDropZone : MonoBehaviour, IDroppable
 
     public void OnDrop(IDraggable draggable)
     {
-        var draggedTransform = (draggable as MonoBehaviour)?.transform;
-        if (draggedTransform != null)
-        {
-            draggedTransform.SetParent(transform);
-            draggedTransform.localPosition = Vector3.zero;
-        }
+        var draggedTransform = draggable.GameObject.transform;
+        draggedTransform.SetParent(transform);
+        draggedTransform.localPosition = Vector3.zero;
+    }
+
+    public void OnDragEnter(IDraggable draggable)
+    {
+        
+    }
+
+    public void OnDragExit(IDraggable draggable)
+    {
+        
     }
 }

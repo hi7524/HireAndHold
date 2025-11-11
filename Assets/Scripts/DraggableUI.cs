@@ -11,6 +11,9 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
 
     private Transform originalParent;
     private Vector2 originalPos;
+    private IDroppable currentDroppable;
+
+    public GameObject GameObject => gameObject;
 
     private void Awake()
     {
@@ -28,17 +31,44 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
     public void OnDrag(PointerEventData eventData)
     {
         rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
+        UpdateCurrentDroppable(eventData);
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (requireDropZone && !TryDropOnTarget(eventData))
+        bool dropped = false;
+
+        if (currentDroppable != null)
+        {
+            if (currentDroppable.CanDrop(this))
+            {
+                currentDroppable.OnDrop(this);
+                dropped = true;
+            }
+
+            currentDroppable.OnDragExit(this);
+            currentDroppable = null;
+        }
+
+        if (requireDropZone && !dropped)
         {
             ReturnToOriginalPosition();
         }
     }
 
-    private bool TryDropOnTarget(PointerEventData eventData)
+    private void UpdateCurrentDroppable(PointerEventData eventData)
+    {
+        IDroppable newDroppable = FindDroppableAtPosition(eventData);
+
+        if (newDroppable != currentDroppable)
+        {
+            currentDroppable?.OnDragExit(this);
+            currentDroppable = newDroppable;
+            currentDroppable?.OnDragEnter(this);
+        }
+    }
+
+    private IDroppable FindDroppableAtPosition(PointerEventData eventData)
     {
         // UI Raycast
         var results = new List<RaycastResult>();
@@ -47,10 +77,9 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
         foreach (var result in results)
         {
             var droppable = result.gameObject.GetComponent<IDroppable>();
-            if (droppable != null && droppable.CanDrop(this))
+            if (droppable != null)
             {
-                droppable.OnDrop(this);
-                return true;
+                return droppable;
             }
         }
 
@@ -63,19 +92,7 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
         Vector2 worldPos = Camera.main.ScreenToWorldPoint(screenPos);
 
         Collider2D collider = Physics2D.OverlapPoint(worldPos);
-
-        if (collider != null)
-        {
-            var droppable = collider.GetComponent<IDroppable>();
-            if (droppable != null && droppable.CanDrop(this))
-            {
-                droppable.OnDrop(this);
-                gameObject.SetActive(false);
-                return true;
-            }
-        }
-
-        return false;
+        return collider?.GetComponent<IDroppable>();
     }
 
     private void ReturnToOriginalPosition()
