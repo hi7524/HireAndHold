@@ -20,3 +20,8 @@ public static class AudioMixerParams
     public static readonly string Bgm = "BGM";
     public static readonly string Sfx = "SFX";
 }
+
+public static class AnimParams
+{
+    public static readonly int IsActive = Animator.StringToHash("IsActive");
+}
