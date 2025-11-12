@@ -11,6 +11,7 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
 
     private Transform originalParent;
     private Vector2 originalPos;
+    private int originalSiblingIndex;
     private IDroppable currentDroppable;
 
     public GameObject GameObject => gameObject;
@@ -25,6 +26,9 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
     {
         originalParent = transform.parent;
         originalPos = rectTransform.anchoredPosition;
+        originalSiblingIndex = transform.GetSiblingIndex();
+
+        transform.SetParent(canvas.transform);
         transform.SetAsLastSibling();
     }
 
@@ -98,6 +102,7 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
     private void ReturnToOriginalPosition()
     {
         transform.SetParent(originalParent);
+        transform.SetSiblingIndex(originalSiblingIndex);
         rectTransform.anchoredPosition = originalPos;
     }
 }
