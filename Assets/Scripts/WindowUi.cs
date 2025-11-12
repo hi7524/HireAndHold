@@ -6,6 +6,8 @@ public class WindowUI : MonoBehaviour
     [SerializeField] private GameObject pricePanel;
     [SerializeField] private Button confirmButton;
 
+    [SerializeField] private TopUi topUi;
+
     private bool isActive = false;
 
     private void Awake()
@@ -29,7 +31,7 @@ public class WindowUI : MonoBehaviour
     private void OnConfirm()
     {
         pricePanel.SetActive(false);
-        Time.timeScale = 1f;
+        Time.timeScale = topUi.GetSpeedLevel[topUi.GetCurrentIndex];
         isActive = false;
     }
 }
