@@ -35,19 +35,17 @@ public class Experience : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Wall wall = collision.GetComponent<Wall>();
-        if (wall != null)
+        var collector = collision.GetComponent<ExperienceCollector>();
+        if (collector != null)
         {
-            wall.TakeExp(expAmount);
-            gameObject.SetActive(false);
-            Debug.Log($"경험치 {expAmount} 획득");
+            collector.CollectExperience(expAmount);
+            Destroy(gameObject);
         }
     }
-    
+
     private void OnDisable()
     {
         if (expCollector != null)
             expCollector.OnCollectTriggered -= MoveToTarget;
     }
-
 }

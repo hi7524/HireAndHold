@@ -6,7 +6,7 @@ public class Wall : MonoBehaviour, IDamagable
 {
     [SerializeField] private float maxHp;
     [SerializeField] private float currentHp;
-    [SerializeField] private float maxExp = 100;
+    // [SerializeField] private float maxExp = 100;
     [SerializeField] private float currentExp;
 
     public event Action<float, float> OnHpChanged;
@@ -14,12 +14,12 @@ public class Wall : MonoBehaviour, IDamagable
 
     public float CurrentHp => currentHp;
     public float MaxHp() => maxHp;
-    public float MaxExp () => maxExp;
+    // public float MaxExp () => maxExp;
     void Start()
     {
         currentHp = maxHp;
         OnHpChanged?.Invoke(currentHp, maxHp);
-        OnExpChanged?.Invoke(currentExp, maxExp);
+        // OnExpChanged?.Invoke(currentExp, maxExp);
     }
 
     public void TakeDamage(float damage)
@@ -39,7 +39,7 @@ public class Wall : MonoBehaviour, IDamagable
     {
         currentExp += exp;
         Debug.Log($"경험치 {exp} 만큼 증가");
-        OnExpChanged?.Invoke(currentExp, maxExp);
+        // OnExpChanged?.Invoke(currentExp, maxExp);
     }
 
     public void Die()
