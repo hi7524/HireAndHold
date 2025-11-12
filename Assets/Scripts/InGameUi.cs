@@ -10,17 +10,17 @@ public class InGameUi : MonoBehaviour
 
     private void Awake()
     {
-        if(wall != null)
-        {
-            wall.OnHpChanged += UpdateValue;
-            wall.OnExpChanged += UpdateExp;
-        }
+        // if(wall != null)
+        // {
+        //     wall.OnHpChanged += UpdateValue;
+        //     wall.OnExpChanged += UpdateExp;
+        // }
 
         hpSlider.minValue = 0;
         if (wall != null)
         {
             hpSlider.maxValue = wall.MaxHp();
-            expSlider.maxValue = wall.MaxExp();
+            // expSlider.maxValue = wall.MaxExp();
         }
     }
 
@@ -30,9 +30,9 @@ public class InGameUi : MonoBehaviour
         hpSlider.value = currenthp;
     }
 
-    private void UpdateExp(float currentExp, float maxExp)
-    {
-        expSlider.maxValue = maxExp;
-        expSlider.value = currentExp;
-    }
+    // private void UpdateExp(float currentExp, float maxExp)
+    // {
+    //     expSlider.maxValue = maxExp;
+    //     expSlider.value = currentExp;
+    // }
 }

@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class DataTable_UnitCatlog : DataTable
+public class DataTable_UnitCatalog : DataTable
 
 {
     public class Data
@@ -11,7 +11,7 @@ public class DataTable_UnitCatlog : DataTable
         public int Catalog_ID { get; set; }
         public int Unit_ID { get; set; }
         public float Probability { get; set; }
-        public int Weight { get; set; }
+        public float Weight { get; set; }
         
     }
 
