@@ -6,7 +6,7 @@ public static class DataTableIds
     public static readonly string Stage = "StageTable";
     public static readonly string Monster = "MonsterTable";
     public static readonly string Wave = "WaveTable";
-    public static readonly string UnitCatlog = "UnitCatlogTable";
+    public static readonly string UnitCatalog = "UnitCatalogTable";
 }
 
 public static class Tags
