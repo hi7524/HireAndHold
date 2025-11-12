@@ -27,14 +27,6 @@ public class PlayerExperience : MonoBehaviour
         UpdateExpBarUI();
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            AddExp(2);
-        }
-    }
-
     public void AddExp(int amount)
     {
         curPlayerExp += amount;
