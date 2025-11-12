@@ -6,7 +6,7 @@ public class LoadTest : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     async UniTaskVoid Start()
     {
-        await DataTableManager.Init();
+        await DataTableManager.InitAsync();
         Debug.Log(DataTableManager.Get<DataTable_Stage>(DataTableIds.Stage).Get(701).STAGE_NAME);
         int stage = 701;
         int wave = int.Parse("8" + stage + 1 + 1);
