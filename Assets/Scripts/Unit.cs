@@ -6,10 +6,9 @@ public class Unit : MonoBehaviour
     [SerializeField] private float attackInterval = 1.0f;
     [SerializeField] private float attackDamage = 5;
     [SerializeField] private UnitProjectile projectilePrf;
-
-    [SerializeField] private ObjectPoolManager poolManager;
     [SerializeField] private string projectileKey = "Projectile";
 
+    private ObjectPoolManager poolManager;
     private Monster attackTarget;
     private float lastAttackTime;
 
@@ -22,6 +21,11 @@ public class Unit : MonoBehaviour
             lastAttackTime = Time.time;
             Attack(attackTarget);
         }
+    }
+
+    public void SetPool(ObjectPoolManager poolManager)
+    {
+        this.poolManager = poolManager;
     }
 
     // 사거리에 따라 적 감지
@@ -53,12 +57,6 @@ public class Unit : MonoBehaviour
     // 타겟 공격
     private void Attack(Monster target)
     {
-        //var projectile = Instantiate(projectilePrf, transform.position, Quaternion.identity);
-        //projectile.SetDamage(attackDamage);
-        //projectile.SetTarget(target);
-
-        //projectile.Launch();
-
         // Pool 반환용 연결
         GameObject projectileObj = poolManager.Get(projectileKey);
         projectileObj.transform.position = transform.position;
@@ -80,6 +78,4 @@ public class Unit : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }
-
-    // 현재 타게팅된 적이 없다면 새로 찾기?
 }

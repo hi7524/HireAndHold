@@ -1,9 +1,12 @@
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 
 public class SpriteDropZone : MonoBehaviour, IDroppable
 {
+    // ** 테스트용 나중에 수정 필요
     public Unit testUnitPrf;
+    public ObjectPoolManager poolManager;
 
     [SerializeField] private bool acceptAllDraggables = true;
 
@@ -36,9 +39,10 @@ public class SpriteDropZone : MonoBehaviour, IDroppable
 
     private void CreateUnit()
     {
-        // 테스트용 유닛 생성
+        // 테스트용 유닛 생성 **
         var testUnitObj = Instantiate(testUnitPrf);
         testUnitObj.transform.position = transform.position;
+        testUnitObj.SetPool(poolManager);
     }
 
     public void OnDragEnter(IDraggable draggable)
