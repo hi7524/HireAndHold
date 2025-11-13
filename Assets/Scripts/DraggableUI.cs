@@ -11,6 +11,7 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
 
     private Transform originalParent;
     private Vector2 originalPos;
+    private int originalSiblingIndex;
     private IDroppable currentDroppable;
 
     public GameObject GameObject => gameObject;
@@ -25,6 +26,9 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
     {
         originalParent = transform.parent;
         originalPos = rectTransform.anchoredPosition;
+        originalSiblingIndex = transform.GetSiblingIndex();
+
+        transform.SetParent(canvas.transform);
         transform.SetAsLastSibling();
     }
 
@@ -76,6 +80,9 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
 
         foreach (var result in results)
         {
+            if (result.gameObject == gameObject)
+                continue;
+
             var droppable = result.gameObject.GetComponent<IDroppable>();
             if (droppable != null)
             {
@@ -84,20 +91,24 @@ public class DraggableUI : MonoBehaviour, IDraggable, IBeginDragHandler, IDragHa
         }
 
         // Physics2D Raycast
-        float spriteZPosition = 0f;
-        float distanceFromCamera = Mathf.Abs(spriteZPosition - Camera.main.transform.position.z);
+        if (Camera.main != null)
+        {
+            Vector2 worldPos = Camera.main.ScreenToWorldPoint(eventData.position);
+            Collider2D collider = Physics2D.OverlapPoint(worldPos);
 
-        Vector3 screenPos = eventData.position;
-        screenPos.z = distanceFromCamera;
-        Vector2 worldPos = Camera.main.ScreenToWorldPoint(screenPos);
+            if (collider != null)
+            {
+                return collider.GetComponent<IDroppable>();
+            }
+        }
 
-        Collider2D collider = Physics2D.OverlapPoint(worldPos);
-        return collider?.GetComponent<IDroppable>();
+        return null;
     }
 
     private void ReturnToOriginalPosition()
     {
         transform.SetParent(originalParent);
+        transform.SetSiblingIndex(originalSiblingIndex);
         rectTransform.anchoredPosition = originalPos;
     }
 }

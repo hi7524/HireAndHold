@@ -14,7 +14,7 @@ public class PlayerExperience : MonoBehaviour
     public event Action OnLevelUp;
 
     private float curPlayerExp;
-    private float expRequired = 30;
+    private float expRequired = 15;
     private float expGrowthRate = 1.2f; 
 
 
@@ -25,14 +25,6 @@ public class PlayerExperience : MonoBehaviour
 
         UpdateLevelTextUI();
         UpdateExpBarUI();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            AddExp(2);
-        }
     }
 
     public void AddExp(int amount)

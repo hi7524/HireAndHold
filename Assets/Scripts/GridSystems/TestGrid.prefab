@@ -10,7 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2045884723252125607}
   - component: {fileID: 7189498599392298069}
+  - component: {fileID: 5853948118065903001}
   - component: {fileID: 6005388090822284764}
+  - component: {fileID: 7395067617114804925}
   m_Layer: 0
   m_Name: TestGrid
   m_TagString: Untagged
@@ -88,6 +90,52 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!61 &5853948118065903001
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7561523029768047771}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1, y: 1}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 1, y: 1}
+  m_EdgeRadius: 0
 --- !u!114 &6005388090822284764
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -101,8 +149,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridPosition: {x: 0, y: 0}
-  normalColor: {r: 0.8, g: 0.8, b: 0.8, a: 0.3}
-  occupiedColor: {r: 1, g: 0.5, b: 0.5, a: 0.5}
-  validPlaceColor: {r: 0.5, g: 1, b: 0.5, a: 0.5}
-  invalidPlaceColor: {r: 1, g: 0.3, b: 0.3, a: 0.7}
-  hoverColor: {r: 0.9, g: 0.9, b: 0.5, a: 0.4}
+--- !u!114 &7395067617114804925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7561523029768047771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6561f96ba6b40f84e95cf098ca28513d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  testUnitPrf: {fileID: 5969133922857625763, guid: 2eb55e5fb99746b419e89da9f42ca363, type: 3}
+  acceptAllDraggables: 1

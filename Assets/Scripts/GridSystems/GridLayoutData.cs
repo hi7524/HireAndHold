@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "GridLayout", menuName = "Scriptable/Grid/Layout Data")]
+[CreateAssetMenu(fileName = "GridLayout", menuName = "Scriptable Objects/GridLayoutData")]
 public class GridLayoutData : ScriptableObject
 {
     public int width = 7;

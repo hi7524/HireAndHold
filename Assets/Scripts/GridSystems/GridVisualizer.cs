@@ -6,9 +6,9 @@ public class GridVisualizer : MonoBehaviour
     [SerializeField] private GridCell gridCellPrf;
     [SerializeField] private float cellSize = 1f;
     [SerializeField] private float space = 0.1f;
+    [SerializeField] private ObjectPoolManager poolManager;
 
     public GridLayoutData GetLayoutData() => layoutData;
-
 
     private void Start()
     {
@@ -38,6 +38,9 @@ public class GridVisualizer : MonoBehaviour
                 );
 
                 cell.transform.localScale = new Vector3(cellSize, cellSize, 1f);
+
+                // ** 테스트용
+                cell.GetComponent<SpriteDropZone>().poolManager = poolManager;
             }
         }
     }
