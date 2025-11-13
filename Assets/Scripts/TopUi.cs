@@ -89,7 +89,7 @@ public class TopUi : MonoBehaviour
     private async void OnLobbyButtonClick()
     {
  
-        await SceneManager.LoadSceneAsync("LobbyScene").ToUniTask();
+        await SceneManager.LoadSceneAsync("DevScene_Lobby").ToUniTask();
 
     }
 

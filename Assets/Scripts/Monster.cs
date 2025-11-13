@@ -157,7 +157,6 @@ public class Monster : MonoBehaviour, IDamagable
 
 
         currentHp -= damage;
-        Debug.Log($"Monster 데미지 받음 {damage}, 남은 HP: {currentHp}");
 
         if (currentHp <= 0)
         {

@@ -5,16 +5,14 @@ using UnityEngine.UI;
 public class InGameUi : MonoBehaviour
 {
     [SerializeField] private Slider hpSlider;
-    [SerializeField] private Slider expSlider;
     [SerializeField] private Wall wall;
 
     private void Awake()
     {
-        // if(wall != null)
-        // {
-        //     wall.OnHpChanged += UpdateValue;
-        //     wall.OnExpChanged += UpdateExp;
-        // }
+        if (wall != null)
+        {
+            wall.OnHpChanged += UpdateValue;
+        }
 
         hpSlider.minValue = 0;
         if (wall != null)
@@ -30,9 +28,5 @@ public class InGameUi : MonoBehaviour
         hpSlider.value = currenthp;
     }
 
-    // private void UpdateExp(float currentExp, float maxExp)
-    // {
-    //     expSlider.maxValue = maxExp;
-    //     expSlider.value = currentExp;
-    // }
+  
 }

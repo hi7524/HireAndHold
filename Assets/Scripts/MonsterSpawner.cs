@@ -184,4 +184,10 @@ public class MonsterSpawner : MonoBehaviour
 
         await UniTask.WaitUntil(() => Time.timeScale > 0f, cancellationToken: token);
     }
+
+    private void OnDestroy()
+    {
+        cts?.Cancel();
+        cts?.Dispose();
+    }
 }

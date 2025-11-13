@@ -15,6 +15,8 @@ public class Wall : MonoBehaviour, IDamagable
     public float CurrentHp => currentHp;
     public float MaxHp() => maxHp;
     // public float MaxExp () => maxExp;
+
+    [SerializeField] GameOverUi gameOverUi;
     void Start()
     {
         currentHp = maxHp;
@@ -25,7 +27,6 @@ public class Wall : MonoBehaviour, IDamagable
     public void TakeDamage(float damage)
     {
         currentHp -= damage;
-        Debug.Log($"벽 데미지 {damage} 받음");
 
         if(currentHp <= 0)
         {
@@ -46,5 +47,6 @@ public class Wall : MonoBehaviour, IDamagable
     {
         Destroy(gameObject);
         Debug.Log("벽 파괴됨");
+        gameOverUi.GameOver();
     }
 }
