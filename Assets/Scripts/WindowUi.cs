@@ -5,10 +5,8 @@ public class WindowUI : MonoBehaviour
 {
     [SerializeField] private GameObject pricePanel;
     [SerializeField] private Button confirmButton;
+    [SerializeField] private SkillSelectUi skillSelectUi;
 
-    [SerializeField] private TopUi topUi;
-
-    private bool isActive = false;
 
     private void Awake()
     {
@@ -18,12 +16,7 @@ public class WindowUI : MonoBehaviour
 
     public void Show()
     {
-        if (isActive)
-        {
-            return;
-        }
 
-        isActive = true;
         pricePanel.SetActive(true);
         Time.timeScale = 0f;
     }
@@ -31,7 +24,7 @@ public class WindowUI : MonoBehaviour
     private void OnConfirm()
     {
         pricePanel.SetActive(false);
-        Time.timeScale = topUi.GetSpeedLevel[topUi.GetCurrentIndex];
-        isActive = false;
+        Time.timeScale = 0f;
+        skillSelectUi.Show();
     }
 }
