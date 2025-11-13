@@ -8,7 +8,7 @@ public class Unit : MonoBehaviour
     [SerializeField] private UnitProjectile projectilePrf;
     [SerializeField] private string projectileKey = "Projectile";
 
-    private ObjectPoolManager poolManager;
+    [SerializeField] private ObjectPoolManager poolManager;
     private Monster attackTarget;
     private float lastAttackTime;
 
