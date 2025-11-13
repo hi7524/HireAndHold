@@ -5,6 +5,7 @@ public class LevelUpCardUI : MonoBehaviour
     [SerializeField] private PlayerExperience playerExperience;
     [SerializeField] private GameObject[] cards;
 
+
     private void Start()
     {
         playerExperience.OnLevelUp += ActiveCardUIs;
@@ -24,7 +25,7 @@ public class LevelUpCardUI : MonoBehaviour
     public void ResumeGame()
     {
         Time.timeScale = 1;
-         
+
         for (int i = 0; i < cards.Length; i++)
         {
             cards[i].SetActive(false);

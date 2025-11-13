@@ -3,7 +3,7 @@ using UnityEngine;
 public class Test : MonoBehaviour
 {
     [SerializeField] private PlayerExperience playerExp;
-    [SerializeField] private CardUI[] cardUis;
+    [SerializeField] private TestCard[] cardUis;
 
     private bool[] types; // true: 유닛, false: 패시브 스킬
 
