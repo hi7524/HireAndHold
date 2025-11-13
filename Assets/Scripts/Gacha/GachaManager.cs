@@ -13,7 +13,7 @@ public class GachaManager : MonoBehaviour
     // 이벤트 (UI에서 구독)
     public event Action<GachaResult> OnGachaComplete;
     public event Action<string> OnGachaError;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    
      private async void Start()
     {
         await DataTableManager.InitAsync();
@@ -67,6 +67,7 @@ public class GachaManager : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             results.Add(GachaSingle(type));
+            Debug.Log($"[GachaManager] 뽑기 결과: {results[i].unitId}");
         }
 
         // // 재화 차감

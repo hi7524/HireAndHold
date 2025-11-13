@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System.Threading;
@@ -11,8 +12,7 @@ public class StoreWindow : GenericWindow
     [SerializeField] private GachaManager gachaManager;
 
     [Header("UI Panels")]
-    [SerializeField] private GameObject gachaMenuPanel;
-    [SerializeField] private GameObject gachaResultPanel;
+       [SerializeField] private GameObject gachaResultPanel;
 
     [Header("Result UI")]
     [SerializeField] private Transform resultContainer;
@@ -117,11 +117,7 @@ public class StoreWindow : GenericWindow
     {
         isPlaying = true;
 
-        // 메뉴 패널 숨기고 결과 패널 표시
-        if (gachaMenuPanel != null)
-        {
-            gachaMenuPanel.SetActive(false);
-        }
+      
         
         if (gachaResultPanel != null)
         {
@@ -137,13 +133,13 @@ public class StoreWindow : GenericWindow
             ct.ThrowIfCancellationRequested();
 
             var item = result.items[i];
-            await ShowResultCardAsync(item, i, ct);
-            // Debug.Log($"[GachaUI] 카드 표시: {item.unitId} ({item.rarity})");
+            // await ShowResultCardAsync(item, i, ct);
+            Debug.Log($"[GachaUI] 카드 표시: {item.unitId} ({item.rarity})");
 
-            if (i < result.items.Count - 1)
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(cardAppearDelay), cancellationToken: ct);
-            }
+            // if (i < result.items.Count - 1)
+            // {
+            //     await UniTask.Delay(TimeSpan.FromSeconds(cardAppearDelay), cancellationToken: ct);
+            // }
         }
 
         // 모든 카드 표시 후 대기
@@ -152,69 +148,69 @@ public class StoreWindow : GenericWindow
         isPlaying = false;
     }
 
-    // <summary>
-    // 결과 카드 표시
-    // </summary>
-    private async UniTask ShowResultCardAsync(GachaItem item, int index, CancellationToken ct)
-    {
-        if (gachaResultCardPrefab == null || resultContainer == null)
-        {
-            return;
-        }
+    /// <summary>
+    /// 결과 카드 표시
+    /// </summary>
+    // private async UniTask ShowResultCardAsync(GachaItem item, int index, CancellationToken ct)
+    // {
+    //     if (gachaResultCardPrefab == null || resultContainer == null)
+    //     {
+    //         return;
+    //     }
 
-        // 카드 생성
-        GameObject cardObj = Instantiate(gachaResultCardPrefab, resultContainer);
-        var card = cardObj.GetComponent<GachaResultCard>();
+    //     // 카드 생성
+    //     GameObject cardObj = Instantiate(gachaResultCardPrefab, resultContainer);
+    //     var card = cardObj.GetComponent<GachaResultCard>();
         
-        if (card != null)
-        {
-            card.Setup(item);
-        }
+    //     if (card != null)
+    //     {
+    //         card.Setup(item);
+    //     }
 
-        // 애니메이션
-        RectTransform rectTransform = cardObj.GetComponent<RectTransform>();
-        CanvasGroup canvasGroup = cardObj.GetComponent<CanvasGroup>();
+    //     // 애니메이션
+    //     RectTransform rectTransform = cardObj.GetComponent<RectTransform>();
+    //     CanvasGroup canvasGroup = cardObj.GetComponent<CanvasGroup>();
         
-        if (canvasGroup == null)
-        {
-            canvasGroup = cardObj.AddComponent<CanvasGroup>();
-        }
+    //     if (canvasGroup == null)
+    //     {
+    //         canvasGroup = cardObj.AddComponent<CanvasGroup>();
+    //     }
 
-        rectTransform.localScale = Vector3.zero;
-        canvasGroup.alpha = 0f;
+    //     rectTransform.localScale = Vector3.zero;
+    //     canvasGroup.alpha = 0f;
 
-        // 등장 애니메이션
-        float elapsed = 0f;
-        while (elapsed < cardAnimationDuration)
-        {
-            ct.ThrowIfCancellationRequested();
+    //     // 등장 애니메이션
+    //     float elapsed = 0f;
+    //     while (elapsed < cardAnimationDuration)
+    //     {
+    //         ct.ThrowIfCancellationRequested();
 
-            elapsed += Time.deltaTime;
-            float t = elapsed / cardAnimationDuration;
+    //         elapsed += Time.deltaTime;
+    //         float t = elapsed / cardAnimationDuration;
             
-            float scale = Mathf.Lerp(0f, 1f, EaseOutBack(t));
-            rectTransform.localScale = Vector3.one * scale;
-            canvasGroup.alpha = t;
+    //         float scale = Mathf.Lerp(0f, 1f, EaseOutBack(t));
+    //         rectTransform.localScale = Vector3.one * scale;
+    //         canvasGroup.alpha = t;
 
-            await UniTask.Yield(PlayerLoopTiming.Update, ct);
-        }
+    //         await UniTask.Yield(PlayerLoopTiming.Update, ct);
+    //     }
 
-        rectTransform.localScale = Vector3.one;
-        canvasGroup.alpha = 1f;
+    //     rectTransform.localScale = Vector3.one;
+    //     canvasGroup.alpha = 1f;
 
-        // // 특수 효과
-        // if (item.rarity == GachaRarity.Legendary)
-        // {
-        //     PlayLegendaryEffect(cardObj);
-        // }
-    }
+    //     // 특수 효과
+    //     if (item.rarity == GachaRarity.Legendary)
+    //     {
+    //         PlayLegendaryEffect(cardObj);
+    //     }
+    // }
 
-    private float EaseOutBack(float t)
-    {
-        float c1 = 1.70158f;
-        float c3 = c1 + 1f;
-        return 1f + c3 * Mathf.Pow(t - 1f, 3f) + c1 * Mathf.Pow(t - 1f, 2f);
-    }
+    // private float EaseOutBack(float t)
+    // {
+    //     float c1 = 1.70158f;
+    //     float c3 = c1 + 1f;
+    //     return 1f + c3 * Mathf.Pow(t - 1f, 3f) + c1 * Mathf.Pow(t - 1f, 2f);
+    // }
 
     // private void PlayLegendaryEffect(GameObject cardObj)
     // {
@@ -245,10 +241,6 @@ public class StoreWindow : GenericWindow
             gachaResultPanel.SetActive(false);
         }
         
-        if (gachaMenuPanel != null)
-        {
-            gachaMenuPanel.SetActive(true);
-        }
 
         ClearResultCards();
     }
