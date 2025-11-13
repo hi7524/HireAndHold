@@ -67,7 +67,6 @@ public class GachaManager : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             results.Add(GachaSingle(type));
-            Debug.Log($"[GachaManager] 뽑기 결과: {results[i].unitId}");
         }
 
         // // 재화 차감

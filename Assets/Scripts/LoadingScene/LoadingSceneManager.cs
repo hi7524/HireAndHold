@@ -24,7 +24,7 @@ public class LoadingSceneManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private string loadingSceneName = "DevScene_Loading";
-    [SerializeField] private float minimumLoadingTime = 1f; // 최소 로딩 시간
+    [SerializeField] private float minimumLoadingTime = 1f; 
 
     private LoadingRequest currentRequest;
     private CancellationTokenSource cts;
@@ -66,7 +66,7 @@ public class LoadingSceneManager : MonoBehaviour
     private async UniTask LoadSceneWithLoadingAsync(LoadingRequest request, CancellationToken ct)
     {
         currentRequest = request;
-
+        Time.timeScale = 1f;
         // 1. 로딩 씬으로 이동
         await Addressables.LoadSceneAsync(loadingSceneName, LoadSceneMode.Single)
     .ToUniTask(cancellationToken: ct);

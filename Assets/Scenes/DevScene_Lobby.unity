@@ -1415,6 +1415,7 @@ GameObject:
   - component: {fileID: 277816380}
   - component: {fileID: 277816378}
   - component: {fileID: 277816379}
+  - component: {fileID: 277816384}
   m_Layer: 5
   m_Name: Lobby
   m_TagString: Untagged
@@ -1551,6 +1552,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 277816376}
   m_CullTransparentMesh: 1
+--- !u!114 &277816384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 277816376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52a6e4ac95d13214c9c6c29f02f2eae8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &281535710
 GameObject:
   m_ObjectHideFlags: 0
@@ -11303,7 +11316,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1894680715}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 277816384}
+        m_TargetAssemblyTypeName: LobbyToGameLoader, Assembly-CSharp
+        m_MethodName: OnStartGameButtonClicked
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1894680715
 MonoBehaviour:
   m_ObjectHideFlags: 0

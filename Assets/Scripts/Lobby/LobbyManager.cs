@@ -8,6 +8,7 @@ public class LobbyManager : MonoBehaviour
     private void Start()
     {
         windowManager = FindObjectOfType<WindowManager>();
+        Time.timeScale = 1f;   
     }
 
     public void OnClickedStoreButton()

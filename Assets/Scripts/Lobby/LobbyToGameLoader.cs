@@ -9,7 +9,7 @@ public class LobbyToGameLoader : MonoBehaviour
     }
     private void LoadGameScene()
     {
-        LoadingRequest request = new LoadingRequest("DevScene_stage");
+        LoadingRequest request = new LoadingRequest("DevScene_Stage");
 
         // 예시: 리소스 로드 작업 추가
         request.AddTask("Load Game Resources", async (ct) =>
