@@ -43,11 +43,11 @@ public class AuthManager : MonoBehaviour
 
         if(currentUser != null)
         {
-            // Debug.Log($"[Auth] 이미 로그인됨: {UserId}"); 
+            Debug.Log($"[Auth] 이미 로그인됨: {UserId}"); 
         }
         else
         {
-            // Debug.Log($"[Auth] 로그인 필요");
+            Debug.Log($"[Auth] 로그인 필요");
 
         }
 
