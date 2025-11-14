@@ -3,23 +3,11 @@ using Cysharp.Threading.Tasks;
 
 public class DatabaseManager : MonoBehaviour
 {
-    public static DatabaseManager Instance { get; private set; }
+     private static DatabaseManager instance;
+    public static DatabaseManager Instance => instance;
 
     private Database database;
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            database = new Database();
-            database.Initialize();
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
+    
 
     // Example methods for CRUD operations on PlayerData
     public async UniTask<bool> CreatePlayerDataAsync(string userId, PlayerData data)

@@ -14,9 +14,9 @@ public class GachaManager : MonoBehaviour
     public event Action<GachaResult> OnGachaComplete;
     public event Action<string> OnGachaError;
     
-     private async void Start()
+     private  void Start()
     {
-        await DataTableManager.InitAsync();
+    
         InitializeTables();
     }
 
