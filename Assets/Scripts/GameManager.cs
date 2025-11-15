@@ -17,6 +17,8 @@ public class GameManager : MonoBehaviour
     private float originalSpeed;
     private int curSpeedLevelIdx;
 
+    private StageTimeEventScheduler timeScheduler = new StageTimeEventScheduler();
+
 
     private void Start()
     {
@@ -82,5 +84,18 @@ public class GameManager : MonoBehaviour
     {
         curSpeedLevelIdx = (curSpeedLevelIdx + 1) % speedLevels.Length;
         Time.timeScale = speedLevels[curSpeedLevelIdx];
+    }
+
+    // 시간에 따른 이벤트 추가
+    public TimeEvent AddTimeEvent(int minutes, int seconds, Action callback)
+    {
+        float totalSeconds = minutes * 60f + seconds;
+        return timeScheduler.AddTimeEvent(totalSeconds, callback);
+    }
+    
+    // 이벤트 삭제
+    public bool RemoveTimeEvent(TimeEvent timeEvent)
+    {
+        return timeScheduler.RemoveTimeEvent(timeEvent);
     }
 }
