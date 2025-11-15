@@ -40,8 +40,7 @@ public class StageTimeEventScheduler
         elapsedTime += deltaTime;
 
         int removeCount = 0;
-
-        for (int i = scheduledEvents.Count - 1; i >= 0; i--)
+        for (int i = 0; i < scheduledEvents.Count; i++)
         {
             if (scheduledEvents[i].TriggerTime <= elapsedTime)
             {
