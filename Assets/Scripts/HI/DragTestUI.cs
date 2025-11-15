@@ -1,11 +1,11 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
-public class DragTestObject : MonoBehaviour, ITestDraggable
+public class DragTestUI : MonoBehaviour, ITestDraggable
 {
     public bool IsDraggable => true;
     public bool RequireDropZone => true;
     public GameObject GameObject => gameObject;
+
 
 
     public void OnDragStart()
