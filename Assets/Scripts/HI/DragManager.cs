@@ -9,6 +9,7 @@ public class DragManager : MonoBehaviour
 
     private Camera mainCamera;
     private ITestDraggable dragTarget;
+    private Vector3 originalPosition;
 
     private bool isTargetUI = false;
 
@@ -26,7 +27,11 @@ public class DragManager : MonoBehaviour
             if (Pointer.current.press.wasPressedThisFrame)
             {
                 dragTarget = DetectObject();
-                dragTarget?.OnDragStart();
+                if (dragTarget != null)
+                {
+                    originalPosition = dragTarget.GameObject.transform.position;
+                    dragTarget.OnDragStart();
+                }
             }
 
             // 누르는 중
@@ -39,8 +44,28 @@ public class DragManager : MonoBehaviour
             // 떼는 순간
             if (Pointer.current.press.wasReleasedThisFrame)
             {
-                dragTarget?.OnDragEnd();
-                dragTarget = null;
+                if (dragTarget != null)
+                {
+                    ITestDroppable dropTarget = DetectDropTarget();
+
+                    // 드롭 성공
+                    if (dropTarget != null && dropTarget.CanAccept(dragTarget))
+                    {
+                        dropTarget.OnDrop(dragTarget);
+                    }
+                    // 드롭 실패
+                    else
+                    {
+                        dragTarget.GameObject.transform.position = originalPosition;
+                        if (!isTargetUI)
+                        {
+                            Physics2D.SyncTransforms();
+                        }
+                    }
+
+                    dragTarget.OnDragEnd();
+                    dragTarget = null;
+                }
             }
         }
     }
@@ -112,6 +137,74 @@ public class DragManager : MonoBehaviour
         }
 
         return topDraggable;
+    }
+
+    // 드롭 가능 대상 감지
+    private ITestDroppable DetectDropTarget()
+    {
+        Vector2 pointerPosition = Pointer.current.position.ReadValue();
+
+        ITestDroppable uiDroppable = DetectUIDropTarget(pointerPosition);
+        if (uiDroppable != null)
+            return uiDroppable;
+
+        ITestDroppable worldDroppable = DetectWorldDropTarget(pointerPosition);
+        return worldDroppable;
+    }
+
+    // 드롭 가능 UI 감지
+    private ITestDroppable DetectUIDropTarget(Vector2 screenPosition)
+    {
+        PointerEventData pointerData = new PointerEventData(EventSystem.current)
+        {
+            position = screenPosition
+        };
+
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerData, results);
+
+        foreach (var result in results)
+        {
+            var droppable = result.gameObject.GetComponent<ITestDroppable>();
+            if (droppable != null)
+            {
+                return droppable;
+            }
+        }
+
+        return null;
+    }
+
+    // 드롭 가능 GameObject 감지
+    private ITestDroppable DetectWorldDropTarget(Vector2 screenPosition)
+    {
+        Vector2 worldPoint = mainCamera.ScreenToWorldPoint(screenPosition);
+
+        RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.zero, Mathf.Infinity, draggableLayer);
+
+        if (hits.Length == 0)
+            return null;
+
+        ITestDroppable topDroppable = null;
+        int highestSortingOrder = int.MinValue;
+
+        foreach (var hit in hits)
+        {
+            var droppable = hit.collider.GetComponent<ITestDroppable>();
+            if (droppable == null)
+                continue;
+
+            var spriteRenderer = hit.collider.GetComponent<SpriteRenderer>();
+            int sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder : 0;
+
+            if (topDroppable == null || sortingOrder > highestSortingOrder)
+            {
+                topDroppable = droppable;
+                highestSortingOrder = sortingOrder;
+            }
+        }
+
+        return topDroppable;
     }
 
     // 오브젝트 이동

@@ -39,8 +39,8 @@ public class GridVisualizer : MonoBehaviour
 
                 cell.transform.localScale = new Vector3(cellSize, cellSize, 1f);
 
-                // ** 테스트용
-                cell.GetComponent<SpriteDropZone>().poolManager = poolManager;
+                // // ** 테스트용
+                // cell.GetComponent<SpriteDropZone>().poolManager = poolManager;
             }
         }
     }
