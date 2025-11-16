@@ -80,7 +80,7 @@ public class UnitGridDataEditor : Editor
                 bool isCenter = (x == centerIndex && y == centerIndex);
 
                 // 차지된 셀인지 확인
-                Vector2Int relativePos = new Vector2Int(x - centerIndex, y - centerIndex);
+                Vector2Int relativePos = new Vector2Int(x - centerIndex, (gridSize - 1 - y) - centerIndex);
                 bool isOccupied = data.shape.occupiedCells.Contains(relativePos);
 
                 // 색상 결정

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum GridState
@@ -32,7 +33,7 @@ public class GridManager : MonoBehaviour
         gridCells[pos.x, pos.y].SetAcceptable(state == GridState.Empty);
     }
 
-    // GridVisualizer의 자식 오브젝트들을 순회하며 GridCell 컴포넌트를 수집
+    // GridVisualizer의 자식 오브젝트들을 순회하며 GridCell 컴포넌트 수집
     private void RegisterCells()
     {
         if (gridVisualizer == null)
@@ -57,5 +58,35 @@ public class GridManager : MonoBehaviour
                 cell.SetGridManager(this);
             }
         }
+    }
+
+    public bool CanPlaceUnit(Vector2Int curPos, List<Vector2Int> grid)
+    {
+        foreach (var relativePos in grid)
+        {
+            Vector2Int absolutePos = curPos + relativePos;
+
+            // 인덱스 범위 체크
+            if (absolutePos.x < 0 || absolutePos.x >= layoutData.width ||
+                absolutePos.y < 0 || absolutePos.y >= layoutData.height)
+            {
+                return false;
+            }
+
+            // 유효한 셀인지 체크 (뚫린 부분 체크)
+            if (!layoutData.IsValidCell(absolutePos))
+            {
+                return false;
+            }
+
+            // 셀 상태 체크 (이미 차지되었는지)
+            int cellState = gridArray[absolutePos.x, absolutePos.y];
+            if (cellState != (int)GridState.Empty)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

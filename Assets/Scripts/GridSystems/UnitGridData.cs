@@ -61,7 +61,6 @@ public class UnitGridData : ScriptableObject
         }
     }
 
-    // 실제 게임에서 사용할 메서드
     public List<Vector2Int> GetOccupiedCells()
     {
         return new List<Vector2Int>(shape.occupiedCells);

@@ -40,10 +40,16 @@ public class GridCell : MonoBehaviour, ITestDroppable
 
     public void OnDragEnter(ITestDraggable draggable)
     {
-        if (canAccept)
-            spriteRenderer.color = new Color(0.455f, 0.953f, 0.420f);
-        else
-            spriteRenderer.color = new Color(0.898f, 0.376f, 0.376f);
+        var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
+        if (gridUnit != null)
+        {
+            canAccept = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells());
+
+            if (canAccept)
+                spriteRenderer.color = new Color(0.455f, 0.953f, 0.420f);
+            else
+                spriteRenderer.color = new Color(0.898f, 0.376f, 0.376f);
+        }
     }
 
     public void OnDragExit(ITestDraggable draggable)
@@ -53,14 +59,14 @@ public class GridCell : MonoBehaviour, ITestDroppable
 
     public void OnDrop(ITestDraggable draggable)
     {
-        if (!canAccept) 
+        if (!canAccept)
             return;
 
         draggable.GameObject.transform.position = transform.position;
         PlacedObject = draggable.GameObject;
 
         // 드래그 가능한 오브젝트에 현재 셀 알려주기
-        var dragObj = draggable.GameObject.GetComponent<DragTestObject>();
+        var dragObj = draggable.GameObject.GetComponent<GridUnit>();
         dragObj?.SetCurrentGridCell(this);
 
         gridManager.SetGridState(GridPosition, GridState.Occupied);
