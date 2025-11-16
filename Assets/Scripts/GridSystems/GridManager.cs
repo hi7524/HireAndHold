@@ -16,6 +16,7 @@ public class GridManager : MonoBehaviour
     public int[,] gridArray { get; private set; }
 
     private GridCell[,] gridCells;
+    private HashSet<GridCell> highlightedCells = new HashSet<GridCell>();
 
 
     private void Start()
@@ -60,33 +61,104 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public bool CanPlaceUnit(Vector2Int curPos, List<Vector2Int> grid)
+    public bool CanPlaceUnit(Vector2Int curPos, List<Vector2Int> grid, Color highlightColor)
     {
+        ClearAllGridsColor();
+
+        bool canPlace = true;
+
+        HashSet<Vector2Int> allPositions = new HashSet<Vector2Int>
+        {
+            curPos
+        };
+
         foreach (var relativePos in grid)
         {
-            Vector2Int absolutePos = curPos + relativePos;
+            allPositions.Add(curPos + relativePos);
+        }
 
+        foreach (var absolutePos in allPositions)
+        {
             // 인덱스 범위 체크
             if (absolutePos.x < 0 || absolutePos.x >= layoutData.width ||
                 absolutePos.y < 0 || absolutePos.y >= layoutData.height)
             {
-                return false;
+                canPlace = false;
+                continue;
             }
 
             // 유효한 셀인지 체크 (뚫린 부분 체크)
             if (!layoutData.IsValidCell(absolutePos))
             {
-                return false;
+                canPlace = false;
+                continue;
             }
 
             // 셀 상태 체크 (이미 차지되었는지)
             int cellState = gridArray[absolutePos.x, absolutePos.y];
             if (cellState != (int)GridState.Empty)
             {
-                return false;
+                canPlace = false;
             }
         }
 
-        return true;
+        // 색상 변경
+        foreach (var absolutePos in allPositions)
+        {
+            if (absolutePos.x >= 0 && absolutePos.x < layoutData.width &&
+                absolutePos.y >= 0 && absolutePos.y < layoutData.height)
+            {
+                GridCell cell = gridCells[absolutePos.x, absolutePos.y];
+                if (cell != null)
+                {
+                    cell.SetColor(canPlace ? highlightColor : Color.red);
+                    highlightedCells.Add(cell);
+                }
+            }
+        }
+
+        return canPlace;
+    }
+
+    public void ClearAllGridsColor()
+    {
+        foreach (var cell in highlightedCells)
+        {
+            if (cell != null)
+            {
+                cell.SetColor(Color.white);
+            }
+        }
+        highlightedCells.Clear();
+    }
+
+    public void SetUnitCellsColor(Vector2Int curPos, List<Vector2Int> grid, Color color)
+    {
+        // 이전 하이라이트 제거
+        ClearAllGridsColor();
+
+        HashSet<Vector2Int> allPositions = new HashSet<Vector2Int>
+        {
+            curPos
+        };
+
+        foreach (var relativePos in grid)
+        {
+            allPositions.Add(curPos + relativePos);
+        }
+
+        // 유닛이 차지하는 모든 셀에 색상 적용
+        foreach (var absolutePos in allPositions)
+        {
+            if (absolutePos.x >= 0 && absolutePos.x < layoutData.width &&
+                absolutePos.y >= 0 && absolutePos.y < layoutData.height)
+            {
+                GridCell cell = gridCells[absolutePos.x, absolutePos.y];
+                if (cell != null)
+                {
+                    cell.SetColor(color);
+                }
+            }
+        }
     }
 }

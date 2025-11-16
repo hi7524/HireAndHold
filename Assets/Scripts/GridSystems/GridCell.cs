@@ -43,18 +43,13 @@ public class GridCell : MonoBehaviour, ITestDroppable
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
         {
-            canAccept = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells());
-
-            if (canAccept)
-                spriteRenderer.color = new Color(0.455f, 0.953f, 0.420f);
-            else
-                spriteRenderer.color = new Color(0.898f, 0.376f, 0.376f);
+            canAccept = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells(), gridUnit.GridData.gridColor);
         }
     }
 
     public void OnDragExit(ITestDraggable draggable)
     {
-        spriteRenderer.color = Color.white;
+        gridManager.ClearAllGridsColor();
     }
 
     public void OnDrop(ITestDraggable draggable)
@@ -70,13 +65,16 @@ public class GridCell : MonoBehaviour, ITestDroppable
         dragObj?.SetCurrentGridCell(this);
 
         gridManager.SetGridState(GridPosition, GridState.Occupied);
-
-        spriteRenderer.color = Color.white;
     }
 
     public void ClearObject()
     {
         PlacedObject = null;
         gridManager.SetGridState(GridPosition, GridState.Empty);
+    }
+
+    public void SetColor(Color color)
+    {
+        spriteRenderer.color = color;
     }
 }

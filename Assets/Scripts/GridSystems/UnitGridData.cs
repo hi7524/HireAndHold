@@ -5,6 +5,8 @@ using System.Collections.Generic;
 public class UnitGridData : ScriptableObject
 {
     public const int GridSize = 5;
+    
+    public Color gridColor = Color.white;
 
     [System.Serializable]
     public class ShapeData
@@ -15,7 +17,7 @@ public class UnitGridData : ScriptableObject
 
     public ShapeData shape = new ShapeData();
 
-    // 에디터용 - 그리드를 boolean 배열로 변환 (시각화용)
+    // 그리드를 boolean 배열로 변환
     public bool[,] GetGridRepresentation()
     {
         bool[,] grid = new bool[GridSize, GridSize];

@@ -17,6 +17,18 @@ public class UnitGridDataEditor : Editor
 
         EditorGUILayout.Space(10);
         EditorGUILayout.LabelField("Unit Shape Editor", EditorStyles.boldLabel);
+
+        // Grid Color 필드
+        EditorGUI.BeginChangeCheck();
+        Color newColor = EditorGUILayout.ColorField("Grid Color", data.gridColor);
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(data, "Change Grid Color");
+            data.gridColor = newColor;
+            EditorUtility.SetDirty(data);
+        }
+
+        EditorGUILayout.Space(5);
         EditorGUILayout.LabelField("클릭하여 셀을 토글. 중심(빨간색)을 기준으로 상대 좌표가 저장");
         EditorGUILayout.Space(5);
 
