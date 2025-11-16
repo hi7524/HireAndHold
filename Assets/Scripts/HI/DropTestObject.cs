@@ -9,12 +9,10 @@ public class DropTestObject : MonoBehaviour, ITestDroppable
 
     public void OnDragEnter(ITestDraggable draggable)
     {
-        Debug.Log("놓는중");
     }
 
     public void OnDragExit(ITestDraggable draggable)
     {
-        Debug.Log("나감");
     }
 
     public void OnDrop(ITestDraggable draggable)

@@ -12,6 +12,7 @@ public class DragManager : MonoBehaviour
     private Vector3 originalPosition;
 
     private bool isTargetUI = false;
+    private ITestDroppable currentDropTarget;
 
 
     private void Start()
@@ -39,6 +40,26 @@ public class DragManager : MonoBehaviour
             {
                 dragTarget.OnDrag();
                 MoveDraggingObject(dragTarget.GameObject);
+
+                // 드롭 타겟 감지 및 Enter/Exit 이벤트 처리
+                ITestDroppable newDropTarget = DetectDropTarget();
+
+                if (newDropTarget != currentDropTarget)
+                {
+                    // 이전 타겟에서 나감
+                    if (currentDropTarget != null)
+                    {
+                        currentDropTarget.OnDragExit(dragTarget);
+                    }
+
+                    // 새로운 타겟에 진입
+                    if (newDropTarget != null)
+                    {
+                        newDropTarget.OnDragEnter(dragTarget);
+                    }
+
+                    currentDropTarget = newDropTarget;
+                }
             }
 
             // 떼는 순간
@@ -61,6 +82,13 @@ public class DragManager : MonoBehaviour
                         {
                             Physics2D.SyncTransforms();
                         }
+                    }
+
+                    // Exit 이벤트 처리 (드롭 타겟이 있었다면)
+                    if (currentDropTarget != null)
+                    {
+                        currentDropTarget.OnDragExit(dragTarget);
+                        currentDropTarget = null;
                     }
 
                     dragTarget.OnDragEnd();

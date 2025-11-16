@@ -10,7 +10,7 @@ public class GridVisualizer : MonoBehaviour
 
     public GridLayoutData GetLayoutData() => layoutData;
 
-    private void Start()
+    private void Awake()
     {
         VisualizeGridData(layoutData);
     }
@@ -30,6 +30,7 @@ public class GridVisualizer : MonoBehaviour
                 }
 
                 var cell = Instantiate(gridCellPrf, transform);
+                cell.SetGridPosition(new Vector2Int(i, j));
 
                 cell.transform.localPosition = new Vector3(
                     i * (cellSize + space),

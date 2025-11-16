@@ -7,19 +7,25 @@ public class DragTestObject : MonoBehaviour, ITestDraggable
     public bool RequireDropZone => true;
     public GameObject GameObject => gameObject;
 
+    private GridCell curGridCell;
+
 
     public void OnDragStart()
     {
-        Debug.Log($"드래그 시작: {gameObject.name}");
+        curGridCell?.ClearObject();
+        curGridCell = null;
     }
 
     public void OnDrag()
     {
-        Debug.Log($"드래그: {gameObject.name}");
     }
 
     public void OnDragEnd()
     {
-        Debug.Log($"드래그 종료: {gameObject.name}");
+    }
+
+    public void SetCurrentGridCell(GridCell cell)
+    {
+        curGridCell = cell;
     }
 }
