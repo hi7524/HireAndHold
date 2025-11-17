@@ -10,7 +10,7 @@ public class GridVisualizer : MonoBehaviour
 
     public GridLayoutData GetLayoutData() => layoutData;
 
-    private void Start()
+    private void Awake()
     {
         VisualizeGridData(layoutData);
     }
@@ -30,6 +30,7 @@ public class GridVisualizer : MonoBehaviour
                 }
 
                 var cell = Instantiate(gridCellPrf, transform);
+                cell.SetGridPosition(new Vector2Int(i, j));
 
                 cell.transform.localPosition = new Vector3(
                     i * (cellSize + space),
@@ -39,8 +40,8 @@ public class GridVisualizer : MonoBehaviour
 
                 cell.transform.localScale = new Vector3(cellSize, cellSize, 1f);
 
-                // ** 테스트용
-                cell.GetComponent<SpriteDropZone>().poolManager = poolManager;
+                // // ** 테스트용
+                // cell.GetComponent<SpriteDropZone>().poolManager = poolManager;
             }
         }
     }
