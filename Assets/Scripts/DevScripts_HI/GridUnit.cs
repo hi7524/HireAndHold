@@ -25,6 +25,7 @@ public class GridUnit : MonoBehaviour, ITestDraggable
     private void Start()
     {
         CreatePreviewSprites();
+        SetActiveChildrenObj(false);
     }
 
     public void OnDragStart()
@@ -40,7 +41,7 @@ public class GridUnit : MonoBehaviour, ITestDraggable
 
     public void OnDrag()
     {
-        
+
     }
 
     public void OnDragEnd()
@@ -79,23 +80,32 @@ public class GridUnit : MonoBehaviour, ITestDraggable
         if (gridData == null || cellPrf == null)
             return;
 
-        for (int i = 0; i < gridData.GetOccupiedCells().Count; i++)
+        var occupiedCells = gridData.GetOccupiedCells();
+
+        // 중앙 셀
+        CreatePreviewCell(Vector2Int.zero);
+
+        // 나머지 셀
+        foreach (var cellPos in occupiedCells)
         {
-            // 생성
-            var cell = Instantiate(cellPrf, transform);
-            childrenObj.Add(cell.transform);
-            cell.transform.localScale = cellSize * Vector3.one;
-
-            // 위치 설정
-            Vector2Int cellPos = gridData.GetOccupiedCells()[i];
-            cell.transform.localPosition = new Vector3(cellPos.x * cellSize, cellPos.y * cellSize, 0);
+            CreatePreviewCell(cellPos);
         }
+    }
 
-        var center = Instantiate(cellPrf, transform);
-        childrenObj.Add(center.transform);
-        center.transform.localScale = cellSize * Vector3.one;
+    private void CreatePreviewCell(Vector2Int cellPos)
+    {
+        var cell = Instantiate(cellPrf, transform);
+        childrenObj.Add(cell.transform);
+        cell.transform.localScale = cellSize * Vector3.one;
+        cell.transform.localPosition = new Vector3(cellPos.x * cellSize, cellPos.y * cellSize, 0);
 
-        center.transform.localPosition = transform.position;
+        SpriteRenderer sr = cell.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            Color color = gridData.gridColor;
+            color.a = 0.75f;
+            sr.color = color;
+        }
     }
 
     // 자식 오브젝트 전체 비활성화 및 활성화
