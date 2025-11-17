@@ -14,10 +14,12 @@ public class GridUnit : MonoBehaviour, ITestDraggable
     public GameObject GameObject => gameObject;
 
     private GridCell curGridCell;
+    private GridCell previousGridCell;
 
 
     public void OnDragStart()
     {
+        previousGridCell = curGridCell;
         curGridCell?.ClearObject();
         curGridCell = null;
     }
@@ -33,5 +35,10 @@ public class GridUnit : MonoBehaviour, ITestDraggable
     public void SetCurrentGridCell(GridCell cell)
     {
         curGridCell = cell;
+    }
+
+    public GridCell GetPreviousCell()
+    {
+        return previousGridCell;
     }
 }

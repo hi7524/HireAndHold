@@ -4,7 +4,7 @@ using UnityEngine;
 public class GridCell : MonoBehaviour, ITestDroppable
 {
     public Vector2Int GridPosition { get; private set; }
-    public GameObject PlacedObject {  get; private set; }
+    public GameObject PlacedObject { get; private set; }
 
     private SpriteRenderer spriteRenderer;
     private GridManager gridManager;
@@ -50,31 +50,43 @@ public class GridCell : MonoBehaviour, ITestDroppable
     public void OnDragExit(ITestDraggable draggable)
     {
         gridManager.ClearAllGridsColor();
+        gridManager.SetOccupiedCellColor();
     }
 
     public void OnDrop(ITestDraggable draggable)
     {
+        var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
+
+        if (gridUnit == null)
+            return;
+
         if (!canAccept)
             return;
+
+        var previousCell = gridUnit.GetPreviousCell();
+        if (previousCell != null)
+        {
+            gridManager.RemoveColoredCells(previousCell.GridPosition, gridUnit.GridData.GetOccupiedCells());
+        }
 
         draggable.GameObject.transform.position = transform.position;
         PlacedObject = draggable.GameObject;
 
-        // 드래그 가능한 오브젝트에 현재 셀 알려주기
-        var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
-        if (gridUnit != null)
+        gridUnit.SetCurrentGridCell(this);
+
+        var occupiedCells = gridUnit.GridData.GetOccupiedCells();
+
+        gridManager.SetGridState(GridPosition, GridState.Occupied);
+        gridManager.OccupiedCellAndColor(GridPosition, gridUnit.GridData.gridColor);
+
+        foreach (var relativePos in occupiedCells)
         {
-            gridUnit.SetCurrentGridCell(this);
-
-            var occupiedCells = gridUnit.GridData.GetOccupiedCells();
-
-            gridManager.SetGridState(GridPosition, GridState.Occupied); // 중심
-            foreach (var relativePos in occupiedCells) // 나머지
-            {
-                Vector2Int absolutePos = GridPosition + relativePos;
-                gridManager.SetGridState(absolutePos, GridState.Occupied);
-            }
+            Vector2Int absolutePos = GridPosition + relativePos;
+            gridManager.SetGridState(absolutePos, GridState.Occupied);
+            gridManager.OccupiedCellAndColor(absolutePos, gridUnit.GridData.gridColor);
         }
+
+        gridManager.ClearAllGridsColor();
     }
 
     public void ClearObject()
@@ -94,6 +106,8 @@ public class GridCell : MonoBehaviour, ITestDroppable
                     Vector2Int absolutePos = GridPosition + relativePos;
                     gridManager.SetGridState(absolutePos, GridState.Empty);
                 }
+
+                gridManager.RemoveColoredCells(GridPosition, occupiedCells);
             }
         }
 

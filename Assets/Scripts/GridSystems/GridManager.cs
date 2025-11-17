@@ -17,6 +17,7 @@ public class GridManager : MonoBehaviour
 
     private GridCell[,] gridCells;
     private HashSet<GridCell> highlightedCells = new HashSet<GridCell>();
+    private Dictionary<Vector2Int, Color> coloredCell = new Dictionary<Vector2Int, Color>();
 
 
     private void Start()
@@ -64,6 +65,7 @@ public class GridManager : MonoBehaviour
     public bool CanPlaceUnit(Vector2Int curPos, List<Vector2Int> grid, Color highlightColor)
     {
         ClearAllGridsColor();
+        SetOccupiedCellColor();
 
         bool canPlace = true;
 
@@ -134,7 +136,6 @@ public class GridManager : MonoBehaviour
 
     public void SetUnitCellsColor(Vector2Int curPos, List<Vector2Int> grid, Color color)
     {
-        // 이전 하이라이트 제거
         ClearAllGridsColor();
 
         HashSet<Vector2Int> allPositions = new HashSet<Vector2Int>
@@ -159,6 +160,29 @@ public class GridManager : MonoBehaviour
                     cell.SetColor(color);
                 }
             }
+        }
+    }
+
+    public void OccupiedCellAndColor(Vector2Int pos, Color color)
+    {
+        coloredCell[pos] = color;
+    }
+
+    public void RemoveColoredCells(Vector2Int curPos, List<Vector2Int> grid)
+    {
+        coloredCell.Remove(curPos);
+        foreach (var relativePos in grid)
+        {
+            coloredCell.Remove(curPos + relativePos);
+        }
+    }
+
+    public void SetOccupiedCellColor()
+    {
+        foreach (var cell in coloredCell)
+        {
+            var pos = cell.Key;
+            gridCells[pos.x, pos.y].SetColor(cell.Value);
         }
     }
 }
