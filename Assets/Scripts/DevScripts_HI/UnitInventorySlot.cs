@@ -11,11 +11,17 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
     public GameObject GameObject => gameObject;
 
     private int unitId;
+    private UnitGridData gridData;
 
 
     public void SetUnit(int unitId)
     {
         this.unitId = unitId;
+    }
+
+    public void SetGridData(UnitGridData gridData)
+    {
+        this.gridData = gridData;
     }
 
     public void UpdateUi()
@@ -27,6 +33,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
 
     public void OnDrag()
     {
+        Debug.Log($"유닛 ID: {unitId}");
     }
 
     public void OnDragEnd()
@@ -40,5 +47,4 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
     public void OnDropFailed()
     {
     }
-
 }

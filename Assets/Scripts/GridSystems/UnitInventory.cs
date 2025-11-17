@@ -6,6 +6,8 @@ public class UnitInventory : MonoBehaviour
 {
     [SerializeField] private UnitInventorySlot slotPrf;
     [SerializeField] private ScrollRect scrollRect;
+    [Space]
+    [SerializeField] private GridDatasForTesting gridDatas;
 
     private const int MaxCapacity = 5;
 
@@ -21,10 +23,9 @@ public class UnitInventory : MonoBehaviour
         Create(MaxCapacity);
 
         // 테스트용 아이디 추가  
-        AddUnit(0);
-        AddUnit(1);
-        AddUnit(2);
-        AddUnit(3);
+        AddUnit(11101);
+        AddUnit(11104);
+        AddUnit(11107);
 
         UpdateAllSlotsUi();
     }
@@ -42,6 +43,7 @@ public class UnitInventory : MonoBehaviour
 
         slots[slotIndex].gameObject.SetActive(true);
         slots[slotIndex].SetUnit(unitId);
+        slots[slotIndex].SetGridData(gridDatas.GridDatas[unitId]);
         slots[slotIndex].UpdateUi();
         slotIndex++;
     }

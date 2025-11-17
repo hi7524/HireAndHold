@@ -2415,6 +2415,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1675905485}
   - component: {fileID: 1675905486}
+  - component: {fileID: 1675905487}
   m_Layer: 5
   m_Name: Inventory
   m_TagString: Untagged
@@ -2456,6 +2457,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   slotPrf: {fileID: 1679972663638351980, guid: 2dd3c95fd92838c4ba6efe0c06bc537a, type: 3}
   scrollRect: {fileID: 1095571875}
+  gridDatas: {fileID: 1675905487}
+--- !u!114 &1675905487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1675905484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4cc3cc448295e04b9374cefb448f719, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grids:
+  - unitId: 11101
+    gridData: {fileID: 11400000, guid: f7bb50619c8af0d46b5afda779d9c5af, type: 2}
+  - unitId: 11104
+    gridData: {fileID: 11400000, guid: e0ca5727671dcfe46bb656ee2db43d17, type: 2}
+  - unitId: 11107
+    gridData: {fileID: 11400000, guid: 3766ff9f7064b6e41a554b18a61dd4e1, type: 2}
 --- !u!1 &1719803729
 GameObject:
   m_ObjectHideFlags: 0
