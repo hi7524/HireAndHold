@@ -51,7 +51,8 @@ public class UnitGridData : ScriptableObject
         int centerX = GridSize / 2;
         int centerY = GridSize / 2;
 
-        Vector2Int relativePos = new Vector2Int(gridX - centerX, gridY - centerY);
+        // 에디터 배열 순서와 씬 배치 순서를 맞추기 위해 Y 좌표 반전
+        Vector2Int relativePos = new Vector2Int(gridX - centerX, (GridSize - 1 - gridY) - centerY);
 
         if (shape.occupiedCells.Contains(relativePos))
         {
