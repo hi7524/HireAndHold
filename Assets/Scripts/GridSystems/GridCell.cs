@@ -1,18 +1,18 @@
 using UnityEngine;
 
-
 public class GridCell : MonoBehaviour, ITestDroppable
 {
     public Vector2Int GridPosition { get; private set; }
-    public GameObject PlacedObject { get; private set; }
+
+    private GridManager gridManager;
+    private GameObject PlacedObject;
 
     private SpriteRenderer spriteRenderer;
-    private GridManager gridManager;
 
-    private bool canAccept = true;
+    private bool canDrop = true;
 
 
-    private void Start()
+    private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
@@ -22,75 +22,94 @@ public class GridCell : MonoBehaviour, ITestDroppable
         this.gridManager = gridManager;
     }
 
+    public GridManager GetGridManager()
+    {
+        return gridManager;
+    }
+
     public void SetGridPosition(Vector2Int pos)
     {
         GridPosition = pos;
     }
 
-    // 셀의 드롭 허용 여부 설정
     public void SetAcceptable(bool canAccept)
     {
-        this.canAccept = canAccept;
+        this.canDrop = canAccept;
     }
 
-    public bool CanAccept(ITestDraggable draggable)
+    public void SetColor(Color color)
     {
-        return canAccept;
+        spriteRenderer.color = color;
+    }
+
+    public bool CanDrop(ITestDraggable draggable)
+    {
+        return canDrop;
     }
 
     public void OnDragEnter(ITestDraggable draggable)
     {
+        // GridUnit 배치 가능 여부 판정 및 판정에 따라 색상 변경
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
         {
-            canAccept = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells(), gridUnit.GridData.gridColor);
+            canDrop = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells(), gridUnit.GridData.gridColor);
         }
     }
 
     public void OnDragExit(ITestDraggable draggable)
     {
+        // 그리드 색상 변경
         gridManager.ClearAllGridsColor();
-        gridManager.SetOccupiedCellColor();
+        gridManager.ChangeOccupiedCellColor();
     }
 
     public void OnDrop(ITestDraggable draggable)
     {
-        var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
+        // 드롭 가능 상태가 아닐 경우 배치 불가
+        if (!canDrop)
+            return;
 
+        // 유닛이 아닐 경우 배치 불가
+        var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit == null)
             return;
 
-        if (!canAccept)
-            return;
 
+        // 이전 위치의 색칠된 셀들 제거
         var previousCell = gridUnit.GetPreviousCell();
         if (previousCell != null)
         {
             gridManager.RemoveColoredCells(previousCell.GridPosition, gridUnit.GridData.GetOccupiedCells());
         }
 
+        // 배치 대상 위치 스냅 
         draggable.GameObject.transform.position = transform.position;
         PlacedObject = draggable.GameObject;
 
         gridUnit.SetCurrentGridCell(this);
 
+        // GridManager에 그리드 정보 전달
         var occupiedCells = gridUnit.GridData.GetOccupiedCells();
 
         gridManager.SetGridState(GridPosition, GridState.Occupied);
-        gridManager.OccupiedCellAndColor(GridPosition, gridUnit.GridData.gridColor);
+        gridManager.SetOccupiedCellAndColor(GridPosition, gridUnit.GridData.gridColor);
 
         foreach (var relativePos in occupiedCells)
         {
             Vector2Int absolutePos = GridPosition + relativePos;
             gridManager.SetGridState(absolutePos, GridState.Occupied);
-            gridManager.OccupiedCellAndColor(absolutePos, gridUnit.GridData.gridColor);
+            gridManager.SetOccupiedCellAndColor(absolutePos, gridUnit.GridData.gridColor);
         }
 
         gridManager.ClearAllGridsColor();
+        gridManager.ChangeOccupiedCellColor();
     }
 
     public void ClearObject()
     {
+        gridManager.CopyColoredCellToTemp();
+
         // 유닛이 차지했던 모든 셀을 Empty로 설정
         if (PlacedObject != null)
         {
@@ -112,10 +131,5 @@ public class GridCell : MonoBehaviour, ITestDroppable
         }
 
         PlacedObject = null;
-    }
-
-    public void SetColor(Color color)
-    {
-        spriteRenderer.color = color;
     }
 }

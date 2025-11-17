@@ -8,4 +8,5 @@ public interface ITestDraggable
     void OnDragStart();
     void OnDrag();
     void OnDragEnd();
+    void OnDropFailed();
 }

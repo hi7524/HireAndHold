@@ -2,7 +2,7 @@ using UnityEngine;
 
 public interface ITestDroppable
 {
-    bool CanAccept(ITestDraggable draggable);
+    bool CanDrop(ITestDraggable draggable);
 
     void OnDrop(ITestDraggable draggable);
     void OnDragEnter(ITestDraggable draggable);

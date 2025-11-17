@@ -22,4 +22,8 @@ public class DragTestUI : MonoBehaviour, ITestDraggable
     {
         Debug.Log($"드래그 종료: {gameObject.name}");
     }
+
+    public void OnDropFailed()
+    {
+    }
 }

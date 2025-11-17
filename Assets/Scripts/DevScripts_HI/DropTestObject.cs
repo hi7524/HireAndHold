@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class DropTestObject : MonoBehaviour, ITestDroppable
 {
-    public bool CanAccept(ITestDraggable draggable)
+    public bool CanDrop(ITestDraggable draggable)
     {
         return true;
     }

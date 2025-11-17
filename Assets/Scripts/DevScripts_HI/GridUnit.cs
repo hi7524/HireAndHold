@@ -32,6 +32,21 @@ public class GridUnit : MonoBehaviour, ITestDraggable
     {
     }
 
+    public void OnDropFailed()
+    {
+        curGridCell = previousGridCell;
+
+        // 드롭 실패 시 원래 그리드 색상 복원
+        if (curGridCell != null)
+        {
+            var gridManager = curGridCell.GetGridManager();
+            if (gridManager != null)
+            {
+                gridManager.OnFailed();
+            }
+        }
+    }
+
     public void SetCurrentGridCell(GridCell cell)
     {
         curGridCell = cell;

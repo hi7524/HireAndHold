@@ -18,6 +18,7 @@ public class GridManager : MonoBehaviour
     private GridCell[,] gridCells;
     private HashSet<GridCell> highlightedCells = new HashSet<GridCell>();
     private Dictionary<Vector2Int, Color> coloredCell = new Dictionary<Vector2Int, Color>();
+    private Dictionary<Vector2Int, Color> tempColoredCell;
 
 
     private void Start()
@@ -65,7 +66,7 @@ public class GridManager : MonoBehaviour
     public bool CanPlaceUnit(Vector2Int curPos, List<Vector2Int> grid, Color highlightColor)
     {
         ClearAllGridsColor();
-        SetOccupiedCellColor();
+        ChangeOccupiedCellColor();
 
         bool canPlace = true;
 
@@ -126,7 +127,7 @@ public class GridManager : MonoBehaviour
     {
         foreach (var cell in highlightedCells)
         {
-            if (cell != null)
+            if (cell != null && !coloredCell.ContainsKey(cell.GridPosition))
             {
                 cell.SetColor(Color.white);
             }
@@ -163,23 +164,56 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public void OccupiedCellAndColor(Vector2Int pos, Color color)
+    public void SetOccupiedCellAndColor(Vector2Int pos, Color color)
     {
         coloredCell[pos] = color;
     }
 
     public void RemoveColoredCells(Vector2Int curPos, List<Vector2Int> grid)
     {
-        coloredCell.Remove(curPos);
+        // coloredCell에서 제거하면서 해당 셀을 흰색으로 변경
+        if (coloredCell.Remove(curPos))
+        {
+            gridCells[curPos.x, curPos.y].SetColor(Color.white);
+        }
+
         foreach (var relativePos in grid)
         {
-            coloredCell.Remove(curPos + relativePos);
+            Vector2Int absolutePos = curPos + relativePos;
+            if (coloredCell.Remove(absolutePos))
+            {
+                gridCells[absolutePos.x, absolutePos.y].SetColor(Color.white);
+            }
         }
     }
 
-    public void SetOccupiedCellColor()
+    public void ChangeOccupiedCellColor()
     {
         foreach (var cell in coloredCell)
+        {
+            var pos = cell.Key;
+            gridCells[pos.x, pos.y].SetColor(cell.Value);
+        }
+    }
+
+    public void CopyColoredCellToTemp()
+    {
+        tempColoredCell = new Dictionary<Vector2Int, Color>(coloredCell);
+    }
+
+    public void OnFailed()
+    {
+        if (tempColoredCell == null)
+            return;
+
+        // tempColoredCell의 내용을 coloredCell로 복원
+        foreach (var cell in tempColoredCell)
+        {
+            coloredCell[cell.Key] = cell.Value;
+        }
+
+        // 색상 복원
+        foreach (var cell in tempColoredCell)
         {
             var pos = cell.Key;
             gridCells[pos.x, pos.y].SetColor(cell.Value);

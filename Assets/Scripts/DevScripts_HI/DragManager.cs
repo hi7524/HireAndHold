@@ -70,7 +70,7 @@ public class DragManager : MonoBehaviour
                     ITestDroppable dropTarget = DetectDropTarget();
 
                     // 드롭 성공
-                    if (dropTarget != null && dropTarget.CanAccept(dragTarget))
+                    if (dropTarget != null && dropTarget.CanDrop(dragTarget))
                     {
                         dropTarget.OnDrop(dragTarget);
                     }
@@ -82,6 +82,7 @@ public class DragManager : MonoBehaviour
                         {
                             Physics2D.SyncTransforms();
                         }
+                        dragTarget.OnDropFailed();
                     }
 
                     // Exit 이벤트 처리 (드롭 타겟이 있었다면)
