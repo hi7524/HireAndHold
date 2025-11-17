@@ -12,6 +12,9 @@ public class GridManager : MonoBehaviour
 {
     [SerializeField] private GridLayoutData layoutData;
     [SerializeField] private GridVisualizer gridVisualizer;
+    [Space]
+    [SerializeField] private Color validColor;
+    [SerializeField] private Color invalidColor;
 
     public int[,] gridArray { get; private set; }
 
@@ -63,7 +66,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public bool CanPlaceUnit(Vector2Int curPos, List<Vector2Int> grid, Color highlightColor)
+    public bool CanPlaceUnit(Vector2Int curPos, List<Vector2Int> grid)
     {
         ClearAllGridsColor();
         ChangeOccupiedCellColor();
@@ -114,7 +117,7 @@ public class GridManager : MonoBehaviour
                 GridCell cell = gridCells[absolutePos.x, absolutePos.y];
                 if (cell != null)
                 {
-                    cell.SetColor(canPlace ? highlightColor : Color.red);
+                    cell.SetColor(canPlace ? validColor : invalidColor);
                     highlightedCells.Add(cell);
                 }
             }

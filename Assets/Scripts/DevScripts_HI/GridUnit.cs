@@ -101,11 +101,7 @@ public class GridUnit : MonoBehaviour, ITestDraggable
 
         SpriteRenderer sr = cell.GetComponent<SpriteRenderer>();
         if (sr != null)
-        {
-            Color color = gridData.gridColor;
-            color.a = 0.75f;
-            sr.color = color;
-        }
+            sr.color = gridData.gridColor;
     }
 
     // 자식 오브젝트 전체 비활성화 및 활성화
