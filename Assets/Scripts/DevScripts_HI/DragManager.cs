@@ -6,6 +6,7 @@ using System.Collections.Generic;
 public class DragManager : MonoBehaviour
 {
     [SerializeField] private LayerMask draggableLayer;
+    [SerializeField] private Canvas rootCanvas;
 
     private Camera mainCamera;
     private ITestDraggable dragTarget;
@@ -13,6 +14,10 @@ public class DragManager : MonoBehaviour
 
     private bool isTargetUI = false;
     private ITestDroppable currentDropTarget;
+
+    // UI 드래그 관련
+    private Transform originalParent;
+    private int originalSiblingIndex;
 
 
     private void Start()
@@ -31,6 +36,18 @@ public class DragManager : MonoBehaviour
                 if (dragTarget != null)
                 {
                     originalPosition = dragTarget.GameObject.transform.position;
+
+                    // UI인 경우 Canvas 최상위로 이동
+                    if (isTargetUI && rootCanvas != null)
+                    {
+                        Transform targetTransform = dragTarget.GameObject.transform;
+                        originalParent = targetTransform.parent;
+                        originalSiblingIndex = targetTransform.GetSiblingIndex();
+
+                        targetTransform.SetParent(rootCanvas.transform, true);
+                        targetTransform.SetAsLastSibling();
+                    }
+
                     dragTarget.OnDragStart();
                 }
             }
@@ -85,6 +102,14 @@ public class DragManager : MonoBehaviour
                         dragTarget.OnDropFailed();
                     }
 
+                    // UI인 경우 원래 부모로 복원
+                    if (isTargetUI && originalParent != null)
+                    {
+                        Transform targetTransform = dragTarget.GameObject.transform;
+                        targetTransform.SetParent(originalParent, true);
+                        targetTransform.SetSiblingIndex(originalSiblingIndex);
+                    }
+
                     // Exit 이벤트 처리 (드롭 타겟이 있었다면)
                     if (currentDropTarget != null)
                     {
@@ -94,6 +119,7 @@ public class DragManager : MonoBehaviour
 
                     dragTarget.OnDragEnd();
                     dragTarget = null;
+                    originalParent = null;
                 }
             }
         }
