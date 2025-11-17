@@ -4,7 +4,7 @@ using UnityEngine;
 public class GridCell : MonoBehaviour, ITestDroppable
 {
     public Vector2Int GridPosition { get; private set; }
-    public GameObject PlacedObject { get; private set; }
+    public GameObject PlacedObject {  get; private set; }
 
     private SpriteRenderer spriteRenderer;
     private GridManager gridManager;
@@ -61,16 +61,43 @@ public class GridCell : MonoBehaviour, ITestDroppable
         PlacedObject = draggable.GameObject;
 
         // 드래그 가능한 오브젝트에 현재 셀 알려주기
-        var dragObj = draggable.GameObject.GetComponent<GridUnit>();
-        dragObj?.SetCurrentGridCell(this);
+        var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
+        if (gridUnit != null)
+        {
+            gridUnit.SetCurrentGridCell(this);
 
-        gridManager.SetGridState(GridPosition, GridState.Occupied);
+            var occupiedCells = gridUnit.GridData.GetOccupiedCells();
+
+            gridManager.SetGridState(GridPosition, GridState.Occupied); // 중심
+            foreach (var relativePos in occupiedCells) // 나머지
+            {
+                Vector2Int absolutePos = GridPosition + relativePos;
+                gridManager.SetGridState(absolutePos, GridState.Occupied);
+            }
+        }
     }
 
     public void ClearObject()
     {
+        // 유닛이 차지했던 모든 셀을 Empty로 설정
+        if (PlacedObject != null)
+        {
+            var gridUnit = PlacedObject.GetComponent<GridUnit>();
+            if (gridUnit != null)
+            {
+                var occupiedCells = gridUnit.GridData.GetOccupiedCells();
+
+                gridManager.SetGridState(GridPosition, GridState.Empty);
+
+                foreach (var relativePos in occupiedCells)
+                {
+                    Vector2Int absolutePos = GridPosition + relativePos;
+                    gridManager.SetGridState(absolutePos, GridState.Empty);
+                }
+            }
+        }
+
         PlacedObject = null;
-        gridManager.SetGridState(GridPosition, GridState.Empty);
     }
 
     public void SetColor(Color color)
