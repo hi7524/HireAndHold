@@ -7,6 +7,7 @@ public class GridUnit : MonoBehaviour, ITestDraggable
     [SerializeField] private UnitGridData gridData;
     [SerializeField] private float cellSize = 0.6f;
     [SerializeField] private GameObject cellPrf;
+    [SerializeField] private Transform previewTrans;
 
     // 그리드 데이터
     public UnitGridData GridData => gridData;
@@ -94,7 +95,7 @@ public class GridUnit : MonoBehaviour, ITestDraggable
 
     private void CreatePreviewCell(Vector2Int cellPos)
     {
-        var cell = Instantiate(cellPrf, transform);
+        var cell = Instantiate(cellPrf, previewTrans);
         childrenObj.Add(cell.transform);
         cell.transform.localScale = cellSize * Vector3.one;
         cell.transform.localPosition = new Vector3(cellPos.x * cellSize, cellPos.y * cellSize, 0);
