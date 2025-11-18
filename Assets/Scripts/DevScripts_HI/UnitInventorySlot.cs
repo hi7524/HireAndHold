@@ -19,6 +19,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
 
     private int unitId;
     private readonly List<GameObject> previewImages = new List<GameObject>();
+    private bool dropFailed = false;
 
 
     public void SetUnit(int unitId)
@@ -60,11 +61,17 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
     public void OnDragEnd()
     {
         SetActivePreviewImages(false);
-        // inventory.RemoveUnit(unitId);
+
+        if (!dropFailed)
+        {
+            inventory.RemoveUnit(unitId);
+        }
+        dropFailed = false;
     }
 
     public void OnDropFailed()
     {
+        dropFailed = true;
     }
 
 
@@ -134,6 +141,5 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
         }
 
         previewObjTrans.DOScale(1.0f, 0.15f);
-
     }
 }

@@ -29,6 +29,8 @@ public class UnitInventory : MonoBehaviour
         AddUnit(11101);
         AddUnit(11104);
         AddUnit(11107);
+
+        UpdateAllSlotsUi();
     }
 
     // 유닛 추가
@@ -58,9 +60,17 @@ public class UnitInventory : MonoBehaviour
             return;
         }
 
-        slots[slotIndex].gameObject.SetActive(false);
-        ownedUnitIds.Remove(unitId);
+        int removeIndex = ownedUnitIds.IndexOf(unitId);
+        if (removeIndex == -1)
+        {
+            Debug.LogWarning($"유닛 ID {unitId}를 찾을 수 없습니다.");
+            return;
+        }
+
+        ownedUnitIds.RemoveAt(removeIndex);
         slotIndex--;
+
+        UpdateAllSlotsUi();
     }
 
     // 유닛 나타낼 UI 생성
@@ -79,8 +89,11 @@ public class UnitInventory : MonoBehaviour
     {
         for (int i = 0; i < MaxCapacity; i++)
         {
-            if (i < slotIndex)
+            if (i < ownedUnitIds.Count)
             {
+                int unitId = ownedUnitIds[i];
+                slots[i].SetUnit(unitId);
+                slots[i].SetGridData(gridDatas.GridDatas[unitId]);
                 slots[i].UpdateUi();
                 slots[i].gameObject.SetActive(true);
             }
