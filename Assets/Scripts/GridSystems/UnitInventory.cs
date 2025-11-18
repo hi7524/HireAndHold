@@ -3,11 +3,12 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UnitInventory : MonoBehaviour
+public class UnitInventory : MonoBehaviour, ITestDroppable
 {
     [SerializeField] private UnitInventorySlot slotPrf;
     [SerializeField] private ScrollRect scrollRect;
     [Space]
+    [SerializeField] private DragManager dragManager;
     [SerializeField] private GridDatasForTesting gridDatas;
 
     private const int MaxCapacity = 5;
@@ -15,6 +16,7 @@ public class UnitInventory : MonoBehaviour
     private List<int> ownedUnitIds = new List<int>();
     private UnitInventorySlot[] slots;
     private int slotIndex;
+
 
     async UniTaskVoid Start()
     {
@@ -31,6 +33,16 @@ public class UnitInventory : MonoBehaviour
         AddUnit(11107);
 
         UpdateAllSlotsUi();
+    }
+
+    private void OnEnable()
+    {
+        dragManager.SetDragEnabled(true);
+    }
+
+    private void OnDisable()
+    {
+        dragManager.SetDragEnabled(false);
     }
 
     // 유닛 추가
@@ -102,5 +114,32 @@ public class UnitInventory : MonoBehaviour
                 slots[i].gameObject.SetActive(false);
             }
         }
+    }
+
+    public bool CanDrop(ITestDraggable draggable)
+    {
+        return ownedUnitIds.Count < MaxCapacity;
+    }
+
+    public void OnDrop(ITestDraggable draggable)
+    {
+        Debug.Log("드롭");
+    }
+
+    public void OnDragEnter(ITestDraggable draggable)
+    {
+        if (ownedUnitIds.Count < MaxCapacity)
+        {
+            Debug.Log("드롭 가능");
+        }
+        else
+        {
+            Debug.Log("드롭 불가능");
+        }
+    }
+
+    public void OnDragExit(ITestDraggable draggable)
+    {
+        
     }
 }

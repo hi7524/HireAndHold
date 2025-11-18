@@ -7,6 +7,7 @@ public class DragManager : MonoBehaviour
 {
     [SerializeField] private LayerMask draggableLayer;
     [SerializeField] private Canvas rootCanvas;
+    [SerializeField] private bool isDragEnabled = false;
 
     private Camera mainCamera;
     private ITestDraggable dragTarget;
@@ -27,6 +28,9 @@ public class DragManager : MonoBehaviour
 
     private void Update()
     {
+        if (!isDragEnabled)
+            return;
+
         if (Pointer.current != null)
         {
             // 누르기 시작
@@ -123,6 +127,11 @@ public class DragManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void SetDragEnabled(bool value)
+    {
+        isDragEnabled = value;
     }
 
     private ITestDraggable DetectObject()
