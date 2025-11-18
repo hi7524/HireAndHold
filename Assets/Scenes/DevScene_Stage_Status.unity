@@ -560,7 +560,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &30453769
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -818,7 +818,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &68998177
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -931,6 +930,8 @@ GameObject:
   - component: {fileID: 79280130}
   - component: {fileID: 79280129}
   - component: {fileID: 79280131}
+  - component: {fileID: 79280132}
+  - component: {fileID: 79280133}
   m_Layer: 0
   m_Name: SkillManager
   m_TagString: Player
@@ -945,7 +946,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 79280128}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 307997b79e45ea14ba2d3c90602c2596, type: 3}
   m_Name: 
@@ -953,7 +954,8 @@ MonoBehaviour:
   spawnPoint: {fileID: 759200207}
   skillUi: {fileID: 1686309337}
   skills:
-  - {fileID: 1665917702}
+  - {fileID: 8852601924326503523, guid: 21b8bdf4965ead04686216f38a630f30, type: 3}
+  - {fileID: 1467813969}
   skillSelectUi: {fileID: 1359513804}
 --- !u!4 &79280130
 Transform:
@@ -982,6 +984,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e52270651296a804fba9c46783e09bb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &79280132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 79280128}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d38b3237d3370a428ca3f2c43012904, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cooldown: 5
+  skillID: 22059
+  damage: 10
+  applyStatusEffect: 1
+  statusEffectType: 2
+  statusEffectDuration: 3
+  statusEffectValue: 0
+  isOnCoolTime: 0
+  elapsed: 0
+  earthquakeRange: 10
+  earthquakeEffectPrefab: {fileID: 4668959578009461119, guid: e14b8908d91af1749929a11ccf2d6f82, type: 3}
+--- !u!114 &79280133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 79280128}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94feae27fb977604abf8afae12f6693e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  earthquakeSkill: {fileID: 79280132}
+  spawnPoint: {fileID: 759200207}
+  testKey: 32
 --- !u!1 &83676426
 GameObject:
   m_ObjectHideFlags: 0
@@ -1326,7 +1366,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &91657803
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1759,7 +1798,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &206233329
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1894,7 +1933,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &229364892
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2058,7 +2096,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &236817318
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2402,7 +2439,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &323011037
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2703,7 +2739,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &342574220
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2840,10 +2875,10 @@ RectTransform:
   - {fileID: 1667130725}
   m_Father: {fileID: 2041971605}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 60, y: -100}
+  m_SizeDelta: {x: 120, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &344014550
 MonoBehaviour:
@@ -3485,7 +3520,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &426518844
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3964,7 +3998,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &578483540
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -5471,7 +5504,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &908738583
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -5759,7 +5791,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &924951656
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -5879,7 +5910,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &934386959
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6024,7 +6055,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &951518563
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -6542,7 +6572,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1084514626
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -6686,7 +6715,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 414.6891, y: -93.3}
-  m_SizeDelta: {x: 137.87564, y: 0}
+  m_SizeDelta: {x: 137.87564, y: 183.83418}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1098031399
 MonoBehaviour:
@@ -7345,7 +7374,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameManager: {fileID: 313655619}
-  levelUpCardObj: {fileID: 934386958}
+  timerText: {fileID: 0}
+  speedLevelText: {fileID: 0}
 --- !u!1 &1215571290
 GameObject:
   m_ObjectHideFlags: 0
@@ -7364,7 +7394,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1215571291
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7761,7 +7791,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1308745857
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -7985,7 +8014,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1359513803
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8078,7 +8107,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1381728254
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8707,7 +8736,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1428708468
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -8871,7 +8899,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1450253742
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -9048,6 +9075,61 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1466024858}
   m_CullTransparentMesh: 1
+--- !u!1 &1467813968
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1467813970}
+  - component: {fileID: 1467813969}
+  m_Layer: 0
+  m_Name: EarthQuake
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1467813969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1467813968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d38b3237d3370a428ca3f2c43012904, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cooldown: 5
+  skillID: 22059
+  damage: 10
+  applyStatusEffect: 1
+  statusEffectType: 0
+  statusEffectDuration: 3
+  statusEffectValue: 0
+  isOnCoolTime: 0
+  elapsed: 0
+  earthquakeRange: 10
+  earthquakeEffectPrefab: {fileID: 0}
+--- !u!4 &1467813970
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1467813968}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.15, y: -2.81, z: 2.458544}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1496393919
 GameObject:
   m_ObjectHideFlags: 0
@@ -9639,7 +9721,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1572966897
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -10100,7 +10181,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1639475391
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -10410,7 +10490,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1663131581
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -10512,62 +10591,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!1 &1665917701
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1665917703}
-  - component: {fileID: 1665917702}
-  m_Layer: 0
-  m_Name: ProjectileSkill
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1665917702
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1665917701}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c446177c7cd6174196e2477a8523c92, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProjectileSkill
-  cooldown: 5
-  skillName: 
-  damage: 10
-  applyStatusEffect: 0
-  statusEffectType: 2
-  statusEffectDuration: 3
-  statusEffectValue: 0
-  isOnCoolTime: 0
-  elapsed: 0
-  skillprf: {fileID: 1320811511625055900, guid: 19c61e0f006e56647bba5e410499a695, type: 3}
-  speed: 5
-  lifeTime: 3
---- !u!4 &1665917703
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1665917701}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.09163, y: 0.26338, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1667130724
 GameObject:
   m_ObjectHideFlags: 0
@@ -10746,7 +10769,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 88.93782, y: -93.3}
-  m_SizeDelta: {x: 137.87564, y: 0}
+  m_SizeDelta: {x: 137.87564, y: 183.83418}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1668511730
 MonoBehaviour:
@@ -11104,7 +11127,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1723735979
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -11342,7 +11364,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 251.81346, y: -93.3}
-  m_SizeDelta: {x: 137.87564, y: 0}
+  m_SizeDelta: {x: 137.87564, y: 183.83418}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1786794334
 MonoBehaviour:
@@ -11519,7 +11541,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1818145025
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -11773,7 +11794,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1824771531
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -11937,7 +11957,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &1825149320
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -12763,7 +12782,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -0.756958, y: 1.592041}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -251.34692, y: -242.09998}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2041971606
 MonoBehaviour:
@@ -12905,7 +12924,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &2049050302
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -13509,7 +13527,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e46622e7aa2b1a4ab98ad095e4694c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
 --- !u!61 &2146730840
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -13630,6 +13647,6 @@ SceneRoots:
   - {fileID: 1632719292}
   - {fileID: 807986306}
   - {fileID: 733249000}
-  - {fileID: 1665917703}
   - {fileID: 759200207}
   - {fileID: 79280130}
+  - {fileID: 1467813970}

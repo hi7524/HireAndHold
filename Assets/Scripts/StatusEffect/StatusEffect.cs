@@ -2,13 +2,25 @@ using UnityEngine;
 
 public enum StatusEffectType
 {
-    None,
-    DoT,
-    Stun,
-    Root,
-    Slow,
-    Heal,
-    DecreaseAttackSpeed,
+    None = 0,
+    Slow = 1,
+    Stun = 2,
+    DamageOverTime = 3,
+    DefenseDown = 4,
+    Root = 5,
+    Knockback = 6,
+    Pull = 7,   
+    AttackUp = 8,
+    DamageUpPercent = 9,
+    DamageUpFlat = 10,
+    FixedDamage = 11,   
+    DamageTakenUpPercent = 12,
+    CritRateUp = 13,
+    CritDamageUp = 14,
+    ExpGainUp = 15,
+    BarrierRegenPerSecond = 16,
+    BossDamageUp = 17
+
 }
 
 public abstract class StatusEffect
