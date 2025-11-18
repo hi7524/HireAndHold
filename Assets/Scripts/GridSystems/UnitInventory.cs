@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,19 +16,19 @@ public class UnitInventory : MonoBehaviour
     private UnitInventorySlot[] slots;
     private int slotIndex;
 
-
-    private void Start()
+    async UniTaskVoid Start()
     {
         slots = new UnitInventorySlot[MaxCapacity];
 
         Create(MaxCapacity);
 
-        // 테스트용 아이디 추가  
+        // DataTable 먼저 초기화
+        await DataTableManager.InitAsync();
+
+        // 테스트용 아이디 추가
         AddUnit(11101);
         AddUnit(11104);
         AddUnit(11107);
-
-        UpdateAllSlotsUi();
     }
 
     // 유닛 추가

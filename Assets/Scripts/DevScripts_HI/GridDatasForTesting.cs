@@ -18,7 +18,7 @@ public class GridDatasForTesting : MonoBehaviour
     private Dictionary<int, UnitGridData> gridDatas = new Dictionary<int, UnitGridData>();
 
 
-    private void Start()
+    private void Awake()
     {
         // 딕셔너리에 정보 담아두기 [id - unitGridData]
         for (int i = 0; i < grids.Length; i++)
