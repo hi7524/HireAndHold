@@ -55,6 +55,12 @@ public class GridCell : MonoBehaviour, ITestDroppable
         {
             canDrop = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells());
         }
+
+        var inventorySlot = draggable.GameObject.GetComponent<UnitInventorySlot>();
+        if (inventorySlot != null)
+        {
+            canDrop = gridManager.CanPlaceUnit(GridPosition, inventorySlot.GridData.GetOccupiedCells());
+        }
     }
 
     public void OnDragExit(ITestDraggable draggable)
@@ -70,36 +76,71 @@ public class GridCell : MonoBehaviour, ITestDroppable
         if (!canDrop)
             return;
 
-        // 유닛이 아닐 경우 배치 불가
+        // 유닛 또는 인벤토리 슬롯 아닐 경우 배치 불가
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
-        if (gridUnit == null)
+        var inventorySlot = draggable.GameObject.GetComponent<UnitInventorySlot>();
+        if (gridUnit == null && inventorySlot == null)
             return;
 
 
-        // 이전 위치의 색칠된 셀들 제거
-        var previousCell = gridUnit.GetPreviousCell();
-        if (previousCell != null)
+        // GridUnit 처리
+        if (gridUnit != null)
         {
-            gridManager.RemoveColoredCells(previousCell.GridPosition, gridUnit.GridData.GetOccupiedCells());
+            // 이전 위치의 색칠된 셀들 제거
+            var previousCell = gridUnit.GetPreviousCell();
+            if (previousCell != null)
+            {
+                gridManager.RemoveColoredCells(previousCell.GridPosition, gridUnit.GridData.GetOccupiedCells());
+            }
+
+            // 배치 대상 위치 스냅
+            draggable.GameObject.transform.position = transform.position;
+            PlacedObject = draggable.GameObject;
+
+            gridUnit.SetCurrentGridCell(this);
+
+            // GridManager에 그리드 정보 전달
+            var occupiedCells = gridUnit.GridData.GetOccupiedCells();
+
+            gridManager.SetGridState(GridPosition, GridState.Occupied);
+            gridManager.SetOccupiedCellAndColor(GridPosition, gridUnit.GridData.gridColor);
+
+            foreach (var relativePos in occupiedCells)
+            {
+                Vector2Int absolutePos = GridPosition + relativePos;
+                gridManager.SetGridState(absolutePos, GridState.Occupied);
+                gridManager.SetOccupiedCellAndColor(absolutePos, gridUnit.GridData.gridColor);
+            }
         }
 
-        // 배치 대상 위치 스냅 
-        draggable.GameObject.transform.position = transform.position;
-        PlacedObject = draggable.GameObject;
-
-        gridUnit.SetCurrentGridCell(this);
-
-        // GridManager에 그리드 정보 전달
-        var occupiedCells = gridUnit.GridData.GetOccupiedCells();
-
-        gridManager.SetGridState(GridPosition, GridState.Occupied);
-        gridManager.SetOccupiedCellAndColor(GridPosition, gridUnit.GridData.gridColor);
-
-        foreach (var relativePos in occupiedCells)
+        // UnitInventorySlot 처리 - GridUnit 생성
+        if (inventorySlot != null)
         {
-            Vector2Int absolutePos = GridPosition + relativePos;
-            gridManager.SetGridState(absolutePos, GridState.Occupied);
-            gridManager.SetOccupiedCellAndColor(absolutePos, gridUnit.GridData.gridColor);
+            // GridManager를 통해 GridUnit 생성
+            var newGridUnit = gridManager.SpawnGridUnit(transform.position, inventorySlot.GridData);
+
+            if (newGridUnit == null)
+            {
+                draggable.OnDropFailed();
+                return;
+            }
+
+            // 생성된 GridUnit을 배치
+            PlacedObject = newGridUnit.GameObject;
+            newGridUnit.SetCurrentGridCell(this);
+
+            // GridManager에 그리드 정보 전달
+            var occupiedCells = newGridUnit.GridData.GetOccupiedCells();
+
+            gridManager.SetGridState(GridPosition, GridState.Occupied);
+            gridManager.SetOccupiedCellAndColor(GridPosition, newGridUnit.GridData.gridColor);
+
+            foreach (var relativePos in occupiedCells)
+            {
+                Vector2Int absolutePos = GridPosition + relativePos;
+                gridManager.SetGridState(absolutePos, GridState.Occupied);
+                gridManager.SetOccupiedCellAndColor(absolutePos, newGridUnit.GridData.gridColor);
+            }
         }
 
         gridManager.ClearAllGridsColor();

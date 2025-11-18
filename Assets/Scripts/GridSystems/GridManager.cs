@@ -15,6 +15,8 @@ public class GridManager : MonoBehaviour
     [Space]
     [SerializeField] private Color validColor;
     [SerializeField] private Color invalidColor;
+    [Space]
+    [SerializeField] private GameObject gridUnitPrefab;
 
     public int[,] gridArray { get; private set; }
 
@@ -221,5 +223,23 @@ public class GridManager : MonoBehaviour
             var pos = cell.Key;
             gridCells[pos.x, pos.y].SetColor(cell.Value);
         }
+    }
+
+    public GridUnit SpawnGridUnit(Vector3 position, UnitGridData gridData)
+    {
+        if (gridUnitPrefab == null)
+            return null;
+
+        var unitObj = Instantiate(gridUnitPrefab, position, Quaternion.identity);
+        var gridUnit = unitObj.GetComponent<GridUnit>();
+
+        if (gridUnit == null)
+        {
+            Destroy(unitObj);
+            return null;
+        }
+
+        gridUnit.SetGridData(gridData);
+        return gridUnit;
     }
 }

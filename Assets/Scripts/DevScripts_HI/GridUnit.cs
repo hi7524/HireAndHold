@@ -75,6 +75,29 @@ public class GridUnit : MonoBehaviour, ITestDraggable
         return previousGridCell;
     }
 
+    public void SetGridData(UnitGridData newGridData)
+    {
+        gridData = newGridData;
+
+        // 기존 프리뷰 제거
+        ClearPreviewSprites();
+
+        // 새 프리뷰 생성
+        CreatePreviewSprites();
+        SetActiveChildrenObj(false);
+    }
+
+    // 미리보기 스프라이트 제거
+    private void ClearPreviewSprites()
+    {
+        foreach (var child in childrenObj)
+        {
+            if (child != null)
+                Destroy(child.gameObject);
+        }
+        childrenObj.Clear();
+    }
+
     // 미리보기 스프라이트 생성
     private void CreatePreviewSprites()
     {

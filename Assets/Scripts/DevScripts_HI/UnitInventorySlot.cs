@@ -13,10 +13,12 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
 
     public bool IsDraggable => true; // 수정 필요: 편집 시스템과 연동짓기 **
     public GameObject GameObject => gameObject;
+    public UnitGridData GridData { get; private set; }
+
+    private UnitInventory inventory;
 
     private int unitId;
-    private UnitGridData gridData;
-    private readonly List<GameObject> previewImages = new();
+    private readonly List<GameObject> previewImages = new List<GameObject>();
 
 
     public void SetUnit(int unitId)
@@ -26,9 +28,14 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
 
     public void SetGridData(UnitGridData gridData)
     {
-        this.gridData = gridData;
+        this.GridData = gridData;
         CreatePreviewUIImages();
         SetActivePreviewImages(false);
+    }
+
+    public void SetInventory(UnitInventory inventory)
+    {
+        this.inventory = inventory;
     }
 
     public void UpdateUi()
@@ -53,6 +60,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
     public void OnDragEnd()
     {
         SetActivePreviewImages(false);
+        // inventory.RemoveUnit(unitId);
     }
 
     public void OnDropFailed()
@@ -63,10 +71,10 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
     // 프리뷰를 위한 이미지 생성
     private void CreatePreviewUIImages()
     {
-        if (gridData == null)
+        if (GridData == null)
             return;
 
-        var occupiedCells = gridData.GetOccupiedCells();
+        var occupiedCells = GridData.GetOccupiedCells();
 
         CreatePreviewUICell(Vector2Int.zero);
 
@@ -91,7 +99,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
 
         // 색상 설정
         Image img = cellObj.AddComponent<Image>();
-        img.color = gridData.gridColor;
+        img.color = GridData.gridColor;
     }
 
     //미리보기 이미지 활성화 및 비활성화
@@ -113,6 +121,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
         }
     }
 
+    // 활성화
     private void SetActivePreviewImages()
     {
         if (previewImages == null || previewImages.Count == 0)

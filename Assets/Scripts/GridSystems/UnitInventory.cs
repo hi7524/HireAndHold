@@ -69,6 +69,7 @@ public class UnitInventory : MonoBehaviour
         for (int i = 0; i < amount; i++)
         {
             var slot = Instantiate(slotPrf, scrollRect.content);
+            slot.SetInventory(this);
             slots[i] = slot;
         }
     }
