@@ -5,11 +5,13 @@ using UnityEngine;
 public static class DataTableManager
 {
     private static readonly Dictionary<string, DataTable> tables = new Dictionary<string, DataTable>();
+    public static bool IsInitialized { get; private set; } = false;
 
    
     public static async UniTask InitAsync()
     {
         await LoadAllTablesAsync();
+        IsInitialized = true;
         Debug.Log("DataTableManager initialized");
     }
 
@@ -23,6 +25,7 @@ public static class DataTableManager
             LoadTableAsync<DataTable_Monster>(DataTableIds.Monster),
             LoadTableAsync<DataTable_Wave>(DataTableIds.Wave),
             LoadTableAsync<DataTable_UnitCatalog>(DataTableIds.UnitCatalog),
+            LoadTableAsync<DataTable_Skill>(DataTableIds.Skill),
             // 다른 테이블들 추가
             // LoadTableAsync<DataTable_Item>(DataTableIds.Item),
             // LoadTableAsync<DataTable_Character>(DataTableIds.Character),
@@ -43,6 +46,7 @@ public static class DataTableManager
     public static DataTable_Monster MonsterTable => Get<DataTable_Monster>(DataTableIds.Monster);
     public static DataTable_Wave WaveTable => Get<DataTable_Wave>(DataTableIds.Wave);
     public static DataTable_UnitCatalog UnitCatalogTable => Get<DataTable_UnitCatalog>(DataTableIds.UnitCatalog);
+    public static DataTable_Skill SkillTable => Get<DataTable_Skill>(DataTableIds.Skill);
 
     public static T Get<T>(string id) where T : DataTable
     {

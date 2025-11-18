@@ -125,12 +125,12 @@ public class GameInitializer : MonoBehaviour
         //     await DatabaseManager.Instance.ReadPlayerDataAsync(AuthManager.Instance.UserId);
         // }, weight: 0.7f);
 
-        // // 예시: 데이터 초기화 작업 추가
-        // request.AddTask("Initialize Game Data", async (ct) =>
-        // {
-        //     // 데이터 초기화 시뮬레이션
-        //     await DataTableManager.InitAsync();
-        // }, weight: 0.3f);
+        // 예시: 데이터 초기화 작업 추가
+        request.AddTask("Initialize Game Data", async (ct) =>
+        {
+            // 데이터 초기화 시뮬레이션
+            await DataTableManager.InitAsync();
+        }, weight: 0.3f);
 
         request.onLoadingComplete = () =>
         {

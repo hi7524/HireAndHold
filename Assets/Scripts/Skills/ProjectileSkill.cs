@@ -16,7 +16,7 @@ public class ProjectileSkill : PlayerSkillBase
         if (applyStatusEffect)
         {
             ApplyStatusEffectInRange(spawnPoint, 10f);
-            Debug.Log($"{skillName}: 범위 내 상태이상 적용");
+            
         }
 
         Destroy(obj, lifeTime);

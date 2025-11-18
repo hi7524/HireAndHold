@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class GachaManager : MonoBehaviour
@@ -14,10 +15,17 @@ public class GachaManager : MonoBehaviour
     public event Action<GachaResult> OnGachaComplete;
     public event Action<string> OnGachaError;
     
-     private  void Start()
-    {
     
-        InitializeTables();
+     private async void Start()
+    {
+       //Datatalble이 초기화 되어있지 않다면 await DataTableManager.InitAsync(); 호출 후 InitializeTables 호출
+       if(DataTableManager.IsInitialized == false)
+        {
+            await DataTableManager.InitAsync();
+         
+        }
+            InitializeTables();
+        
     }
 
     private void InitializeTables()
