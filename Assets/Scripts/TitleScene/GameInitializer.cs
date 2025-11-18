@@ -63,14 +63,12 @@ public class GameInitializer : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Firebase 초기화를 타임아웃과 함께 대기
-    /// </summary>
+   
     private async UniTask<bool> WaitForFirebaseWithTimeoutAsync()
     {
         try
         {
-            // FirebaseInitializer가 생성될 때까지 대기 (최대 0.5초)
+            
             var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(0.5f));
             var waitTask = UniTask.WaitUntil(() => FirebaseInitializer.Instance != null);
             
@@ -115,9 +113,7 @@ public class GameInitializer : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 데이터 로드 후 로비로 이동
-    /// </summary>
+   
     private async UniTask LoadDataAndGoToLobbyAsync()
     {
          LoadingRequest request = new LoadingRequest("DevScene_Lobby");
@@ -129,12 +125,12 @@ public class GameInitializer : MonoBehaviour
         //     await DatabaseManager.Instance.ReadPlayerDataAsync(AuthManager.Instance.UserId);
         // }, weight: 0.7f);
 
-        // 예시: 데이터 초기화 작업 추가
-        request.AddTask("Initialize Game Data", async (ct) =>
-        {
-            // 데이터 초기화 시뮬레이션
-            await DataTableManager.InitAsync();
-        }, weight: 0.3f);
+        // // 예시: 데이터 초기화 작업 추가
+        // request.AddTask("Initialize Game Data", async (ct) =>
+        // {
+        //     // 데이터 초기화 시뮬레이션
+        //     await DataTableManager.InitAsync();
+        // }, weight: 0.3f);
 
         request.onLoadingComplete = () =>
         {
@@ -144,9 +140,6 @@ public class GameInitializer : MonoBehaviour
         LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
 
-    /// <summary>
-    /// 로그인 화면 표시
-    /// </summary>
     private void ShowLoginScreen()
     {
         if (loginPanel != null)
@@ -155,9 +148,7 @@ public class GameInitializer : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 로딩 화면 표시/숨김
-    /// </summary>
+
     private void ShowLoading(bool show, string message = "")
     {
         if (loadingPanel != null)
@@ -171,9 +162,7 @@ public class GameInitializer : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 로그인 버튼 클릭 시 호출 (LoginUI에서 호출)
-    /// </summary>
+
     public async void OnLoginSuccess()
     {
         if (loginPanel != null)
@@ -184,9 +173,7 @@ public class GameInitializer : MonoBehaviour
         await LoadDataAndGoToLobbyAsync();
     }
 
-    /// <summary>
-    /// 앱 종료
-    /// </summary>
+
     private void QuitApplication()
     {
         Debug.Log("[GameInitializer] 애플리케이션을 종료합니다...");

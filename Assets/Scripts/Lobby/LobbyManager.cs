@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -31,6 +32,11 @@ public class LobbyManager : MonoBehaviour
     public void OnClickedStageButton()
     {
         windowManager.Open(Windows.Stage);
+    }
+    public void OnClickedLogOutButton()
+    {
+        AuthManager.Instance.SignOut();
+        SceneManager.LoadScene("DevScene_Title");
     }
     
 }
