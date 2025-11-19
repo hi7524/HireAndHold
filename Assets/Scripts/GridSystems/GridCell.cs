@@ -125,6 +125,8 @@ public class GridCell : MonoBehaviour, ITestDroppable
                 return;
             }
 
+            newGridUnit.UnitId = inventorySlot.UnitId;
+
             // 생성된 GridUnit을 배치
             PlacedObject = newGridUnit.GameObject;
             newGridUnit.SetCurrentGridCell(this);

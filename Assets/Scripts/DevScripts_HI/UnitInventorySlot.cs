@@ -13,25 +13,94 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
 
     public bool IsDraggable => true; // 수정 필요: 편집 시스템과 연동짓기 **
     public GameObject GameObject => gameObject;
+
+    public int UnitId { get; private set; }
     public UnitGridData GridData { get; private set; }
 
     private UnitInventory inventory;
 
-    private int unitId;
     private readonly List<GameObject> previewImages = new List<GameObject>();
     private bool dropFailed = false;
 
 
     public void SetUnit(int unitId)
     {
-        this.unitId = unitId;
+        this.UnitId = unitId;
     }
 
     public void SetGridData(UnitGridData gridData)
     {
         this.GridData = gridData;
-        CreatePreviewUIImages();
+
+        // 기존 프리뷰 이미지가 있다면 UpdatePreviewImages 사용
+        if (previewImages.Count > 0)
+        {
+            UpdatePreviewImages(gridData);
+        }
+        else
+        {
+            CreatePreviewUIImages();
+            SetActivePreviewImages(false);
+        }
+    }
+
+    // GridData가 변경되었을 때 기존 미리보기 이미지들을 재사용하여 갱신
+    public void UpdatePreviewImages(UnitGridData newGridData)
+    {
+        if (newGridData == null)
+            return;
+
+        this.GridData = newGridData;
+
+        var occupiedCells = GridData.GetOccupiedCells();
+        // 기본 셀 (Vector2Int.zero) + 추가 셀들
+        int requiredCount = occupiedCells.Count + 1;
+
+        // 부족한 셀이 있으면 추가 생성
+        while (previewImages.Count < requiredCount)
+        {
+            var cellPos = previewImages.Count == 0 ? Vector2Int.zero : occupiedCells[previewImages.Count - 1];
+            CreatePreviewUICell(cellPos);
+        }
+
+        // 넘치는 셀이 있으면 삭제
+        while (previewImages.Count > requiredCount)
+        {
+            int lastIndex = previewImages.Count - 1;
+            GameObject objToRemove = previewImages[lastIndex];
+            previewImages.RemoveAt(lastIndex);
+            Destroy(objToRemove);
+        }
+
+        // 기존 셀들의 색상과 위치 갱신
+        // 첫 번째 셀 (기본 위치)
+        UpdatePreviewCell(0, Vector2Int.zero);
+
+        // 나머지 셀들
+        for (int i = 0; i < occupiedCells.Count; i++)
+        {
+            UpdatePreviewCell(i + 1, occupiedCells[i]);
+        }
+
         SetActivePreviewImages(false);
+    }
+
+    // 개별 미리보기 셀의 위치와 색상 갱신
+    private void UpdatePreviewCell(int index, Vector2Int cellPos)
+    {
+        if (index < 0 || index >= previewImages.Count)
+            return;
+
+        GameObject cellObj = previewImages[index];
+        cellObj.name = $"PreviewCell_{cellPos.x}_{cellPos.y}";
+
+        // 위치 갱신
+        RectTransform rect = cellObj.GetComponent<RectTransform>();
+        rect.anchoredPosition = new Vector2(cellPos.x * cellUISize, cellPos.y * cellUISize);
+
+        // 색상 갱신
+        Image img = cellObj.GetComponent<Image>();
+        img.color = GridData.gridColor;
     }
 
     public void SetInventory(UnitInventory inventory)
@@ -43,7 +112,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
     {
         // 데이터 테이블과 연결 및 수정 필요 **
         // unitImg.sprite = unitSprite;
-        var unitData = DataTableManager.UnitTable.Get(unitId);
+        var unitData = DataTableManager.UnitTable.Get(UnitId);
         nameText.text = unitData.UNIT_NAME;
     }
 
@@ -55,7 +124,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
 
     public void OnDrag()
     {
-        Debug.Log($"유닛 ID: {unitId}");
+        Debug.Log($"유닛 ID: {UnitId}");
     }
 
     public void OnDragEnd()
@@ -64,7 +133,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
 
         if (!dropFailed)
         {
-            inventory.RemoveUnit(unitId);
+            inventory.RemoveUnit(UnitId);
         }
         dropFailed = false;
     }
@@ -109,7 +178,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
         img.color = GridData.gridColor;
     }
 
-    //미리보기 이미지 활성화 및 비활성화
+    // 미리보기 이미지 활성화 및 비활성화
     private void SetActivePreviewImages(bool value)
     {
         if (previewImages == null || previewImages.Count == 0)

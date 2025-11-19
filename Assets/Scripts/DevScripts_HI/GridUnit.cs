@@ -4,6 +4,8 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class GridUnit : MonoBehaviour, ITestDraggable
 {
+    public int UnitId; // 테스트용 ** 수정 필요
+    [Space]
     [SerializeField] private UnitGridData gridData;
     [SerializeField] private float cellSize = 0.6f;
     [SerializeField] private GameObject cellPrf;

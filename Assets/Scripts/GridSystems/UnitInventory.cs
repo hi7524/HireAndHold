@@ -114,7 +114,7 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
             {
                 int unitId = ownedUnitIds[i];
                 slots[i].SetUnit(unitId);
-                slots[i].SetGridData(gridDatas.GridDatas[unitId]);
+                slots[i].UpdatePreviewImages(gridDatas.GridDatas[unitId]);
                 slots[i].UpdateUi();
                 slots[i].gameObject.SetActive(true);
             }
@@ -132,15 +132,27 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
 
     public void OnDrop(ITestDraggable draggable)
     {
-        dropSequence?.Kill();
+        // GridUnit일 경우
+        var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
+        if (gridUnit != null)
+        {
+            AddUnit(gridUnit.UnitId);
+            draggable.GameObject.SetActive(false);
 
-        //var test = draggable.GameObject.GetComponent<GridUnit>();
+            dropSequence?.Kill();
+            dropSequence = DOTween.Sequence();
+            dropSequence.Append(transform.DOScale(1.1f, 0.1f));
+            dropSequence.Append(transform.DOScale(1.0f, 0.15f));
+            return;
+        }
 
-        draggable.GameObject.SetActive(false);
-
-        dropSequence = DOTween.Sequence();
-        dropSequence.Append(transform.DOScale(1.2f, 0.15f));
-        dropSequence.Append(transform.DOScale(1.0f, 0.15f));
+        // UnitInventorySlot일 경우
+        var inventorySlot = draggable.GameObject.GetComponent<UnitInventorySlot>();
+        if (inventorySlot != null)
+        {
+            inventorySlot.OnDropFailed();
+            return;
+        }
     }
 
     public void OnDragEnter(ITestDraggable draggable)
