@@ -9,6 +9,7 @@ public class LevelUpRewardController : MonoBehaviour
     [SerializeField] private GameManager gameManager;
     [SerializeField] private PlayerExperience playerExp;
     [SerializeField] private UnitInventory inventory;
+    public GridDatasForTesting gridDatasForTesting;
 
     private UnitCardUi[] unitCardUIs;
     private SkillCardUi[] skillCardUIs;
@@ -72,8 +73,9 @@ public class LevelUpRewardController : MonoBehaviour
 
         for (int i = 0; i < 3 && i < unitCardUIs.Length; i++)
         {
-            unitCardUIs[i].UnitId = tempList[i];
-            unitCardUIs[i].SetUnitID();
+            int unitId = tempList[i];
+            unitCardUIs[i].SetUnitID(unitId);
+            unitCardUIs[i].SetGridData(gridDatasForTesting.GridDatas[unitId]);
         }
     }
 

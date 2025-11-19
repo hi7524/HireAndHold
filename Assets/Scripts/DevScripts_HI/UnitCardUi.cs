@@ -4,12 +4,13 @@ using UnityEngine.UI;
 
 public class UnitCardUi : BaseCardUi
 {
-    public int UnitId; // 테스트용**
-    public UnitGridData gridUnitData; // 테스트용**
-
     [SerializeField] private Transform previewTrans;
     [SerializeField] private DraggableGridUnitUi draggableUnitUI;
     [SerializeField] private float cellUISize = 2f;
+
+    private int unitId; // 테스트용**
+    private UnitGridData gridUnitData; // 테스트용**
+
 
     // 프리뷰 오브젝트
     private readonly List<GameObject> previewImages = new List<GameObject>();
@@ -17,19 +18,30 @@ public class UnitCardUi : BaseCardUi
 
     private void Start()
     {
-        SetUnitID();
-        SetGridData();
         VisualizeGridData();
     }
 
-    public void SetUnitID()
+    private void OnEnable()
     {
-        draggableUnitUI.SetUnit(UnitId);
+        draggableUnitUI.gameObject.SetActive(true);
     }
 
-    public void SetGridData()
+    private void OnDisable()
     {
-        draggableUnitUI.SetGridData(gridUnitData);
+        draggableUnitUI.gameObject.SetActive(false);
+    }
+
+    public void SetUnitID(int unitId)
+    {
+        this.unitId = unitId;
+        draggableUnitUI.SetUnit(unitId);
+    }
+
+    public void SetGridData(UnitGridData gridData)
+    {
+        this.gridUnitData = gridData;
+        draggableUnitUI.SetGridData(gridData);
+        VisualizeGridData();
     }
 
     public void VisualizeGridData()

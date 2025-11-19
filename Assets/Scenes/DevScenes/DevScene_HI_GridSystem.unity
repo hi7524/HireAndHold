@@ -760,6 +760,7 @@ GameObject:
   - component: {fileID: 645317282}
   - component: {fileID: 645317281}
   - component: {fileID: 645317283}
+  - component: {fileID: 645317284}
   m_Layer: 5
   m_Name: LevelUpRewardController
   m_TagString: Untagged
@@ -843,6 +844,30 @@ MonoBehaviour:
   gameManager: {fileID: 313655619}
   playerExp: {fileID: 1133995189}
   inventory: {fileID: 1675905486}
+  gridDatasForTesting: {fileID: 645317284}
+--- !u!114 &645317284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 645317279}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4cc3cc448295e04b9374cefb448f719, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grids:
+  - unitId: 11101
+    gridData: {fileID: 11400000, guid: f7bb50619c8af0d46b5afda779d9c5af, type: 2}
+  - unitId: 11104
+    gridData: {fileID: 11400000, guid: e0ca5727671dcfe46bb656ee2db43d17, type: 2}
+  - unitId: 11107
+    gridData: {fileID: 11400000, guid: 3766ff9f7064b6e41a554b18a61dd4e1, type: 2}
+  - unitId: 11110
+    gridData: {fileID: 11400000, guid: a8561c5c9bf703340b2199abf2fdd5d4, type: 2}
+  - unitId: 11113
+    gridData: {fileID: 11400000, guid: 41d5abea7b83cc142b7387b6c0d8a43f, type: 2}
 --- !u!224 &737244490 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4583034379109322298, guid: 91f81769c7c2559448a8d6a92997ef5c, type: 3}
@@ -2456,6 +2481,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: Inventory
       objectReference: {fileID: 0}
+    - target: {fileID: 8975559060589276356, guid: cb99b9c4ecb256d4eb140c005ed9dc98, type: 3}
+      propertyPath: grids.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8975559060589276356, guid: cb99b9c4ecb256d4eb140c005ed9dc98, type: 3}
+      propertyPath: grids.Array.data[3].unitId
+      value: 11110
+      objectReference: {fileID: 0}
+    - target: {fileID: 8975559060589276356, guid: cb99b9c4ecb256d4eb140c005ed9dc98, type: 3}
+      propertyPath: grids.Array.data[4].unitId
+      value: 11113
+      objectReference: {fileID: 0}
+    - target: {fileID: 8975559060589276356, guid: cb99b9c4ecb256d4eb140c005ed9dc98, type: 3}
+      propertyPath: grids.Array.data[3].gridData
+      value: 
+      objectReference: {fileID: 11400000, guid: 3766ff9f7064b6e41a554b18a61dd4e1, type: 2}
+    - target: {fileID: 8975559060589276356, guid: cb99b9c4ecb256d4eb140c005ed9dc98, type: 3}
+      propertyPath: grids.Array.data[4].gridData
+      value: 
+      objectReference: {fileID: 11400000, guid: 3766ff9f7064b6e41a554b18a61dd4e1, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
