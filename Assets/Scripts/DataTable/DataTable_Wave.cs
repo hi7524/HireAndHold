@@ -3,9 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class DataTable_Wave : DataTable
-{
-    public class Data
+public class WaveData
     {
 
         public int WAVE_ID { get; set; }
@@ -21,7 +19,10 @@ public class DataTable_Wave : DataTable
         public float WAVE_SPEED { get; set; }
 
     }
-    private readonly Dictionary<int, Data> dictionary = new Dictionary<int, Data>();
+public class DataTable_Wave : DataTable
+{
+    
+    private readonly Dictionary<int, WaveData> dictionary = new Dictionary<int, WaveData>();
     public override async UniTask LoadAsync(string filename)
     {
         dictionary.Clear();
@@ -29,7 +30,7 @@ public class DataTable_Wave : DataTable
         var path = string.Format(FormatPath, filename);
         var textAsset = await Addressables.LoadAssetAsync<TextAsset>(path).ToUniTask();
 
-        var list = LoadCSV<Data>(textAsset.text);
+        var list = LoadCSV<WaveData>(textAsset.text);
         
         foreach (var item in list)
         {
@@ -42,7 +43,7 @@ public class DataTable_Wave : DataTable
         }
     }
 
-    public Data Get(int key)
+    public WaveData Get(int key)
     {
         if (!dictionary.ContainsKey(key))
         {

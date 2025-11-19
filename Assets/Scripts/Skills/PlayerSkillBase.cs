@@ -33,17 +33,13 @@ public abstract class PlayerSkillBase : MonoBehaviour
 
     protected virtual void Awake()
     {
-        // Awake는 프리팹 생성 시 호출되므로, 실제로는 OnEnable이나 Start에서 찾아야 함
-        Debug.Log($"[{GetType().Name}] Awake 호출됨");
-     skillEffectApplier = GameObject.FindWithTag("Player")?.GetComponent<SkillEffectApplier>();
+        skillEffectApplier = GameObject.FindWithTag("Player")?.GetComponent<SkillEffectApplier>();
     }
 
 
 
     protected virtual void Start()
     {
-        
-
         LoadSkillDataAsync().Forget();
     }
     private async UniTaskVoid LoadSkillDataAsync()
@@ -75,7 +71,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
         if (skillData == null)
         {
             Debug.LogWarning($"스킬 데이터 로딩 중... Inspector 값으로 실행");
-            // null이어도 계속 진행 (Inspector 값 사용)
+        
         }
         if (skillEffectApplier == null)
         {
@@ -84,7 +80,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
         if (isOnCoolTime) return;
 
         OnUse(spawnPoint);
-        StartCooldown();
+        // StartCooldown(); // testing purpose
     }
 
     public void StartCooldown()
