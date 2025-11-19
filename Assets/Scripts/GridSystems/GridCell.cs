@@ -61,6 +61,12 @@ public class GridCell : MonoBehaviour, ITestDroppable
         {
             canDrop = gridManager.CanPlaceUnit(GridPosition, inventorySlot.GridData.GetOccupiedCells());
         }
+
+        var draggableUnitUi = draggable.GameObject.GetComponent<DraggableGridUnitUi>();
+        if (draggableUnitUi != null)
+        {
+            canDrop = gridManager.CanPlaceUnit(GridPosition, draggableUnitUi.GridData.GetOccupiedCells());
+        }
     }
 
     public void OnDragExit(ITestDraggable draggable)
@@ -76,10 +82,11 @@ public class GridCell : MonoBehaviour, ITestDroppable
         if (!canDrop)
             return;
 
-        // 유닛 또는 인벤토리 슬롯 아닐 경우 배치 불가
+        // 유닛 또는 인벤토리 슬롯 또는 DraggableGridUnitUi 아닐 경우 배치 불가
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         var inventorySlot = draggable.GameObject.GetComponent<UnitInventorySlot>();
-        if (gridUnit == null && inventorySlot == null)
+        var draggableUnitUi = draggable.GameObject.GetComponent<DraggableGridUnitUi>();
+        if (gridUnit == null && inventorySlot == null && draggableUnitUi == null)
             return;
 
 
@@ -126,6 +133,38 @@ public class GridCell : MonoBehaviour, ITestDroppable
             }
 
             newGridUnit.UnitId = inventorySlot.UnitId;
+
+            // 생성된 GridUnit을 배치
+            PlacedObject = newGridUnit.GameObject;
+            newGridUnit.SetCurrentGridCell(this);
+
+            // GridManager에 그리드 정보 전달
+            var occupiedCells = newGridUnit.GridData.GetOccupiedCells();
+
+            gridManager.SetGridState(GridPosition, GridState.Occupied);
+            gridManager.SetOccupiedCellAndColor(GridPosition, newGridUnit.GridData.gridColor);
+
+            foreach (var relativePos in occupiedCells)
+            {
+                Vector2Int absolutePos = GridPosition + relativePos;
+                gridManager.SetGridState(absolutePos, GridState.Occupied);
+                gridManager.SetOccupiedCellAndColor(absolutePos, newGridUnit.GridData.gridColor);
+            }
+        }
+
+        // DraggableGridUnitUi 처리 - GridUnit 생성
+        if (draggableUnitUi != null)
+        {
+            // GridManager를 통해 GridUnit 생성
+            var newGridUnit = gridManager.SpawnGridUnit(transform.position, draggableUnitUi.GridData);
+
+            if (newGridUnit == null)
+            {
+                draggable.OnDropFailed();
+                return;
+            }
+
+            newGridUnit.UnitId = draggableUnitUi.UnitId;
 
             // 생성된 GridUnit을 배치
             PlacedObject = newGridUnit.GameObject;
