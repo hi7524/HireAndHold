@@ -5,6 +5,7 @@ public class LevelUpRewardController : MonoBehaviour
 {
     [SerializeField] private UnitCardUi unitCardUiPrf;
     [SerializeField] private SkillCardUi skillCardPrf;
+    [SerializeField] private GameObject reRollBtn;
     [Space]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private PlayerExperience playerExp;
@@ -37,6 +38,7 @@ public class LevelUpRewardController : MonoBehaviour
         DrawUnitID();
         SetActiveCards(unitCardUIs, true);
         inventory.gameObject.SetActive(true);
+        reRollBtn.SetActive(true);
         gameManager.PauseGame();
     }
 
@@ -63,6 +65,7 @@ public class LevelUpRewardController : MonoBehaviour
     {
         SetActiveCards(skillCardUIs, false);
         SetActiveCards(unitCardUIs, false);
+        reRollBtn.SetActive(false);
 
         if (!gameManager.IsGameStarted)
             gameManager.StartGame();
