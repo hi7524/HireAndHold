@@ -1,25 +1,28 @@
 using System.Collections.Generic;
 using DG.Tweening;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UnitInventorySlot : MonoBehaviour, ITestDraggable
+
+public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
 {
-    [SerializeField] private Image unitImg;
-    [SerializeField] private TextMeshProUGUI nameText;
+    [SerializeField] private Image image;
     [SerializeField] private Transform previewObjTrans;
     [SerializeField] private float cellUISize = 65f;
 
-    public bool IsDraggable => true; // 수정 필요: 편집 시스템과 연동짓기 **
+    // 드래그
     public GameObject GameObject => gameObject;
+    public bool IsDraggable => true; // 수정 필요: 편집 시스템과 연동짓기 **
 
+    // 유닛 정보
     public int UnitId { get; private set; }
     public UnitGridData GridData { get; private set; }
 
-    private UnitInventory inventory;
-
+    // 프리뷰 오브젝트
     private readonly List<GameObject> previewImages = new List<GameObject>();
+
+    private Vector3 originalPosition;
+    private Transform originalParent;
     private bool dropFailed = false;
 
 
@@ -53,17 +56,16 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
         this.GridData = newGridData;
 
         var occupiedCells = GridData.GetOccupiedCells();
-        // 기본 셀 (Vector2Int.zero) + 추가 셀들
         int requiredCount = occupiedCells.Count + 1;
 
-        // 부족한 셀이 있으면 추가 생성
+        // 부족한 셀 추가
         while (previewImages.Count < requiredCount)
         {
             var cellPos = previewImages.Count == 0 ? Vector2Int.zero : occupiedCells[previewImages.Count - 1];
             CreatePreviewUICell(cellPos);
         }
 
-        // 넘치는 셀이 있으면 삭제
+        // 넘치는 셀 삭제
         while (previewImages.Count > requiredCount)
         {
             int lastIndex = previewImages.Count - 1;
@@ -72,11 +74,9 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
             Destroy(objToRemove);
         }
 
-        // 기존 셀들의 색상과 위치 갱신
-        // 첫 번째 셀 (기본 위치)
+        // 기존 셀들의 색상 및 위치 갱신
         UpdatePreviewCell(0, Vector2Int.zero);
 
-        // 나머지 셀들
         for (int i = 0; i < occupiedCells.Count; i++)
         {
             UpdatePreviewCell(i + 1, occupiedCells[i]);
@@ -103,22 +103,15 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
         img.color = GridData.gridColor;
     }
 
-    public void SetInventory(UnitInventory inventory)
-    {
-        this.inventory = inventory;
-    }
-
-    public void UpdateUi()
-    {
-        // 데이터 테이블과 연결 및 수정 필요 **
-        // unitImg.sprite = unitSprite;
-        var unitData = DataTableManager.UnitTable.Get(UnitId);
-        nameText.text = unitData.UNIT_NAME;
-    }
-
-
     public void OnDragStart()
     {
+        Debug.Log($"GridData: {GridData}, previewImages.Count: {previewImages.Count}, previewObjTrans: {previewObjTrans}");
+        image.color = new Color(1, 1, 1, 0);
+
+        // 원래 위치 저장
+        originalPosition = transform.position;
+        originalParent = transform.parent;
+
         SetActivePreviewImages(true);
     }
 
@@ -131,18 +124,25 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
     {
         SetActivePreviewImages(false);
 
+        // 드롭 성공시에 active false
         if (!dropFailed)
         {
-            inventory.RemoveUnit(UnitId);
+            gameObject.SetActive(false);
         }
+
+        transform.SetParent(originalParent);
+        transform.position = originalPosition;
         dropFailed = false;
+        image.color = new Color(1, 1, 1, 1);
     }
 
     public void OnDropFailed()
     {
+        SetActivePreviewImages(false);
+
+        gameObject.SetActive(true);
         dropFailed = true;
     }
-
 
     // 프리뷰를 위한 이미지 생성
     private void CreatePreviewUIImages()
@@ -160,7 +160,7 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
         }
     }
 
-    // 쎌 단위 이미지 생성
+    // 셀 단위 이미지 생성
     private void CreatePreviewUICell(Vector2Int cellPos)
     {
         // UI Image GameObject 생성
