@@ -39,6 +39,12 @@ public class PlayerExperience : MonoBehaviour
         UpdateExpBarUI();
     }
 
+    // ** 테스트 후 지울 것
+    public void Cheat_LevelUp()
+    {
+        LevelUp();
+    }
+
     private void LevelUp()
     {
         Level++;

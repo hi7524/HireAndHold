@@ -5,11 +5,15 @@ public class LevelUpRewardController : MonoBehaviour
 {
     [SerializeField] private UnitCardUi unitCardUiPrf;
     [SerializeField] private SkillCardUi skillCardPrf;
+    [Space]
+    [SerializeField] private GameManager gameManager;
+    [SerializeField] private PlayerExperience playerExp;
+    [SerializeField] private UnitInventory inventory;
 
     private UnitCardUi[] unitCardUIs;
     private SkillCardUi[] skillCardUIs;
 
-    private List<int> ownedUnitIdForTesting = new List<int>{11101, 11104, 11107, 11110, 11113}; // 테스트용***
+    private List<int> ownedUnitIdForTesting = new List<int> { 11101, 11104, 11107, 11110, 11113 }; // 테스트용***
 
 
     private void Start()
@@ -17,28 +21,60 @@ public class LevelUpRewardController : MonoBehaviour
         CreateUnitCardPrf(3);
         CreateSkillCardPrf(3);
 
+        playerExp.OnLevelUp += DrawReward;
     }
 
-    public void DrawReward(int curPlayerLv)
+    private void OnDestroy()
     {
-        // 플레이어 레벨이 3의 배수일 때 유닛 뽑기
-        if (curPlayerLv % 3 == 0)
+        playerExp.OnLevelUp -= DrawReward;
+    }
+
+    public void DrawReward()
+    {
+        // 플레이어 레벨이 3의 배수일 때 스킬 뽑기
+        if (playerExp.Level % 3 == 0)
         {
-            
-            SetActiveCards(unitCardUIs, true);
-        }
-        // 그 외에는 스킬 뽑기
-        else
-        {
-            DrawSkill();
             SetActiveCards(skillCardUIs, true);
         }
+        // 그 외에는 유닛 뽑기
+        else
+        {
+            DrawUnitID();
+            SetActiveCards(unitCardUIs, true);
+        }
+
+        inventory.gameObject.SetActive(true);
+
+        gameManager.PauseGame();
     }
 
-    public int DrawUnitID()
+    public void OnClickConfirmBtn()
     {
-        int randomIdx = Random.Range(0, ownedUnitIdForTesting.Count);
-        return ownedUnitIdForTesting[randomIdx];
+        SetActiveCards(skillCardUIs, false);
+        SetActiveCards(unitCardUIs, false);
+
+        gameManager.ResumeGame();
+    }
+
+    // 유닛 3개 중복 없이 뽑기
+    public void DrawUnitID()
+    {
+        List<int> tempList = new List<int>(ownedUnitIdForTesting);
+
+        for (int i = tempList.Count - 1; i > 0; i--)
+        {
+            int randomIndex = Random.Range(0, i + 1);
+
+            int temp = tempList[i];
+            tempList[i] = tempList[randomIndex];
+            tempList[randomIndex] = temp;
+        }
+
+        for (int i = 0; i < 3 && i < unitCardUIs.Length; i++)
+        {
+            unitCardUIs[i].UnitId = tempList[i];
+            unitCardUIs[i].SetUnitID();
+        }
     }
 
     public int DrawSkill()
@@ -72,7 +108,7 @@ public class LevelUpRewardController : MonoBehaviour
         }
     }
 
-    // 전체 활성화 및 비활성화
+    // 일부 활성화
     private void SetActiveCards(BaseCardUi[] cardArray, bool value)
     {
         for (int i = 0; i < cardArray.Length; i++)
