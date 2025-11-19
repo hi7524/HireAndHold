@@ -5,12 +5,17 @@ public class Unit : MonoBehaviour
     [SerializeField] private float attackRange = 1.0f;
     [SerializeField] private float attackInterval = 1.0f;
     [SerializeField] private float attackDamage = 5;
-    [SerializeField] private UnitProjectile projectilePrf;
     [SerializeField] private string projectileKey = "Projectile";
 
-    [SerializeField] private ObjectPoolManager poolManager;
+    private ObjectPoolManager poolManager;
     private Monster attackTarget;
     private float lastAttackTime;
+
+
+    private void Start()
+    {
+        poolManager = GameObject.FindWithTag(Tags.PoolManager).GetComponent<ObjectPoolManager>();
+    }
 
     private void Update()
     {

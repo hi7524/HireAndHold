@@ -4,15 +4,12 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class GridUnit : MonoBehaviour, ITestDraggable
 {
-    public int UnitId; // 테스트용 ** 수정 필요
-    [Space]
-    [SerializeField] private UnitGridData gridData;
     [SerializeField] private float cellSize = 0.6f;
     [SerializeField] private GameObject cellPrf;
     [SerializeField] private Transform previewTrans;
 
-    // 그리드 데이터
-    public UnitGridData GridData => gridData;
+    public int UnitId { get; private set; }
+    public UnitGridData GridData { get; private set; }
 
     // 드래그
     public bool IsDraggable => true;
@@ -30,6 +27,11 @@ public class GridUnit : MonoBehaviour, ITestDraggable
         CreatePreviewSprites();
         SetActiveChildrenObj(false);
     }
+
+    public void SetUnitID(int unitId)
+    {
+        UnitId = unitId;
+    } 
 
     public void OnDragStart()
     {
@@ -79,7 +81,7 @@ public class GridUnit : MonoBehaviour, ITestDraggable
 
     public void SetGridData(UnitGridData newGridData)
     {
-        gridData = newGridData;
+        GridData = newGridData;
 
         // 기존 프리뷰 제거
         ClearPreviewSprites();
@@ -103,10 +105,10 @@ public class GridUnit : MonoBehaviour, ITestDraggable
     // 미리보기 스프라이트 생성
     private void CreatePreviewSprites()
     {
-        if (gridData == null || cellPrf == null)
+        if (GridData == null || cellPrf == null)
             return;
 
-        var occupiedCells = gridData.GetOccupiedCells();
+        var occupiedCells = GridData.GetOccupiedCells();
 
         // 중앙 셀
         CreatePreviewCell(Vector2Int.zero);
@@ -127,7 +129,7 @@ public class GridUnit : MonoBehaviour, ITestDraggable
 
         SpriteRenderer sr = cell.GetComponent<SpriteRenderer>();
         if (sr != null)
-            sr.color = gridData.gridColor;
+            sr.color = GridData.gridColor;
     }
 
     // 자식 오브젝트 전체 비활성화 및 활성화

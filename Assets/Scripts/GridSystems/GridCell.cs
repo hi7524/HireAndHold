@@ -133,7 +133,7 @@ public class GridCell : MonoBehaviour, ITestDroppable
                 return;
             }
 
-            newGridUnit.UnitId = inventorySlot.UnitId;
+            newGridUnit.SetUnitID(inventorySlot.UnitId);
 
             // 생성된 GridUnit을 배치
             PlacedObject = newGridUnit.GameObject;
@@ -165,7 +165,7 @@ public class GridCell : MonoBehaviour, ITestDroppable
                 return;
             }
 
-            newGridUnit.UnitId = draggableUnitUi.UnitId;
+            newGridUnit.SetUnitID(draggableUnitUi.UnitId);
 
             // 생성된 GridUnit을 배치
             PlacedObject = newGridUnit.GameObject;

@@ -23,11 +23,21 @@ public class LevelUpRewardController : MonoBehaviour
         CreateSkillCardPrf(3);
 
         playerExp.OnLevelUp += DrawReward;
+
+        SelectUnitOnGameStart();
     }
 
     private void OnDestroy()
     {
         playerExp.OnLevelUp -= DrawReward;
+    }
+
+    public void SelectUnitOnGameStart()
+    {
+        DrawUnitID();
+        SetActiveCards(unitCardUIs, true);
+        inventory.gameObject.SetActive(true);
+        gameManager.PauseGame();
     }
 
     public void DrawReward()
@@ -54,7 +64,10 @@ public class LevelUpRewardController : MonoBehaviour
         SetActiveCards(skillCardUIs, false);
         SetActiveCards(unitCardUIs, false);
 
-        gameManager.ResumeGame();
+        if (!gameManager.IsGameStarted)
+            gameManager.StartGame();
+        else
+            gameManager.ResumeGame();
     }
 
     // 유닛 3개 중복 없이 뽑기

@@ -11,13 +11,13 @@ public class InGameUi : MonoBehaviour
     {
         if (wall != null)
         {
-            wall.OnHpChanged += UpdateValue;
+            //wall.OnHpChanged += UpdateValue;
         }
 
         hpSlider.minValue = 0;
         if (wall != null)
         {
-            hpSlider.maxValue = wall.MaxHp();
+            //hpSlider.maxValue = wall.MaxHp();
             // expSlider.maxValue = wall.MaxExp();
         }
     }

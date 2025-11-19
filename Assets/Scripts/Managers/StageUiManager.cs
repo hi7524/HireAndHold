@@ -7,6 +7,8 @@ public class StageUiManager : MonoBehaviour
     [Space]
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TextMeshProUGUI speedLevelText;
+    [Space]
+    [SerializeField] private GameObject gameOverPanel;
 
     private void Update()
     {
@@ -27,5 +29,10 @@ public class StageUiManager : MonoBehaviour
     public void UpdateSpeedLevelText()
     {
         speedLevelText.text = $"X{gameManager.CurSpeedLevel}";
+    }
+
+    public void ActiveGameOverPanel()
+    {
+        gameOverPanel.SetActive(true);
     }
 }

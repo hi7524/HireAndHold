@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1492418833879989011
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1920215198019259347}
+  - component: {fileID: 2825233175377020172}
+  - component: {fileID: 298331754600960098}
+  - component: {fileID: 8969676568068889782}
+  - component: {fileID: 3370350582403285189}
+  - component: {fileID: 6445794222994925957}
+  m_Layer: 5
+  m_Name: LevelUpRewardController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1920215198019259347
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1492418833879989011}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 155}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2825233175377020172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1492418833879989011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 30
+    m_Right: 30
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 15
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 1
+  m_ChildControlHeight: 1
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
+--- !u!114 &298331754600960098
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1492418833879989011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AspectMode: 1
+  m_AspectRatio: 2.7
+--- !u!114 &8969676568068889782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1492418833879989011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05acb16c2097a94ba02f6368419d312, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  unitCardUiPrf: {fileID: 537899014852373020, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
+  skillCardPrf: {fileID: 898403305766665316, guid: 1e06c786d98a86242a9bc16b824e2311, type: 3}
+  gameManager: {fileID: 0}
+  playerExp: {fileID: 0}
+  inventory: {fileID: 0}
+  gridDatasForTesting: {fileID: 3370350582403285189}
+--- !u!114 &3370350582403285189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1492418833879989011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4cc3cc448295e04b9374cefb448f719, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grids:
+  - unitId: 11101
+    gridData: {fileID: 11400000, guid: f7bb50619c8af0d46b5afda779d9c5af, type: 2}
+  - unitId: 11104
+    gridData: {fileID: 11400000, guid: e0ca5727671dcfe46bb656ee2db43d17, type: 2}
+  - unitId: 11107
+    gridData: {fileID: 11400000, guid: 3766ff9f7064b6e41a554b18a61dd4e1, type: 2}
+  - unitId: 11110
+    gridData: {fileID: 11400000, guid: a8561c5c9bf703340b2199abf2fdd5d4, type: 2}
+  - unitId: 11113
+    gridData: {fileID: 11400000, guid: 41d5abea7b83cc142b7387b6c0d8a43f, type: 2}
+--- !u!222 &6445794222994925957
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1492418833879989011}
+  m_CullTransparentMesh: 1

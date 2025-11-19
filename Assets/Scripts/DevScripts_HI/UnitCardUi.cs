@@ -6,7 +6,7 @@ public class UnitCardUi : BaseCardUi
 {
     [SerializeField] private Transform previewTrans;
     [SerializeField] private DraggableGridUnitUi draggableUnitUI;
-    [SerializeField] private float cellUISize = 2f;
+    [SerializeField] private float cellUISize = 20f;
 
     private int unitId; // 테스트용**
     private UnitGridData gridUnitData; // 테스트용**

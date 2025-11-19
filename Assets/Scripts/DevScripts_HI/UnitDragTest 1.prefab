@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2297193980710762621}
   - component: {fileID: 3928008395352735845}
   - component: {fileID: 7068993427469663743}
+  - component: {fileID: 4719826175344303417}
   - component: {fileID: 6630921504287376387}
   m_Layer: 11
   m_Name: UnitDragTest 1
@@ -126,6 +127,22 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.5
+--- !u!114 &4719826175344303417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1490772236210125429}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5800dbd0439b49499ec7bbc159b6611, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackRange: 10
+  attackInterval: 1
+  attackDamage: 5
+  projectileKey: Projectile
 --- !u!114 &6630921504287376387
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -138,8 +155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fba74566ffc682c4c84a626847a8b71f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridData: {fileID: 11400000, guid: f7bb50619c8af0d46b5afda779d9c5af, type: 2}
-  cellSize: 1.2
+  cellSize: 1.1
   cellPrf: {fileID: 7561523029768047771, guid: 306089a1b45d7ee459d73ba53a5f95c2, type: 3}
   previewTrans: {fileID: 6802499784913829392}
 --- !u!1 &3441880575064887792
