@@ -289,7 +289,6 @@ public class DragManager : MonoBehaviour
             Vector3 worldPos = mainCamera.ScreenToWorldPoint(screenPos);
             worldPos.z = 0;
             targetObj.transform.position = worldPos;
-            Physics2D.SyncTransforms();
         }
     }
 }
