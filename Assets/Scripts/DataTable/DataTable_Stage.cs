@@ -3,9 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class DataTable_Stage : DataTable
-{
-    public class Data
+public class StageData
     {
         public int  STAGE_ID { get; set; }
         public string STAGE_NAME { get; set; }
@@ -20,8 +18,11 @@ public class DataTable_Stage : DataTable
         public string STAGE_MAP { get; set; }
         
     }
+public class DataTable_Stage : DataTable
+{
+    
 
-    private readonly Dictionary<int, Data> dictionary = new Dictionary<int, Data>();
+    private readonly Dictionary<int, StageData> dictionary = new Dictionary<int, StageData>();
 
     public override async UniTask LoadAsync(string filename)
     {
@@ -30,7 +31,7 @@ public class DataTable_Stage : DataTable
         var path = string.Format(FormatPath, filename);
         var textAsset = await Addressables.LoadAssetAsync<TextAsset>(path).ToUniTask();
 
-        var list = LoadCSV<Data>(textAsset.text);
+        var list = LoadCSV<StageData>(textAsset.text);
         
         foreach (var item in list)
         {
@@ -43,7 +44,7 @@ public class DataTable_Stage : DataTable
         }
     }
 
-    public Data Get(int key)
+    public StageData Get(int key)
     {
         if (!dictionary.ContainsKey(key))
         {

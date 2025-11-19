@@ -9,6 +9,8 @@ public class Monster : MonoBehaviour, IDamagable
     [SerializeField] private float attackDamage;
     [SerializeField] private float attackRange;
     [SerializeField] private float attackCooldown;
+    [SerializeField] private float defense;
+    public float Defense{ get { return defense; } set { defense = value; } }
 
     private ObjectPoolManager poolManager;
     private string poolKey;
@@ -45,6 +47,7 @@ public class Monster : MonoBehaviour, IDamagable
         isAttacking = false;
         isStunned = false; // 장철희
         originalSpeed = speed; // 장철희
+        defense = 5; // 장철희
 
         isBoss = boss;
 
@@ -168,7 +171,7 @@ public class Monster : MonoBehaviour, IDamagable
         }
 
 
-        currentHp -= damage;
+        currentHp -= damage - defense;
 
         if (currentHp <= 0)
         {

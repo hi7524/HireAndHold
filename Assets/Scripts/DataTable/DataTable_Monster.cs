@@ -3,9 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class DataTable_Monster : DataTable
-{
-    public class Data
+public class MonsterData
     {
         public int MON_ID { get; set; }
         public string MON_NAME { get; set; }
@@ -29,7 +27,10 @@ public class DataTable_Monster : DataTable
 
 
     }
-    private readonly Dictionary<int, Data> dictionary = new Dictionary<int, Data>();
+public class DataTable_Monster : DataTable
+{
+    
+    private readonly Dictionary<int, MonsterData> dictionary = new Dictionary<int, MonsterData>();
 
     public override async UniTask LoadAsync(string filename)
     {
@@ -38,7 +39,7 @@ public class DataTable_Monster : DataTable
         var path = string.Format(FormatPath, filename);
         var textAsset = await Addressables.LoadAssetAsync<TextAsset>(path).ToUniTask();
 
-        var list = LoadCSV<Data>(textAsset.text);
+        var list = LoadCSV<MonsterData>(textAsset.text);
         
         foreach (var item in list)
         {
@@ -51,7 +52,7 @@ public class DataTable_Monster : DataTable
         }
     }
 
-    public Data Get(int key)
+    public MonsterData Get(int key)
     {
         if (!dictionary.ContainsKey(key))
         {

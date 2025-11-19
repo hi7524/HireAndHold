@@ -18,7 +18,7 @@ public class StatusEffectSlow : StatusEffect
         {
             originalSpeed = monster.speed;
 
-            monster.speed = originalSpeed * (1f - amount);
+            monster.speed = originalSpeed * (amount/100f);
 
             startTime = Time.time;
 
@@ -29,8 +29,7 @@ public class StatusEffectSlow : StatusEffect
 
     public override void WhileEffect(GameObject target)
     {
-        // 슬로우는 지속 효과이므로 특별한 틱 처리 불필요
-        // 속도는 OnStartEffect에서 이미 적용됨
+        
     }
 
     public override void OnEndEffect(GameObject target)
