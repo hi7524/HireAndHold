@@ -12,7 +12,7 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
     [SerializeField] private DragManager dragManager;
     [SerializeField] private GridDatasForTesting gridDatas;
 
-    private const int MaxCapacity = 5;
+    private const int MaxCapacity = 16;
 
     private List<int> ownedUnitIds = new List<int>();
     private UnitInventorySlot[] slots;

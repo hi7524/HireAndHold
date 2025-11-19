@@ -388,17 +388,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 89312781}
   m_CullTransparentMesh: 1
---- !u!114 &144297421 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 581100933610866185, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
-  m_PrefabInstance: {fileID: 2742608910152522243}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00e956722a406ab4ea0bf11dc7d655fd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &181593917
 GameObject:
   m_ObjectHideFlags: 0
@@ -1207,6 +1196,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c05acb16c2097a94ba02f6368419d312, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  unitCardUiPrf: {fileID: 537899014852373020, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
+  skillCardPrf: {fileID: 898403305766665316, guid: 1e06c786d98a86242a9bc16b824e2311, type: 3}
 --- !u!1 &737244489
 GameObject:
   m_ObjectHideFlags: 0
@@ -2769,11 +2760,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!224 &1746081173 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 2567956632411969498, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
-  m_PrefabInstance: {fileID: 2742608910152522243}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1951526179
 GameObject:
   m_ObjectHideFlags: 0
@@ -3374,22 +3360,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 645317280}
     m_Modifications:
-    - target: {fileID: 537899014852373020, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
-      propertyPath: UnitId
-      value: 11101
-      objectReference: {fileID: 0}
-    - target: {fileID: 537899014852373020, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
-      propertyPath: gridUnitData
-      value: 
-      objectReference: {fileID: 11400000, guid: f7bb50619c8af0d46b5afda779d9c5af, type: 2}
-    - target: {fileID: 537899014852373020, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
-      propertyPath: previewTrans
-      value: 
-      objectReference: {fileID: 1746081173}
-    - target: {fileID: 537899014852373020, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
-      propertyPath: draggableUnitUI
-      value: 
-      objectReference: {fileID: 144297421}
     - target: {fileID: 1658894821089501869, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3475,8 +3445,7 @@ PrefabInstance:
       value: UnitCard
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects:
-    - {fileID: 9142188708480734241, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
