@@ -106,6 +106,7 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
     public void OnDragStart()
     {
         Debug.Log($"GridData: {GridData}, previewImages.Count: {previewImages.Count}, previewObjTrans: {previewObjTrans}");
+        image.color = new Color(1, 1, 1, 0);
 
         // 원래 위치 저장
         originalPosition = transform.position;
@@ -132,6 +133,7 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
         transform.SetParent(originalParent);
         transform.position = originalPosition;
         dropFailed = false;
+        image.color = new Color(1, 1, 1, 1);
     }
 
     public void OnDropFailed()
