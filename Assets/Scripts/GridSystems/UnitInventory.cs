@@ -42,6 +42,11 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
         dragManager.SetDragEnabled(true);
     }
 
+    private void OnDisable()
+    {
+        dragManager.SetDragEnabled(false);
+    }
+
     private void OnDestroy()
     {
         // GameObject 파괴 시 트윈 정리
