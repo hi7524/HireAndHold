@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,7 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
     private List<int> ownedUnitIds = new List<int>();
     private UnitInventorySlot[] slots;
     private int slotIndex;
+    private Sequence dropSequence;
 
 
     async UniTaskVoid Start()
@@ -40,9 +42,11 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
         dragManager.SetDragEnabled(true);
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
-        dragManager.SetDragEnabled(false);
+        // GameObject 파괴 시 트윈 정리
+        dropSequence?.Kill();
+        transform.DOKill();
     }
 
     // 유닛 추가
@@ -123,7 +127,15 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
 
     public void OnDrop(ITestDraggable draggable)
     {
-        Debug.Log("드롭");
+        dropSequence?.Kill();
+
+        //var test = draggable.GameObject.GetComponent<GridUnit>();
+
+        draggable.GameObject.SetActive(false);
+
+        dropSequence = DOTween.Sequence();
+        dropSequence.Append(transform.DOScale(1.2f, 0.15f));
+        dropSequence.Append(transform.DOScale(1.0f, 0.15f));
     }
 
     public void OnDragEnter(ITestDraggable draggable)
@@ -140,6 +152,5 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
 
     public void OnDragExit(ITestDraggable draggable)
     {
-        
     }
 }

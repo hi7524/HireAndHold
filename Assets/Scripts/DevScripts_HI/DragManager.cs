@@ -229,7 +229,7 @@ public class DragManager : MonoBehaviour
 
         foreach (var result in results)
         {
-            var droppable = result.gameObject.GetComponent<ITestDroppable>();
+            var droppable = result.gameObject.GetComponentInParent<ITestDroppable>();
             if (droppable != null)
             {
                 return droppable;
