@@ -19,8 +19,11 @@ public class Monster : MonoBehaviour, IDamagable
 
     private bool isAttacking = false;
     private bool isDead = false;
+    private bool isStunned = false; // 스턴 상태
+    private float originalSpeed; // 원래 속도 저장
 
     public bool IsDead => isDead;
+    public bool IsStunned => isStunned;
 
     //boss
     private bool isBoss = false;
@@ -40,6 +43,8 @@ public class Monster : MonoBehaviour, IDamagable
         isDead = false;
         currentHp = maxHp;
         isAttacking = false;
+        isStunned = false; // 장철희
+        originalSpeed = speed; // 장철희
 
         isBoss = boss;
 
@@ -64,6 +69,12 @@ public class Monster : MonoBehaviour, IDamagable
             return;
         }
 
+        // 스턴 상태일 때는 움직임과 공격을 모두 정지 // 장철희
+        if (isStunned)
+        {
+            return;
+        }
+
         if (!isAttacking)
         {
             MoveTowardsWall();
@@ -82,6 +93,7 @@ public class Monster : MonoBehaviour, IDamagable
         }
 
         transform.Translate(Vector3.down * speed * Time.deltaTime);
+        
 
         SeparateFromOthers();
     }
@@ -209,6 +221,27 @@ public class Monster : MonoBehaviour, IDamagable
                 }
             }
         }
+    }
+
+    
+    public void SetStunned(bool stunned) // 장철희
+    {
+        isStunned = stunned;
+        
+        if (stunned)
+        {
+            Debug.Log($"[Monster] {gameObject.name} 스턴 적용!");
+        }
+        else
+        {
+            Debug.Log($"[Monster] {gameObject.name} 스턴 해제!");
+        }
+    }
+
+    
+    public void RestoreOriginalSpeed() // 장철희
+    {
+        speed = originalSpeed;
     }
 
 }

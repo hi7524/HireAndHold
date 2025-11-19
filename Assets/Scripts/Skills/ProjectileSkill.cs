@@ -13,6 +13,11 @@ public class ProjectileSkill : PlayerSkillBase
 
 
         rb.linearVelocity = Vector2.up * speed;
+        if (applyStatusEffect)
+        {
+            ApplyStatusEffectInRange(spawnPoint, 10f);
+            
+        }
 
         Destroy(obj, lifeTime);
     }

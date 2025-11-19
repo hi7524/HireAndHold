@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8075044744728372596}
   - component: {fileID: 1700367696202662363}
   - component: {fileID: 6144066983784420167}
+  - component: {fileID: 1259468442709672046}
   m_Layer: 0
   m_Name: Monster
   m_TagString: Monster
@@ -108,8 +109,7 @@ MonoBehaviour:
   attackDamage: 10
   attackRange: 0.6
   attackCooldown: 0.5
-  collector: {fileID: 0}
-  expPrefab: {fileID: 451080174845656977, guid: 64909d2d5bc2e2348a7bc5748565556d, type: 3}
+  expKey: Exp
 --- !u!50 &1700367696202662363
 Rigidbody2D:
   serializedVersion: 5
@@ -183,3 +183,15 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.16, y: 0.16}
   m_EdgeRadius: 0
+--- !u!114 &1259468442709672046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4668959578009461119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11c0f9b29e337484aace73276b4b25a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

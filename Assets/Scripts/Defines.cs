@@ -7,6 +7,7 @@ public static class DataTableIds
     public static readonly string Monster = "MonsterTable";
     public static readonly string Wave = "WaveTable";
     public static readonly string UnitCatalog = "UnitCatalogTable";
+    public static readonly string Skill = "SkillTable";
     public static readonly string Unit = "UnitTable";
 }
 
