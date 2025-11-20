@@ -16,7 +16,6 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private float rushInterval = 150f;
     [SerializeField] private float rushDuration = 30f;
     [SerializeField] private float rushSpawnInterval = 0.2f;
-
     [SerializeField] private WindowUI bossClearUI;
 
     private int maxSpawnCount;
@@ -179,7 +178,7 @@ public class MonsterSpawner : MonoBehaviour
         {
             await UniTask.Yield();
         }
-
+        Debug.Log("보스 클리어 UI 표시");
         bossClearUI.Show();
 
         await UniTask.WaitUntil(() => Time.timeScale > 0f, cancellationToken: token);

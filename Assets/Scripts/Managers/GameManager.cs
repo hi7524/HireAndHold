@@ -77,7 +77,6 @@ public class GameManager : MonoBehaviour
             return;
 
         GameManagerLog("게임 재개");
-
         Time.timeScale = originalSpeed;
         IsPausedGame = false;
         OnGameResume?.Invoke();
@@ -115,5 +114,11 @@ public class GameManager : MonoBehaviour
     private void GameManagerLog(string msg)
     {
         Debug.Log($"<color=#E155E1>{msg}</color>");
+    }
+    public void OnLobbyButtonClick()
+    {
+ 
+        LoadingSceneManager.Instance.LoadSceneWithLoading(new LoadingRequest("Lobby"));
+
     }
 }

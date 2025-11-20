@@ -120,7 +120,6 @@ public abstract class PlayerSkillBase : MonoBehaviour
     // 범위 내 모든 적에게 상태이상 적용 // 장철희
     protected void ApplyStatusEffectInRange(Vector3 center, float range)
     {
-        Debug.Log("sibal");
         if (!applyStatusEffect || skillEffectApplier == null)
             return;
         skillEffectApplier.ApplyStatusEffectInRange(center, range, statusEffectType, statusEffectDuration, statusEffectValue);

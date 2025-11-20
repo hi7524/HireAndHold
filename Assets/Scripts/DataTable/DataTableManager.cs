@@ -6,21 +6,36 @@ public static class DataTableManager
 {
     private static readonly Dictionary<string, DataTable> tables = new Dictionary<string, DataTable>();
     public static bool IsInitialized { get; private set; } = false;
-
+    private static bool isInitializing = false;
    
     public static async UniTask InitAsync()
     {
-        
         if (IsInitialized)
+            return;
+
+        // 누군가 이미 초기화 중이면 끝날 때까지 기다렸다가 리턴
+        if (isInitializing)
         {
-            Debug.Log("[DataTableManager] 이미 초기화됨 - 스킵");
+            while (!IsInitialized)
+            {
+                await UniTask.Yield();
+            }
             return;
         }
 
-        Debug.Log("[DataTableManager] 초기화 시작");
-        await LoadAllTablesAsync();
-        IsInitialized = true;
-        Debug.Log("[DataTableManager] 초기화 완료");
+        // 여기까지 온 애만 실제 초기화 수행
+        isInitializing = true;
+
+        try
+        {
+            await LoadAllTablesAsync();
+            Debug.Log("DataTableManager initialized");
+            IsInitialized = true;
+        }
+        finally
+        {
+            isInitializing = false;
+        }
     }
 
     private static async UniTask LoadAllTablesAsync()

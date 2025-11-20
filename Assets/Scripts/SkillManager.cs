@@ -2,7 +2,7 @@
 
 public class SkillManager : MonoBehaviour
 {
-    [SerializeField] private Transform spawnPoint;
+    
     [SerializeField] private SkillUiControl skillUi;
     [SerializeField] private PlayerSkillBase[] skills;
     [SerializeField] private SkillSelectUi skillSelectUi;
@@ -12,6 +12,7 @@ public class SkillManager : MonoBehaviour
         skillUi.gameObject.SetActive(false);
 
         skillSelectUi.OnSkillSelected += HandleSkillSelected;
+        
     }
 
     private void HandleSkillSelected(int skillIndex)
@@ -23,7 +24,7 @@ public class SkillManager : MonoBehaviour
 
         var selectedSkill = skills[skillIndex];
         skillUi.gameObject.SetActive(true);
-        skillUi.AddSkill(selectedSkill, spawnPoint.position);
+        skillUi.AddSkill(selectedSkill, new Vector3(0,3,0));
     }
 
     public int GetTotalSkillCount()
@@ -39,30 +40,30 @@ public class SkillManager : MonoBehaviour
         }
         return skills[index].SkillID;
     }
-    private void TestUseSkill(int skillIndex)
-    {
-        if (skillIndex < 0 || skillIndex >= skills.Length)
-        {
-            Debug.LogWarning($"[SkillManager] 잘못된 스킬 인덱스: {skillIndex}");
-            return;
-        }
+    // private void TestUseSkill(int skillIndex)
+    // {
+    //     if (skillIndex < 0 || skillIndex >= skills.Length)
+    //     {
+    //         Debug.LogWarning($"[SkillManager] 잘못된 스킬 인덱스: {skillIndex}");
+    //         return;
+    //     }
 
-        var skill = skills[skillIndex];
-        if (skill == null)
-        {
-            Debug.LogWarning($"[SkillManager] 스킬 슬롯 {skillIndex}이(가) 비어있습니다!");
-            return;
-        }
+    //     var skill = skills[skillIndex];
+    //     if (skill == null)
+    //     {
+    //         Debug.LogWarning($"[SkillManager] 스킬 슬롯 {skillIndex}이(가) 비어있습니다!");
+    //         return;
+    //     }
 
-        Vector3 usePosition = spawnPoint != null ? spawnPoint.position : transform.position;
+    //     Vector3 usePosition = spawnPoint != null ? spawnPoint.position : transform.position;
         
-        skill.TryUse(usePosition);
-    }
+    //     skill.TryUse(usePosition);
+    // }
 
-    public void UseSkillByIndex(int skillIndex)
-    {
-        TestUseSkill(skillIndex);
-    }
+    // public void UseSkillByIndex(int skillIndex)
+    // {
+    //     TestUseSkill(skillIndex);
+    // }
     private void OnDestroy()
     {
         skillSelectUi.OnSkillSelected -= HandleSkillSelected;
