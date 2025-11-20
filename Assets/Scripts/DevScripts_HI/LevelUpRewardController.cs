@@ -1,15 +1,21 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LevelUpRewardController : MonoBehaviour
 {
     [SerializeField] private UnitCardUi unitCardUiPrf;
     [SerializeField] private SkillCardUi skillCardPrf;
-    [SerializeField] private GameObject reRollBtn;
+    [SerializeField] private Button reRollBtn;
     [Space]
     [SerializeField] private GameManager gameManager;
+    [Space]
+    [SerializeField] private PlayerStageGold playerStageGold;
+    [SerializeField] private int rerollCost = 10;
+    [Space]
     [SerializeField] private PlayerExperience playerExp;
     [SerializeField] private UnitInventory inventory;
+
     public GridDatasForTesting gridDatasForTesting;
 
     private UnitCardUi[] unitCardUIs;
@@ -38,7 +44,7 @@ public class LevelUpRewardController : MonoBehaviour
         DrawUnitID();
         SetActiveCards(unitCardUIs, true);
         inventory.gameObject.SetActive(true);
-        reRollBtn.SetActive(true);
+        reRollBtn.gameObject.SetActive(true);
         gameManager.PauseGame();
     }
 
@@ -65,7 +71,7 @@ public class LevelUpRewardController : MonoBehaviour
     {
         SetActiveCards(skillCardUIs, false);
         SetActiveCards(unitCardUIs, false);
-        reRollBtn.SetActive(false);
+        reRollBtn.gameObject.SetActive(false);
 
         if (!gameManager.IsGameStarted)
             gameManager.StartGame();
@@ -98,6 +104,14 @@ public class LevelUpRewardController : MonoBehaviour
     public int DrawSkill()
     {
         return 1; // 수정 필요**
+    }
+
+    private void SetRerollBtn()
+    {
+        if (playerStageGold.Gold < rerollCost)
+            reRollBtn.interactable = false;
+        else
+            reRollBtn.interactable = true;
     }
 
     // UnitCardUI 생성
