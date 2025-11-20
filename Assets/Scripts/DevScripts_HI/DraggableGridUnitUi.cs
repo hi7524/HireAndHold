@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -12,11 +13,13 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
 
     // 드래그
     public GameObject GameObject => gameObject;
-    public bool IsDraggable => true; // 수정 필요: 편집 시스템과 연동짓기 **
+    public bool IsDraggable => isDraggable;
 
     // 유닛 정보
     public int UnitId { get; private set; }
     public UnitGridData GridData { get; private set; }
+
+    public event Action OnDropSuccess;
 
     // 프리뷰 오브젝트
     private readonly List<GameObject> previewImages = new List<GameObject>();
@@ -24,7 +27,13 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
     private Vector3 originalPosition;
     private Transform originalParent;
     private bool dropFailed = false;
+    private bool isDraggable = true;
 
+
+    public void SetDraggableState(bool value)
+    {
+        isDraggable = value;
+    }
 
     public void SetUnit(int unitId)
     {
@@ -105,7 +114,6 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
 
     public void OnDragStart()
     {
-        Debug.Log($"GridData: {GridData}, previewImages.Count: {previewImages.Count}, previewObjTrans: {previewObjTrans}");
         image.color = new Color(1, 1, 1, 0);
 
         // 원래 위치 저장
@@ -117,7 +125,6 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
 
     public void OnDrag()
     {
-        Debug.Log($"유닛 ID: {UnitId}");
     }
 
     public void OnDragEnd()
@@ -128,6 +135,7 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
         if (!dropFailed)
         {
             gameObject.SetActive(false);
+            OnDropSuccess?.Invoke();
         }
 
         transform.SetParent(originalParent);
@@ -164,7 +172,7 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
     private void CreatePreviewUICell(Vector2Int cellPos)
     {
         // UI Image GameObject 생성
-        GameObject cellObj = new($"PreviewCell_{cellPos.x}_{cellPos.y}");
+        GameObject cellObj = new();
         cellObj.transform.SetParent(previewObjTrans, false);
         previewImages.Add(cellObj);
 

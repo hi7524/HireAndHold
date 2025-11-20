@@ -10,6 +10,7 @@ public class StageUiManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TextMeshProUGUI goldText;
     [SerializeField] private TextMeshProUGUI speedLevelText;
+    [SerializeField] private TextMeshProUGUI infoText;
     [Space]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject warningPanel;
@@ -68,4 +69,10 @@ public class StageUiManager : MonoBehaviour
         }
     }
     
+
+    public void UpdateInfoText(string msg)
+    {
+        infoText.text = msg;
+        infoText.gameObject.SetActive(true);
+    }
 }

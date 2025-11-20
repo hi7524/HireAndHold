@@ -4,52 +4,97 @@ using UnityEngine.UI;
 
 public class LevelUpRewardController : MonoBehaviour
 {
+    public GridDatasForTesting gridDatasForTesting;
+
+    [Header("UI Prefabs")]
     [SerializeField] private UnitCardUi unitCardUiPrf;
     [SerializeField] private SkillCardUi skillCardPrf;
+    [Header("UI")]
     [SerializeField] private Button reRollBtn;
-    [Space]
+    [Header("Others")]
     [SerializeField] private GameManager gameManager;
-    [Space]
-    [SerializeField] private PlayerStageGold playerStageGold;
-    [SerializeField] private int rerollCost = 10;
-    [Space]
-    [SerializeField] private PlayerExperience playerExp;
     [SerializeField] private UnitInventory inventory;
+    [SerializeField] private PlayerStageGold playerStageGold;
+    [SerializeField] private PlayerExperience playerExp;
 
-    public GridDatasForTesting gridDatasForTesting;
+    private int rerollCost = 50;
 
     private UnitCardUi[] unitCardUIs;
     private SkillCardUi[] skillCardUIs;
 
     private List<int> ownedUnitIdForTesting = new List<int> { 11101, 11104, 11107, 11110, 11113 }; // 테스트용***
 
-
+    // 초기 세팅
     private void Start()
     {
+        // 각 프리팹 카드 3장씩 생성
         CreateUnitCardPrf(3);
         CreateSkillCardPrf(3);
 
-        playerExp.OnLevelUp += DrawReward;
+        // 레기업시 보상 뽑기
+        playerExp.OnLevelUp += DrawLevelUpReward;
 
+        // 스테이지 시작 전, 초기 배치를 위한 활성화
         SelectUnitOnGameStart();
     }
 
     private void OnDestroy()
     {
-        playerExp.OnLevelUp -= DrawReward;
+        playerExp.OnLevelUp -= DrawLevelUpReward;
+
+        // UnitCardUI 이벤트 구독 해제
+        if (unitCardUIs != null)
+        {
+            foreach (var card in unitCardUIs)
+            {
+                if (card != null)
+                {
+                    card.OnUnitDropSuccess -= OnUnitCardDropSuccess;
+                }
+            }
+        }
     }
 
+    // 스테이지 시작 전
     public void SelectUnitOnGameStart()
     {
+        // 유닛뽑기
         DrawUnitID();
         SetActiveCards(unitCardUIs, true);
+
+        // 관련 UI 활성화
         inventory.gameObject.SetActive(true);
         reRollBtn.gameObject.SetActive(true);
+        UpdateRerollBtn();
+    }
+
+    // 레벌업시 보상 랜덤 뽑기
+    public void DrawLevelUpReward()
+    {
+        // 관련 UI 업데이트
+        inventory.gameObject.SetActive(true);
+        reRollBtn.gameObject.SetActive(true);
+        UpdateRerollBtn();
+
+        // ** 수정 필요 
+        for (int i = 0; i < unitCardUIs.Length; i++)
+        {
+            unitCardUIs[i].SetDragState(true);
+            unitCardUIs[i].SetColor(Color.white);
+        }
+
+        DrawReward();
+
         gameManager.PauseGame();
     }
 
-    public void DrawReward()
+    // 실제 보상 뽑기
+    private void DrawReward()
     {
+        // 기존 카드들을 모두 비활성화
+        SetActiveCards(skillCardUIs, false);
+        SetActiveCards(unitCardUIs, false);
+
         // 플레이어 레벨이 3의 배수일 때 스킬 뽑기
         if (playerExp.Level % 3 == 0)
         {
@@ -61,14 +106,12 @@ public class LevelUpRewardController : MonoBehaviour
             DrawUnitID();
             SetActiveCards(unitCardUIs, true);
         }
-
-        inventory.gameObject.SetActive(true);
-
-        gameManager.PauseGame();
     }
 
+    // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
+        // 관련 UI 비활성화
         SetActiveCards(skillCardUIs, false);
         SetActiveCards(unitCardUIs, false);
         reRollBtn.gameObject.SetActive(false);
@@ -106,12 +149,30 @@ public class LevelUpRewardController : MonoBehaviour
         return 1; // 수정 필요**
     }
 
-    private void SetRerollBtn()
+    // 리롤 버튼 상호작용 상태 설정
+    private void UpdateRerollBtn()
     {
         if (playerStageGold.Gold < rerollCost)
             reRollBtn.interactable = false;
         else
             reRollBtn.interactable = true;
+    }
+
+    // 리롤
+    public void OnClickRerollBtn()
+    {
+        if (playerStageGold.UseGold(rerollCost))
+        {
+            DrawReward();
+            UpdateRerollBtn();
+
+            // 리롤 시 카드 드래그 다시 활성화
+            for (int i = 0; i < unitCardUIs.Length; i++)
+            {
+                unitCardUIs[i].SetDragState(true);
+                unitCardUIs[i].SetColor(Color.white);
+            }
+        }
     }
 
     // UnitCardUI 생성
@@ -124,6 +185,9 @@ public class LevelUpRewardController : MonoBehaviour
             var card = Instantiate(unitCardUiPrf, transform);
             unitCardUIs[i] = card;
             card.gameObject.SetActive(false);
+
+            // 각 카드의 드롭 성공 이벤트 구독
+            card.OnUnitDropSuccess += OnUnitCardDropSuccess;
         }
     }
 
@@ -146,6 +210,16 @@ public class LevelUpRewardController : MonoBehaviour
         for (int i = 0; i < cardArray.Length; i++)
         {
             cardArray[i].gameObject.SetActive(value);
+        }
+    }
+
+    // 유닛 카드의 드롭 성공 처리
+    private void OnUnitCardDropSuccess()
+    {
+        for (int i = 0; i < unitCardUIs.Length; i++)
+        {
+            unitCardUIs[i].SetDragState(false);
+            unitCardUIs[i].SetColor(new Color(0.267f, 0.267f, 0.267f));
         }
     }
 }

@@ -10,7 +10,9 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
     [SerializeField] private ScrollRect scrollRect;
     [Space]
     [SerializeField] private DragManager dragManager;
+    [SerializeField] private PlayerStageGold playerGold;
     [SerializeField] private GridDatasForTesting gridDatas;
+    [SerializeField] private StageUiManager uiManager;
 
     private const int MaxCapacity = 16;
 
@@ -18,6 +20,8 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
     private UnitInventorySlot[] slots;
     private int slotIndex;
     private Sequence dropSequence;
+
+    private int sellCost = 25; // 테스트용 **
 
 
     async UniTaskVoid Start()
@@ -39,6 +43,7 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
     {
         dragManager.SetDragEnabled(false);
         SellUnits();
+        UpdateAllSlotsUi();
     }
 
     private void OnDestroy()
@@ -90,7 +95,19 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
 
     private void SellUnits()
     {
+        if (ownedUnitIds.Count <= 0)
+            return;
+
         Debug.Log("잔여 유닛 판매");
+
+        int addGold = ownedUnitIds.Count * sellCost;
+        playerGold.AddGold(addGold);
+
+        string msg = $"+{addGold}G\n유닛 {ownedUnitIds.Count}개 판매!";
+        uiManager.UpdateInfoText(msg);
+
+        ownedUnitIds.Clear();
+        slotIndex = 0;
     }
 
     // 유닛 나타낼 UI 생성
