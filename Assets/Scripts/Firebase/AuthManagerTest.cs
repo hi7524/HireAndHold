@@ -112,7 +112,7 @@ public class AuthManagerTester : MonoBehaviour
     {
         if (AuthManager.Instance == null) { Append("[Tester] AuthManager null"); return; }
         Append("[Tester] Try: Anonymous SignIn");
-        var (ok, err) = await AuthManager.Instance.SingInAnonymouslyAsync(); // 네 메서드명 그대로 사용
+        var (ok, err) = await AuthManager.Instance.SingInAnonymouslyAsync(); 
         Append(ok ? "[Tester] Anonymous SignIn OK" : $"[Tester] Anonymous SignIn FAIL: {err}");
         DumpState();
     }
@@ -130,7 +130,7 @@ public class AuthManagerTester : MonoBehaviour
     {
         if (AuthManager.Instance == null) { Append("[Tester] AuthManager null"); return; }
         Append($"[Tester] Try: SignIn {email}");
-        var (ok, err) = await AuthManager.Instance.SighInWithEmailAsync(email, password); // 네 메서드명 그대로 사용
+        var (ok, err) = await AuthManager.Instance.SighInWithEmailAsync(email, password); 
         Append(ok ? "[Tester] Email SignIn OK" : $"[Tester] Email SignIn FAIL: {err}");
         DumpState();
     }
@@ -139,7 +139,7 @@ public class AuthManagerTester : MonoBehaviour
     {
         if (AuthManager.Instance == null) { Append("[Tester] AuthManager null"); return; }
         Append("[Tester] Try: SignOut");
-        AuthManager.Instance.SignOut();
+        AuthManager.Instance.SignOutAsync().Forget();
         Append("[Tester] SignOut called");
         DumpState();
     }
