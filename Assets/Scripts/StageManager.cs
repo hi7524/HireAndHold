@@ -47,7 +47,7 @@ public class StageManager : MonoBehaviour
 
         OnStageStart?.Invoke(stageId);
         waveManager.InitializeWaves(stageId);
-        gameManager.StartGame();
+        // gameManager.StartGame();
     }
     public void CompleteStage()
     {

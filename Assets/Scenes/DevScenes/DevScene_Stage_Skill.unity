@@ -3645,7 +3645,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 185.67346, y: -221.04999}
+  m_AnchoredPosition: {x: 315.5193, y: -221.04999}
   m_SizeDelta: {x: 120, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &433837855
@@ -4452,7 +4452,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 309.45578, y: -221.04999}
+  m_AnchoredPosition: {x: 525.8655, y: -221.04999}
   m_SizeDelta: {x: 120, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &670294312
@@ -5520,8 +5520,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHp: 600
   currentHp: 0
-  currentExp: 0
-  gameOverUi: {fileID: 206233330}
+  hpSlider: {fileID: 0}
+  uiManager: {fileID: 0}
+  gameManager: {fileID: 0}
 --- !u!212 &897469848
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -8055,6 +8056,7 @@ MonoBehaviour:
   gameManager: {fileID: 313655619}
   timerText: {fileID: 0}
   speedLevelText: {fileID: 0}
+  gameOverPanel: {fileID: 0}
 --- !u!1 &1215571290
 GameObject:
   m_ObjectHideFlags: 0
@@ -13615,7 +13617,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 61.891155, y: -221.04999}
+  m_AnchoredPosition: {x: 105.173096, y: -221.04999}
   m_SizeDelta: {x: 120, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2041971606
