@@ -11,6 +11,8 @@ public class UnitCard : MonoBehaviour
     private UnitData data;
     private Action<UnitData> onClick;
 
+    public UnitData Data => data;
+
     public void Init(UnitData unit)
     {
         data = unit;
@@ -26,5 +28,10 @@ public class UnitCard : MonoBehaviour
     public void OnClick()
     {
         onClick?.Invoke(data);
+    }
+
+    public void SetVisible(bool visible)
+    {
+        gameObject.SetActive(visible);
     }
 }

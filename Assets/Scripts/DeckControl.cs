@@ -10,7 +10,8 @@ public class DeckControl : MonoBehaviour
     public Button completeButton;
 
     private List<UnitCard> unitCards = new();
-    private bool isEditing = false; 
+    private Dictionary<UnitData, UnitCard> unitMap = new();
+    private bool isEditing = false;
 
     void Awake()
     {
@@ -37,7 +38,24 @@ public class DeckControl : MonoBehaviour
                 card.Init(unitData);
                 card.Setup(OnUnitCardClicked);
                 unitCards.Add(card);
+                unitMap[unitData] = card;
             }
+        }
+    }
+
+    public void OnSlotClicked(DeckSlot slot)
+    {
+        if (!isEditing)
+        {
+            EnterEditMode();
+            return;
+        }
+
+        if (slot.HasPending)
+        {
+            slot.ClearPending();
+            UpdateCompleteButtonState();
+            return;
         }
     }
 
@@ -45,6 +63,12 @@ public class DeckControl : MonoBehaviour
     {
         isEditing = true;
         highlightOverlay.SetActive(true);
+
+        foreach (var slot in slots)
+        {
+            slot.BeginEdit();
+        }
+
         UpdateCompleteButtonState();
     }
 
@@ -52,6 +76,25 @@ public class DeckControl : MonoBehaviour
     {
         isEditing = false;
         highlightOverlay.SetActive(false);
+
+        foreach (var slot in slots)
+        {
+            slot.CancelPending();
+        }
+
+        UpdateCompleteButtonState();
+    }
+
+    public void ToggleEditMode()
+    {
+        if (isEditing)
+        {
+            ExitEditMode();
+        }
+        else
+        {
+            EnterEditMode();
+        }
     }
 
     void OnUnitCardClicked(UnitData data)
@@ -61,26 +104,41 @@ public class DeckControl : MonoBehaviour
             return;
         }
 
-
         foreach (var slot in slots)
         {
-            if (!slot.HasUnit)
+            if (!slot.HasPending)
             {
-                slot.SetUnit(data);
+                slot.SetPending(data);
+                NotifyUnitAssigned(data);
                 UpdateCompleteButtonState();
                 return;
             }
         }
+    }
 
-        Debug.Log(" x empty slot");
+    public void NotifyUnitAssigned(UnitData data)
+    {
+        if (unitMap.TryGetValue(data, out var card))
+        {
+            card.SetVisible(false);
+        }
+    }
+
+    public void NotifyUnitCleared(UnitData data)
+    {
+        if (unitMap.TryGetValue(data, out var card))
+        {
+            card.SetVisible(true);
+        }
     }
 
     void UpdateCompleteButtonState()
     {
         bool allFilled = true;
+
         foreach (var slot in slots)
         {
-            if (!slot.HasUnit)
+            if (!slot.HasPending)
             {
                 allFilled = false;
                 break;
@@ -99,14 +157,19 @@ public class DeckControl : MonoBehaviour
 
         foreach (var slot in slots)
         {
-            if (!slot.HasUnit)
+            if (!slot.HasPending)
             {
-                Debug.Log("fill all slots");
                 return;
             }
         }
 
-        ExitEditMode();
-        Debug.Log("deck composition finished");
+        foreach (var slot in slots)
+        {
+            slot.CommitPending();
+        }
+
+        isEditing = false;
+        highlightOverlay.SetActive(false);
+        UpdateCompleteButtonState();
     }
 }
