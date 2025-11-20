@@ -117,7 +117,6 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
 
     public void OnDrag()
     {
-        Debug.Log($"유닛 ID: {UnitId}");
     }
 
     public void OnDragEnd()

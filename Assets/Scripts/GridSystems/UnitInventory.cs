@@ -21,7 +21,7 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
     private int slotIndex;
     private Sequence dropSequence;
 
-    private int sellCost = 10; // 테스트용 **
+    private int sellCost = 25; // 테스트용 **
 
 
     async UniTaskVoid Start()

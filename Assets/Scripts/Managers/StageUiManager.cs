@@ -45,7 +45,6 @@ public class StageUiManager : MonoBehaviour
 
     public void UpdateInfoText(string msg)
     {
-        Debug.Log("asdf");
         infoText.text = msg;
         infoText.gameObject.SetActive(true);
     }

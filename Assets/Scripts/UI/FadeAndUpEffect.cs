@@ -26,9 +26,9 @@ public class FadeAndUpEffect : MonoBehaviour
         sequence = DOTween.Sequence();
         sequence.SetUpdate(true);
 
-        sequence.Append(transform.DOLocalMoveY(-30, 0.3f));
-        sequence.Join(canvasGroup.DOFade(1f, 0.2f));
-        sequence.Append(transform.DOLocalMoveY(-40f, 0.1f));
+        sequence.Append(transform.DOLocalMoveY(0, 0.3f));
+        sequence.Join(canvasGroup.DOFade(1f, 0.3f));
+        sequence.Append(transform.DOLocalMoveY(-15f, 0.1f));
         sequence.AppendInterval(1.0f);
         sequence.Append(canvasGroup.DOFade(0f, 0.8f));
         sequence.OnComplete(() => gameObject.SetActive(false));
