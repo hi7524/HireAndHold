@@ -64,6 +64,35 @@ public class Monster : MonoBehaviour, IDamagable
             transform.localScale = transform.localScale * 1;
         }
     }
+    public void InitializeWithData(ObjectPoolManager manager, string key, MonsterData data, bool boss = false)
+    {
+        poolManager = manager;
+        poolKey = key;
+        isDead = false;
+        maxHp = data.MON_HP;
+        currentHp = maxHp;
+        speed = data.MON_SPEED;
+        attackDamage = data.MON_ATK;
+        isAttacking = false;
+        isStunned = false; 
+        originalSpeed = speed; 
+        defense = data.MON_DEF; 
+        Debug.Log($"[Monster] {data.MON_NAME} 데이터로 초기화 완료! HP: {maxHp}, ATK: {attackDamage}, DEF: {defense}");
+        isBoss = boss;
+
+        if (isBoss)
+        {
+            maxHp *= 3f;
+            currentHp = maxHp;
+            speed *= 0.7f;
+            attackDamage *= 2f;
+            transform.localScale = transform.localScale * 3f;
+        }
+        else
+        {
+            transform.localScale = transform.localScale * 1;
+        }
+    }
 
     void Update()
     {
@@ -171,7 +200,7 @@ public class Monster : MonoBehaviour, IDamagable
         }
 
 
-        currentHp -= damage ;//- defense;
+        currentHp -= damage *10 ;//- defense;
 
         if (currentHp <= 0)
         {

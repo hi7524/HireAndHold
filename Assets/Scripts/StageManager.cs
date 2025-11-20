@@ -23,8 +23,8 @@ public class StageManager : MonoBehaviour
             Debug.Log("[StageManager] DataTable 초기화 대기 중...");
             await DataTableManager.InitAsync();
         }
-
-        StartStage(701);
+        CurrentStageId = 701; 
+        gameManager.OnGameStart += () => StartStage(CurrentStageId);
     }
 
     
@@ -47,7 +47,7 @@ public class StageManager : MonoBehaviour
 
         OnStageStart?.Invoke(stageId);
         waveManager.InitializeWaves(stageId);
-        // gameManager.StartGame();
+        
     }
     public void CompleteStage()
     {
@@ -64,5 +64,9 @@ public class StageManager : MonoBehaviour
         Debug.Log($"[StageManager] 스테이지 {CurrentStageId} 실패");
         OnStageFailed?.Invoke(CurrentStageId);
         gameManager.GameEnd();
+    }
+    private void OnDestroy()
+    {
+        gameManager.OnGameStart -= () => StartStage(CurrentStageId);
     }
 }
