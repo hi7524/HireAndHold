@@ -41,6 +41,18 @@ public class LevelUpRewardController : MonoBehaviour
     private void OnDestroy()
     {
         playerExp.OnLevelUp -= DrawLevelUpReward;
+
+        // UnitCardUI 이벤트 구독 해제
+        if (unitCardUIs != null)
+        {
+            foreach (var card in unitCardUIs)
+            {
+                if (card != null)
+                {
+                    card.OnUnitDropSuccess -= OnUnitCardDropSuccess;
+                }
+            }
+        }
     }
 
     // 스테이지 시작 전
@@ -63,6 +75,13 @@ public class LevelUpRewardController : MonoBehaviour
         inventory.gameObject.SetActive(true);
         reRollBtn.gameObject.SetActive(true);
         UpdateRerollBtn();
+
+        // ** 수정 필요 
+        for (int i = 0; i < unitCardUIs.Length; i++)
+        {
+            unitCardUIs[i].SetDragState(true);
+            unitCardUIs[i].SetColor(Color.white);
+        }
 
         DrawReward();
 
@@ -146,6 +165,13 @@ public class LevelUpRewardController : MonoBehaviour
         {
             DrawReward();
             UpdateRerollBtn();
+
+            // 리롤 시 카드 드래그 다시 활성화
+            for (int i = 0; i < unitCardUIs.Length; i++)
+            {
+                unitCardUIs[i].SetDragState(true);
+                unitCardUIs[i].SetColor(Color.white);
+            }
         }
     }
 
@@ -159,6 +185,9 @@ public class LevelUpRewardController : MonoBehaviour
             var card = Instantiate(unitCardUiPrf, transform);
             unitCardUIs[i] = card;
             card.gameObject.SetActive(false);
+
+            // 각 카드의 드롭 성공 이벤트 구독
+            card.OnUnitDropSuccess += OnUnitCardDropSuccess;
         }
     }
 
@@ -181,6 +210,16 @@ public class LevelUpRewardController : MonoBehaviour
         for (int i = 0; i < cardArray.Length; i++)
         {
             cardArray[i].gameObject.SetActive(value);
+        }
+    }
+
+    // 유닛 카드의 드롭 성공 처리
+    private void OnUnitCardDropSuccess()
+    {
+        for (int i = 0; i < unitCardUIs.Length; i++)
+        {
+            unitCardUIs[i].SetDragState(false);
+            unitCardUIs[i].SetColor(new Color(0.267f, 0.267f, 0.267f));
         }
     }
 }
