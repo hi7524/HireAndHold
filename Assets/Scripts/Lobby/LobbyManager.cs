@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,7 +10,7 @@ public class LobbyManager : MonoBehaviour
     private void Start()
     {
         windowManager = FindObjectOfType<WindowManager>();
-        Time.timeScale = 1f;   
+        Time.timeScale = 1f;
     }
 
     public void OnClickedStoreButton()
@@ -33,10 +34,11 @@ public class LobbyManager : MonoBehaviour
     {
         windowManager.Open(Windows.Stage);
     }
-    public void OnClickedLogOutButton()
+    public async void OnClickedLogOutButton()
     {
-        AuthManager.Instance.SignOut();
+        await AuthManager.Instance.SignOutAsync();
         SceneManager.LoadScene("DevScene_Title");
     }
-    
+
+
 }

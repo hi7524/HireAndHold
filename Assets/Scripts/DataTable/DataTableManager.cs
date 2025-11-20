@@ -10,9 +10,17 @@ public static class DataTableManager
    
     public static async UniTask InitAsync()
     {
+        
+        if (IsInitialized)
+        {
+            Debug.Log("[DataTableManager] 이미 초기화됨 - 스킵");
+            return;
+        }
+
+        Debug.Log("[DataTableManager] 초기화 시작");
         await LoadAllTablesAsync();
         IsInitialized = true;
-        Debug.Log("DataTableManager initialized");
+        Debug.Log("[DataTableManager] 초기화 완료");
     }
 
     private static async UniTask LoadAllTablesAsync()
@@ -37,6 +45,13 @@ public static class DataTableManager
 
     private static async UniTask LoadTableAsync<T>(string id) where T : DataTable, new()
     {
+        // 이미 로드된 테이블은 스킵
+        if (tables.ContainsKey(id))
+        {
+            Debug.Log($"[DataTableManager] {id} 이미 로드됨 - 스킵");
+            return;
+        }
+
         var table = new T();
         await table.LoadAsync(id);
         tables.Add(id, table);

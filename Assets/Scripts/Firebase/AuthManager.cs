@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using Firebase.Auth;
 using UnityEngine;
@@ -14,14 +15,14 @@ public class AuthManager : MonoBehaviour
 
     public FirebaseUser CurrentUser => currentUser;
 
-    public bool IsLoggedIn => currentUser != null; 
+    public bool IsLoggedIn => currentUser != null;
 
     public string UserId => currentUser?.UserId ?? string.Empty;
     public bool IsInitialized => isInitialized;
 
     private void Awake()
     {
-        if(instance == null)
+        if (instance == null)
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
@@ -34,16 +35,16 @@ public class AuthManager : MonoBehaviour
 
     private async UniTaskVoid Start()
     {
-        await FirebaseInitializer.Instance.WaitForInitializationAsync(); 
+        await FirebaseInitializer.Instance.WaitForInitializationAsync();
 
         auth = FirebaseAuth.DefaultInstance;
         auth.StateChanged += OnAuthStateChanged;
 
-        currentUser = auth.CurrentUser; 
+        currentUser = auth.CurrentUser;
 
-        if(currentUser != null)
+        if (currentUser != null)
         {
-            Debug.Log($"[Auth] 이미 로그인됨: {UserId}"); 
+            Debug.Log($"[Auth] 이미 로그인됨: {UserId}");
         }
         else
         {
@@ -56,7 +57,7 @@ public class AuthManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        if(auth != null)
+        if (auth != null)
         {
             auth.StateChanged -= OnAuthStateChanged;
         }
@@ -65,7 +66,7 @@ public class AuthManager : MonoBehaviour
 
     private void OnAuthStateChanged(object sender, System.EventArgs eventArgrs)
     {
-        if(auth.CurrentUser != currentUser)
+        if (auth.CurrentUser != currentUser)
         {
             bool signedIn = auth.CurrentUser != currentUser && auth.CurrentUser != null;
             if (!signedIn && currentUser != null)
@@ -87,18 +88,18 @@ public class AuthManager : MonoBehaviour
     {
         try
         {
-            // Debug.Log("[Auth] 익명 로그인 시도...");
+            Debug.Log("[Auth] 익명 로그인 시도...");
 
             AuthResult result = await auth.SignInAnonymouslyAsync().AsUniTask();
             currentUser = result.User;
 
-            // Debug.Log($"[Auth] 익명 로그인 성공: {UserId}");
+            Debug.Log($"[Auth] 익명 로그인 성공: {UserId}");
 
             return (true, null);
         }
         catch (System.Exception ex)
         {
-            // Debug.Log($"[Auth] 익명 로그인 실패: {ex.Message}");
+            Debug.Log($"[Auth] 익명 로그인 실패: {ex.Message}");
             return (false, ex.Message);
         }
 
@@ -145,14 +146,27 @@ public class AuthManager : MonoBehaviour
 
     }
 
-    public void SignOut()
+    public async UniTask SignOutAsync()
     {
-        if(auth != null && currentUser != null)
+        if (auth != null && currentUser != null)
         {
-            // Debug.Log("[Auth] 로그아웃 시도");
             auth.SignOut();
             currentUser = null;
-            // Debug.Log("[Auth] 로그아웃");
+
+            // 타임아웃과 함께 대기
+            var waitTask = UniTask.WaitUntil(() => auth.CurrentUser == null);
+            var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(3f));
+
+            int result = await UniTask.WhenAny(waitTask, timeoutTask);
+
+            if (result == 0)
+            {
+                Debug.Log("[Auth] 로그아웃 완료");
+            }
+            else
+            {
+                Debug.LogWarning("[Auth] 로그아웃 타임아웃 (강제 진행)");
+            }
         }
     }
 
