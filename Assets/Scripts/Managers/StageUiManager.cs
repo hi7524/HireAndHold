@@ -8,6 +8,7 @@ public class StageUiManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TextMeshProUGUI goldText;
     [SerializeField] private TextMeshProUGUI speedLevelText;
+    [SerializeField] private TextMeshProUGUI infoText;
     [Space]
     [SerializeField] private GameObject gameOverPanel;
 
@@ -40,5 +41,12 @@ public class StageUiManager : MonoBehaviour
     public void UpdateStageGoldText(int curGold)
     {
         goldText.text = $"{curGold:N0}G";
+    }
+
+    public void UpdateInfoText(string msg)
+    {
+        Debug.Log("asdf");
+        infoText.text = msg;
+        infoText.gameObject.SetActive(true);
     }
 }
