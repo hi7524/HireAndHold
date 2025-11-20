@@ -37,7 +37,7 @@ public class LobbyManager : MonoBehaviour
     public async void OnClickedLogOutButton()
     {
         await AuthManager.Instance.SignOutAsync();
-        SceneManager.LoadScene("DevScene_Title");
+        SceneManager.LoadScene("01_Title");
     }
 
 

@@ -171,7 +171,7 @@ public class Monster : MonoBehaviour, IDamagable
         }
 
 
-        currentHp -= damage - defense;
+        currentHp -= damage ;//- defense;
 
         if (currentHp <= 0)
         {

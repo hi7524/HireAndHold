@@ -6,6 +6,7 @@ public class WindowUI : MonoBehaviour
     [SerializeField] private GameObject pricePanel;
     [SerializeField] private Button confirmButton;
     [SerializeField] private SkillSelectUi skillSelectUi;
+    [SerializeField] private GameManager gameManager;
 
 
     private void Awake()
@@ -16,15 +17,13 @@ public class WindowUI : MonoBehaviour
 
     public void Show()
     {
-
         pricePanel.SetActive(true);
-        Time.timeScale = 0f;
+        gameManager.PauseGame();
     }
 
     private void OnConfirm()
     {
         pricePanel.SetActive(false);
-        Time.timeScale = 0f;
         skillSelectUi.Show();
     }
 }

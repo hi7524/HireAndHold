@@ -89,7 +89,7 @@ public class TopUi : MonoBehaviour
     private  void OnLobbyButtonClick()
     {
  
-        LoadingSceneManager.Instance.LoadSceneWithLoading(new LoadingRequest("DevScene_Lobby"));
+        LoadingSceneManager.Instance.LoadSceneWithLoading(new LoadingRequest("Lobby"));
 
     }
 

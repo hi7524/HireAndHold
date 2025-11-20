@@ -23,7 +23,7 @@ public class LoadingSceneManager : MonoBehaviour
     }
 
     [Header("Settings")]
-    [SerializeField] private string loadingSceneName = "DevScene_Loading";
+    [SerializeField] private string loadingSceneName = "Loading";
     [SerializeField] private float minimumLoadingTime = 1f; 
 
     private LoadingRequest currentRequest;
