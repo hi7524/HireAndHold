@@ -13,12 +13,12 @@ public class GameInitializer : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private float firebaseTimeoutSeconds = 2f;
-   
+
 
     private async UniTaskVoid Start()
     {
         await InitializeGameAsync();
-        
+
     }
 
     private async UniTask InitializeGameAsync()
@@ -41,37 +41,33 @@ public class GameInitializer : MonoBehaviour
         // 2. AuthManager 초기화 대기
         ShowLoading(true, "인증 시스템 초기화 중...");
         Debug.Log(AuthManager.Instance.IsInitialized);
-        // await UniTask.WaitUntil(() => AuthManager.Instance != null && AuthManager.Instance.IsInitialized);
+        await UniTask.WaitUntil(() => AuthManager.Instance != null && AuthManager.Instance.IsInitialized);
 
-       
-        ShowLoading(true, "로그인 상태 확인 중...");
-        // await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
-       
-        // 4. 로그인 상태 확인
+
+        // 3. 로그인 상태 확인
         if (AuthManager.Instance.IsLoggedIn)
         {
-            // 이미 로그인된 경우 - 데이터 로드 후 로비로 이동
-            Debug.Log("[GameInitializer] 사용자가 이미 로그인되어 있습니다. 데이터를 로드합니다.");
+            Debug.Log("[GameInitializer] 사용자 이미 로그인됨. 로비로 이동합니다.");
+            ShowLoading(true, "데이터 로드 중...");
             await LoadDataAndGoToLobbyAsync();
         }
         else
         {
-            // 로그인되지 않은 경우 - 로그인 화면 표시
-            Debug.Log("[GameInitializer] 사용자가 로그인되어 있지 않습니다. 로그인 화면을 표시합니다.");
+            Debug.Log("[GameInitializer] 로그인 필요. 로그인 화면을 표시합니다.");
             ShowLoading(false);
             ShowLoginScreen();
         }
     }
 
-   
+
     private async UniTask<bool> WaitForFirebaseWithTimeoutAsync()
     {
         try
         {
-            
+
             var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(0.5f));
             var waitTask = UniTask.WaitUntil(() => FirebaseInitializer.Instance != null);
-            
+
             await UniTask.WhenAny(waitTask, timeoutTask);
 
             if (FirebaseInitializer.Instance == null)
@@ -83,7 +79,7 @@ public class GameInitializer : MonoBehaviour
             // Firebase 초기화 완료를 타임아웃과 함께 대기
             var initTimeoutTask = UniTask.Delay(TimeSpan.FromSeconds(firebaseTimeoutSeconds));
             var initWaitTask = FirebaseInitializer.Instance.WaitForInitializationAsync();
-            
+
             // 인덱스 기반으로 어느 작업이 먼저 완료되었는지 확인
             int completedIndex = await UniTask.WhenAny(initWaitTask, initTimeoutTask);
 
@@ -113,12 +109,13 @@ public class GameInitializer : MonoBehaviour
         }
     }
 
-   
+
     private async UniTask LoadDataAndGoToLobbyAsync()
     {
-         LoadingRequest request = new LoadingRequest("DevScene_Lobby");
+        Debug.Log("[GameInitializer] 로비 씬 로딩 시작");
+        LoadingRequest request = new LoadingRequest("DevScene_Lobby");
 
-        
+
         // request.AddTask("Load Game Resources", async (ct) =>
         // {
         //     // 리소스 로드 시뮬레이션
@@ -165,12 +162,16 @@ public class GameInitializer : MonoBehaviour
 
     public async void OnLoginSuccess()
     {
+        Debug.Log("[GameInitializer] OnLoginSuccess 호출됨");
+        
         if (loginPanel != null)
         {
             loginPanel.SetActive(false);
         }
-        
+
+        Debug.Log("[GameInitializer] LoadDataAndGoToLobbyAsync 호출 시작");
         await LoadDataAndGoToLobbyAsync();
+        Debug.Log("[GameInitializer] LoadDataAndGoToLobbyAsync 완료");
     }
 
 

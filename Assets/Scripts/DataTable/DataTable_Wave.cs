@@ -51,4 +51,8 @@ public class DataTable_Wave : DataTable
         }
         return dictionary[key];
     }
+    public IEnumerable<WaveData> GetAll()
+    {
+        return dictionary.Values;
+    }
 }

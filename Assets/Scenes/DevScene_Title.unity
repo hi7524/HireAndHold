@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4320536}
   - component: {fileID: 4320537}
+  - component: {fileID: 4320538}
   m_Layer: 5
   m_Name: LoginUI
   m_TagString: Untagged
@@ -181,7 +182,23 @@ MonoBehaviour:
   backToLoginButton: {fileID: 1718550346}
   feedbackText: {fileID: 0}
   loadingIndicator: {fileID: 0}
-  gameInitializer: {fileID: 0}
+  gameInitializer: {fileID: 4320538}
+--- !u!114 &4320538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4320535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29d38867825f8ea4ba19a03fc8bc0fc6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  loadingPanel: {fileID: 724446236}
+  loginPanel: {fileID: 724446236}
+  statusText: {fileID: 400137989}
+  firebaseTimeoutSeconds: 2
 --- !u!1 &153820845
 GameObject:
   m_ObjectHideFlags: 0
@@ -451,7 +468,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 163328095}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 29d38867825f8ea4ba19a03fc8bc0fc6, type: 3}
   m_Name: 

@@ -31,6 +31,7 @@ public class GameManager : MonoBehaviour
             return;
 
         ElapsedTime += Time.deltaTime;
+        timeScheduler.UpdateTime(Time.deltaTime);
     }
     
     // 게임 재설정
@@ -39,6 +40,9 @@ public class GameManager : MonoBehaviour
         curSpeedLevelIdx = 0;
         IsGameStarted = false;
         Time.timeScale = 0;
+
+        ElapsedTime = 0f;
+        timeScheduler.Reset();
     }
 
     // 게임 시작

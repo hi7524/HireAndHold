@@ -27,14 +27,11 @@ public class LoginUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI feedbackText;
     [SerializeField] private GameObject loadingIndicator;
 
-//임시
+
     [SerializeField]private GameInitializer gameInitializer;
 
     private void Start()
     {
-       
-
-        // 버튼 이벤트 연결
         if (loginButton != null)
             loginButton.onClick.AddListener(() => OnLoginButtonClick().Forget());
         
@@ -50,13 +47,10 @@ public class LoginUI : MonoBehaviour
         if (backToLoginButton != null)
             backToLoginButton.onClick.AddListener(ShowLoginPanel);
 
-        // 초기 화면 설정
         ShowLoginPanel();
     }
 
-    /// <summary>
-    /// 로그인 버튼 클릭
-    /// </summary>
+   
     private async UniTaskVoid OnLoginButtonClick()
     {
         string email = loginEmailInput.text.Trim();
@@ -143,9 +137,7 @@ public class LoginUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 게스트 로그인 버튼 클릭
-    /// </summary>
+   
     private async UniTaskVoid OnGuestLoginButtonClick()
     {
         SetUIInteractable(false);
@@ -159,11 +151,16 @@ public class LoginUI : MonoBehaviour
         if (success)
         {
             ShowFeedback("게스트 로그인 성공!", true);
+            Debug.Log("[LoginUI] 게스트 로그인 성공 - GameInitializer 호출 시도");
             
-            // 게스트 로그인 성공
             if (gameInitializer != null)
             {
+                Debug.Log("[LoginUI] GameInitializer.OnLoginSuccess() 호출");
                 gameInitializer.OnLoginSuccess();
+            }
+            else
+            {
+                Debug.LogError("[LoginUI] GameInitializer가 null입니다! Inspector에서 할당하세요.");
             }
         }
         else
@@ -172,9 +169,6 @@ public class LoginUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 로그인 패널 표시
-    /// </summary>
     private void ShowLoginPanel()
     {
         if (loginPanel != null)
