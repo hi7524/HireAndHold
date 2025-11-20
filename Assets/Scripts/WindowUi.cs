@@ -9,21 +9,22 @@ public class WindowUI : MonoBehaviour
     [SerializeField] private GameManager gameManager;
 
 
-    private void Awake()
-    {
-        pricePanel.SetActive(false);
-        confirmButton.onClick.AddListener(OnConfirm);
-    }
 
-    public void Show()
+    private void OnEnable()
     {
         pricePanel.SetActive(true);
         gameManager.PauseGame();
+        confirmButton.onClick.AddListener(OnConfirm);
     }
 
     private void OnConfirm()
     {
         pricePanel.SetActive(false);
         skillSelectUi.Show();
+    }
+    private void OnDisable()
+    {
+        confirmButton.onClick.RemoveListener(OnConfirm);
+        
     }
 }

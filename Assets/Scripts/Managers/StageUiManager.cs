@@ -1,4 +1,6 @@
-﻿using TMPro;
+﻿using System;
+using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 
 public class StageUiManager : MonoBehaviour
@@ -10,6 +12,9 @@ public class StageUiManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI speedLevelText;
     [Space]
     [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private GameObject warningPanel;
+    [SerializeField] private GameObject bossPricePanel;
+    [SerializeField] private GameObject skillSelectPanel;
 
     private void Update()
     {
@@ -36,9 +41,31 @@ public class StageUiManager : MonoBehaviour
     {
         gameOverPanel.SetActive(true);
     }
+    public void ActiveBossPricePanel()
+    {
+        bossPricePanel.SetActive(true);
+    }
+    public void ActiveSkillSelectPanel()
+    {
+        skillSelectPanel.SetActive(true);
+    }
 
     public void UpdateStageGoldText(int curGold)
     {
         goldText.text = $"{curGold:N0}G";
     }
+    public void ShowWarningPanel()
+    {
+        warningPanel.SetActive(true);
+        HideWarningPanel(5f).Forget();
+    }
+    public async UniTask HideWarningPanel(float duration)
+    {
+        await UniTask.Delay((int)(duration * 1000));
+        if (warningPanel != null)
+        {
+            warningPanel.SetActive(false);
+        }
+    }
+    
 }

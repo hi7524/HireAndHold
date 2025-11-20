@@ -19,17 +19,15 @@ public class SkillSelectUi : MonoBehaviour
     private int selectedSkillIndex = 0;
     private List<int> randomSkillIndices = new List<int>();
 
-    private void Awake()
+    private void OnEnable()
     {
-        skillSelectPanel.SetActive(false);
-
-
         // 각 버튼에 클릭 이벤트 연결
         for (int i = 0; i < skillSelectButtons.Length; i++)
         {
             int buttonIndex = i;
             skillSelectButtons[i].onClick.AddListener(() => SelectSkill(buttonIndex));
         }
+        Show();
     }
 
     public void Show()
@@ -83,5 +81,12 @@ public class SkillSelectUi : MonoBehaviour
         skillSelectPanel.SetActive(false);
         OnSkillSelected?.Invoke(selectedSkillIndex);
         gameManager.ResumeGame();
+    }
+    private void OnDisable()
+    {
+        foreach (var button in skillSelectButtons)
+        {
+            button.onClick.RemoveAllListeners();
+        }
     }
 }

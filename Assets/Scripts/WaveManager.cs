@@ -17,6 +17,8 @@ public class WaveManager : MonoBehaviour
     private List<WaveData> currentStageWaves;
     private List<TimeEvent> registeredEvents = new List<TimeEvent>();
     private int completedWaves = 0;
+    [SerializeField] private MonsterSpawner monsterSpawner;
+    [SerializeField] private StageUiManager stageUiManager;
 
     
     public void Initialize(GameManager gameManager, StageManager stageManager)
@@ -53,6 +55,24 @@ public class WaveManager : MonoBehaviour
     {
         foreach (var wave in currentStageWaves)
         {
+           if (wave.WAVE_TYPE == 2)
+            {
+                int warningTime = wave.WAVE_START_T - 5; // 5초 전
+                if (warningTime >= 0)
+                {
+                    int warnMinutes = warningTime / 60;
+                    int warnSeconds = warningTime % 60;
+                    
+                    // 클로저 캡처 방지
+                    WaveData currentWave = wave;
+                    
+                    var warningEvent = gameManager.AddTimeEvent(warnMinutes, warnSeconds, () =>
+                    {
+                        stageUiManager.ShowWarningPanel();
+                    });
+                    registeredEvents.Add(warningEvent);
+                }
+            }
             // 웨이브 시작 이벤트 등록
             int startMinutes = wave.WAVE_START_T / 60;
             int startSeconds = wave.WAVE_START_T % 60;
@@ -150,8 +170,7 @@ public class WaveManager : MonoBehaviour
     {
         Debug.Log($"[WaveManager] 몬스터 {monsterId} 스폰!");
         
-        // MonsterSpawner를 통해 실제 스폰 (MonsterSpawner에 메서드 추가 필요)
-        // MonsterSpawner.Instance?.SpawnMonsterById(monsterId);
+        monsterSpawner.SpawnMonsterById(monsterId);
     }
 
 
