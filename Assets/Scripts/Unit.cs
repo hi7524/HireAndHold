@@ -17,6 +17,11 @@ public class Unit : MonoBehaviour
         poolManager = GameObject.FindWithTag(Tags.PoolManager).GetComponent<ObjectPoolManager>();
     }
 
+    private void OnEnable()
+    {
+        lastAttackTime = Time.time;
+    }
+
     private void Update()
     {
         attackTarget = FindNearestTarget();

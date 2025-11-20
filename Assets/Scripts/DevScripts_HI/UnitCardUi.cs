@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 public class UnitCardUi : BaseCardUi
@@ -8,17 +10,34 @@ public class UnitCardUi : BaseCardUi
     [SerializeField] private DraggableGridUnitUi draggableUnitUI;
     [SerializeField] private float cellUISize = 20f;
 
-    private int unitId; // 테스트용**
-    private UnitGridData gridUnitData; // 테스트용**
+    private int unitId;
+    private UnitGridData gridUnitData;
+    private Image img;
 
+    // 드롭 성공 이벤트
+    public event Action OnUnitDropSuccess;
 
     // 프리뷰 오브젝트
     private readonly List<GameObject> previewImages = new List<GameObject>();
 
+    private void Awake()
+    {
+        img = gameObject.GetComponent<Image>();
+    }
 
     private void Start()
     {
         VisualizeGridData();
+
+        draggableUnitUI.OnDropSuccess += HandleUnitDropSuccess;
+    }
+
+    private void OnDestroy()
+    {
+        if (draggableUnitUI != null)
+        {
+            draggableUnitUI.OnDropSuccess -= HandleUnitDropSuccess;
+        }
     }
 
     private void OnEnable()
@@ -29,6 +48,11 @@ public class UnitCardUi : BaseCardUi
     private void OnDisable()
     {
         draggableUnitUI.gameObject.SetActive(false);
+    }
+
+    private void HandleUnitDropSuccess()
+    {
+        OnUnitDropSuccess?.Invoke();
     }
 
     public void SetUnitID(int unitId)
@@ -42,6 +66,19 @@ public class UnitCardUi : BaseCardUi
         this.gridUnitData = gridData;
         draggableUnitUI.SetGridData(gridData);
         VisualizeGridData();
+    }
+
+    public void SetDragState(bool value)
+    {
+        draggableUnitUI.SetDraggableState(value);
+    }
+
+    public void SetColor(Color color)
+    {
+        if (img != null)
+        {
+            img.color = color;
+        }
     }
 
     public void VisualizeGridData()

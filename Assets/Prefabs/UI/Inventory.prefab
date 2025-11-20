@@ -513,7 +513,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: -0.000015258789, y: 150}
-  m_SizeDelta: {x: 0, y: 300}
+  m_SizeDelta: {x: -350, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2965290321746402804
 MonoBehaviour:
@@ -708,7 +708,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6009246196892459879
 RectTransform:
   m_ObjectHideFlags: 0
@@ -746,7 +746,9 @@ MonoBehaviour:
   slotPrf: {fileID: 1679972663638351980, guid: 2dd3c95fd92838c4ba6efe0c06bc537a, type: 3}
   scrollRect: {fileID: 7632158758367835831}
   dragManager: {fileID: 0}
+  playerGold: {fileID: 0}
   gridDatas: {fileID: 8975559060589276356}
+  uiManager: {fileID: 0}
 --- !u!114 &8975559060589276356
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -767,6 +769,6 @@ MonoBehaviour:
   - unitId: 11107
     gridData: {fileID: 11400000, guid: 3766ff9f7064b6e41a554b18a61dd4e1, type: 2}
   - unitId: 11110
-    gridData: {fileID: 11400000, guid: 3766ff9f7064b6e41a554b18a61dd4e1, type: 2}
+    gridData: {fileID: 11400000, guid: a8561c5c9bf703340b2199abf2fdd5d4, type: 2}
   - unitId: 11113
-    gridData: {fileID: 11400000, guid: 3766ff9f7064b6e41a554b18a61dd4e1, type: 2}
+    gridData: {fileID: 11400000, guid: 41d5abea7b83cc142b7387b6c0d8a43f, type: 2}
