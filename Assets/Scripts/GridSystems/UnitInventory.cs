@@ -26,14 +26,7 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
 
         Create(MaxCapacity);
 
-        // DataTable 먼저 초기화
         await DataTableManager.InitAsync();
-
-        // 테스트용 아이디 추가
-        AddUnit(11101);
-        AddUnit(11104);
-        AddUnit(11107);
-
         UpdateAllSlotsUi();
     }
 
@@ -45,6 +38,7 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
     private void OnDisable()
     {
         dragManager.SetDragEnabled(false);
+        SellUnits();
     }
 
     private void OnDestroy()
@@ -92,6 +86,11 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
         slotIndex--;
 
         UpdateAllSlotsUi();
+    }
+
+    private void SellUnits()
+    {
+        Debug.Log("잔여 유닛 판매");
     }
 
     // 유닛 나타낼 UI 생성

@@ -6,6 +6,7 @@ public class StageUiManager : MonoBehaviour
     [SerializeField] private GameManager gameManager;
     [Space]
     [SerializeField] private TextMeshProUGUI timerText;
+    [SerializeField] private TextMeshProUGUI goldText;
     [SerializeField] private TextMeshProUGUI speedLevelText;
     [Space]
     [SerializeField] private GameObject gameOverPanel;
@@ -34,5 +35,10 @@ public class StageUiManager : MonoBehaviour
     public void ActiveGameOverPanel()
     {
         gameOverPanel.SetActive(true);
+    }
+
+    public void UpdateStageGoldText(int curGold)
+    {
+        goldText.text = $"{curGold:N0}G";
     }
 }
