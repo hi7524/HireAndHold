@@ -10,11 +10,11 @@ public class DragManager : MonoBehaviour
     [SerializeField] private bool isDragEnabled = false;
 
     private Camera mainCamera;
-    private ITestDraggable dragTarget;
+    private IDraggable dragTarget;
     private Vector3 originalPosition;
 
     private bool isTargetUI = false;
-    private ITestDroppable currentDropTarget;
+    private IDroppable currentDropTarget;
 
     // UI 드래그 관련
     private Transform originalParent;
@@ -63,7 +63,7 @@ public class DragManager : MonoBehaviour
                 MoveDraggingObject(dragTarget.GameObject);
 
                 // 드롭 타겟 감지 및 Enter/Exit 이벤트 처리
-                ITestDroppable newDropTarget = DetectDropTarget();
+                IDroppable newDropTarget = DetectDropTarget();
 
                 if (newDropTarget != currentDropTarget)
                 {
@@ -88,7 +88,7 @@ public class DragManager : MonoBehaviour
             {
                 if (dragTarget != null)
                 {
-                    ITestDroppable dropTarget = DetectDropTarget();
+                    IDroppable dropTarget = DetectDropTarget();
 
                     // 드롭 성공
                     if (dropTarget != null && dropTarget.CanDrop(dragTarget))
@@ -134,21 +134,21 @@ public class DragManager : MonoBehaviour
         isDragEnabled = value;
     }
 
-    private ITestDraggable DetectObject()
+    private IDraggable DetectObject()
     {
         isTargetUI = false;
         Vector2 pointerPosition = Pointer.current.position.ReadValue();
 
-        ITestDraggable uiDraggable = DetectUIObject(pointerPosition);
+        IDraggable uiDraggable = DetectUIObject(pointerPosition);
         if (uiDraggable != null)
             return uiDraggable;
 
-        ITestDraggable worldDraggable = DetectWorldObject(pointerPosition);
+        IDraggable worldDraggable = DetectWorldObject(pointerPosition);
         return worldDraggable;
     }
 
     // 드래그 가능한 UI 감지
-    private ITestDraggable DetectUIObject(Vector2 screenPosition)
+    private IDraggable DetectUIObject(Vector2 screenPosition)
     {
         PointerEventData pointerData = new PointerEventData(EventSystem.current)
         {
@@ -160,7 +160,7 @@ public class DragManager : MonoBehaviour
 
         foreach (var result in results)
         {
-            var draggable = result.gameObject.GetComponent<ITestDraggable>();
+            var draggable = result.gameObject.GetComponent<IDraggable>();
             if (draggable != null && draggable.IsDraggable)
             {
                 isTargetUI = true;
@@ -172,7 +172,7 @@ public class DragManager : MonoBehaviour
     }
 
     // 드래그 가능한 GameObject 감지
-    private ITestDraggable DetectWorldObject(Vector2 screenPosition)
+    private IDraggable DetectWorldObject(Vector2 screenPosition)
     {
         Vector2 worldPoint = mainCamera.ScreenToWorldPoint(screenPosition);
 
@@ -181,12 +181,12 @@ public class DragManager : MonoBehaviour
         if (hits.Length == 0)
             return null;
 
-        ITestDraggable topDraggable = null;
+        IDraggable topDraggable = null;
         int highestSortingOrder = int.MinValue;
 
         foreach (var hit in hits)
         {
-            var draggable = hit.collider.GetComponent<ITestDraggable>();
+            var draggable = hit.collider.GetComponent<IDraggable>();
             if (draggable == null || !draggable.IsDraggable)
                 continue;
 
@@ -204,20 +204,20 @@ public class DragManager : MonoBehaviour
     }
 
     // 드롭 가능 대상 감지
-    private ITestDroppable DetectDropTarget()
+    private IDroppable DetectDropTarget()
     {
         Vector2 pointerPosition = Pointer.current.position.ReadValue();
 
-        ITestDroppable uiDroppable = DetectUIDropTarget(pointerPosition);
+        IDroppable uiDroppable = DetectUIDropTarget(pointerPosition);
         if (uiDroppable != null)
             return uiDroppable;
 
-        ITestDroppable worldDroppable = DetectWorldDropTarget(pointerPosition);
+        IDroppable worldDroppable = DetectWorldDropTarget(pointerPosition);
         return worldDroppable;
     }
 
     // 드롭 가능 UI 감지
-    private ITestDroppable DetectUIDropTarget(Vector2 screenPosition)
+    private IDroppable DetectUIDropTarget(Vector2 screenPosition)
     {
         PointerEventData pointerData = new PointerEventData(EventSystem.current)
         {
@@ -229,7 +229,7 @@ public class DragManager : MonoBehaviour
 
         foreach (var result in results)
         {
-            var droppable = result.gameObject.GetComponentInParent<ITestDroppable>();
+            var droppable = result.gameObject.GetComponentInParent<IDroppable>();
             if (droppable != null)
             {
                 return droppable;
@@ -240,7 +240,7 @@ public class DragManager : MonoBehaviour
     }
 
     // 드롭 가능 GameObject 감지
-    private ITestDroppable DetectWorldDropTarget(Vector2 screenPosition)
+    private IDroppable DetectWorldDropTarget(Vector2 screenPosition)
     {
         Vector2 worldPoint = mainCamera.ScreenToWorldPoint(screenPosition);
 
@@ -249,12 +249,12 @@ public class DragManager : MonoBehaviour
         if (hits.Length == 0)
             return null;
 
-        ITestDroppable topDroppable = null;
+        IDroppable topDroppable = null;
         int highestSortingOrder = int.MinValue;
 
         foreach (var hit in hits)
         {
-            var droppable = hit.collider.GetComponent<ITestDroppable>();
+            var droppable = hit.collider.GetComponent<IDroppable>();
             if (droppable == null)
                 continue;
 

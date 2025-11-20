@@ -1,10 +1,13 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public interface IDraggable
 {
+    bool IsDraggable { get; }
     GameObject GameObject { get; }
-    void OnBeginDrag(PointerEventData eventData);
-    void OnDrag(PointerEventData eventData);
-    void OnEndDrag(PointerEventData eventData);
+
+    void OnDragStart();
+    void OnDrag();
+    void OnDragEnd();
+    void OnDropSuccess();
+    void OnDropFailed();
 }

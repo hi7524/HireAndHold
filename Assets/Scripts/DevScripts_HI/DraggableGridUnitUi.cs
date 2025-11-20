@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
+public class DraggableGridUnitUi : MonoBehaviour, IDraggable
 {
     [SerializeField] private Image image;
     [SerializeField] private Transform previewObjTrans;
@@ -218,5 +218,9 @@ public class DraggableGridUnitUi : MonoBehaviour, ITestDraggable
         }
 
         previewObjTrans.DOScale(1.0f, 0.15f);
+    }
+
+    void IDraggable.OnDropSuccess()
+    {
     }
 }
