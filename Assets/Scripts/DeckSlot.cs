@@ -6,37 +6,94 @@ public class DeckSlot : MonoBehaviour
     public Image icon;
     public Sprite emptySprite;
 
-    private UnitData current;
+    private UnitData committed;
+    private UnitData pending;
+
     private DeckControl deckControl;
 
-    public bool HasUnit => current != null;
+    public bool HasCommitted => committed != null;
+    public bool HasPending => pending != null;
 
     public void SetDeckControl(DeckControl control)
     {
         deckControl = control;
     }
 
-    public void SetUnit(UnitData unit)
+    public void BeginEdit()
     {
-        current = unit;
-        icon.sprite = unit.icon;
+        pending = committed;
+        ApplyPendingToUI();
     }
 
-    public void Clear()
+    public void ApplyPendingToUI()
     {
-        current = null;
-        icon.sprite = emptySprite;
+        if (pending != null)
+        {
+            icon.sprite = pending.icon;
+        }
+        else
+        {
+            icon.sprite = emptySprite;
+        }
+    }
+
+    public void SetPending(UnitData unit)
+    {
+        if (pending == unit)
+        {
+            return;
+        }
+
+        if (pending != null && pending != committed)
+        {
+            deckControl.NotifyUnitCleared(pending);
+        }
+
+        pending = unit;
+        ApplyPendingToUI();
+    }
+
+    public void ClearPending()
+    {
+        if (pending != null && pending != committed)
+        {
+            deckControl.NotifyUnitCleared(pending);
+        }
+
+        pending = null;
+        ApplyPendingToUI();
+    }
+
+    public void CommitPending()
+    {
+        committed = pending;
+        ApplyPendingToUI();
+    }
+
+    public UnitData GetCommitted()
+    {
+        return committed;
+    }
+
+    public void CancelPending()
+    {
+        if (pending != null && pending != committed)
+        {
+            deckControl.NotifyUnitCleared(pending);
+        }
+
+        pending = committed;
+        ApplyPendingToUI();
     }
 
     public void OnClick()
     {
-        if (HasUnit)
-        {
-            Clear();
-        }
-        else
-        {
-            deckControl?.EnterEditMode();
-        }
+        deckControl?.OnSlotClicked(this);
     }
+
+    public UnitData GetPending()
+    {
+        return pending;
+    }
+
 }
