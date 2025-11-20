@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class TimeEvent
 {
@@ -46,6 +47,7 @@ public class StageTimeEventScheduler
             {
                 scheduledEvents[i].Callback?.Invoke();
                 removeCount++;
+                Debug.Log($"<color=#FFFF55>{scheduledEvents[i]} 실행</color>");
             }
             else
             {

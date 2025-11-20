@@ -159,11 +159,11 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
     {
         if (ownedUnitIds.Count < MaxCapacity)
         {
-            Debug.Log("드롭 가능");
+            //Debug.Log("드롭 가능");
         }
         else
         {
-            Debug.Log("드롭 불가능");
+            //Debug.Log("드롭 불가능");
         }
     }
 

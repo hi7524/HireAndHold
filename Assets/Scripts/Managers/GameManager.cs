@@ -5,6 +5,7 @@ public class GameManager : MonoBehaviour
 {
     public float ElapsedTime { get; private set; }
     public bool IsGameStarted { get; private set; }
+    public bool IsPausedGame { get; private set; }
 
     public int CurSpeedLevel => speedLevels[curSpeedLevelIdx];
 
@@ -32,7 +33,7 @@ public class GameManager : MonoBehaviour
 
         ElapsedTime += Time.deltaTime;
     }
-    
+
     // 게임 재설정
     private void Reset()
     {
@@ -44,7 +45,7 @@ public class GameManager : MonoBehaviour
     // 게임 시작
     public void StartGame()
     {
-        Debug.Log("게임 시작");
+        GameManagerLog("게임 시작");
 
         IsGameStarted = true;
         Time.timeScale = speedLevels[0];
@@ -54,26 +55,34 @@ public class GameManager : MonoBehaviour
     // 게임 일시 정지
     public void PauseGame()
     {
-        Debug.Log("일시 정지");
+        if (!IsGameStarted)
+            return;
+
+        GameManagerLog("일시 정지");
 
         originalSpeed = Time.timeScale;
         Time.timeScale = 0f;
+        IsPausedGame = true;
         OnGamePause?.Invoke();
     }
 
     // 게임 재개
     public void ResumeGame()
     {
-        Debug.Log("게임 재개");
+        if (!IsGameStarted)
+            return;
+
+        GameManagerLog("게임 재개");
 
         Time.timeScale = originalSpeed;
+        IsPausedGame = false;
         OnGameResume?.Invoke();
     }
 
     // 게임 종료
     public void GameEnd()
     {
-        Debug.Log("게임 종료");
+        GameManagerLog("게임 종료");
 
         Time.timeScale = 0f;
         OnGameEnd?.Invoke();
@@ -92,10 +101,15 @@ public class GameManager : MonoBehaviour
         float totalSeconds = minutes * 60f + seconds;
         return timeScheduler.AddTimeEvent(totalSeconds, callback);
     }
-    
+
     // 이벤트 삭제
     public bool RemoveTimeEvent(TimeEvent timeEvent)
     {
         return timeScheduler.RemoveTimeEvent(timeEvent);
+    }
+
+    private void GameManagerLog(string msg)
+    {
+        Debug.Log($"<color=#E155E1>{msg}</color>");
     }
 }

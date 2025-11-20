@@ -102,6 +102,7 @@ public class GridCell : MonoBehaviour, ITestDroppable
 
             // 배치 대상 위치 스냅
             draggable.GameObject.transform.position = transform.position;
+            Physics2D.SyncTransforms(); // Collider2D 위치 동기화
             PlacedObject = draggable.GameObject;
 
             gridUnit.SetCurrentGridCell(this);
@@ -132,7 +133,7 @@ public class GridCell : MonoBehaviour, ITestDroppable
                 return;
             }
 
-            newGridUnit.UnitId = inventorySlot.UnitId;
+            newGridUnit.SetUnitID(inventorySlot.UnitId);
 
             // 생성된 GridUnit을 배치
             PlacedObject = newGridUnit.GameObject;
@@ -164,7 +165,7 @@ public class GridCell : MonoBehaviour, ITestDroppable
                 return;
             }
 
-            newGridUnit.UnitId = draggableUnitUi.UnitId;
+            newGridUnit.SetUnitID(draggableUnitUi.UnitId);
 
             // 생성된 GridUnit을 배치
             PlacedObject = newGridUnit.GameObject;
