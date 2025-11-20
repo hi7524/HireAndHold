@@ -113,7 +113,7 @@ public class GameInitializer : MonoBehaviour
     private async UniTask LoadDataAndGoToLobbyAsync()
     {
         Debug.Log("[GameInitializer] 로비 씬 로딩 시작");
-        LoadingRequest request = new LoadingRequest("DevScene_Lobby");
+        LoadingRequest request = new LoadingRequest("Lobby");
 
 
         // request.AddTask("Load Game Resources", async (ct) =>

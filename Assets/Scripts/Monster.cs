@@ -10,7 +10,7 @@ public class Monster : MonoBehaviour, IDamagable
     [SerializeField] private float attackRange;
     [SerializeField] private float attackCooldown;
     [SerializeField] private float defense;
-    public float Defense{ get { return defense; } set { defense = value; } }
+    public float Defense { get { return defense; } set { defense = value; } }
 
     private ObjectPoolManager poolManager;
     private string poolKey;
@@ -74,9 +74,9 @@ public class Monster : MonoBehaviour, IDamagable
         speed = data.MON_SPEED;
         attackDamage = data.MON_ATK;
         isAttacking = false;
-        isStunned = false; 
-        originalSpeed = speed; 
-        defense = data.MON_DEF; 
+        isStunned = false;
+        originalSpeed = speed;
+        defense = data.MON_DEF;
         Debug.Log($"[Monster] {data.MON_NAME} 데이터로 초기화 완료! HP: {maxHp}, ATK: {attackDamage}, DEF: {defense}");
         isBoss = boss;
 
@@ -125,7 +125,7 @@ public class Monster : MonoBehaviour, IDamagable
         }
 
         transform.Translate(Vector3.down * speed * Time.deltaTime);
-        
+
 
         SeparateFromOthers();
     }
@@ -200,7 +200,7 @@ public class Monster : MonoBehaviour, IDamagable
         }
 
 
-        currentHp -= damage *10 ;//- defense;
+        currentHp -= damage * 30; //- defense;
 
         if (currentHp <= 0)
         {
@@ -255,11 +255,11 @@ public class Monster : MonoBehaviour, IDamagable
         }
     }
 
-    
+
     public void SetStunned(bool stunned) // 장철희
     {
         isStunned = stunned;
-        
+
         if (stunned)
         {
             Debug.Log($"[Monster] {gameObject.name} 스턴 적용!");
@@ -270,7 +270,7 @@ public class Monster : MonoBehaviour, IDamagable
         }
     }
 
-    
+
     public void RestoreOriginalSpeed() // 장철희
     {
         speed = originalSpeed;
