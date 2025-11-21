@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
-public class GridUnit : MonoBehaviour, ITestDraggable
+public class GridUnit : MonoBehaviour, IDraggable
 {
     [SerializeField] private float cellSize = 0.6f;
     [SerializeField] private GameObject cellPrf;
@@ -142,5 +142,10 @@ public class GridUnit : MonoBehaviour, ITestDraggable
         {
             childrenObj[i].gameObject.SetActive(value);
         }
+    }
+
+    public void OnDropSuccess()
+    {
+        //
     }
 }

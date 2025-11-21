@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class GridCell : MonoBehaviour, ITestDroppable
+public class GridCell : MonoBehaviour, IDroppable
 {
     public Vector2Int GridPosition { get; private set; }
 
@@ -42,12 +42,12 @@ public class GridCell : MonoBehaviour, ITestDroppable
         spriteRenderer.color = color;
     }
 
-    public bool CanDrop(ITestDraggable draggable)
+    public bool CanDrop(IDraggable draggable)
     {
         return canDrop;
     }
 
-    public void OnDragEnter(ITestDraggable draggable)
+    public void OnDragEnter(IDraggable draggable)
     {
         // GridUnit 배치 가능 여부 판정 및 판정에 따라 색상 변경
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
@@ -69,14 +69,14 @@ public class GridCell : MonoBehaviour, ITestDroppable
         }
     }
 
-    public void OnDragExit(ITestDraggable draggable)
+    public void OnDragExit(IDraggable draggable)
     {
         // 그리드 색상 변경
         gridManager.ClearAllGridsColor();
         gridManager.ChangeOccupiedCellColor();
     }
 
-    public void OnDrop(ITestDraggable draggable)
+    public void OnDrop(IDraggable draggable)
     {
         // 드롭 가능 상태가 아닐 경우 배치 불가
         if (!canDrop)

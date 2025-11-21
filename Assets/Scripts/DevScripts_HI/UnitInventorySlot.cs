@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UnitInventorySlot : MonoBehaviour, ITestDraggable
+public class UnitInventorySlot : MonoBehaviour, IDraggable
 {
     [SerializeField] private Image unitImg;
     [SerializeField] private TextMeshProUGUI nameText;
@@ -210,5 +210,9 @@ public class UnitInventorySlot : MonoBehaviour, ITestDraggable
         }
 
         previewObjTrans.DOScale(1.0f, 0.15f);
+    }
+
+    public void OnDropSuccess()
+    {
     }
 }

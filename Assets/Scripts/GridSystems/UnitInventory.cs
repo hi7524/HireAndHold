@@ -4,7 +4,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UnitInventory : MonoBehaviour, ITestDroppable
+public class UnitInventory : MonoBehaviour, IDroppable
 {
     [SerializeField] private UnitInventorySlot slotPrf;
     [SerializeField] private ScrollRect scrollRect;
@@ -141,12 +141,12 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
         }
     }
 
-    public bool CanDrop(ITestDraggable draggable)
+    public bool CanDrop(IDraggable draggable)
     {
         return ownedUnitIds.Count < MaxCapacity;
     }
 
-    public void OnDrop(ITestDraggable draggable)
+    public void OnDrop(IDraggable draggable)
     {
         // GridUnit일 경우
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
@@ -171,7 +171,7 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
         }
     }
 
-    public void OnDragEnter(ITestDraggable draggable)
+    public void OnDragEnter(IDraggable draggable)
     {
         if (ownedUnitIds.Count < MaxCapacity)
         {
@@ -183,7 +183,8 @@ public class UnitInventory : MonoBehaviour, ITestDroppable
         }
     }
 
-    public void OnDragExit(ITestDraggable draggable)
+    public void OnDragExit(IDraggable draggable)
     {
+        
     }
 }
