@@ -49,7 +49,19 @@ public class SkillTester : MonoBehaviour
             TestSkill(7, "GreatSlow");
         }
     }
+    public void OnSkillBTN1()
+    {
+        TestSkill(0, "EarthQuake");
+    }
 
+public void OnSkillBTN2()
+    {
+        TestSkill(2, "BlackHole");
+    }
+    public void OnSkillBTN3()
+    {
+        TestSkill(3, "AirForce");
+    }
     private void TestSkill(int index, string skillName)
     {
         if (index < 0 || index >= skills.Length)

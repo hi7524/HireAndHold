@@ -65,7 +65,7 @@ public class GameInitializer : MonoBehaviour
         try
         {
 
-            var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+            var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(2f));
             var waitTask = UniTask.WaitUntil(() => FirebaseInitializer.Instance != null);
 
             await UniTask.WhenAny(waitTask, timeoutTask);
