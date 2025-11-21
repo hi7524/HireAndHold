@@ -16,6 +16,9 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
 
     public int unlockedStage = 3;
 
+    public StageUIData[] stageDataList;
+
+
     //Play Button
 
     public GameObject playButton;
@@ -77,10 +80,18 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
     {
         for (int i = 0; i < totalStages; i++)
         {
-            GameObject card = Instantiate(stageCardPrefab, content);
-            card.name = $"StageCard_{i + 1}";
+            GameObject cardObj = Instantiate(stageCardPrefab, content);
+            cardObj.name = $"StageCard_{i + 1}";
+
+            StageCard card = cardObj.GetComponent<StageCard>();
+
+            if (stageDataList != null && i < stageDataList.Length)
+            {
+                card.ApplyData(stageDataList[i]);
+            }
         }
     }
+
 
     private void CollectStageCards()
     {
