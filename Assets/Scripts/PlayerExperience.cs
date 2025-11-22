@@ -47,7 +47,7 @@ public class PlayerExperience : MonoBehaviour
 
         if (curPlayerExp >= expRequired)
         {
-            expBar.DOValue(1f, expBarFillDuration).SetEase(Ease.OutCubic).OnComplete(() =>
+            expBar.DOValue(1f, expBarFillDuration).SetEase(Ease.OutCubic).SetUpdate(UpdateType.Normal, false).OnComplete(() =>
             {
                 LevelUp();
                 AnimateExpBar();

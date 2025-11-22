@@ -215,4 +215,10 @@ public class GridCell : MonoBehaviour, IDroppable
 
         PlacedObject = null;
     }
+
+    // 드롭 실패 시 PlacedObject 복원
+    public void RestorePlacedObject(GameObject obj)
+    {
+        PlacedObject = obj;
+    }
 }

@@ -28,20 +28,25 @@ public class GridManager : MonoBehaviour
 
     private void Start()
     {
-        // 최대 Grid Stage 사이즈에 맞추어 배열 생성
+        InitializeGrid();
+    }
+
+    // 그리드 배열 및 셀 초기화
+    private void InitializeGrid()
+    {
         gridArray = new int[layoutData.width, layoutData.height];
         gridCells = new GridCell[layoutData.width, layoutData.height];
-
         RegisterCells();
     }
 
+    // 그리드 셀 상태 설정 (Empty, Occupied, Unavailable)
     public void SetGridState(Vector2Int pos, GridState state)
     {
         gridArray[pos.x, pos.y] = (int)state;
         gridCells[pos.x, pos.y].SetAcceptable(state == GridState.Empty);
     }
 
-    // GridVisualizer의 자식 오브젝트들을 순회하며 GridCell 컴포넌트 수집
+    // GridVisualizer의 자식 오브젝트들을 순회하며 GridCell 컴포넌트 수집 및 등록
     private void RegisterCells()
     {
         if (gridVisualizer == null)
@@ -55,79 +60,107 @@ public class GridManager : MonoBehaviour
             var cell = child.GetComponent<GridCell>();
             if (cell != null)
             {
-                Vector2Int pos = cell.GridPosition;
-
-                if (pos.x >= 0 && pos.x < layoutData.width &&
-                    pos.y >= 0 && pos.y < layoutData.height)
-                {
-                    gridCells[pos.x, pos.y] = cell;
-                }
-
-                cell.SetGridManager(this);
+                RegisterCell(cell);
             }
         }
     }
 
+    // 개별 셀을 그리드 배열에 등록
+    private void RegisterCell(GridCell cell)
+    {
+        Vector2Int pos = cell.GridPosition;
+
+        if (IsWithinBounds(pos))
+        {
+            gridCells[pos.x, pos.y] = cell;
+        }
+
+        cell.SetGridManager(this);
+    }
+
+    // 유닛 배치 가능 여부 확인 및 시각적 피드백 제공
     public bool CanPlaceUnit(Vector2Int curPos, List<Vector2Int> grid)
     {
         ClearAllGridsColor();
         ChangeOccupiedCellColor();
 
-        bool canPlace = true;
+        HashSet<Vector2Int> allPositions = GetAbsolutePositions(curPos, grid);
+        bool canPlace = ValidateAllPositions(allPositions);
 
-        HashSet<Vector2Int> allPositions = new HashSet<Vector2Int>
-        {
-            curPos
-        };
+        HighlightCells(allPositions, canPlace);
+
+        return canPlace;
+    }
+
+    // 현재 위치와 상대 위치를 합쳐 절대 위치 목록 생성
+    private HashSet<Vector2Int> GetAbsolutePositions(Vector2Int curPos, List<Vector2Int> grid)
+    {
+        HashSet<Vector2Int> allPositions = new HashSet<Vector2Int> { curPos };
 
         foreach (var relativePos in grid)
         {
             allPositions.Add(curPos + relativePos);
         }
 
-        foreach (var absolutePos in allPositions)
+        return allPositions;
+    }
+
+    // 모든 위치가 배치 가능한지 검증
+    private bool ValidateAllPositions(HashSet<Vector2Int> positions)
+    {
+        bool canPlace = true;
+
+        foreach (var pos in positions)
         {
-            // 인덱스 범위 체크
-            if (absolutePos.x < 0 || absolutePos.x >= layoutData.width ||
-                absolutePos.y < 0 || absolutePos.y >= layoutData.height)
+            if (!IsValidPosition(pos))
             {
                 canPlace = false;
-                continue;
-            }
-
-            // 유효한 셀인지 체크 (뚫린 부분 체크)
-            if (!layoutData.IsValidCell(absolutePos))
-            {
-                canPlace = false;
-                continue;
-            }
-
-            // 셀 상태 체크 (이미 차지되었는지)
-            int cellState = gridArray[absolutePos.x, absolutePos.y];
-            if (cellState != (int)GridState.Empty)
-            {
-                canPlace = false;
-            }
-        }
-
-        // 색상 변경
-        foreach (var absolutePos in allPositions)
-        {
-            if (absolutePos.x >= 0 && absolutePos.x < layoutData.width &&
-                absolutePos.y >= 0 && absolutePos.y < layoutData.height)
-            {
-                GridCell cell = gridCells[absolutePos.x, absolutePos.y];
-                if (cell != null)
-                {
-                    cell.SetColor(canPlace ? validColor : invalidColor);
-                    highlightedCells.Add(cell);
-                }
             }
         }
 
         return canPlace;
     }
 
+    // 위치가 유효한지 확인 (범위 내, 유효한 셀, 비어있음)
+    private bool IsValidPosition(Vector2Int pos)
+    {
+        if (!IsWithinBounds(pos))
+            return false;
+
+        if (!layoutData.IsValidCell(pos))
+            return false;
+
+        int cellState = gridArray[pos.x, pos.y];
+        return cellState == (int)GridState.Empty;
+    }
+
+    // 위치가 그리드 범위 내에 있는지 확인
+    private bool IsWithinBounds(Vector2Int pos)
+    {
+        return pos.x >= 0 && pos.x < layoutData.width &&
+               pos.y >= 0 && pos.y < layoutData.height;
+    }
+
+    // 배치 가능 여부에 따라 셀 하이라이트 색상 적용
+    private void HighlightCells(HashSet<Vector2Int> positions, bool canPlace)
+    {
+        Color highlightColor = canPlace ? validColor : invalidColor;
+
+        foreach (var pos in positions)
+        {
+            if (IsWithinBounds(pos))
+            {
+                GridCell cell = gridCells[pos.x, pos.y];
+                if (cell != null)
+                {
+                    cell.SetColor(highlightColor);
+                    highlightedCells.Add(cell);
+                }
+            }
+        }
+    }
+
+    // 모든 하이라이트된 셀의 색상 초기화
     public void ClearAllGridsColor()
     {
         foreach (var cell in highlightedCells)
@@ -140,27 +173,18 @@ public class GridManager : MonoBehaviour
         highlightedCells.Clear();
     }
 
+    // 유닛이 차지하는 모든 셀에 지정된 색상 적용
     public void SetUnitCellsColor(Vector2Int curPos, List<Vector2Int> grid, Color color)
     {
         ClearAllGridsColor();
 
-        HashSet<Vector2Int> allPositions = new HashSet<Vector2Int>
-        {
-            curPos
-        };
+        HashSet<Vector2Int> allPositions = GetAbsolutePositions(curPos, grid);
 
-        foreach (var relativePos in grid)
+        foreach (var pos in allPositions)
         {
-            allPositions.Add(curPos + relativePos);
-        }
-
-        // 유닛이 차지하는 모든 셀에 색상 적용
-        foreach (var absolutePos in allPositions)
-        {
-            if (absolutePos.x >= 0 && absolutePos.x < layoutData.width &&
-                absolutePos.y >= 0 && absolutePos.y < layoutData.height)
+            if (IsWithinBounds(pos))
             {
-                GridCell cell = gridCells[absolutePos.x, absolutePos.y];
+                GridCell cell = gridCells[pos.x, pos.y];
                 if (cell != null)
                 {
                     cell.SetColor(color);
@@ -169,29 +193,34 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    // 점유된 셀과 색상 정보 등록
     public void SetOccupiedCellAndColor(Vector2Int pos, Color color)
     {
         coloredCell[pos] = color;
     }
 
+    // 유닛이 차지하던 셀의 색상 정보 제거 및 색상 초기화
     public void RemoveColoredCells(Vector2Int curPos, List<Vector2Int> grid)
     {
-        // coloredCell에서 제거하면서 해당 셀을 흰색으로 변경
-        if (coloredCell.Remove(curPos))
-        {
-            gridCells[curPos.x, curPos.y].SetColor(Color.white);
-        }
+        RemoveCellColor(curPos);
 
         foreach (var relativePos in grid)
         {
             Vector2Int absolutePos = curPos + relativePos;
-            if (coloredCell.Remove(absolutePos))
-            {
-                gridCells[absolutePos.x, absolutePos.y].SetColor(Color.white);
-            }
+            RemoveCellColor(absolutePos);
         }
     }
 
+    // 특정 셀의 색상 정보 제거 및 흰색으로 리셋
+    private void RemoveCellColor(Vector2Int pos)
+    {
+        if (coloredCell.Remove(pos))
+        {
+            gridCells[pos.x, pos.y].SetColor(Color.white);
+        }
+    }
+
+    // 점유된 모든 셀에 등록된 색상 다시 적용
     public void ChangeOccupiedCellColor()
     {
         foreach (var cell in coloredCell)
@@ -201,23 +230,34 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    // 현재 색상 상태를 임시 저장 (실패 시 복원용)
     public void CopyColoredCellToTemp()
     {
         tempColoredCell = new Dictionary<Vector2Int, Color>(coloredCell);
     }
 
+    // 배치 실패 시 임시 저장된 색상 상태로 복원
     public void OnFailed()
     {
         if (tempColoredCell == null)
             return;
 
-        // tempColoredCell의 내용을 coloredCell로 복원
+        RestoreColoredCells();
+        RestoreCellColors();
+    }
+
+    // coloredCell 딕셔너리를 임시 저장 값으로 복원
+    private void RestoreColoredCells()
+    {
         foreach (var cell in tempColoredCell)
         {
             coloredCell[cell.Key] = cell.Value;
         }
+    }
 
-        // 색상 복원
+    // 그리드 셀의 시각적 색상을 임시 저장 값으로 복원
+    private void RestoreCellColors()
+    {
         foreach (var cell in tempColoredCell)
         {
             var pos = cell.Key;
@@ -225,13 +265,14 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    // 그리드 유닛 생성 및 초기화
     public GridUnit SpawnGridUnit(Vector3 position, UnitGridData gridData)
     {
         if (gridUnitPrefab == null)
             return null;
 
-        var unitObj = Instantiate(gridUnitPrefab, position, Quaternion.identity);
-        var gridUnit = unitObj.GetComponent<GridUnit>();
+        GameObject unitObj = Instantiate(gridUnitPrefab, position, Quaternion.identity);
+        GridUnit gridUnit = unitObj.GetComponent<GridUnit>();
 
         if (gridUnit == null)
         {

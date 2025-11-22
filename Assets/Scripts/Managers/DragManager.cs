@@ -10,16 +10,28 @@ public class DragManager : MonoBehaviour
     [SerializeField] private bool isDragEnabled = false;
 
     private Camera mainCamera;
-    private IDraggable dragTarget;
-    private Vector3 originalPosition;
-
-    private bool isTargetUI = false;
+    private DragState dragState;
     private IDroppable currentDropTarget;
 
-    // UI 드래그 관련
-    private Transform originalParent;
-    private int originalSiblingIndex;
+    private struct DragState
+    {
+        public IDraggable Target;
+        public Vector3 OriginalPosition;
+        public bool IsUI;
+        public Transform OriginalParent;
+        public int OriginalSiblingIndex;
 
+        public readonly bool IsDragging => Target != null;
+
+        public void Reset()
+        {
+            Target = null;
+            OriginalPosition = Vector3.zero;
+            IsUI = false;
+            OriginalParent = null;
+            OriginalSiblingIndex = 0;
+        }
+    }
 
     private void Start()
     {
@@ -28,126 +40,143 @@ public class DragManager : MonoBehaviour
 
     private void Update()
     {
-        if (!isDragEnabled)
+        if (!isDragEnabled || Pointer.current == null)
             return;
 
-        if (Pointer.current != null)
+        if (Pointer.current.press.wasPressedThisFrame)
         {
-            // 누르기 시작
-            if (Pointer.current.press.wasPressedThisFrame)
-            {
-                dragTarget = DetectObject();
-                if (dragTarget != null)
-                {
-                    originalPosition = dragTarget.GameObject.transform.position;
-
-                    // UI인 경우 Canvas 최상위로 이동
-                    if (isTargetUI && rootCanvas != null)
-                    {
-                        Transform targetTransform = dragTarget.GameObject.transform;
-                        originalParent = targetTransform.parent;
-                        originalSiblingIndex = targetTransform.GetSiblingIndex();
-
-                        targetTransform.SetParent(rootCanvas.transform, true);
-                        targetTransform.SetAsLastSibling();
-                    }
-
-                    dragTarget.OnDragStart();
-                }
-            }
-
-            // 누르는 중
-            if (Pointer.current.press.isPressed && dragTarget != null)
-            {
-                dragTarget.OnDrag();
-                MoveDraggingObject(dragTarget.GameObject);
-
-                // 드롭 타겟 감지 및 Enter/Exit 이벤트 처리
-                IDroppable newDropTarget = DetectDropTarget();
-
-                if (newDropTarget != currentDropTarget)
-                {
-                    // 이전 타겟에서 나감
-                    if (currentDropTarget != null)
-                    {
-                        currentDropTarget.OnDragExit(dragTarget);
-                    }
-
-                    // 새로운 타겟에 진입
-                    if (newDropTarget != null)
-                    {
-                        newDropTarget.OnDragEnter(dragTarget);
-                    }
-
-                    currentDropTarget = newDropTarget;
-                }
-            }
-
-            // 떼는 순간
-            if (Pointer.current.press.wasReleasedThisFrame)
-            {
-                if (dragTarget != null)
-                {
-                    IDroppable dropTarget = DetectDropTarget();
-
-                    // 드롭 성공
-                    if (dropTarget != null && dropTarget.CanDrop(dragTarget))
-                    {
-                        dropTarget.OnDrop(dragTarget);
-                    }
-                    // 드롭 실패
-                    else
-                    {
-                        dragTarget.GameObject.transform.position = originalPosition;
-                        if (!isTargetUI)
-                        {
-                            Physics2D.SyncTransforms();
-                        }
-                        dragTarget.OnDropFailed();
-                    }
-
-                    // UI인 경우 원래 부모로 복원
-                    if (isTargetUI && originalParent != null)
-                    {
-                        Transform targetTransform = dragTarget.GameObject.transform;
-                        targetTransform.SetParent(originalParent, true);
-                        targetTransform.SetSiblingIndex(originalSiblingIndex);
-                    }
-
-                    // Exit 이벤트 처리 (드롭 타겟이 있었다면)
-                    if (currentDropTarget != null)
-                    {
-                        currentDropTarget.OnDragExit(dragTarget);
-                        currentDropTarget = null;
-                    }
-
-                    dragTarget.OnDragEnd();
-                    dragTarget = null;
-                    originalParent = null;
-                }
-            }
+            HandleDragStart();
+        }
+        else if (Pointer.current.press.isPressed && dragState.IsDragging)
+        {
+            HandleDragging();
+        }
+        else if (Pointer.current.press.wasReleasedThisFrame && dragState.IsDragging)
+        {
+            HandleDragEnd();
         }
     }
 
+    // 드래그 활성화/비활성화 설정
     public void SetDragEnabled(bool value)
     {
         isDragEnabled = value;
     }
 
-    private IDraggable DetectObject()
+    // 드래그 시작 처리: 드래그 대상 감지 및 초기 상태 설정
+    private void HandleDragStart()
     {
-        isTargetUI = false;
+        dragState.Target = DetectDraggable(out dragState.IsUI);
+        if (!dragState.IsDragging)
+            return;
+
+        dragState.OriginalPosition = dragState.Target.GameObject.transform.position;
+
+        if (dragState.IsUI && rootCanvas != null)
+        {
+            MoveUIToCanvasTop(dragState.Target.GameObject.transform);
+        }
+
+        dragState.Target.OnDragStart();
+    }
+
+    // 드래그 중 처리: 오브젝트 이동 및 드롭 타겟 업데이트
+    private void HandleDragging()
+    {
+        dragState.Target.OnDrag();
+        MoveDraggingObject(dragState.Target.GameObject);
+        UpdateDropTarget();
+    }
+
+    // 드래그 종료 처리: 드롭 성공/실패 처리 및 상태 리셋
+    private void HandleDragEnd()
+    {
+        IDroppable dropTarget = DetectDropTarget();
+        bool dropSuccess = dropTarget != null && dropTarget.CanDrop(dragState.Target);
+
+        if (dropSuccess)
+        {
+            dropTarget.OnDrop(dragState.Target);
+            dragState.Target.OnDropSuccess();
+        }
+        else
+        {
+            ResetDraggablePosition();
+            dragState.Target.OnDropFailed();
+        }
+
+        if (dragState.IsUI && dragState.OriginalParent != null)
+        {
+            RestoreUIParent(dragState.Target.GameObject.transform);
+        }
+
+        if (currentDropTarget != null)
+        {
+            currentDropTarget.OnDragExit(dragState.Target);
+            currentDropTarget = null;
+        }
+
+        dragState.Target.OnDragEnd();
+        dragState.Reset();
+    }
+
+    // 드롭 타겟 변경 감지 및 Enter/Exit 이벤트 처리
+    private void UpdateDropTarget()
+    {
+        IDroppable newDropTarget = DetectDropTarget();
+
+        if (newDropTarget == currentDropTarget)
+            return;
+
+        currentDropTarget?.OnDragExit(dragState.Target);
+        newDropTarget?.OnDragEnter(dragState.Target);
+        currentDropTarget = newDropTarget;
+    }
+
+    // UI 오브젝트를 Canvas 최상위로 이동 (드래그 시 다른 UI 위에 표시되도록)
+    private void MoveUIToCanvasTop(Transform targetTransform)
+    {
+        dragState.OriginalParent = targetTransform.parent;
+        dragState.OriginalSiblingIndex = targetTransform.GetSiblingIndex();
+        targetTransform.SetParent(rootCanvas.transform, true);
+        targetTransform.SetAsLastSibling();
+    }
+
+    // UI 오브젝트를 원래 부모로 복원
+    private void RestoreUIParent(Transform targetTransform)
+    {
+        targetTransform.SetParent(dragState.OriginalParent, true);
+        targetTransform.SetSiblingIndex(dragState.OriginalSiblingIndex);
+    }
+
+    // 드래그 오브젝트를 원래 위치로 복원 (드롭 실패 시)
+    private void ResetDraggablePosition()
+    {
+        dragState.Target.GameObject.transform.position = dragState.OriginalPosition;
+
+        if (!dragState.IsUI)
+        {
+            Physics2D.SyncTransforms();
+        }
+    }
+
+    // 드래그 가능한 오브젝트 감지 (UI 우선, 그 다음 World)
+    private IDraggable DetectDraggable(out bool isUI)
+    {
         Vector2 pointerPosition = Pointer.current.position.ReadValue();
 
         IDraggable uiDraggable = DetectUIObject(pointerPosition);
         if (uiDraggable != null)
+        {
+            isUI = true;
             return uiDraggable;
+        }
 
-        IDraggable worldDraggable = DetectWorldObject(pointerPosition);
-        return worldDraggable;
+        isUI = false;
+        return DetectWorldObject(pointerPosition);
     }
 
-    // 드래그 가능한 UI 감지
+    // UI에서 드래그 가능한 오브젝트 감지
     private IDraggable DetectUIObject(Vector2 screenPosition)
     {
         PointerEventData pointerData = new PointerEventData(EventSystem.current)
@@ -163,7 +192,6 @@ public class DragManager : MonoBehaviour
             var draggable = result.gameObject.GetComponent<IDraggable>();
             if (draggable != null && draggable.IsDraggable)
             {
-                isTargetUI = true;
                 return draggable;
             }
         }
@@ -171,16 +199,21 @@ public class DragManager : MonoBehaviour
         return null;
     }
 
-    // 드래그 가능한 GameObject 감지
+    // World에서 드래그 가능한 오브젝트 감지
     private IDraggable DetectWorldObject(Vector2 screenPosition)
     {
         Vector2 worldPoint = mainCamera.ScreenToWorldPoint(screenPosition);
-
         RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.zero, Mathf.Infinity, draggableLayer);
 
         if (hits.Length == 0)
             return null;
 
+        return FindTopDraggable(hits);
+    }
+
+    // Raycast 결과에서 가장 위에 있는 드래그 가능한 오브젝트 찾기 (SortingOrder 기준)
+    private IDraggable FindTopDraggable(RaycastHit2D[] hits)
+    {
         IDraggable topDraggable = null;
         int highestSortingOrder = int.MinValue;
 
@@ -190,8 +223,7 @@ public class DragManager : MonoBehaviour
             if (draggable == null || !draggable.IsDraggable)
                 continue;
 
-            var spriteRenderer = hit.collider.GetComponent<SpriteRenderer>();
-            int sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder : 0;
+            int sortingOrder = GetSortingOrder(hit.collider);
 
             if (topDraggable == null || sortingOrder > highestSortingOrder)
             {
@@ -203,7 +235,7 @@ public class DragManager : MonoBehaviour
         return topDraggable;
     }
 
-    // 드롭 가능 대상 감지
+    // 드롭 가능한 타겟 감지 (UI 우선, 그 다음 World)
     private IDroppable DetectDropTarget()
     {
         Vector2 pointerPosition = Pointer.current.position.ReadValue();
@@ -212,11 +244,10 @@ public class DragManager : MonoBehaviour
         if (uiDroppable != null)
             return uiDroppable;
 
-        IDroppable worldDroppable = DetectWorldDropTarget(pointerPosition);
-        return worldDroppable;
+        return DetectWorldDropTarget(pointerPosition);
     }
 
-    // 드롭 가능 UI 감지
+    // UI에서 드롭 가능한 타겟 감지
     private IDroppable DetectUIDropTarget(Vector2 screenPosition)
     {
         PointerEventData pointerData = new PointerEventData(EventSystem.current)
@@ -239,16 +270,21 @@ public class DragManager : MonoBehaviour
         return null;
     }
 
-    // 드롭 가능 GameObject 감지
+    // World에서 드롭 가능한 타겟 감지
     private IDroppable DetectWorldDropTarget(Vector2 screenPosition)
     {
         Vector2 worldPoint = mainCamera.ScreenToWorldPoint(screenPosition);
-
         RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.zero, Mathf.Infinity, draggableLayer);
 
         if (hits.Length == 0)
             return null;
 
+        return FindTopDroppable(hits);
+    }
+
+    // Raycast 결과에서 가장 위에 있는 드롭 가능한 타겟 찾기 (SortingOrder 기준)
+    private IDroppable FindTopDroppable(RaycastHit2D[] hits)
+    {
         IDroppable topDroppable = null;
         int highestSortingOrder = int.MinValue;
 
@@ -258,8 +294,7 @@ public class DragManager : MonoBehaviour
             if (droppable == null)
                 continue;
 
-            var spriteRenderer = hit.collider.GetComponent<SpriteRenderer>();
-            int sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder : 0;
+            int sortingOrder = GetSortingOrder(hit.collider);
 
             if (topDroppable == null || sortingOrder > highestSortingOrder)
             {
@@ -271,24 +306,43 @@ public class DragManager : MonoBehaviour
         return topDroppable;
     }
 
-    // 오브젝트 이동
+    // 드래그 중인 오브젝트를 마우스 위치로 이동
     private void MoveDraggingObject(GameObject targetObj)
     {
         Vector2 screenPos = Pointer.current.position.ReadValue();
 
-        if (isTargetUI)
+        if (dragState.IsUI)
         {
-            RectTransform rectTransform = targetObj.GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                rectTransform.position = screenPos;
-            }
+            MoveUIObject(targetObj, screenPos);
         }
         else
         {
-            Vector3 worldPos = mainCamera.ScreenToWorldPoint(screenPos);
-            worldPos.z = 0;
-            targetObj.transform.position = worldPos;
+            MoveWorldObject(targetObj, screenPos);
         }
+    }
+
+    // UI 오브젝트를 스크린 좌표로 이동
+    private void MoveUIObject(GameObject targetObj, Vector2 screenPos)
+    {
+        RectTransform rectTransform = targetObj.GetComponent<RectTransform>();
+        if (rectTransform != null)
+        {
+            rectTransform.position = screenPos;
+        }
+    }
+
+    // World 오브젝트를 월드 좌표로 이동
+    private void MoveWorldObject(GameObject targetObj, Vector2 screenPos)
+    {
+        Vector3 worldPos = mainCamera.ScreenToWorldPoint(screenPos);
+        worldPos.z = 0;
+        targetObj.transform.position = worldPos;
+    }
+
+    // Collider에서 SpriteRenderer의 SortingOrder 가져오기
+    private int GetSortingOrder(Collider2D collider)
+    {
+        var spriteRenderer = collider.GetComponent<SpriteRenderer>();
+        return spriteRenderer != null ? spriteRenderer.sortingOrder : 0;
     }
 }

@@ -58,14 +58,28 @@ public class GridUnit : MonoBehaviour, IDraggable
     {
         curGridCell = previousGridCell;
 
-        // 드롭 실패 시 원래 그리드 색상 복원
+        // 드롭 실패 시 원래 그리드 상태 및 색상 복원
         if (curGridCell != null)
         {
             var gridManager = curGridCell.GetGridManager();
             if (gridManager != null)
             {
+                // gridArray 상태 복원 (Empty -> Occupied)
+                var occupiedCells = GridData.GetOccupiedCells();
+                gridManager.SetGridState(curGridCell.GridPosition, GridState.Occupied);
+
+                foreach (var relativePos in occupiedCells)
+                {
+                    Vector2Int absolutePos = curGridCell.GridPosition + relativePos;
+                    gridManager.SetGridState(absolutePos, GridState.Occupied);
+                }
+
+                // 색상 복원
                 gridManager.OnFailed();
             }
+
+            // GridCell의 PlacedObject 참조도 복원
+            curGridCell.RestorePlacedObject(gameObject);
         }
     }
 
