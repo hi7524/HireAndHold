@@ -13,7 +13,7 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     private const float PreviewScaleDuration = 0.15f;
 
     [SerializeField] private Image unitImg;
-    [SerializeField] private Transform previewObjTrans;
+    [SerializeField] private Transform previewObjTrans; // 드래그 중에 보여질 프리뷰 오브젝트
     [SerializeField] private float cellUISize = 65f;
 
     // 드래그
@@ -29,11 +29,23 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     // 프리뷰 헬퍼
     private GridPreviewHelper previewHelper;
 
-    // 드래그 중 원래 위치 저장
-    private Vector3 originalPosition;
-    private Transform originalParent;
+    // 드래그 가능 여부
     private bool isDraggable = true;
 
+    // 초기 로컬 위치 저장
+    private Vector3 initialLocalPosition;
+
+    private void Awake()
+    {
+        // 초기 로컬 위치 저장
+        initialLocalPosition = transform.localPosition;
+    }
+
+    private void OnEnable()
+    {
+        // 활성화 시 초기 위치로 복구
+        transform.localPosition = initialLocalPosition;
+    }
 
     // 드래그 가능 여부를 설정
     public void SetDraggableState(bool value)
@@ -84,9 +96,8 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     // 드래그 시작
     public void OnDragStart()
     {
-        // 프리뷰 셀 표시 및 유닛 이미지 투명화, 원래 위치 저장
+        // 프리뷰 셀 표시 및 유닛 이미지 투명화
         SetImageAlpha(TransparentAlpha);
-        SaveOriginalTransform();
         ShowPreviewCells();
     }
 
@@ -98,10 +109,9 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     // 드래그 종료
     public void OnDragEnd()
     {
-        // 프리뷰 셀 숨김 및 메인 이미지 불투명화, 원래 위치 복구
+        // 프리뷰 셀 숨김 및 메인 이미지 불투명화
         HidePreviewCells();
         SetImageAlpha(OpaqueAlpha);
-        RestoreOriginalTransform();
     }
 
     // 드롭 실패
@@ -116,20 +126,6 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
         // 유닛을 비활성화하고 성공 이벤트를 발생
         gameObject.SetActive(false);
         OnUnitDroppedSuccessfully?.Invoke();
-    }
-
-    // 원래 위치와 부모를 저장
-    private void SaveOriginalTransform()
-    {
-        originalPosition = transform.position;
-        originalParent = transform.parent;
-    }
-
-    // 원래 위치와 부모로 복구
-    private void RestoreOriginalTransform()
-    {
-        transform.SetParent(originalParent);
-        transform.position = originalPosition;
     }
 
     // 유닛 이미지의 투명도 조정

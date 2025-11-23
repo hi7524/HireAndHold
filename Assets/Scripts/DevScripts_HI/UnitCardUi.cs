@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class UnitCardUi : BaseCardUi
 {
-    [SerializeField] private Transform previewTrans;
+    [SerializeField] private Transform previewTrans; // 왼쪽 상단에 작게 표시할 미리보기 그리드
     [SerializeField] private DraggableGridUnitUi draggableUnitUI;
     [SerializeField] private float cellUISize = 20f;
 
