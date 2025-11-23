@@ -17,6 +17,8 @@ public class GridManager : MonoBehaviour
     [SerializeField] private Color invalidColor;
     [Space]
     [SerializeField] private GameObject gridUnitPrefab;
+    [Space]
+    [SerializeField] private LevelUpRewardController levelUpRewardController;
 
     public int[,] gridArray { get; private set; }
 
@@ -282,5 +284,12 @@ public class GridManager : MonoBehaviour
 
         gridUnit.SetGridData(gridData);
         return gridUnit;
+    }
+
+    // 레벨업 보상 유닛이 생성되었음을 알림
+    public void NotifyLevelUpRewardUnitSpawned(GridUnit unit)
+    {
+        if (levelUpRewardController != null)
+            levelUpRewardController.OnLevelUpRewardUnitSpawned(unit);
     }
 }

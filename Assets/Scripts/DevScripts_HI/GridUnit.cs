@@ -10,6 +10,7 @@ public class GridUnit : MonoBehaviour, IDraggable
 
     public int UnitId { get; private set; }
     public UnitGridData GridData { get; private set; }
+    public bool canPlaceInInventory = true; // 인벤토리에 보관 가능하게 할 지 여부
 
     // 드래그
     public bool IsDraggable => true;
@@ -32,6 +33,11 @@ public class GridUnit : MonoBehaviour, IDraggable
     {
         UnitId = unitId;
     } 
+
+    public void SetInventoryPlaceable(bool value)
+    {
+        canPlaceInInventory = value;
+    }
 
     public void OnDragStart()
     {

@@ -3,6 +3,11 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum DraggableUnitType
+{
+    LevelUp,
+    Inventory,
+}
 
 public class DraggableGridUnitUi : MonoBehaviour, IDraggable
 {
@@ -16,24 +21,19 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     [SerializeField] private Transform previewObjTrans; // 드래그 중에 보여질 프리뷰 오브젝트
     [SerializeField] private float cellUISize = 65f;
 
-    // 드래그
     public GameObject GameObject => gameObject;
     public bool IsDraggable => isDraggable;
 
-    // 유닛 정보
     public int UnitId { get; private set; }
     public UnitGridData GridData { get; private set; }
+    public DraggableUnitType DraggableUnitType { get; private set; }
 
     public event Action OnUnitDroppedSuccessfully;
 
-    // 프리뷰 헬퍼
     private GridPreviewHelper previewHelper;
-
-    // 드래그 가능 여부
     private bool isDraggable = true;
-
-    // 초기 로컬 위치 저장
     private Vector3 initialLocalPosition;
+
 
     private void Awake()
     {
@@ -59,6 +59,11 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
         UnitId = unitId;
     }
 
+    public void SetDraggableUnitType(DraggableUnitType type)
+    {
+        DraggableUnitType = type;
+    }
+
     // 그리드 데이터 설정 및 프리뷰 초기화
     public void SetGridData(UnitGridData gridData)
     {
@@ -79,7 +84,6 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
             previewHelper.Hide();
         }
     }
-
 
     // 기존 프리뷰 이미지를 새로운 그리드 데이터로 업데이트
     public void UpdatePreviewImages(UnitGridData newGridData)
@@ -117,7 +121,7 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     // 드롭 실패
     public void OnDropFailed()
     {
-        
+
     }
 
     // 드롭 성공

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class UnitCardUi : BaseCardUi
 {
     [SerializeField] private Transform previewTrans; // 왼쪽 상단에 작게 표시할 미리보기 그리드
-    [SerializeField] private DraggableGridUnitUi draggableUnitUI;
+    [SerializeField] private DraggableGridUnitUi draggableUnitUI; // 실제로 드래그 할 유닛 UI
     [SerializeField] private float cellUISize = 20f;
 
     private int unitId;
@@ -57,6 +57,7 @@ public class UnitCardUi : BaseCardUi
     {
         this.unitId = unitId;
         draggableUnitUI.SetUnit(unitId);
+        draggableUnitUI.SetDraggableUnitType(DraggableUnitType.LevelUp);
     }
 
     public void SetGridData(UnitGridData gridData)
