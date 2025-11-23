@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,7 +6,13 @@ using UnityEngine.UI;
 
 public class DraggableGridUnitUi : MonoBehaviour, IDraggable
 {
-    [SerializeField] private Image image;
+    private const float TransparentAlpha = 0f;
+    private const float OpaqueAlpha = 1f;
+    private const float PreviewInitialScale = 0.5f;
+    private const float PreviewFinalScale = 1.0f;
+    private const float PreviewScaleDuration = 0.15f;
+
+    [SerializeField] private Image unitImg;
     [SerializeField] private Transform previewObjTrans;
     [SerializeField] private float cellUISize = 65f;
 
@@ -19,208 +24,134 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     public int UnitId { get; private set; }
     public UnitGridData GridData { get; private set; }
 
-    public event Action OnDropSuccess;
+    public event Action OnUnitDroppedSuccessfully;
 
-    // 프리뷰 오브젝트
-    private readonly List<GameObject> previewImages = new List<GameObject>();
+    // 프리뷰 헬퍼
+    private GridPreviewHelper previewHelper;
 
+    // 드래그 중 원래 위치 저장
     private Vector3 originalPosition;
     private Transform originalParent;
-    private bool dropFailed = false;
     private bool isDraggable = true;
 
 
+    // 드래그 가능 여부를 설정
     public void SetDraggableState(bool value)
     {
         isDraggable = value;
     }
 
+    // 유닛 ID를 설정
     public void SetUnit(int unitId)
     {
-        this.UnitId = unitId;
+        UnitId = unitId;
     }
 
+    // 그리드 데이터 설정 및 프리뷰 초기화
     public void SetGridData(UnitGridData gridData)
     {
-        this.GridData = gridData;
+        GridData = gridData;
 
-        // 기존 프리뷰 이미지가 있다면 UpdatePreviewImages 사용
-        if (previewImages.Count > 0)
+        if (previewHelper == null)
+        {
+            previewHelper = new GridPreviewHelper(previewObjTrans, cellUISize);
+        }
+
+        if (previewHelper.HasCells)
         {
             UpdatePreviewImages(gridData);
         }
         else
         {
-            CreatePreviewUIImages();
-            SetActivePreviewImages(false);
+            previewHelper.CreatePreview(gridData);
+            previewHelper.Hide();
         }
     }
 
-    // GridData가 변경되었을 때 기존 미리보기 이미지들을 재사용하여 갱신
+
+    // 기존 프리뷰 이미지를 새로운 그리드 데이터로 업데이트
     public void UpdatePreviewImages(UnitGridData newGridData)
     {
         if (newGridData == null)
             return;
 
-        this.GridData = newGridData;
-
-        var occupiedCells = GridData.GetOccupiedCells();
-        int requiredCount = occupiedCells.Count + 1;
-
-        // 부족한 셀 추가
-        while (previewImages.Count < requiredCount)
-        {
-            var cellPos = previewImages.Count == 0 ? Vector2Int.zero : occupiedCells[previewImages.Count - 1];
-            CreatePreviewUICell(cellPos);
-        }
-
-        // 넘치는 셀 삭제
-        while (previewImages.Count > requiredCount)
-        {
-            int lastIndex = previewImages.Count - 1;
-            GameObject objToRemove = previewImages[lastIndex];
-            previewImages.RemoveAt(lastIndex);
-            Destroy(objToRemove);
-        }
-
-        // 기존 셀들의 색상 및 위치 갱신
-        UpdatePreviewCell(0, Vector2Int.zero);
-
-        for (int i = 0; i < occupiedCells.Count; i++)
-        {
-            UpdatePreviewCell(i + 1, occupiedCells[i]);
-        }
-
-        SetActivePreviewImages(false);
+        GridData = newGridData;
+        previewHelper.UpdatePreview(newGridData);
+        previewHelper.Hide();
     }
 
-    // 개별 미리보기 셀의 위치와 색상 갱신
-    private void UpdatePreviewCell(int index, Vector2Int cellPos)
-    {
-        if (index < 0 || index >= previewImages.Count)
-            return;
 
-        GameObject cellObj = previewImages[index];
-        cellObj.name = $"PreviewCell_{cellPos.x}_{cellPos.y}";
-
-        // 위치 갱신
-        RectTransform rect = cellObj.GetComponent<RectTransform>();
-        rect.anchoredPosition = new Vector2(cellPos.x * cellUISize, cellPos.y * cellUISize);
-
-        // 색상 갱신
-        Image img = cellObj.GetComponent<Image>();
-        img.color = GridData.gridColor;
-    }
-
+    // 드래그 시작
     public void OnDragStart()
     {
-        image.color = new Color(1, 1, 1, 0);
-
-        // 원래 위치 저장
-        originalPosition = transform.position;
-        originalParent = transform.parent;
-
-        SetActivePreviewImages(true);
+        // 프리뷰 셀 표시 및 유닛 이미지 투명화, 원래 위치 저장
+        SetImageAlpha(TransparentAlpha);
+        SaveOriginalTransform();
+        ShowPreviewCells();
     }
 
+    // 드래그 중
     public void OnDrag()
     {
     }
 
+    // 드래그 종료
     public void OnDragEnd()
     {
-        SetActivePreviewImages(false);
-
-        // 드롭 성공시에 active false
-        if (!dropFailed)
-        {
-            gameObject.SetActive(false);
-            OnDropSuccess?.Invoke();
-        }
-
-        transform.SetParent(originalParent);
-        transform.position = originalPosition;
-        dropFailed = false;
-        image.color = new Color(1, 1, 1, 1);
+        // 프리뷰 셀 숨김 및 메인 이미지 불투명화, 원래 위치 복구
+        HidePreviewCells();
+        SetImageAlpha(OpaqueAlpha);
+        RestoreOriginalTransform();
     }
 
+    // 드롭 실패
     public void OnDropFailed()
     {
-        SetActivePreviewImages(false);
-
-        gameObject.SetActive(true);
-        dropFailed = true;
+        
     }
 
-    // 프리뷰를 위한 이미지 생성
-    private void CreatePreviewUIImages()
+    // 드롭 성공
+    public void OnDropSuccess()
     {
-        if (GridData == null)
+        // 유닛을 비활성화하고 성공 이벤트를 발생
+        gameObject.SetActive(false);
+        OnUnitDroppedSuccessfully?.Invoke();
+    }
+
+    // 원래 위치와 부모를 저장
+    private void SaveOriginalTransform()
+    {
+        originalPosition = transform.position;
+        originalParent = transform.parent;
+    }
+
+    // 원래 위치와 부모로 복구
+    private void RestoreOriginalTransform()
+    {
+        transform.SetParent(originalParent);
+        transform.position = originalPosition;
+    }
+
+    // 유닛 이미지의 투명도 조정
+    private void SetImageAlpha(float alpha)
+    {
+        unitImg.color = new Color(1, 1, 1, alpha);
+    }
+
+    // 프리뷰 셀 활성화
+    private void ShowPreviewCells()
+    {
+        if (previewHelper == null || !previewHelper.HasCells)
             return;
 
-        var occupiedCells = GridData.GetOccupiedCells();
-
-        CreatePreviewUICell(Vector2Int.zero);
-
-        foreach (var cellPos in occupiedCells)
-        {
-            CreatePreviewUICell(cellPos);
-        }
+        previewObjTrans.localScale = PreviewInitialScale * Vector3.one;
+        previewHelper.Show();
+        previewObjTrans.DOScale(PreviewFinalScale, PreviewScaleDuration);
     }
 
-    // 셀 단위 이미지 생성
-    private void CreatePreviewUICell(Vector2Int cellPos)
+    // 프리뷰 셀 숨기기
+    private void HidePreviewCells()
     {
-        // UI Image GameObject 생성
-        GameObject cellObj = new();
-        cellObj.transform.SetParent(previewObjTrans, false);
-        previewImages.Add(cellObj);
-
-        // RectTransform 설정
-        RectTransform rect = cellObj.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(cellUISize, cellUISize);
-        rect.anchoredPosition = new Vector2(cellPos.x * cellUISize, cellPos.y * cellUISize);
-
-        // 색상 설정
-        Image img = cellObj.AddComponent<Image>();
-        img.color = GridData.gridColor;
-    }
-
-    // 미리보기 이미지 활성화 및 비활성화
-    private void SetActivePreviewImages(bool value)
-    {
-        if (previewImages == null || previewImages.Count == 0)
-            return;
-
-        if (value)
-        {
-            SetActivePreviewImages();
-        }
-        else
-        {
-            foreach (var previewImg in previewImages)
-            {
-                previewImg.SetActive(false);
-            }
-        }
-    }
-
-    // 활성화
-    private void SetActivePreviewImages()
-    {
-        if (previewImages == null || previewImages.Count == 0)
-            return;
-
-        previewObjTrans.localScale = 0.5f * Vector3.one;
-        foreach (var previewImg in previewImages)
-        {
-            previewImg.SetActive(true);
-        }
-
-        previewObjTrans.DOScale(1.0f, 0.15f);
-    }
-
-    void IDraggable.OnDropSuccess()
-    {
+        previewHelper?.Hide();
     }
 }

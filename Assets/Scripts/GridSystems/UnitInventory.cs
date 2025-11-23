@@ -15,21 +15,17 @@ public class UnitInventory : MonoBehaviour, IDroppable
     [SerializeField] private StageUiManager uiManager;
 
     private const int MaxCapacity = 16;
+    private const int SellCost = 25; // 테스트용 **
 
     private List<int> ownedUnitIds = new List<int>();
     private UnitInventorySlot[] slots;
     private int slotIndex;
     private Sequence dropSequence;
 
-    private int sellCost = 25; // 테스트용 **
-
 
     async UniTaskVoid Start()
     {
-        slots = new UnitInventorySlot[MaxCapacity];
-
-        Create(MaxCapacity);
-
+        InitializeSlots();
         await DataTableManager.InitAsync();
         UpdateAllSlotsUi();
     }
@@ -48,70 +44,20 @@ public class UnitInventory : MonoBehaviour, IDroppable
 
     private void OnDestroy()
     {
-        // GameObject 파괴 시 트윈 정리
+        // 트윈 정리
         dropSequence?.Kill();
         transform.DOKill();
     }
 
-    // 유닛 추가
-    public void AddUnit(int unitId)
+    // 슬롯 배열 초기화 및 생성
+    private void InitializeSlots()
     {
-        if (ownedUnitIds.Count >= MaxCapacity)
-        {
-            Debug.Log("인벤토리 가득 참");
-            return;
-        }
-
-        ownedUnitIds.Add(unitId);
-
-        slots[slotIndex].gameObject.SetActive(true);
-        slots[slotIndex].SetUnit(unitId);
-        slots[slotIndex].SetGridData(gridDatas.GridDatas[unitId]);
-        slots[slotIndex].UpdateUi();
-        slotIndex++;
+        slots = new UnitInventorySlot[MaxCapacity];
+        CreateSlots(MaxCapacity);
     }
 
-    // 유닛 제거
-    public void RemoveUnit(int unitId)
-    {
-        if (ownedUnitIds.Count <= 0)
-        {
-            Debug.Log("보유 유닛 없음");
-            return;
-        }
-
-        int removeIndex = ownedUnitIds.IndexOf(unitId);
-        if (removeIndex == -1)
-        {
-            Debug.LogWarning($"유닛 ID {unitId}를 찾을 수 없습니다.");
-            return;
-        }
-
-        ownedUnitIds.RemoveAt(removeIndex);
-        slotIndex--;
-
-        UpdateAllSlotsUi();
-    }
-
-    private void SellUnits()
-    {
-        if (ownedUnitIds.Count <= 0)
-            return;
-
-        Debug.Log("잔여 유닛 판매");
-
-        int addGold = ownedUnitIds.Count * sellCost;
-        playerGold.AddGold(addGold);
-
-        string msg = $"+{addGold}G\n유닛 {ownedUnitIds.Count}개 판매!";
-        uiManager.UpdateInfoText(msg);
-
-        ownedUnitIds.Clear();
-        slotIndex = 0;
-    }
-
-    // 유닛 나타낼 UI 생성
-    public void Create(int amount)
+    // 지정된 수만큼 슬롯 생성
+    private void CreateSlots(int amount)
     {
         for (int i = 0; i < amount; i++)
         {
@@ -121,6 +67,107 @@ public class UnitInventory : MonoBehaviour, IDroppable
         }
     }
 
+    // 유닛 추가
+    public void AddUnit(int unitId)
+    {
+        if (!CanAddUnit())
+        {
+            Debug.Log("인벤토리 가득 참");
+            return;
+        }
+
+        ownedUnitIds.Add(unitId);
+        SetupSlot(slotIndex, unitId);
+        slotIndex++;
+    }
+
+    // 유닛 추가 가능 여부 확인
+    private bool CanAddUnit()
+    {
+        return ownedUnitIds.Count < MaxCapacity;
+    }
+
+    // 특정 슬롯 설정 및 활성화
+    private void SetupSlot(int index, int unitId)
+    {
+        slots[index].gameObject.SetActive(true);
+        slots[index].SetUnit(unitId);
+        slots[index].SetGridData(gridDatas.GridDatas[unitId]);
+        slots[index].UpdateUi();
+    }
+
+    // 유닛 제거
+    public void RemoveUnit(int unitId)
+    {
+        if (!HasUnits())
+        {
+            Debug.Log("보유 유닛 없음");
+            return;
+        }
+
+        int removeIndex = FindUnitIndex(unitId);
+        if (removeIndex == -1)
+        {
+            Debug.LogWarning($"유닛 ID {unitId}를 찾을 수 없습니다.");
+            return;
+        }
+
+        RemoveUnitAtIndex(removeIndex);
+        UpdateAllSlotsUi();
+    }
+
+    // 유닛 보유 여부 확인
+    private bool HasUnits()
+    {
+        return ownedUnitIds.Count > 0;
+    }
+
+    // 유닛 ID로 인덱스 찾기
+    private int FindUnitIndex(int unitId)
+    {
+        return ownedUnitIds.IndexOf(unitId);
+    }
+
+    // 특정 인덱스의 유닛 제거
+    private void RemoveUnitAtIndex(int index)
+    {
+        ownedUnitIds.RemoveAt(index);
+        slotIndex--;
+    }
+
+    // 모든 잔여 유닛 판매
+    private void SellUnits()
+    {
+        if (!HasUnits())
+            return;
+
+        int totalGold = CalculateSellValue();
+        playerGold.AddGold(totalGold);
+
+        ShowSellMessage(totalGold, ownedUnitIds.Count);
+        ClearInventory();
+    }
+
+    // 판매 금액 계산
+    private int CalculateSellValue()
+    {
+        return ownedUnitIds.Count * SellCost;
+    }
+
+    // 판매 완료 메시지 표시
+    private void ShowSellMessage(int gold, int unitCount)
+    {
+        string msg = $"+{gold}G\n유닛 {unitCount}개 판매!";
+        uiManager.UpdateInfoText(msg);
+    }
+
+    // 인벤토리 초기화
+    private void ClearInventory()
+    {
+        ownedUnitIds.Clear();
+        slotIndex = 0;
+    }
+
     // 전체 슬롯 UI 갱신
     public void UpdateAllSlotsUi()
     {
@@ -128,63 +175,90 @@ public class UnitInventory : MonoBehaviour, IDroppable
         {
             if (i < ownedUnitIds.Count)
             {
-                int unitId = ownedUnitIds[i];
-                slots[i].SetUnit(unitId);
-                slots[i].UpdatePreviewImages(gridDatas.GridDatas[unitId]);
-                slots[i].UpdateUi();
-                slots[i].gameObject.SetActive(true);
+                UpdateActiveSlot(i);
             }
             else
             {
-                slots[i].gameObject.SetActive(false);
+                DeactivateSlot(i);
             }
         }
     }
 
-    public bool CanDrop(IDraggable draggable)
+    // 활성 슬롯 UI 업데이트
+    private void UpdateActiveSlot(int index)
     {
-        return ownedUnitIds.Count < MaxCapacity;
+        int unitId = ownedUnitIds[index];
+        slots[index].SetUnit(unitId);
+        slots[index].UpdatePreviewImages(gridDatas.GridDatas[unitId]);
+        slots[index].UpdateUi();
+        slots[index].gameObject.SetActive(true);
     }
 
+    // 슬롯 비활성화
+    private void DeactivateSlot(int index)
+    {
+        slots[index].gameObject.SetActive(false);
+    }
+
+    // 드롭 가능 여부 확인
+    public bool CanDrop(IDraggable draggable)
+    {
+        // draggableUnitUI는 드롭할 수 없음 
+        var draggableUnitUi = draggable.GameObject.GetComponent<DraggableGridUnitUi>();
+        if (draggableUnitUi != null)
+            return false;
+
+        return CanAddUnit();
+    }
+
+    // 드롭 처리 (GridUnit 또는 UnitInventorySlot)
     public void OnDrop(IDraggable draggable)
     {
-        // GridUnit일 경우
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
         {
-            AddUnit(gridUnit.UnitId);
-            draggable.GameObject.SetActive(false);
-
-            dropSequence?.Kill();
-            dropSequence = DOTween.Sequence();
-            dropSequence.Append(transform.DOScale(1.1f, 0.1f));
-            dropSequence.Append(transform.DOScale(1.0f, 0.15f));
+            HandleGridUnitDrop(gridUnit);
             return;
         }
 
-        // UnitInventorySlot일 경우
         var inventorySlot = draggable.GameObject.GetComponent<UnitInventorySlot>();
         if (inventorySlot != null)
         {
-            inventorySlot.OnDropFailed();
+            HandleInventorySlotDrop(inventorySlot);
             return;
         }
+    }
+
+    // GridUnit 드롭 처리
+    private void HandleGridUnitDrop(GridUnit gridUnit)
+    {
+        AddUnit(gridUnit.UnitId);
+        gridUnit.gameObject.SetActive(false);
+        PlayDropAnimation();
+    }
+
+    // UnitInventorySlot 드롭 처리
+    private void HandleInventorySlotDrop(UnitInventorySlot inventorySlot)
+    {
+        inventorySlot.OnDropFailed();
+    }
+
+    // 드롭 애니메이션 재생
+    private void PlayDropAnimation()
+    {
+        dropSequence?.Kill();
+        dropSequence = DOTween.Sequence();
+        dropSequence.Append(transform.DOScale(1.1f, 0.1f));
+        dropSequence.Append(transform.DOScale(1.0f, 0.15f));
     }
 
     public void OnDragEnter(IDraggable draggable)
     {
-        if (ownedUnitIds.Count < MaxCapacity)
-        {
-            //Debug.Log("드롭 가능");
-        }
-        else
-        {
-            //Debug.Log("드롭 불가능");
-        }
+
     }
 
     public void OnDragExit(IDraggable draggable)
     {
-        
+
     }
 }
