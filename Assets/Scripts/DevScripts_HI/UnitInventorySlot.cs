@@ -124,7 +124,6 @@ public class UnitInventorySlot : MonoBehaviour, IDraggable
 
     public void OnDrag()
     {
-        Debug.Log($"유닛 ID: {UnitId}");
     }
 
     public void OnDragEnd()

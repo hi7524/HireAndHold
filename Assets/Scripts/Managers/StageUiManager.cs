@@ -7,6 +7,7 @@ public class StageUiManager : MonoBehaviour
 {
     [SerializeField] private GameManager gameManager;
     [Space]
+    [SerializeField] private GameObject gameControllBtns;
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TextMeshProUGUI goldText;
     [SerializeField] private TextMeshProUGUI speedLevelText;
@@ -42,24 +43,33 @@ public class StageUiManager : MonoBehaviour
     {
         gameOverPanel.SetActive(true);
     }
+
     public void ActiveBossPricePanel()
     {
         bossPricePanel.SetActive(true);
     }
+
     public void ActiveSkillSelectPanel()
     {
         skillSelectPanel.SetActive(true);
+    }
+    
+    public void SetGameControllBtnsActive(bool isActive)
+    {
+        gameControllBtns.SetActive(isActive);
     }
 
     public void UpdateStageGoldText(int curGold)
     {
         goldText.text = $"{curGold:N0}G";
     }
+
     public void ShowWarningPanel()
     {
         warningPanel.SetActive(true);
         HideWarningPanel(5f).Forget();
     }
+
     public async UniTask HideWarningPanel(float duration)
     {
         await UniTask.Delay((int)(duration * 1000));
@@ -68,7 +78,6 @@ public class StageUiManager : MonoBehaviour
             warningPanel.SetActive(false);
         }
     }
-    
 
     public void UpdateInfoText(string msg)
     {

@@ -13,6 +13,7 @@ public class LevelUpRewardController : MonoBehaviour
     [SerializeField] private Button reRollBtn;
     [Header("Others")]
     [SerializeField] private GameManager gameManager;
+    [SerializeField] private StageUiManager uiManager;
     [SerializeField] private UnitInventory inventory;
     [SerializeField] private PlayerStageGold playerStageGold;
     [SerializeField] private PlayerExperience playerExp;
@@ -23,6 +24,7 @@ public class LevelUpRewardController : MonoBehaviour
     private SkillCardUi[] skillCardUIs;
 
     private List<int> ownedUnitIdForTesting = new List<int> { 11101, 11104, 11107, 11110, 11113 }; // 테스트용***
+
 
     // 초기 세팅
     private void Start()
@@ -62,9 +64,10 @@ public class LevelUpRewardController : MonoBehaviour
         DrawUnitID();
         SetActiveCards(unitCardUIs, true);
 
-        // 관련 UI 활성화
+        // 관련 UI 활성화 및 비활성화
         inventory.gameObject.SetActive(true);
         reRollBtn.gameObject.SetActive(true);
+        uiManager.SetGameControllBtnsActive(false);
         UpdateRerollBtn();
     }
 
@@ -94,6 +97,7 @@ public class LevelUpRewardController : MonoBehaviour
         // 기존 카드들을 모두 비활성화
         SetActiveCards(skillCardUIs, false);
         SetActiveCards(unitCardUIs, false);
+        uiManager.SetGameControllBtnsActive(false);
 
         // 플레이어 레벨이 3의 배수일 때 스킬 뽑기
         if (playerExp.Level % 3 == 0)
@@ -111,10 +115,11 @@ public class LevelUpRewardController : MonoBehaviour
     // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
-        // 관련 UI 비활성화
+        // 관련 UI 비활성화 및 활성화
         SetActiveCards(skillCardUIs, false);
         SetActiveCards(unitCardUIs, false);
         reRollBtn.gameObject.SetActive(false);
+        uiManager.SetGameControllBtnsActive(true);
 
         if (!gameManager.IsGameStarted)
             gameManager.StartGame();

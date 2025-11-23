@@ -94,6 +94,9 @@ public class GameManager : MonoBehaviour
     // 게임 플레이 속도 변경
     public void ChangeSpeed()
     {
+        if (!IsGameStarted || IsPausedGame)
+            return;
+        
         curSpeedLevelIdx = (curSpeedLevelIdx + 1) % speedLevels.Length;
         Time.timeScale = speedLevels[curSpeedLevelIdx];
     }
@@ -115,10 +118,9 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"<color=#E155E1>{msg}</color>");
     }
+    
     public void OnLobbyButtonClick()
-    {
- 
+    { 
         LoadingSceneManager.Instance.LoadSceneWithLoading(new LoadingRequest("Lobby"));
-
     }
 }
