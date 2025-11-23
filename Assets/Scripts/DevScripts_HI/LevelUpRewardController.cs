@@ -118,6 +118,7 @@ public class LevelUpRewardController : MonoBehaviour
         // 관련 UI 비활성화 및 활성화
         SetActiveCards(skillCardUIs, false);
         SetActiveCards(unitCardUIs, false);
+        inventory.gameObject.SetActive(false);
         reRollBtn.gameObject.SetActive(false);
         uiManager.SetGameControllBtnsActive(true);
 
@@ -205,6 +206,7 @@ public class LevelUpRewardController : MonoBehaviour
         {
             var card = Instantiate(skillCardPrf, transform);
             skillCardUIs[i] = card;
+            card.SetLevelUpRewardController(this);
             card.gameObject.SetActive(false);
         }
     }
