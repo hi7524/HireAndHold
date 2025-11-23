@@ -124,7 +124,7 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
         HorizontalOrVerticalLayoutGroup layoutGroup = content.GetComponent<HorizontalOrVerticalLayoutGroup>();
         if (layoutGroup == null)
         {
-            Debug.LogError("Content에 Horizontal Layout Group이 없습니다. 중앙 정렬이 작동하려면 필수입니다!");
+
             return;
         }
 
