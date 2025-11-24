@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
             return;
 
         ElapsedTime += Time.deltaTime;
+        
         timeScheduler.UpdateTime(Time.deltaTime);
     }
 
@@ -86,8 +87,13 @@ public class GameManager : MonoBehaviour
     // 게임 종료
     public void GameEnd()
     {
+        if (!IsGameStarted) 
+        {
+            Debug.LogWarning("[GameManager] 게임이 시작되지 않았는데 GameEnd() 호출됨!");
+            return;
+        }
         GameManagerLog("게임 종료");
-
+        IsGameStarted = false; 
         Time.timeScale = 0f;
         OnGameEnd?.Invoke();
     }
@@ -121,7 +127,8 @@ public class GameManager : MonoBehaviour
     }
     
     public void OnLobbyButtonClick()
-    { 
+    {
+        Time.timeScale = 1f;
         LoadingSceneManager.Instance.LoadSceneWithLoading(new LoadingRequest("Lobby"));
     }
 }
