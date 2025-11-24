@@ -135,6 +135,8 @@ public class GridCell : MonoBehaviour, IDroppable
                     if (TryMergeUnits(existingUnit, gridUnit))
                     {
                         // 합성 성공 - 색상 업데이트
+                        Debug.Log("머지");
+                        gridManager.OnMergedUnits();
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
                         return;
@@ -188,6 +190,8 @@ public class GridCell : MonoBehaviour, IDroppable
                     if (TryMergeWithInventorySlot(existingUnit, inventorySlot))
                     {
                         // 합성 성공 - 색상 업데이트
+                        Debug.Log("머지");
+                        gridManager.OnMergedUnits();
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
                         return;
@@ -243,7 +247,8 @@ public class GridCell : MonoBehaviour, IDroppable
                     if (TryMergeWithUi(existingUnit, draggableUnitUi))
                     {
                         // 합성 성공 - UI 비활성화 및 색상 업데이트
-                        draggable.OnDropSuccess();
+                        Debug.Log("머지");
+                        gridManager.OnMergedUnits();
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
                         return;

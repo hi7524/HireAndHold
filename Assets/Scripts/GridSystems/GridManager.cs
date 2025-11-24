@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,6 +20,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject gridUnitPrefab;
     [Space]
     [SerializeField] private LevelUpRewardController levelUpRewardController;
+    [SerializeField] private StageUiManager uiManager;
 
     public int[,] gridArray { get; private set; }
 
@@ -160,6 +162,12 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    // 유닛 합성시 호출
+    public void OnMergedUnits()
+    {
+        uiManager.UpdateInfoText("유닛 합성 완료!");
     }
 
     // 모든 하이라이트된 셀의 색상 초기화
