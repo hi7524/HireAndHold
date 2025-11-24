@@ -12,16 +12,20 @@ public class Wall : MonoBehaviour, IDamagable
     [SerializeField] GameManager gameManager;
 
     public float CurrentHp => currentHp;
+    private bool isDead = false; 
 
 
     private void Start()
     {
         currentHp = maxHp;
         hpSlider.value = 1f;
+        isDead = false; 
     }
 
     public void TakeDamage(float damage)
     {
+        if (isDead) return; 
+
         currentHp -= damage;
         hpSlider.value = currentHp / maxHp;
 
@@ -33,6 +37,9 @@ public class Wall : MonoBehaviour, IDamagable
 
     public void Die()
     {
+        if (isDead) return;
+        isDead = true;
+        
         gameObject.SetActive(false);
         uiManager.ActiveGameOverPanel();
         gameManager.GameEnd();
