@@ -208,6 +208,13 @@ public class UnitInventory : MonoBehaviour, IDroppable
         if (draggableUnitUi != null)
             return false;
 
+        var unit = draggable.GameObject.GetComponent<GridUnit>();
+        if (unit != null)
+        {
+            if (!unit.canPlaceInInventory)
+                return false;
+        }
+
         return CanAddUnit();
     }
 

@@ -25,6 +25,9 @@ public class LevelUpRewardController : MonoBehaviour
 
     private List<int> ownedUnitIdForTesting = new List<int> { 11101, 11104, 11107, 11110, 11113 }; // 테스트용***
 
+    // 현재 레벨업 보상으로 생성된 유닛들을 추적
+    private readonly List<GridUnit> currentLevelUpRewardUnits = new();
+
 
     // 초기 세팅
     private void Start()
@@ -33,10 +36,8 @@ public class LevelUpRewardController : MonoBehaviour
         CreateUnitCardPrf(3);
         CreateSkillCardPrf(3);
 
-        // 레기업시 보상 뽑기
         playerExp.OnLevelUp += DrawLevelUpReward;
 
-        // 스테이지 시작 전, 초기 배치를 위한 활성화
         SelectUnitOnGameStart();
     }
 
@@ -55,6 +56,28 @@ public class LevelUpRewardController : MonoBehaviour
                 }
             }
         }
+    }
+
+    // 레벨업 보상 유닛이 생성되었을 때 호출
+    public void OnLevelUpRewardUnitSpawned(GridUnit unit)
+    {
+        if (unit != null && !currentLevelUpRewardUnits.Contains(unit))
+        {
+            currentLevelUpRewardUnits.Add(unit);
+        }
+    }
+
+    // 이전 레벨업 보상 유닛들의 인벤토리 배치 허용
+    private void EnableInventoryPlacementForPreviousRewards()
+    {
+        foreach (var unit in currentLevelUpRewardUnits)
+        {
+            if (unit != null)
+            {
+                unit.SetInventoryPlaceable(true);
+            }
+        }
+        currentLevelUpRewardUnits.Clear();
     }
 
     // 스테이지 시작 전
@@ -79,7 +102,7 @@ public class LevelUpRewardController : MonoBehaviour
         reRollBtn.gameObject.SetActive(true);
         UpdateRerollBtn();
 
-        // ** 수정 필요 
+        // ** 수정 필요
         for (int i = 0; i < unitCardUIs.Length; i++)
         {
             unitCardUIs[i].SetDragState(true);
@@ -115,9 +138,13 @@ public class LevelUpRewardController : MonoBehaviour
     // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
+        // 현재 레벨업 보상 유닛들의 인벤토리 배치 허용
+        EnableInventoryPlacementForPreviousRewards();
+
         // 관련 UI 비활성화 및 활성화
         SetActiveCards(skillCardUIs, false);
         SetActiveCards(unitCardUIs, false);
+        inventory.gameObject.SetActive(false);
         reRollBtn.gameObject.SetActive(false);
         uiManager.SetGameControllBtnsActive(true);
 
@@ -168,6 +195,9 @@ public class LevelUpRewardController : MonoBehaviour
     {
         if (playerStageGold.UseGold(rerollCost))
         {
+            // 현재 레벨업 보상 유닛들의 인벤토리 배치 허용
+            EnableInventoryPlacementForPreviousRewards();
+
             DrawReward();
             UpdateRerollBtn();
 
@@ -205,6 +235,7 @@ public class LevelUpRewardController : MonoBehaviour
         {
             var card = Instantiate(skillCardPrf, transform);
             skillCardUIs[i] = card;
+            card.SetLevelUpRewardController(this);
             card.gameObject.SetActive(false);
         }
     }

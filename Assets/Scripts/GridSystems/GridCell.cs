@@ -134,6 +134,7 @@ public class GridCell : MonoBehaviour, IDroppable
             }
 
             newGridUnit.SetUnitID(inventorySlot.UnitId);
+            newGridUnit.SetInventoryPlaceable(true);
 
             // 생성된 GridUnit을 배치
             PlacedObject = newGridUnit.GameObject;
@@ -166,6 +167,13 @@ public class GridCell : MonoBehaviour, IDroppable
             }
 
             newGridUnit.SetUnitID(draggableUnitUi.UnitId);
+
+            // 레벨업 보상 유닛인 경우 GridManager를 통해 알림
+            if (draggableUnitUi.DraggableUnitType == DraggableUnitType.LevelUp)
+            {
+                gridManager.NotifyLevelUpRewardUnitSpawned(newGridUnit);
+                newGridUnit.SetInventoryPlaceable(false);
+            }
 
             // 생성된 GridUnit을 배치
             PlacedObject = newGridUnit.GameObject;

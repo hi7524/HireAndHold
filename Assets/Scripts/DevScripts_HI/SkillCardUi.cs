@@ -11,6 +11,8 @@ public class SkillCardUi : BaseCardUi
     [SerializeField] private Color defaultColor;
     [SerializeField] private Color filledColor;
 
+    private LevelUpRewardController levelUpRewardController;
+
 
     private void Start()
     {
@@ -29,9 +31,15 @@ public class SkillCardUi : BaseCardUi
         }
     }
 
+    public void SetLevelUpRewardController(LevelUpRewardController levelUpRewardController)
+    {
+        this.levelUpRewardController = levelUpRewardController;
+    }
+
     public void SelectSkill()
     {
         Debug.Log("스킬 선택");
+        levelUpRewardController.OnClickConfirmBtn();
     }
 
     private void SetIconColor(Image img, Color color)
