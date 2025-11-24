@@ -1,5 +1,4 @@
-﻿using UnityEditor;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Monster : MonoBehaviour, IDamagable
 {
@@ -12,6 +11,7 @@ public class Monster : MonoBehaviour, IDamagable
     [SerializeField] private float defense;
     public float Defense { get { return defense; } set { defense = value; } }
 
+
     private ObjectPoolManager poolManager;
     private string poolKey;
     private float nextAttackTime;
@@ -21,15 +21,22 @@ public class Monster : MonoBehaviour, IDamagable
 
     private bool isAttacking = false;
     private bool isDead = false;
-    private bool isStunned = false; // 스턴 상태
-    private float originalSpeed; // 원래 속도 저장
+    private bool isStunned = false;
+    private float originalSpeed;
+
 
     public bool IsDead => isDead;
     public bool IsStunned => isStunned;
 
     //boss
     private bool isBoss = false;
+    private Vector3 originalScale;
     public float CurrentHp => currentHp;
+
+    private void Awake()
+    {
+        originalScale = transform.localScale;
+    }
 
     void Start()
     {
@@ -45,23 +52,23 @@ public class Monster : MonoBehaviour, IDamagable
         isDead = false;
         currentHp = maxHp;
         isAttacking = false;
-        isStunned = false; // 장철희
-        originalSpeed = speed; // 장철희
-        defense = 5; // 장철희
+        isStunned = false;
+        originalSpeed = speed ;
+        originalScale = transform.localScale;
+
+        defense = 5;
 
         isBoss = boss;
 
         if (isBoss)
         {
-            maxHp *= 3f;
             currentHp = maxHp;
             speed *= 0.7f;
-            attackDamage *= 2f;
-            transform.localScale = transform.localScale * 3f;
+            transform.localScale = originalScale * 3f;
         }
         else
         {
-            transform.localScale = transform.localScale * 1;
+            transform.localScale = originalScale * 1;
         }
     }
     public void InitializeWithData(ObjectPoolManager manager, string key, MonsterData data, bool boss = false)
@@ -75,22 +82,22 @@ public class Monster : MonoBehaviour, IDamagable
         attackDamage = data.MON_ATK;
         isAttacking = false;
         isStunned = false;
-        originalSpeed = speed;
+        originalSpeed = speed ;
         defense = data.MON_DEF;
         Debug.Log($"[Monster] {data.MON_NAME} 데이터로 초기화 완료! HP: {maxHp}, ATK: {attackDamage}, DEF: {defense}");
         isBoss = boss;
 
         if (isBoss)
         {
-            maxHp *= 3f;
+            
             currentHp = maxHp;
             speed *= 0.7f;
             attackDamage *= 2f;
-            transform.localScale = transform.localScale * 3f;
+            transform.localScale = originalScale * 3f;
         }
         else
         {
-            transform.localScale = transform.localScale * 1;
+            transform.localScale = originalScale * 1;
         }
     }
 
@@ -200,7 +207,7 @@ public class Monster : MonoBehaviour, IDamagable
         }
 
 
-        currentHp -= damage * 30; //- defense;
+        currentHp -= damage ; //- defense;
 
         if (currentHp <= 0)
         {

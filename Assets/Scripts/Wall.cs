@@ -12,6 +12,7 @@ public class Wall : MonoBehaviour, IDamagable
     [SerializeField] GameManager gameManager;
 
     public float CurrentHp => currentHp;
+    public float MaxHp => maxHp;
     private bool isDead = false; 
 
 

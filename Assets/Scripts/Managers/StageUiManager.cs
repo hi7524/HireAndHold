@@ -17,6 +17,8 @@ public class StageUiManager : MonoBehaviour
     [SerializeField] private GameObject warningPanel;
     [SerializeField] private GameObject rewardPanel;
     [SerializeField] private GameObject skillSelectPanel;
+    [SerializeField] private BossHPBar bossHealthBar;
+    [SerializeField] private StageClearPanelController stageClearPanel;
 
     private void Update()
     {
@@ -82,6 +84,27 @@ public class StageUiManager : MonoBehaviour
         {
             warningPanel.SetActive(false);
         }
+    }
+    public void ShowBossHealthBar(Monster boss, string bossName)
+    {
+        if (bossHealthBar != null)
+        {
+            bossHealthBar.ShowBossHealthBar(boss, bossName);
+        }
+    }
+
+    // 보스 체력바 숨김
+    public void HideBossHealthBar()
+    {
+        if (bossHealthBar != null)
+        {
+            bossHealthBar.HideBossHealthBar();
+        }
+    }
+
+    public void ShowStageClearPanel(string stageName, int exp, int gold, int stars)
+    {
+        stageClearPanel?.Show(stageName, exp, gold, stars);
     }
 
     public void UpdateInfoText(string msg, Color? color = null)

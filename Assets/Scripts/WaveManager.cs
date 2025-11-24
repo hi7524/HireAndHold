@@ -74,7 +74,7 @@ public class WaveManager : MonoBehaviour
                     registeredEvents.Add(warningEvent);
                 }
             }
-            
+
             // 웨이브 시작 이벤트 등록
             int startMinutes = wave.WAVE_START_T / 60;
             int startSeconds = wave.WAVE_START_T % 60;
@@ -96,14 +96,14 @@ public class WaveManager : MonoBehaviour
             var endEvent = gameManager.AddTimeEvent(endMinutes, endSeconds, () =>
             {
                 Debug.Log($"[WaveManager] 🔔 웨이브 종료 이벤트 실행! Wave {endWave.WAVE_NUM}, Type: {endWave.WAVE_TYPE}, 시간: {endMinutes}:{endSeconds}");
-                
+
                 // WAVE_TYPE 2면 워닝 타임 종료 처리
                 if (endWave.WAVE_TYPE == 2)
                 {
                     Debug.Log($"[WaveManager] 워닝 타임 종료 감지! Wave {endWave.WAVE_NUM}");
                     OnWarningTimeEnd(endWave);
                 }
-                
+
                 EndWave(endWave);
             });
             registeredEvents.Add(endEvent);
@@ -142,7 +142,7 @@ public class WaveManager : MonoBehaviour
     private void SpawnWaveMonsters(WaveData wave)
     {
         // WAVE_TYPE 3 = 중간보스
-        if (wave.WAVE_TYPE == 3)
+        if (wave.WAVE_TYPE == 3 || wave.WAVE_TYPE == 4)
         {
             SpawnBoss(wave);
             return;
@@ -196,82 +196,50 @@ public class WaveManager : MonoBehaviour
 
     private void OnWarningTimeEnd(WaveData wave)
     {
-       
-
         // 모든 몬스터 제거
         if (monsterSpawner != null)
         {
             Debug.Log($"[WaveManager] MonsterSpawner.KillAllMonsters() 호출");
             monsterSpawner.KillAllMonsters();
         }
-        else
-        {
-            Debug.LogError("[WaveManager] MonsterSpawner가 null입니다!");
-        }
-
         // 보상 패널 표시
         if (stageUiManager != null)
         {
             Debug.Log($"[WaveManager] ShowRewardPanel() 호출");
             stageUiManager.ShowRewardPanel();
         }
-        else
-        {
-            Debug.LogError("[WaveManager] StageUiManager가 null입니다!");
-        }
-        
-        Debug.Log($"[WaveManager] ⚠️⚠️⚠️ 워닝 타임 종료 처리 완료! ⚠️⚠️⚠️");
     }
 
-    // 중간보스 스폰
     private void SpawnBoss(WaveData wave)
     {
         Debug.Log($"[WaveManager] 중간보스 웨이브 {wave.WAVE_NUM} - 보스 스폰!");
-
+        gameManager.IsBoss = true;
         int bossId = wave.SPAWN_MON1_ID;
         if (bossId <= 0)
         {
             Debug.LogError("[WaveManager] 보스 ID가 없습니다!");
             return;
         }
-
-        // 보스 스폰 (isBoss = true로 3배 크기)
         Monster boss = monsterSpawner.SpawnBossById(bossId);
-        
+
         if (boss != null)
         {
-           
+            MonsterData bossData = DataTableManager.MonsterTable.Get(bossId);
+            string bossName = bossData?.MON_NAME ?? "중간보스";
+            stageUiManager.ShowBossHealthBar(boss, bossName);
             monsterSpawner.WaitForBossDeath(boss, () => OnBossDeath(wave));
         }
     }
     private void OnBossDeath(WaveData wave)
     {
         Debug.Log($"[WaveManager] 중간보스 처치! Wave {wave.WAVE_NUM} ");
-
-        // 보상 패널 표시
+        gameManager.IsBoss = false;
+        stageUiManager.HideBossHealthBar();
         if (stageUiManager != null)
         {
             stageUiManager.ShowRewardPanel();
         }
-        else
-        {
-            Debug.LogError("[WaveManager] StageUiManager가 null입니다!");
-        }
-
-        
-        if (stageManager != null)
-        {
-            int nextStageId = stageManager.CurrentStageId + 1;
-            Debug.Log($"[WaveManager] 다음 스테이지 {nextStageId}로 이동 요청");
-            stageManager.StartStage(nextStageId);
-        }
-        else
-        {
-            Debug.LogError("[WaveManager] StageManager가 null입니다!");
-        }
     }
-
-
     private void ClearAllEvents()
     {
         if (gameManager == null) return;

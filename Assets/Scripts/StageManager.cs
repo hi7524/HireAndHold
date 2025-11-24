@@ -13,6 +13,7 @@ public class StageManager : MonoBehaviour
 
     [SerializeField] private WaveManager waveManager;
     [SerializeField] private GameManager gameManager;
+    [SerializeField] private StageUiManager stageUiManager;
 
     private async UniTaskVoid Start()
     {
@@ -55,7 +56,40 @@ public class StageManager : MonoBehaviour
         Debug.Log($"  - 보상 골드: {CurrentStageData.STAGE_C_GOLD}");
         
         OnStageComplete?.Invoke(CurrentStageId);
-
+        
+        // 클리어 패널 표시
+        if (stageUiManager != null && CurrentStageData != null)
+        {
+            int stars = CalculateStars();
+            
+            stageUiManager.ShowStageClearPanel(
+                CurrentStageData.STAGE_NAME,
+                CurrentStageData.STAGE_C_EXP,
+                CurrentStageData.STAGE_C_GOLD,
+                stars
+            );
+        }
+    }
+    
+    private int CalculateStars()
+    {
+        // Wall 체력 비율로 별 계산
+        Wall wall = GameObject.FindWithTag("Wall")?.GetComponent<Wall>();
+        
+        if (wall == null)
+        {
+            Debug.LogWarning("[StageManager] Wall을 찾을 수 없습니다. 기본 1성 부여");
+            return 1;
+        }
+        
+        float hpRatio = wall.CurrentHp / wall.MaxHp; // 현재 체력 비율
+        
+        Debug.Log($"[StageManager] Wall 체력 비율: {hpRatio:P0} ({wall.CurrentHp}/{wall.MaxHp})");
+        
+        
+        if (hpRatio >= 1f) return 3;      // 100% 이상: 3성
+        if (hpRatio >= 0.5f) return 2;      // 50% 이상: 2성
+        return 1;                            // 그 외: 1성
     }
 
     public void FailStage()

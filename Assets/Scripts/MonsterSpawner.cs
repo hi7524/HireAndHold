@@ -83,7 +83,6 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
         }
 
         Vector3 spawnPos = spawnPoint.position;
-        spawnPos.x += UnityEngine.Random.Range(-horizontalRange, horizontalRange);
         bossObj.transform.position = spawnPos;
 
         Monster boss = bossObj.GetComponent<Monster>();
