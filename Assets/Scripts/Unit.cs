@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
@@ -10,6 +11,8 @@ public class Unit : MonoBehaviour
     private ObjectPoolManager poolManager;
     private Monster attackTarget;
     private float lastAttackTime;
+
+    private List<UnitSkill> skills = new List<UnitSkill>(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
 
 
     private void Start()
@@ -31,6 +34,8 @@ public class Unit : MonoBehaviour
             lastAttackTime = Time.time;
             Attack(attackTarget);
         }
+
+        HandleAutoSkills();
     }
 
     public void SetPool(ObjectPoolManager poolManager)
@@ -75,7 +80,7 @@ public class Unit : MonoBehaviour
         UnitProjectile projectile = projectileObj.GetComponent<UnitProjectile>();
         if (projectile != null)
         {
-            projectile.Initialize(poolManager, projectileKey); 
+            projectile.Initialize(poolManager, projectileKey);
             projectile.SetDamage(attackDamage);
             projectile.SetTarget(target.transform);
             projectile.Launch();
@@ -87,5 +92,14 @@ public class Unit : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+    }
+
+    // 자동 시전 스킬, 성급 업그레이드에 따라 추가될 스킬 목록 시전
+    private void HandleAutoSkills()
+    {
+        foreach (var skill in skills)
+        {
+            skill.TryExecute();
+        }
     }
 }
