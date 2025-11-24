@@ -18,6 +18,7 @@ public class UnitInventory : MonoBehaviour, IDroppable
     private const int SellCost = 25; // 테스트용 **
 
     private List<int> ownedUnitIds = new List<int>();
+    private List<int> ownedUnitStars = new List<int>(); // 각 유닛의 성급 저장
     private UnitInventorySlot[] slots;
     private int slotIndex;
     private Sequence dropSequence;
@@ -68,7 +69,7 @@ public class UnitInventory : MonoBehaviour, IDroppable
     }
 
     // 유닛 추가
-    public void AddUnit(int unitId)
+    public void AddUnit(int unitId, int starLevel = 1)
     {
         if (!CanAddUnit())
         {
@@ -77,7 +78,8 @@ public class UnitInventory : MonoBehaviour, IDroppable
         }
 
         ownedUnitIds.Add(unitId);
-        SetupSlot(slotIndex, unitId);
+        ownedUnitStars.Add(starLevel);
+        SetupSlot(slotIndex, unitId, starLevel);
         slotIndex++;
     }
 
@@ -88,10 +90,10 @@ public class UnitInventory : MonoBehaviour, IDroppable
     }
 
     // 특정 슬롯 설정 및 활성화
-    private void SetupSlot(int index, int unitId)
+    private void SetupSlot(int index, int unitId, int starLevel = 1)
     {
         slots[index].gameObject.SetActive(true);
-        slots[index].SetUnit(unitId);
+        slots[index].SetUnit(unitId, starLevel);
         slots[index].SetGridData(gridDatas.GridDatas[unitId]);
         slots[index].UpdateUi();
     }
@@ -132,6 +134,7 @@ public class UnitInventory : MonoBehaviour, IDroppable
     private void RemoveUnitAtIndex(int index)
     {
         ownedUnitIds.RemoveAt(index);
+        ownedUnitStars.RemoveAt(index);
         slotIndex--;
     }
 
@@ -165,6 +168,7 @@ public class UnitInventory : MonoBehaviour, IDroppable
     private void ClearInventory()
     {
         ownedUnitIds.Clear();
+        ownedUnitStars.Clear();
         slotIndex = 0;
     }
 
@@ -188,7 +192,8 @@ public class UnitInventory : MonoBehaviour, IDroppable
     private void UpdateActiveSlot(int index)
     {
         int unitId = ownedUnitIds[index];
-        slots[index].SetUnit(unitId);
+        int starLevel = ownedUnitStars[index];
+        slots[index].SetUnit(unitId, starLevel);
         slots[index].UpdatePreviewImages(gridDatas.GridDatas[unitId]);
         slots[index].UpdateUi();
         slots[index].gameObject.SetActive(true);
@@ -239,7 +244,7 @@ public class UnitInventory : MonoBehaviour, IDroppable
     // GridUnit 드롭 처리
     private void HandleGridUnitDrop(GridUnit gridUnit)
     {
-        AddUnit(gridUnit.UnitId);
+        AddUnit(gridUnit.UnitId, gridUnit.StarLevel);
         gridUnit.gameObject.SetActive(false);
         PlayDropAnimation();
     }

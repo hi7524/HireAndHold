@@ -53,18 +53,51 @@ public class GridCell : MonoBehaviour, IDroppable
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
         {
+            // 합성 가능 여부 체크
+            if (PlacedObject != null)
+            {
+                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                if (existingUnit != null && CanMerge(existingUnit, gridUnit))
+                {
+                    canDrop = true;
+                    return;
+                }
+            }
+
             canDrop = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells());
         }
 
         var inventorySlot = draggable.GameObject.GetComponent<UnitInventorySlot>();
         if (inventorySlot != null)
         {
+            // 합성 가능 여부 체크
+            if (PlacedObject != null)
+            {
+                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                if (existingUnit != null && CanMergeWithInventorySlot(existingUnit, inventorySlot))
+                {
+                    canDrop = true;
+                    return;
+                }
+            }
+
             canDrop = gridManager.CanPlaceUnit(GridPosition, inventorySlot.GridData.GetOccupiedCells());
         }
 
         var draggableUnitUi = draggable.GameObject.GetComponent<DraggableGridUnitUi>();
         if (draggableUnitUi != null)
         {
+            // 합성 가능 여부 체크
+            if (PlacedObject != null)
+            {
+                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                if (existingUnit != null && CanMergeWithUi(existingUnit, draggableUnitUi))
+                {
+                    canDrop = true;
+                    return;
+                }
+            }
+
             canDrop = gridManager.CanPlaceUnit(GridPosition, draggableUnitUi.GridData.GetOccupiedCells());
         }
     }
@@ -93,6 +126,28 @@ public class GridCell : MonoBehaviour, IDroppable
         // GridUnit 처리
         if (gridUnit != null)
         {
+            // 합성 체크: 이미 유닛이 배치되어 있는 경우
+            if (PlacedObject != null)
+            {
+                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                if (existingUnit != null)
+                {
+                    if (TryMergeUnits(existingUnit, gridUnit))
+                    {
+                        // 합성 성공 - 색상 업데이트
+                        gridManager.ClearAllGridsColor();
+                        gridManager.ChangeOccupiedCellColor();
+                        return;
+                    }
+                    else
+                    {
+                        // 합성 불가능하면 드롭 실패
+                        draggable.OnDropFailed();
+                        return;
+                    }
+                }
+            }
+
             // 이전 위치의 색칠된 셀들 제거
             var previousCell = gridUnit.GetPreviousCell();
             if (previousCell != null)
@@ -124,6 +179,28 @@ public class GridCell : MonoBehaviour, IDroppable
         // UnitInventorySlot 처리 - GridUnit 생성
         if (inventorySlot != null)
         {
+            // 합성 체크: 이미 유닛이 배치되어 있는 경우
+            if (PlacedObject != null)
+            {
+                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                if (existingUnit != null)
+                {
+                    if (TryMergeWithInventorySlot(existingUnit, inventorySlot))
+                    {
+                        // 합성 성공 - 색상 업데이트
+                        gridManager.ClearAllGridsColor();
+                        gridManager.ChangeOccupiedCellColor();
+                        return;
+                    }
+                    else
+                    {
+                        // 합성 불가능하면 드롭 실패
+                        draggable.OnDropFailed();
+                        return;
+                    }
+                }
+            }
+
             // GridManager를 통해 GridUnit 생성
             var newGridUnit = gridManager.SpawnGridUnit(transform.position, inventorySlot.GridData);
 
@@ -133,7 +210,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 return;
             }
 
-            newGridUnit.SetUnitID(inventorySlot.UnitId);
+            newGridUnit.SetUnitID(inventorySlot.UnitId, inventorySlot.StarLevel);
             newGridUnit.SetInventoryPlaceable(true);
 
             // 생성된 GridUnit을 배치
@@ -157,6 +234,29 @@ public class GridCell : MonoBehaviour, IDroppable
         // DraggableGridUnitUi 처리 - GridUnit 생성
         if (draggableUnitUi != null)
         {
+            // 합성 체크: 이미 유닛이 배치되어 있는 경우
+            if (PlacedObject != null)
+            {
+                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                if (existingUnit != null)
+                {
+                    if (TryMergeWithUi(existingUnit, draggableUnitUi))
+                    {
+                        // 합성 성공 - UI 비활성화 및 색상 업데이트
+                        draggable.OnDropSuccess();
+                        gridManager.ClearAllGridsColor();
+                        gridManager.ChangeOccupiedCellColor();
+                        return;
+                    }
+                    else
+                    {
+                        // 합성 불가능하면 드롭 실패
+                        draggable.OnDropFailed();
+                        return;
+                    }
+                }
+            }
+
             // GridManager를 통해 GridUnit 생성
             var newGridUnit = gridManager.SpawnGridUnit(transform.position, draggableUnitUi.GridData);
 
@@ -166,7 +266,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 return;
             }
 
-            newGridUnit.SetUnitID(draggableUnitUi.UnitId);
+            newGridUnit.SetUnitID(draggableUnitUi.UnitId, draggableUnitUi.StarLevel);
 
             // 레벨업 보상 유닛인 경우 GridManager를 통해 알림
             if (draggableUnitUi.DraggableUnitType == DraggableUnitType.LevelUp)
@@ -228,5 +328,100 @@ public class GridCell : MonoBehaviour, IDroppable
     public void RestorePlacedObject(GameObject obj)
     {
         PlacedObject = obj;
+    }
+
+    // 합성 가능 여부 체크
+    private bool CanMerge(GridUnit existingUnit, GridUnit draggingUnit)
+    {
+        // 같은 유닛 ID
+        if (existingUnit.UnitId != draggingUnit.UnitId)
+            return false;
+
+        // 같은 성급
+        if (existingUnit.StarLevel != draggingUnit.StarLevel)
+            return false;
+
+        // 3성 이상 합성 불가
+        if (existingUnit.StarLevel >= 3)
+            return false;
+
+        return true;
+    }
+
+    // 유닛 합성 처리
+    private bool TryMergeUnits(GridUnit existingUnit, GridUnit draggingUnit)
+    {
+        if (!CanMerge(existingUnit, draggingUnit))
+            return false;
+
+        // 합성 처리 성급 업그레이드
+        int newStarLevel = existingUnit.StarLevel + 1;
+        existingUnit.SetUnitID(existingUnit.UnitId, newStarLevel);
+
+        // 드래그 중이던 유닛 삭제
+        Destroy(draggingUnit.gameObject);
+        return true;
+    }
+
+    // DraggableGridUnitUi와 합성 가능 여부 체크
+    private bool CanMergeWithUi(GridUnit existingUnit, DraggableGridUnitUi draggableUnitUi)
+    {
+        // 같은 유닛 ID
+        if (existingUnit.UnitId != draggableUnitUi.UnitId)
+            return false;
+
+        // 같은 성급
+        if (existingUnit.StarLevel != draggableUnitUi.StarLevel)
+            return false;
+
+        // 3성 이상 합성 불가
+        if (existingUnit.StarLevel >= 3)
+            return false;
+
+        return true;
+    }
+
+    // DraggableGridUnitUi와 유닛 합성 처리
+    private bool TryMergeWithUi(GridUnit existingUnit, DraggableGridUnitUi draggableUnitUi)
+    {
+        if (!CanMergeWithUi(existingUnit, draggableUnitUi))
+            return false;
+
+        // 합성 처리: 성급 업그레이드
+        int newStarLevel = existingUnit.StarLevel + 1;
+        existingUnit.SetUnitID(existingUnit.UnitId, newStarLevel);
+
+        return true;
+    }
+
+    // UnitInventorySlot과 합성 가능 여부 체크
+    private bool CanMergeWithInventorySlot(GridUnit existingUnit, UnitInventorySlot inventorySlot)
+    {
+        // 같은 유닛 ID
+        if (existingUnit.UnitId != inventorySlot.UnitId)
+            return false;
+
+        // 같은 성급
+        if (existingUnit.StarLevel != inventorySlot.StarLevel)
+            return false;
+
+        // 3성 이상 합성 불가
+        if (existingUnit.StarLevel >= 3)
+            return false;
+
+        return true;
+    }
+
+    // UnitInventorySlot과 유닛 합성 처리
+    private bool TryMergeWithInventorySlot(GridUnit existingUnit, UnitInventorySlot inventorySlot)
+    {
+        if (!CanMergeWithInventorySlot(existingUnit, inventorySlot))
+            return false;
+
+        // 합성 처리: 성급 업그레이드
+        int newStarLevel = existingUnit.StarLevel + 1;
+        existingUnit.SetUnitID(existingUnit.UnitId, newStarLevel);
+
+        return true;
     }
 }

@@ -25,6 +25,7 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     public bool IsDraggable => isDraggable;
 
     public int UnitId { get; private set; }
+    public int StarLevel { get; private set; } = 1; // 성급 (1~3성)
     public UnitGridData GridData { get; private set; }
     public DraggableUnitType DraggableUnitType { get; private set; }
 
@@ -53,10 +54,11 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
         isDraggable = value;
     }
 
-    // 유닛 ID를 설정
-    public void SetUnit(int unitId)
+    // 유닛 ID와 성급을 설정
+    public void SetUnit(int unitId, int starLevel = 1)
     {
         UnitId = unitId;
+        StarLevel = Mathf.Clamp(starLevel, 1, 3);
     }
 
     public void SetDraggableUnitType(DraggableUnitType type)
