@@ -12,8 +12,7 @@ public class WindowUI : MonoBehaviour
 
     private void OnEnable()
     {
-        pricePanel.SetActive(true);
-        gameManager.PauseGame();
+        
         confirmButton.onClick.AddListener(OnConfirm);
     }
 

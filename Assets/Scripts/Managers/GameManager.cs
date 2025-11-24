@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
     private StageTimeEventScheduler timeScheduler = new StageTimeEventScheduler();
 
 
+
     private void Start()
     {
         Reset();

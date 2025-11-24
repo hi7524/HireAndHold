@@ -15,7 +15,7 @@ public class StageUiManager : MonoBehaviour
     [Space]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject warningPanel;
-    [SerializeField] private GameObject bossPricePanel;
+    [SerializeField] private GameObject rewardPanel;
     [SerializeField] private GameObject skillSelectPanel;
 
     private void Update()
@@ -43,10 +43,16 @@ public class StageUiManager : MonoBehaviour
     {
         gameOverPanel.SetActive(true);
     }
-
-    public void ActiveBossPricePanel()
+    public void ShowRewardPanel()
     {
-        bossPricePanel.SetActive(true);
+       
+        if (rewardPanel != null)
+        {
+            Debug.Log("[StageUiManager] rewardPanel 활성화!");
+            rewardPanel.SetActive(true);
+            gameManager.PauseGame(); // 게임 일시정지
+        }
+       
     }
 
     public void ActiveSkillSelectPanel()
