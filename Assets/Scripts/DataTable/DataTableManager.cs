@@ -50,6 +50,7 @@ public static class DataTableManager
             LoadTableAsync<DataTable_UnitCatalog>(DataTableIds.UnitCatalog),
             LoadTableAsync<DataTable_Unit>(DataTableIds.Unit),
             LoadTableAsync<DataTable_Skill>(DataTableIds.Skill),
+            LoadTableAsync<DataTable_NormalEnforce>(DataTableIds.NormalEnforce),
             // 다른 테이블들 추가
             // LoadTableAsync<DataTable_Item>(DataTableIds.Item),
             // LoadTableAsync<DataTable_Character>(DataTableIds.Character),
@@ -79,6 +80,8 @@ public static class DataTableManager
     public static DataTable_UnitCatalog UnitCatalogTable => Get<DataTable_UnitCatalog>(DataTableIds.UnitCatalog);
     public static DataTable_Unit UnitTable => Get<DataTable_Unit>(DataTableIds.Unit);
     public static DataTable_Skill SkillTable => Get<DataTable_Skill>(DataTableIds.Skill);
+    public static DataTable_NormalEnforce NormalEnforceTable => Get<DataTable_NormalEnforce>(DataTableIds.NormalEnforce);
+
 
     public static T Get<T>(string id) where T : DataTable
     {
