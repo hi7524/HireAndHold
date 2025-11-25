@@ -105,9 +105,9 @@ public class StageManager : MonoBehaviour
 
         // 현재 씬을 다시 로드
         Time.timeScale = 1f;
-        // LoadingSceneManager.Instance.LoadSceneWithLoading(
-        //     new LoadingRequest(SceneManager.GetActiveScene().name)
-        // );
+        LoadingSceneManager.Instance.LoadSceneWithLoading(
+            new LoadingRequest(SceneManager.GetActiveScene().name)
+        );
     }
     private void OnDestroy()
     {
