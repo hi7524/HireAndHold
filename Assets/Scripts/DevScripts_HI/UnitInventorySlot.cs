@@ -15,6 +15,7 @@ public class UnitInventorySlot : MonoBehaviour, IDraggable
     public GameObject GameObject => gameObject;
 
     public int UnitId { get; private set; }
+    public int StarLevel { get; private set; } = 1; // 성급 (1~3성)
     public UnitGridData GridData { get; private set; }
 
     private UnitInventory inventory;
@@ -23,9 +24,10 @@ public class UnitInventorySlot : MonoBehaviour, IDraggable
     private bool dropFailed = false;
 
 
-    public void SetUnit(int unitId)
+    public void SetUnit(int unitId, int starLevel = 1)
     {
         this.UnitId = unitId;
+        this.StarLevel = Mathf.Clamp(starLevel, 1, 3);
     }
 
     public void SetGridData(UnitGridData gridData)

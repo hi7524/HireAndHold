@@ -52,7 +52,6 @@ public class StageUiManager : MonoBehaviour
             rewardPanel.SetActive(true);
             gameManager.PauseGame(); // 게임 일시정지
         }
-       
     }
 
     public void ActiveSkillSelectPanel()
@@ -85,9 +84,11 @@ public class StageUiManager : MonoBehaviour
         }
     }
 
-    public void UpdateInfoText(string msg)
+    public void UpdateInfoText(string msg, Color? color = null)
     {
         infoText.text = msg;
+        if (color == null)
+            infoText.color = Color.yellow;
         infoText.gameObject.SetActive(true);
     }
 }

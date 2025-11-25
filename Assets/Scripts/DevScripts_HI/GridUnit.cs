@@ -9,6 +9,7 @@ public class GridUnit : MonoBehaviour, IDraggable
     [SerializeField] private Transform previewTrans;
 
     public int UnitId { get; private set; }
+    public int StarLevel { get; private set; } = 1; // 성급 (1~3성)
     public UnitGridData GridData { get; private set; }
     public bool canPlaceInInventory = true; // 인벤토리에 보관 가능하게 할 지 여부
 
@@ -29,9 +30,10 @@ public class GridUnit : MonoBehaviour, IDraggable
         SetActiveChildrenObj(false);
     }
 
-    public void SetUnitID(int unitId)
+    public void SetUnitID(int unitId, int starLevel = 1)
     {
         UnitId = unitId;
+        StarLevel = Mathf.Clamp(starLevel, 1, 3);
     } 
 
     public void SetInventoryPlaceable(bool value)
