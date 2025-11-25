@@ -12,12 +12,14 @@ public class Unit : MonoBehaviour
     private Monster attackTarget;
     private float lastAttackTime;
 
-    private List<UnitSkill> skills = new List<UnitSkill>(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
+    private readonly List<UnitSkill> skills = new(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
 
 
     private void Start()
     {
         poolManager = GameObject.FindWithTag(Tags.PoolManager).GetComponent<ObjectPoolManager>();
+
+        AddSkill(21001);
     }
 
     private void OnEnable()
@@ -101,5 +103,53 @@ public class Unit : MonoBehaviour
         {
             skill.TryExecute();
         }
+    }
+
+    // 스킬 ID를 통해 유닛에 스킬 추가
+    public void AddSkill(int skillId)
+    {
+        // DataTable에서 스킬 데이터 가져오기
+        var skillData = DataTableManager.SkillTable.Get(skillId);
+        if (skillData == null)
+        {
+            Debug.LogError($"Skill ID: {skillId}를 찾을 수 없습니다");
+            return;
+        }
+
+        var skill = new UnitSkill(this, skillData);
+        skills.Add(skill);
+
+        Debug.Log($"Skill: {skillId} ({skillData.SKILL_NAME}) 추가");
+    }
+
+    // 특정 스킬을 제거
+    public void RemoveSkill(int skillId)
+    {
+        var skillToRemove = skills.Find(s => s.SkillID == skillId);
+
+        if (skillToRemove != null)
+        {
+            skills.Remove(skillToRemove);
+            Debug.Log($"Skill: {skillId} removed");
+        }
+    }
+
+    // 모든 스킬 제거
+    public void ClearAllSkills()
+    {
+        skills.Clear();
+        Debug.Log("All skills cleared");
+    }
+
+    // 현재 보유한 스킬 개수
+    public int GetSkillCount()
+    {
+        return skills.Count;
+    }
+
+    // 특정 스킬이 있는지 확인
+    public bool HasSkill(int skillId)
+    {
+        return skills.Exists(s => s.SkillID == skillId);
     }
 }
