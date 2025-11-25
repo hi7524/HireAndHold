@@ -33,7 +33,11 @@ public abstract class PlayerSkillBase : MonoBehaviour
 
     protected virtual void Awake()
     {
-        skillEffectApplier = GameObject.FindWithTag("Player")?.GetComponent<SkillEffectApplier>();
+        skillEffectApplier = GetComponent<SkillEffectApplier>();
+        if (skillEffectApplier == null)
+        {
+            skillEffectApplier = gameObject.AddComponent<SkillEffectApplier>();
+        }
     }
 
 
@@ -59,7 +63,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
             applyStatusEffect = skillData.SKILL_CRT > 0;
             statusEffectType = (StatusEffectType)skillData.SKILL_EFFECT1;
             statusEffectDuration = skillData.EFFECT_TIME1;
-            statusEffectValue = 0; // EffectTable 읽어와서 수정해야됨  
+            statusEffectValue = 0; 
         }
     }
 
@@ -75,7 +79,11 @@ public abstract class PlayerSkillBase : MonoBehaviour
         }
         if (skillEffectApplier == null)
         {
-            skillEffectApplier = GameObject.FindWithTag("Player")?.GetComponent<SkillEffectApplier>();
+            skillEffectApplier = GetComponent<SkillEffectApplier>();
+            if (skillEffectApplier == null)
+            {
+                skillEffectApplier = gameObject.AddComponent<SkillEffectApplier>();
+            }
         }
         if (isOnCoolTime) return;
 

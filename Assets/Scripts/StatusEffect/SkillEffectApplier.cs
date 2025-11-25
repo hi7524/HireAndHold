@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class SkillEffectApplier : MonoBehaviour
 {
-
-
     public void ApplyStatusEffectToTarget(GameObject target, StatusEffectType type, float duration, float value)
     {
         var targetEffectManager = target.GetComponent<StatusEffectManager>();
@@ -13,7 +11,6 @@ public class SkillEffectApplier : MonoBehaviour
             Debug.LogWarning($"{target.name}에 StatusEffectManager가 없습니다!");
             return;
         }
-
         StatusEffect effect = CreateStatusEffect(type, duration, value);
 
         if (effect != null)
@@ -21,7 +18,6 @@ public class SkillEffectApplier : MonoBehaviour
             targetEffectManager.AddStatusEffect(type, effect);
         }
     }
-
 
     public void ApplyStatusEffectInRange(Vector3 center, float range, StatusEffectType type, float duration, float value)
     {

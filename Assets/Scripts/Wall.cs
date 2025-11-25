@@ -8,10 +8,11 @@ public class Wall : MonoBehaviour, IDamagable
     [Space]
     [SerializeField] private Slider hpSlider;
     [Header("Managers")]
-    [SerializeField] StageUiManager uiManager;
     [SerializeField] GameManager gameManager;
+    [SerializeField] StageManager stageManager;
 
     public float CurrentHp => currentHp;
+    public float MaxHp => maxHp;
     private bool isDead = false; 
 
 
@@ -40,8 +41,7 @@ public class Wall : MonoBehaviour, IDamagable
         if (isDead) return;
         isDead = true;
         
+        stageManager.FailStage();
         gameObject.SetActive(false);
-        uiManager.ActiveGameOverPanel();
-        gameManager.GameEnd();
     }
 }

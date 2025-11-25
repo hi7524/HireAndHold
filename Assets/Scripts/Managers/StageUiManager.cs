@@ -15,8 +15,10 @@ public class StageUiManager : MonoBehaviour
     [Space]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject warningPanel;
-    [SerializeField] private GameObject rewardPanel;
     [SerializeField] private GameObject skillSelectPanel;
+    [SerializeField] private BossHPBar bossHealthBar;
+    [SerializeField] private StageClearPanelController stageClearPanel;
+    [SerializeField] private RewardPanelController rewardPanel;
 
     private void Update()
     {
@@ -49,7 +51,7 @@ public class StageUiManager : MonoBehaviour
         if (rewardPanel != null)
         {
             Debug.Log("[StageUiManager] rewardPanel 활성화!");
-            rewardPanel.SetActive(true);
+            
             gameManager.PauseGame(); // 게임 일시정지
         }
     }
@@ -82,6 +84,27 @@ public class StageUiManager : MonoBehaviour
         {
             warningPanel.SetActive(false);
         }
+    }
+    public void ShowBossHealthBar(Monster boss, string bossName)
+    {
+        if (bossHealthBar != null)
+        {
+            bossHealthBar.ShowBossHealthBar(boss, bossName);
+        }
+    }
+
+    // 보스 체력바 숨김
+    public void HideBossHealthBar()
+    {
+        if (bossHealthBar != null)
+        {
+            bossHealthBar.HideBossHealthBar();
+        }
+    }
+
+    public void ShowStageClearPanel(string stageName, int exp, int gold, int stars)
+    {
+        stageClearPanel?.Show(stageName, exp, gold, stars);
     }
 
     public void UpdateInfoText(string msg, Color? color = null)

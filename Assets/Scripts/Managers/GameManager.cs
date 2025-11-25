@@ -6,6 +6,7 @@ public class GameManager : MonoBehaviour
     public float ElapsedTime { get; private set; }
     public bool IsGameStarted { get; private set; }
     public bool IsPausedGame { get; private set; }
+    public bool IsBoss { get; set; } = false;
 
     public int CurSpeedLevel => speedLevels[curSpeedLevelIdx];
 
@@ -33,8 +34,8 @@ public class GameManager : MonoBehaviour
             return;
 
         ElapsedTime += Time.deltaTime;
-        
-        timeScheduler.UpdateTime(Time.deltaTime);
+        if(!IsBoss)
+            timeScheduler.UpdateTime(Time.deltaTime);
     }
 
     // 게임 재설정
