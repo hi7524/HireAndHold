@@ -8,6 +8,7 @@ public class GridLayoutData : ScriptableObject
     
     public bool[] validCells;
     
+    
     public bool IsValidCell(int x, int y)
     {
         int index = y * width + x;

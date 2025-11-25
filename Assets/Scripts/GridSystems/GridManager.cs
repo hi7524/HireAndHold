@@ -23,6 +23,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private StageUiManager uiManager;
 
     public int[,] gridArray { get; private set; }
+    public bool IsFilledAllGrids { get; private set; }
 
     private GridCell[,] gridCells;
     private HashSet<GridCell> highlightedCells = new HashSet<GridCell>();
@@ -48,6 +49,8 @@ public class GridManager : MonoBehaviour
     {
         gridArray[pos.x, pos.y] = (int)state;
         gridCells[pos.x, pos.y].SetAcceptable(state == GridState.Empty);
+
+        CheckFilledAllCells();
     }
 
     // GridVisualizer의 자식 오브젝트들을 순회하며 GridCell 컴포넌트 수집 및 등록
@@ -162,6 +165,29 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    // 칸이 모두 채워져있는지 체크
+    private void CheckFilledAllCells()
+    {
+        IsFilledAllGrids = false;
+
+        for (int x = 0; x < layoutData.width; x++)
+        {
+            for (int y = 0; y < layoutData.height; y++)
+            {
+                // 유효하지 않은 셀은 건너뛰기
+                if (!layoutData.IsValidCell(x, y))
+                    continue;
+
+                // 유효한 셀이 비어있으면 false
+                if (gridArray[x, y] == (int)GridState.Empty)
+                    return;
+            }
+        }
+
+        IsFilledAllGrids = true;
+        Debug.Log("그리드 채우기 버프");
     }
 
     // 유닛 합성시 호출
