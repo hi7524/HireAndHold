@@ -9,6 +9,7 @@ public static class DataTableIds
     public static readonly string UnitCatalog = "UnitCatalogTable";
     public static readonly string Skill = "SkillTable";
     public static readonly string Unit = "UnitTable";
+    public static readonly string NormalEnforce = "NormalEnforceTable";
 }
 
 public static class Tags
