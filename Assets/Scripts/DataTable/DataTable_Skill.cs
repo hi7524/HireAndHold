@@ -63,5 +63,8 @@ public class DataTable_Skill : DataTable
         return dictionary[key];
     }
 
-    
+    public IEnumerable<SkillData> GetAll()
+    {
+        return dictionary.Values;
+    }
 }
