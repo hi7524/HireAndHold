@@ -255,4 +255,32 @@ public class WaveManager : MonoBehaviour
     {
         ClearAllEvents();
     }
+
+    // 치트: 중간보스 즉시 소환
+    public void CheatSpawnBoss()
+    {
+        // 중간보스 웨이브 찾기 (WAVE_TYPE == 3)
+        WaveData bossWave = currentStageWaves?.FirstOrDefault(w => w.WAVE_TYPE == 3);
+        
+        if (bossWave == null)
+        {
+            Debug.LogWarning("[WaveManager] 중간보스 웨이브를 찾을 수 없습니다!");
+            return;
+        }
+
+        // 기존 몬스터 제거
+        if (monsterSpawner != null)
+        {
+            monsterSpawner.KillAllMonsters();
+        }
+
+        Debug.Log($"[WaveManager] 치트: 중간보스 소환! Wave {bossWave.WAVE_NUM}");
+        
+        // 현재 웨이브를 보스 웨이브로 설정
+        CurrentWaveNum = bossWave.WAVE_NUM;
+        OnWaveStart?.Invoke(bossWave.WAVE_NUM);
+        
+        // 보스 스폰
+        SpawnBoss(bossWave);
+    }
 }
