@@ -11,6 +11,7 @@ public class UnitCardUi : BaseCardUi
     private int unitId;
     private UnitGridData gridUnitData;
     private Image img;
+    private Color originalColor;
 
     // 드롭 성공 이벤트
     public event Action OnUnitDropSuccess;
@@ -21,6 +22,7 @@ public class UnitCardUi : BaseCardUi
     private void Awake()
     {
         img = gameObject.GetComponent<Image>();
+        originalColor = img.color;
     }
 
     private void Start()
@@ -28,6 +30,7 @@ public class UnitCardUi : BaseCardUi
         VisualizeGridData();
 
         draggableUnitUI.OnUnitDroppedSuccessfully += HandleUnitDropSuccess;
+
     }
 
     private void OnDestroy()
@@ -78,11 +81,14 @@ public class UnitCardUi : BaseCardUi
         draggableUnitUI.SetDraggableState(value);
     }
 
-    public void SetColor(Color color)
+    public void SetColor(Color color = default)
     {
         if (img != null)
         {
-            img.color = color;
+            if (color == default)
+                img.color = originalColor;
+            else
+                img.color = color;
         }
     }
 

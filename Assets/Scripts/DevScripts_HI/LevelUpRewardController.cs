@@ -107,7 +107,7 @@ public class LevelUpRewardController : MonoBehaviour
         for (int i = 0; i < unitCardUIs.Length; i++)
         {
             unitCardUIs[i].SetDragState(true);
-            unitCardUIs[i].SetColor(Color.white);
+            unitCardUIs[i].SetColor();
         }
 
         DrawReward();

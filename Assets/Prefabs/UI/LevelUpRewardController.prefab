@@ -93,13 +93,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c05acb16c2097a94ba02f6368419d312, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  unitCardUiPrf: {fileID: 537899014852373020, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
-  skillCardPrf: {fileID: 898403305766665316, guid: 1e06c786d98a86242a9bc16b824e2311, type: 3}
-  reRollBtn: {fileID: 3744187091236834329}
-  gameManager: {fileID: 0}
-  playerExp: {fileID: 0}
-  inventory: {fileID: 0}
   gridDatasForTesting: {fileID: 3370350582403285189}
+  unitCardUiPrf: {fileID: 537899014852373020, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
+  skillCardPrf: {fileID: 5605763761850063276, guid: 1e06c786d98a86242a9bc16b824e2311, type: 3}
+  reRollBtn: {fileID: 2083656618542852932}
+  gameManager: {fileID: 0}
+  uiManager: {fileID: 0}
+  inventory: {fileID: 0}
+  playerStageGold: {fileID: 0}
+  playerExp: {fileID: 0}
+  passiveSkillManager: {fileID: 0}
 --- !u!114 &3370350582403285189
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,7 +153,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5246979323121488319
 RectTransform:
   m_ObjectHideFlags: 0
@@ -275,7 +278,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 8969676568068889782}
         m_TargetAssemblyTypeName: LevelUpRewardController, Assembly-CSharp
-        m_MethodName: DrawReward
+        m_MethodName: OnClickRerollBtn
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
