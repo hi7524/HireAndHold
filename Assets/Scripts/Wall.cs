@@ -15,12 +15,61 @@ public class Wall : MonoBehaviour, IDamagable
     public float MaxHp => maxHp;
     private bool isDead = false; 
 
+    private PassiveSkillManager passiveSkillManager;
+    private float regenTimer = 0f;
+    private const float REGEN_INTERVAL = 1f; // 1초마다 회복
+
 
     private void Start()
     {
         currentHp = maxHp;
         hpSlider.value = 1f;
         isDead = false; 
+
+        passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
+   
+    }
+    private void Update()
+    {
+        if (isDead) return;
+
+        // 최대 HP보다 낮을 때만 회복
+        if (currentHp < maxHp)
+        {
+            RegenerateShield();
+        }
+    }
+    private void RegenerateShield()
+    {
+        if (passiveSkillManager == null) return;
+
+        regenTimer += Time.deltaTime;
+
+        if (regenTimer >= REGEN_INTERVAL)
+        {
+            regenTimer = 0f;
+
+            PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
+            int regenAmount = (int)(effects.shieldRegenBonus / 100f * maxHp);
+
+            if (regenAmount > 0f)
+            {
+                Heal(regenAmount);
+            }
+        }
+    }
+    public void Heal(int amount)
+    {
+        if (isDead) return;
+
+        int previousHp = (int)currentHp;
+        currentHp = Mathf.Min(currentHp + amount, maxHp);
+        hpSlider.value = currentHp / maxHp;
+
+        if (amount > 0)
+        {
+            Debug.Log($"[Wall] 방벽 회복: +{amount:F1} ({previousHp:F0} → {currentHp:F0})");
+        }
     }
 
     public void TakeDamage(float damage)

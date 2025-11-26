@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public class PassiveSkillManager : MonoBehaviour
 {
+    public event System.Action OnPassiveSkillChanged;
     
     private Dictionary<PassiveSkillType, PassiveSkillGroup> skillGroups = new Dictionary<PassiveSkillType, PassiveSkillGroup>();
     private PassiveSkillEffects currentEffects = new PassiveSkillEffects();
@@ -59,6 +60,7 @@ public class PassiveSkillManager : MonoBehaviour
             if (group.AddStar())
             {
                 RecalculateEffects();
+                OnPassiveSkillChanged?.Invoke();
                 Debug.Log($"[PassiveSkillManager] '{group.displayName}' ★{group.currentStar}으로 업그레이드!");
                 return true;
             }
@@ -72,6 +74,7 @@ public class PassiveSkillManager : MonoBehaviour
         {
             group.currentStar = 1;
             RecalculateEffects();
+            OnPassiveSkillChanged?.Invoke();
             Debug.Log($"[PassiveSkillManager] '{group.displayName}' 획득! ★1");
             return true;
         }
@@ -238,6 +241,7 @@ public class PassiveSkillManager : MonoBehaviour
         }
         
         currentEffects.Reset();
+        OnPassiveSkillChanged?.Invoke();
     }
     
     public void LogOwnedSkills()

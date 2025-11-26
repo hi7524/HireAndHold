@@ -30,6 +30,7 @@ public class Enemy : MonoBehaviour, IDamagable
 
     //boss
     private bool isBoss = false;
+    public bool IsBoss => isBoss;
     private Vector3 originalScale;
     public float CurrentHp => currentHp;
 

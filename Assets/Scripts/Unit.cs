@@ -6,7 +6,15 @@ public class Unit : MonoBehaviour
     [SerializeField] private float attackRange = 1.0f;
     [SerializeField] private float attackInterval = 1.0f;
     [SerializeField] private float attackDamage = 5;
+    [SerializeField] private float baseCritRate = 0f;
+    [SerializeField] private float baseCritMultiplier = 1.5f;
     [SerializeField] private string projectileKey = "Projectile";
+
+    [Header("Final Stats (Runtime)")]
+    [SerializeField] private float finalAttackDamage;
+    [SerializeField] private float finalCritRate;
+    [SerializeField] private float finalCritMultiplier;
+    private PassiveSkillManager passiveSkillManager;
 
     private ObjectPoolManager poolManager;
     private Enemy attackTarget;
@@ -18,7 +26,53 @@ public class Unit : MonoBehaviour
     private void Start()
     {
         poolManager = GameObject.FindWithTag(Tags.PoolManager).GetComponent<ObjectPoolManager>();
+        passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
+
+        if (passiveSkillManager != null)
+        {
+            passiveSkillManager.OnPassiveSkillChanged += UpdateFinalStats;
+            UpdateFinalStats(); // 초기 스탯 계산
+        }
+        else
+        {
+            // 패시브 매니저 없으면 기본값 사용
+            finalAttackDamage = attackDamage;
+            finalCritRate = baseCritRate;
+            finalCritMultiplier = baseCritMultiplier;
+        }
     }
+    private void OnDestroy()
+    {
+        if (passiveSkillManager != null)
+        {
+            passiveSkillManager.OnPassiveSkillChanged -= UpdateFinalStats;
+        }
+    }
+     private void UpdateFinalStats()
+    {
+        if (passiveSkillManager == null)
+        {
+            finalAttackDamage = attackDamage;
+            finalCritRate = baseCritRate;
+            finalCritMultiplier = baseCritMultiplier;
+            return;
+        }
+
+        PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
+        
+        // 최종 공격력 = 기본 공격력 * (1 + 데미지 보너스%)
+        finalAttackDamage = attackDamage * (1f + effects.damageBonus / 100f);
+        
+        // 최종 치명타 확률 = 기본 확률 + 패시브 보너스
+        finalCritRate = baseCritRate + effects.critRateBonus;
+        
+        // 최종 치명타 배율 = 기본 배율 + 패시브 보너스
+        finalCritMultiplier = baseCritMultiplier + (effects.critDamageBonus / 100f);
+        
+        Debug.Log($"[Unit] 스탯 업데이트 - 공격력: {finalAttackDamage:F1}, 크리확률: {finalCritRate:F1}%, 크리배율: {finalCritMultiplier:F2}x");
+    }
+
+
 
     private void OnEnable()
     {
@@ -81,7 +135,25 @@ public class Unit : MonoBehaviour
         if (projectile != null)
         {
             projectile.Initialize(poolManager, projectileKey);
-            projectile.SetDamage(attackDamage);
+            
+            float damage = finalAttackDamage;
+            
+            // ✨ 보스 추가 데미지 (IsBoss 프로퍼티 사용)
+            if (target.IsBoss && passiveSkillManager != null)
+            {
+                PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
+                damage *= (1f + effects.bossDamageBonus / 100f);
+            }
+            
+            // 치명타 판정
+            bool isCritical = Random.value < (finalCritRate / 100f);
+            if (isCritical)
+            {
+                damage *= finalCritMultiplier;
+                Debug.Log($"[Unit]  치명타! 데미지: {damage:F1}");
+            }
+            
+            projectile.SetDamage(damage);
             projectile.SetTarget(target.transform);
             projectile.Launch();
         }
