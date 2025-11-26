@@ -50,7 +50,7 @@ public class PlayerExperience : MonoBehaviour
         // 로그 출력 (보너스 적용 확인용)
         if (bonusPercent > 0)
         {
-            Debug.Log($"[PlayerExp] 💎 경험치 획득: {amount} → {finalAmount:F1} (+{bonusPercent}% 보너스)");
+            Debug.Log($"[PlayerExp] 경험치 획득: {amount} → {finalAmount:F1} (+{bonusPercent}% 보너스)");
         }
         
         AnimateExpBar();

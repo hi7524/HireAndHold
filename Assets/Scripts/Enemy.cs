@@ -33,10 +33,21 @@ public class Enemy : MonoBehaviour, IDamagable
     public bool IsBoss => isBoss;
     private Vector3 originalScale;
     public float CurrentHp => currentHp;
+    private Collider2D currentWallCollider;
+
+
+    private Collider2D myCollider;
+    private IDamagable wallDamagable;
+    private ExperienceCollector expCollector;
+
+    private float lastSeparateTime;
+    private const float SEPARATE_INTERVAL = 0.1f; // 0.1초마다만 실행
+
 
     private void Awake()
     {
         originalScale = transform.localScale;
+        myCollider = GetComponent<Collider2D>();
     }
 
     void Start()
@@ -44,6 +55,11 @@ public class Enemy : MonoBehaviour, IDamagable
         currentHp = maxHp;
         nextAttackTime = 0f;
         targetWall = GameObject.FindWithTag("Wall")?.transform;
+        if (targetWall != null)
+        {
+            wallDamagable = targetWall.GetComponent<IDamagable>();
+        }
+        expCollector = GameObject.FindWithTag("Collector")?.GetComponent<ExperienceCollector>();
     }
 
     public void Initialize(ObjectPoolManager manager, string key, bool boss = false)
@@ -54,7 +70,7 @@ public class Enemy : MonoBehaviour, IDamagable
         currentHp = maxHp;
         isAttacking = false;
         isStunned = false;
-        originalSpeed = speed ;
+        originalSpeed = speed;
         originalScale = transform.localScale;
 
         defense = 5;
@@ -83,14 +99,13 @@ public class Enemy : MonoBehaviour, IDamagable
         attackDamage = data.MON_ATK;
         isAttacking = false;
         isStunned = false;
-        originalSpeed = speed ;
+        originalSpeed = speed;
         defense = data.MON_DEF;
-        Debug.Log($"[Monster] {data.MON_NAME} 데이터로 초기화 완료! HP: {maxHp}, ATK: {attackDamage}, DEF: {defense}");
+
         isBoss = boss;
 
         if (isBoss)
         {
-            
             currentHp = maxHp;
             speed *= 0.7f;
             attackDamage *= 2f;
@@ -115,6 +130,11 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
+        if (isAttacking && currentWallCollider != null)
+        {
+            CheckWallProximity();
+        }
+
         if (!isAttacking)
         {
             MoveTowardsWall();
@@ -124,7 +144,19 @@ public class Enemy : MonoBehaviour, IDamagable
             TryAttackWall();
         }
     }
+    private void CheckWallProximity()
+    {
+        if (currentWallCollider != null && myCollider != null)
+        {
+            bool isOverlapping = currentWallCollider.IsTouching(myCollider);
 
+            if (!isOverlapping && isAttacking)
+            {
+                // 넉백으로 밀려났을 때 자동 해제
+                isAttacking = false;
+            }
+        }
+    }
     private void MoveTowardsWall()
     {
         if (targetWall == null)
@@ -134,8 +166,11 @@ public class Enemy : MonoBehaviour, IDamagable
 
         transform.Translate(Vector3.down * speed * Time.deltaTime);
 
-
-        SeparateFromOthers();
+        if (Time.time >= lastSeparateTime + SEPARATE_INTERVAL)
+        {
+            lastSeparateTime = Time.time;
+            SeparateFromOthers();
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -146,9 +181,22 @@ public class Enemy : MonoBehaviour, IDamagable
 
             if (wall != null)
             {
+                currentWallCollider = other;
                 wall.TakeDamage(attackDamage);
                 isAttacking = true;
                 TryAttackWall();
+            }
+        }
+    }
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.CompareTag("Wall"))
+        {
+            if (isAttacking)
+            {
+                isAttacking = false;
+                currentWallCollider = null;
+
             }
         }
     }
@@ -159,11 +207,10 @@ public class Enemy : MonoBehaviour, IDamagable
 
         foreach (var hit in hits)
         {
-            if (hit.gameObject == gameObject)
+            if (hit == myCollider)
             {
                 continue;
             }
-
             if (hit.CompareTag("Monster"))
             {
                 Vector3 dir = transform.position - hit.transform.position;
@@ -193,10 +240,9 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-        IDamagable wall = targetWall.GetComponent<IDamagable>();
-        if (wall != null)
+       if (wallDamagable != null)
         {
-            wall.TakeDamage(attackDamage);
+            wallDamagable.TakeDamage(attackDamage);
         }
     }
 
@@ -208,7 +254,7 @@ public class Enemy : MonoBehaviour, IDamagable
         }
 
 
-        currentHp -= damage ; //- defense;
+        currentHp -= damage; //- defense;
 
         if (currentHp <= 0)
         {
@@ -252,34 +298,21 @@ public class Enemy : MonoBehaviour, IDamagable
             expObj.transform.position = transform.position;
 
             Experience exp = expObj.GetComponent<Experience>();
-            if (exp != null)
+            if (exp != null && expCollector != null)
             {
-                ExperienceCollector collector = GameObject.FindWithTag("Collector")?.GetComponent<ExperienceCollector>();
-                if (collector != null)
-                {
-                    exp.SetExpCollecter(collector);
-                }
+                exp.SetExpCollecter(expCollector);
             }
         }
     }
 
 
-    public void SetStunned(bool stunned) // 장철희
+    public void SetStunned(bool stunned) 
     {
         isStunned = stunned;
-
-        if (stunned)
-        {
-            Debug.Log($"[Monster] {gameObject.name} 스턴 적용!");
-        }
-        else
-        {
-            Debug.Log($"[Monster] {gameObject.name} 스턴 해제!");
-        }
     }
 
 
-    public void RestoreOriginalSpeed() // 장철희
+    public void RestoreOriginalSpeed()
     {
         speed = originalSpeed;
     }
