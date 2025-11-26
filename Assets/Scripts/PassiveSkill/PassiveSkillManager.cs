@@ -72,7 +72,7 @@ public class PassiveSkillManager : MonoBehaviour
         {
             group.currentStar = 1;
             RecalculateEffects();
-            Debug.Log($"[PassiveSkillManager] '{group.displayName}' ★1 획득!");
+            Debug.Log($"[PassiveSkillManager] '{group.displayName}' 획득! ★1");
             return true;
         }
     }
@@ -187,6 +187,7 @@ public class PassiveSkillManager : MonoBehaviour
                 currentEffects.bossDamageBonus += effectValue;
                 break;
         }
+        LogOwnedSkills();
     }
     
     public PassiveSkillEffects GetCurrentEffects()
@@ -249,6 +250,12 @@ public class PassiveSkillManager : MonoBehaviour
                 Debug.Log($"{group.displayName}: {group.currentStar}");
             }
         }
+        Debug.Log($"bossDamageBonus: {currentEffects.bossDamageBonus}");
+        Debug.Log($"damageBonus: {currentEffects.damageBonus}");
+        Debug.Log($"critRateBonus: {currentEffects.critRateBonus}");
+        Debug.Log($"critDamageBonus: {currentEffects.critDamageBonus}");
+        Debug.Log($"expBonus: {currentEffects.expBonus}");
+        Debug.Log($"shieldRegenBonus: {currentEffects.shieldRegenBonus}");
     }
     
 }
