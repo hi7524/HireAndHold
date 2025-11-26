@@ -11,19 +11,20 @@ public class DeckPreset
 
 public class DeckControl : MonoBehaviour
 {
-    [Header("UI")]
+    // ui 
     public GameObject highlightOverlay;
     public List<DeckSlot> slots;                 
     public Transform unitListParent;           
     public Button completeButton;
 
-    [Header("Preset Buttons (assign 5 buttons, 1..5)")]
+    //프리셋 버튼들
     public List<Button> presetButtons;       
 
-    [Header("Preset Storage")]
+    //프리셋 스토리지 ? 나중을 위해서
     public DeckPreset[] presets = new DeckPreset[5]; 
     private int activePresetIndex = 0;
 
+    // 맵
     private List<UnitCard> unitCards = new();
     private Dictionary<UnitData, UnitCard> unitMap = new();
     private bool isEditing = false;
