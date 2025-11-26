@@ -16,7 +16,9 @@ public class DataTable_NormalEnforce : DataTable
         public int Class { get; set; }
     }
 
-    private readonly Dictionary<int, NormalEnforceData> table = new Dictionary<int, NormalEnforceData>();
+    private readonly Dictionary<int, NormalEnforceData> table = new();
+
+    public Dictionary<int, NormalEnforceData> All => table;
 
     public override async UniTask LoadAsync(string filename)
     {
@@ -44,7 +46,7 @@ public class DataTable_NormalEnforce : DataTable
     {
         if (!table.ContainsKey(enforceId))
         {
-            Debug.LogError($"NormalEnforce 존재하지 않는 id {enforceId}");
+            Debug.LogError($"NormalEnforce 없는 id {enforceId}");
             return null;
         }
 

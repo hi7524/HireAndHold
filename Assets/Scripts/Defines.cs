@@ -10,6 +10,8 @@ public static class DataTableIds
     public static readonly string Skill = "SkillTable";
     public static readonly string Unit = "UnitTable";
     public static readonly string NormalEnforce = "NormalEnforceTable";
+    public static readonly string HeroEnforce = "HeroEnforceTable";
+    public static readonly string HeroEnforceEffect = "HeroEnforceEffectTable";
 }
 
 public static class Tags
