@@ -31,13 +31,44 @@ public class GridLayoutEditor : Editor
 
         // 버프 설정
         EditorGUILayout.LabelField("Buff Settings", EditorStyles.boldLabel);
-        data.enableCrossBuffs = EditorGUILayout.Toggle("Enable Cross Buffs", data.enableCrossBuffs);
-        data.enableRegionBuffs = EditorGUILayout.Toggle("Enable Region Buffs", data.enableRegionBuffs);
+        bool newEnableCrossBuffs = EditorGUILayout.Toggle("Enable Cross Buffs", data.enableCrossBuffs);
+        if (newEnableCrossBuffs && !data.enableCrossBuffs)
+        {
+            data.enableCrossBuffs = true;
+            data.enableRegionBuffs = false;
+        }
+
+        bool newEnableRegionBuffs = EditorGUILayout.Toggle("Enable Region Buffs", data.enableRegionBuffs);
+        if (newEnableRegionBuffs && !data.enableRegionBuffs)
+        {
+            data.enableRegionBuffs = true;
+            data.enableCrossBuffs = false;
+        }
 
         EditorGUILayout.Space(10);
 
         // 탭 선택
-        tabIndex = GUILayout.Toolbar(tabIndex, new string[] { "Grid Layout", "Cross Buffs", "Region Buffs" });
+        string[] tabNames;
+        if (data.enableCrossBuffs)
+        {
+            tabNames = new string[] { "Grid Layout", "Cross Buffs" };
+        }
+        else if (data.enableRegionBuffs)
+        {
+            tabNames = new string[] { "Grid Layout", "Region Buffs" };
+        }
+        else
+        {
+            tabNames = new string[] { "Grid Layout" };
+        }
+
+        // 현재 선택된 탭이 유효한 범위를 벗어나면 0으로 초기화
+        if (tabIndex >= tabNames.Length)
+        {
+            tabIndex = 0;
+        }
+
+        tabIndex = GUILayout.Toolbar(tabIndex, tabNames);
 
         EditorGUILayout.Space(10);
 
@@ -47,7 +78,10 @@ public class GridLayoutEditor : Editor
                 DrawGridLayoutTab(data);
                 break;
             case 1:
-                DrawCrossBuffsTab(data);
+                if (data.enableCrossBuffs)
+                    DrawCrossBuffsTab(data);
+                else if (data.enableRegionBuffs)
+                    DrawRegionBuffsTab(data);
                 break;
             case 2:
                 DrawRegionBuffsTab(data);

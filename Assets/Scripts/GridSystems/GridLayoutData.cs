@@ -12,7 +12,7 @@ public class GridLayoutData : ScriptableObject
 
     [Header("Buff Settings")]
     public bool enableCrossBuffs = true;
-    public bool enableRegionBuffs = true;
+    public bool enableRegionBuffs = false;
 
     public List<CrossBuffData> crossBuffs = new List<CrossBuffData>();
     public List<RegionBuffData> regionBuffs = new List<RegionBuffData>();
