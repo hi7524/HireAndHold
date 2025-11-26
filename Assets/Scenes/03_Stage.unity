@@ -1811,7 +1811,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.05, y: 0.05}
   m_AnchorMax: {x: 0.95, y: 0.95}
-  m_AnchoredPosition: {x: 0, y: 0.00012207031}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: -472}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &341312286
@@ -5448,7 +5448,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.05, y: 0.05}
   m_AnchorMax: {x: 0.95, y: 0.95}
-  m_AnchoredPosition: {x: 0, y: 0.00012207031}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: -472}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1230300779
@@ -8867,7 +8867,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 3.510498, y: 68.0018}
+  m_AnchoredPosition: {x: 3.510498, y: 68.00171}
   m_SizeDelta: {x: -133.4003, y: -641.0828}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1940166132
@@ -10883,11 +10883,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3016047980065441388, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.7
+      value: -1.6
       objectReference: {fileID: 0}
     - target: {fileID: 3016047980065441388, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.1
+      value: -3.02
       objectReference: {fileID: 0}
     - target: {fileID: 3016047980065441388, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: m_LocalPosition.z
@@ -10923,8 +10923,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: cellSize
-      value: 0.55
+      value: 0.52
       objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: layoutData
+      value: 
+      objectReference: {fileID: 11400000, guid: 7be587958ff25574ea7bc70f080375f1, type: 2}
     - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: poolManager
       value: 
@@ -10933,6 +10937,10 @@ PrefabInstance:
       propertyPath: uiManager
       value: 
       objectReference: {fileID: 1213958860}
+    - target: {fileID: 6959901440674583972, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: layoutData
+      value: 
+      objectReference: {fileID: 11400000, guid: 7be587958ff25574ea7bc70f080375f1, type: 2}
     - target: {fileID: 6959901440674583972, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: validColor.b
       value: 0.69411767

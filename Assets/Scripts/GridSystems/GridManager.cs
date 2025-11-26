@@ -23,11 +23,13 @@ public class GridManager : MonoBehaviour
     [SerializeField] private StageUiManager uiManager;
 
     public int[,] gridArray { get; private set; }
+    public bool IsFilledAllGrids { get; private set; }
 
     private GridCell[,] gridCells;
     private HashSet<GridCell> highlightedCells = new HashSet<GridCell>();
     private Dictionary<Vector2Int, Color> coloredCell = new Dictionary<Vector2Int, Color>();
     private Dictionary<Vector2Int, Color> tempColoredCell;
+    private HashSet<string> activatedBuffs = new HashSet<string>();
 
 
     private void Start()
@@ -48,6 +50,8 @@ public class GridManager : MonoBehaviour
     {
         gridArray[pos.x, pos.y] = (int)state;
         gridCells[pos.x, pos.y].SetAcceptable(state == GridState.Empty);
+
+        CheckAllBuffConditions();
     }
 
     // GridVisualizer의 자식 오브젝트들을 순회하며 GridCell 컴포넌트 수집 및 등록
@@ -162,6 +166,147 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    // 모든 버프 조건 체크
+    private void CheckAllBuffConditions()
+    {
+        // 십자가 버프 체크
+        if (layoutData.enableCrossBuffs)
+        {
+            foreach (var crossBuff in layoutData.crossBuffs)
+            {
+                bool horizontalFilled = CheckHorizontalLineFilled(crossBuff.centerPos);
+                bool verticalFilled = CheckVerticalLineFilled(crossBuff.centerPos);
+
+                // 가로줄 체크 및 활성화/비활성화
+                if (horizontalFilled && !activatedBuffs.Contains(crossBuff.horizontalBuffName))
+                {
+                    ActivateBuff(crossBuff.horizontalBuffName);
+                    activatedBuffs.Add(crossBuff.horizontalBuffName);
+                }
+                else if (!horizontalFilled && activatedBuffs.Contains(crossBuff.horizontalBuffName))
+                {
+                    DeactivateBuff(crossBuff.horizontalBuffName);
+                    activatedBuffs.Remove(crossBuff.horizontalBuffName);
+                }
+
+                // 세로줄 체크 및 활성화/비활성화
+                if (verticalFilled && !activatedBuffs.Contains(crossBuff.verticalBuffName))
+                {
+                    ActivateBuff(crossBuff.verticalBuffName);
+                    activatedBuffs.Add(crossBuff.verticalBuffName);
+                }
+                else if (!verticalFilled && activatedBuffs.Contains(crossBuff.verticalBuffName))
+                {
+                    DeactivateBuff(crossBuff.verticalBuffName);
+                    activatedBuffs.Remove(crossBuff.verticalBuffName);
+                }
+            }
+        }
+
+        // 영역 버프 체크
+        if (layoutData.enableRegionBuffs)
+        {
+            foreach (var regionBuff in layoutData.regionBuffs)
+            {
+                bool regionFilled = CheckRegionFilled(regionBuff.regionCells);
+
+                // 영역 버프 활성화/비활성화
+                if (regionFilled && !activatedBuffs.Contains(regionBuff.buffName))
+                {
+                    ActivateBuff(regionBuff.buffName);
+                    activatedBuffs.Add(regionBuff.buffName);
+                }
+                else if (!regionFilled && activatedBuffs.Contains(regionBuff.buffName))
+                {
+                    DeactivateBuff(regionBuff.buffName);
+                    activatedBuffs.Remove(regionBuff.buffName);
+                }
+            }
+        }
+
+        // 전체 채우기 버프 체크
+        CheckFilledAllCells();
+        if (IsFilledAllGrids && !activatedBuffs.Contains("FullGrid"))
+        {
+            ActivateBuff("FullGrid");
+            activatedBuffs.Add("FullGrid");
+        }
+        else if (!IsFilledAllGrids && activatedBuffs.Contains("FullGrid"))
+        {
+            DeactivateBuff("FullGrid");
+            activatedBuffs.Remove("FullGrid");
+        }
+    }
+
+    // 가로줄이 모두 채워졌는지 체크
+    private bool CheckHorizontalLineFilled(Vector2Int centerPos)
+    {
+        for (int x = 0; x < layoutData.width; x++)
+        {
+            if (layoutData.IsValidCell(x, centerPos.y) && gridArray[x, centerPos.y] != (int)GridState.Occupied)
+                return false;
+        }
+        return true;
+    }
+
+    // 세로줄이 모두 채워졌는지 체크
+    private bool CheckVerticalLineFilled(Vector2Int centerPos)
+    {
+        for (int y = 0; y < layoutData.height; y++)
+        {
+            if (layoutData.IsValidCell(centerPos.x, y) && gridArray[centerPos.x, y] != (int)GridState.Occupied)
+                return false;
+        }
+        return true;
+    }
+
+    // 특정 영역이 모두 채워졌는지 체크
+    private bool CheckRegionFilled(List<Vector2Int> region)
+    {
+        foreach (var cell in region)
+        {
+            if (gridArray[cell.x, cell.y] != (int)GridState.Occupied)
+                return false;
+        }
+        return true;
+    }
+
+    // 칸이 모두 채워져있는지 체크
+    private void CheckFilledAllCells()
+    {
+        IsFilledAllGrids = false;
+
+        for (int x = 0; x < layoutData.width; x++)
+        {
+            for (int y = 0; y < layoutData.height; y++)
+            {
+                // 유효하지 않은 셀은 건너뛰기
+                if (!layoutData.IsValidCell(x, y))
+                    continue;
+
+                // 유효한 셀이 비어있으면 false
+                if (gridArray[x, y] == (int)GridState.Empty)
+                    return;
+            }
+        }
+
+        IsFilledAllGrids = true;
+    }
+
+    // 버프 활성화
+    private void ActivateBuff(string buffName)
+    {
+        Debug.Log($"버프 활성화: {buffName}");
+        uiManager.UpdateInfoText($"{buffName} 버프 활성화!");
+    }
+
+    // 버프 비활성화
+    private void DeactivateBuff(string buffName)
+    {
+        Debug.Log($"버프 비활성화: {buffName}");
+        uiManager.UpdateInfoText($"{buffName} 버프 해제!");
     }
 
     // 유닛 합성시 호출
