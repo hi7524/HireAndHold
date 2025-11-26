@@ -206,7 +206,7 @@ public class WaveManager : MonoBehaviour
         if (stageUiManager != null)
         {
             Debug.Log($"[WaveManager] ShowRewardPanel() 호출");
-            stageUiManager.ShowRewardPanel();
+            stageUiManager.ShowWarningReward();
         }
     }
 
@@ -237,7 +237,7 @@ public class WaveManager : MonoBehaviour
         stageUiManager.HideBossHealthBar();
         if (stageUiManager != null)
         {
-            stageUiManager.ShowRewardPanel();
+            stageUiManager.ShowBossRewardPanel();
         }
     }
     private void ClearAllEvents()
