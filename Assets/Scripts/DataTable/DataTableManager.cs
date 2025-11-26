@@ -12,8 +12,6 @@ public static class DataTableManager
     {
         if (IsInitialized)
             return;
-
-        // 누군가 이미 초기화 중이면 끝날 때까지 기다렸다가 리턴
         if (isInitializing)
         {
             while (!IsInitialized)
@@ -22,8 +20,6 @@ public static class DataTableManager
             }
             return;
         }
-
-        // 여기까지 온 애만 실제 초기화 수행
         isInitializing = true;
 
         try
@@ -51,6 +47,7 @@ public static class DataTableManager
             LoadTableAsync<DataTable_Unit>(DataTableIds.Unit),
             LoadTableAsync<DataTable_Skill>(DataTableIds.Skill),
             LoadTableAsync<DataTable_NormalEnforce>(DataTableIds.NormalEnforce),
+            LoadTableAsync<DataTable_Effect>(DataTableIds.Effect),
             // 다른 테이블들 추가
             // LoadTableAsync<DataTable_Item>(DataTableIds.Item),
             // LoadTableAsync<DataTable_Character>(DataTableIds.Character),
@@ -81,6 +78,7 @@ public static class DataTableManager
     public static DataTable_Unit UnitTable => Get<DataTable_Unit>(DataTableIds.Unit);
     public static DataTable_Skill SkillTable => Get<DataTable_Skill>(DataTableIds.Skill);
     public static DataTable_NormalEnforce NormalEnforceTable => Get<DataTable_NormalEnforce>(DataTableIds.NormalEnforce);
+    public static DataTable_Effect EffectTable => Get<DataTable_Effect>(DataTableIds.Effect);
 
 
     public static T Get<T>(string id) where T : DataTable

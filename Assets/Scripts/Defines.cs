@@ -12,6 +12,7 @@ public static class DataTableIds
     public static readonly string NormalEnforce = "NormalEnforceTable";
     public static readonly string HeroEnforce = "HeroEnforceTable";
     public static readonly string HeroEnforceEffect = "HeroEnforceEffectTable";
+    public static readonly string Effect = "EffectTable";
 }
 
 public static class Tags

@@ -61,7 +61,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
             cooldown = skillData.SKILL_COOLTIME;
             damage = skillData.SKILL_CRT_DMG;
             applyStatusEffect = skillData.SKILL_CRT > 0;
-            statusEffectType = (StatusEffectType)skillData.SKILL_EFFECT1;
+            statusEffectType = (StatusEffectType)skillData.SKILL_EFFECT1_ID;
             statusEffectDuration = skillData.EFFECT_TIME1;
             statusEffectValue = 0; 
         }

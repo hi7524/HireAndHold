@@ -18,7 +18,7 @@ public class StageUiManager : MonoBehaviour
     [SerializeField] private GameObject skillSelectPanel;
     [SerializeField] private BossHPBar bossHealthBar;
     [SerializeField] private StageClearPanelController stageClearPanel;
-    [SerializeField] private RewardPanelController rewardPanel;
+    [SerializeField] private GameObject rewardPanel;
 
     private void Update()
     {
@@ -45,16 +45,6 @@ public class StageUiManager : MonoBehaviour
     {
         gameOverPanel.SetActive(true);
     }
-    public void ShowRewardPanel()
-    {
-       
-        if (rewardPanel != null)
-        {
-            Debug.Log("[StageUiManager] rewardPanel 활성화!");
-            
-            gameManager.PauseGame(); // 게임 일시정지
-        }
-    }
 
     public void ActiveSkillSelectPanel()
     {
@@ -75,6 +65,18 @@ public class StageUiManager : MonoBehaviour
     {
         warningPanel.SetActive(true);
         HideWarningPanel(5f).Forget();
+    }
+    public void ShowBossRewardPanel()
+    {
+       rewardPanel.SetActive(true);
+       rewardPanel.GetComponent<RewardPanelController>().ShowBossReward();
+       gameManager.PauseGame();
+    }
+    public void ShowWarningReward()
+    {
+        rewardPanel.SetActive(true);
+        rewardPanel.GetComponent<RewardPanelController>().ShowWarningReward();
+        gameManager.PauseGame();
     }
 
     public async UniTask HideWarningPanel(float duration)

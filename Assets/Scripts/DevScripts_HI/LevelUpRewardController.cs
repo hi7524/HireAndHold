@@ -17,6 +17,7 @@ public class LevelUpRewardController : MonoBehaviour
     [SerializeField] private UnitInventory inventory;
     [SerializeField] private PlayerStageGold playerStageGold;
     [SerializeField] private PlayerExperience playerExp;
+    [SerializeField] private PassiveSkillManager passiveSkillManager;
 
     private int rerollCost = 50;
 
@@ -125,6 +126,7 @@ public class LevelUpRewardController : MonoBehaviour
         // 플레이어 레벨이 3의 배수일 때 스킬 뽑기
         if (playerExp.Level % 3 == 0)
         {
+            DrawPassiveSkills();
             SetActiveCards(skillCardUIs, true);
         }
         // 그 외에는 유닛 뽑기
@@ -173,6 +175,34 @@ public class LevelUpRewardController : MonoBehaviour
             int unitId = tempList[i];
             unitCardUIs[i].SetUnitID(unitId);
             unitCardUIs[i].SetGridData(gridDatasForTesting.GridDatas[unitId]);
+        }
+    }
+    public void DrawPassiveSkills()
+    {
+        if (passiveSkillManager == null)
+        {
+            Debug.LogError("[LevelUpRewardController] PassiveSkillManager가 할당되지 않았습니다!");
+            return;
+        }
+
+        // 중복 없이 3개의 패시브 스킬 ID 가져오기
+        List<int> randomSkillIds = passiveSkillManager.GetRandomPassiveSkillsForReward(3);
+
+        // 가져온 스킬 ID들을 각 카드에 설정
+        for (int i = 0; i < skillCardUIs.Length; i++)
+        {
+            if (i < randomSkillIds.Count)
+            {
+                // 스킬 ID가 있으면 설정하고 활성화
+                skillCardUIs[i].SetPassiveSkillId(randomSkillIds[i]);
+                skillCardUIs[i].gameObject.SetActive(true);
+            }
+            else
+            {
+                // 스킬이 부족하면 돈을 주거나
+                Debug.LogWarning($"[LevelUpRewardController] {i+1}번째 스킬 카드를 표시할 수 없습니다.");
+                
+            }
         }
     }
 
@@ -231,13 +261,14 @@ public class LevelUpRewardController : MonoBehaviour
     {
         skillCardUIs = new SkillCardUi[amount];
 
-        for (int i = 0; i < amount; i++)
-        {
-            var card = Instantiate(skillCardPrf, transform);
-            skillCardUIs[i] = card;
-            card.SetLevelUpRewardController(this);
-            card.gameObject.SetActive(false);
-        }
+    for (int i = 0; i < amount; i++)
+    {
+        var card = Instantiate(skillCardPrf, transform);
+        skillCardUIs[i] = card;
+        card.SetLevelUpRewardController(this);
+        card.SetPassiveSkillManager(passiveSkillManager);
+        card.gameObject.SetActive(false);
+    }
     }
 
     // 일부 활성화

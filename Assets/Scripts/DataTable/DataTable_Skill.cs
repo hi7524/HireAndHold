@@ -9,13 +9,14 @@ public class SkillData
     						
     public int SKILL_ID{get; set;}
     public string SKILL_NAME{get; set;}
+    public string SKILL_NAME_KR{get; set;}
     public int SKILL_OBJECT{get; set;}
     public int SKILL_ACTIVATE{get; set;}
-    public int SKILL_EFFECT1{get; set;}
+    public int SKILL_EFFECT1_ID{get; set;}
     public int SKILL_TYPE1{get; set;}
     public int SKILL_TARGET1{get; set;}
     public float EFFECT_TIME1{get; set;}
-    public int SKILL_EFFECT2{get; set;}
+    public int SKILL_EFFECT2_ID{get; set;}
     public int SKILL_TYPE2{get; set;}
     public int SKILL_TARGET2{get; set;}
     public float EFFECT_TIME2{get; set;}
@@ -27,6 +28,7 @@ public class SkillData
     public float SKILL_ATKRANGE{get; set;}
     public float SKILL_RANGE{get; set;}
     public string SKILL_DESCRIPTION{get; set;}
+    public string SKILL_DESCRIPTION_KR{get; set;}
 
 }
 public class DataTable_Skill : DataTable
