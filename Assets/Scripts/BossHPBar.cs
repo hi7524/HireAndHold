@@ -10,7 +10,7 @@ public class BossHPBar : MonoBehaviour
     [SerializeField] private TextMeshProUGUI bossNameText;
     
     
-    private Monster currentBoss;
+    private Enemy currentBoss;
     private float maxHp;
 
     private void Awake()
@@ -27,7 +27,7 @@ public class BossHPBar : MonoBehaviour
     }
 
     // 보스 체력바 표시
-    public void ShowBossHealthBar(Monster boss, string bossName)
+    public void ShowBossHealthBar(Enemy boss, string bossName)
     {
         currentBoss = boss;
         maxHp = boss.CurrentHp; // 스폰 시점의 최대 HP

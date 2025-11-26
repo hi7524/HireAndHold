@@ -13,7 +13,7 @@ public class StatusEffectStun : StatusEffect
     
     public override void OnStartEffect(GameObject target)
     {
-        var monster = target.GetComponent<Monster>();
+        var monster = target.GetComponent<Enemy>();
         if (monster != null)
         {
             // 스턴 상태 활성화
@@ -32,7 +32,7 @@ public class StatusEffectStun : StatusEffect
 
     public override void OnEndEffect(GameObject target)
     {
-        var monster = target.GetComponent<Monster>();
+        var monster = target.GetComponent<Enemy>();
         if (monster != null)
         {
             // 스턴 상태 해제

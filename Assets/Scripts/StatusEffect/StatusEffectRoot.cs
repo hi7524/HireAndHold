@@ -17,7 +17,7 @@ public class StatusEffectRoot : StatusEffect
 
     public override void OnStartEffect(GameObject target)
     {
-        var monster = target.GetComponent<Monster>();
+        var monster = target.GetComponent<Enemy>();
         if (monster != null)
         {
             originalSpeed = monster.speed;
@@ -36,7 +36,7 @@ public class StatusEffectRoot : StatusEffect
 
     public override void OnEndEffect(GameObject target)
     {
-        var monster = target.GetComponent<Monster>();
+        var monster = target.GetComponent<Enemy>();
         if (monster != null)
         {
             monster.speed = originalSpeed;

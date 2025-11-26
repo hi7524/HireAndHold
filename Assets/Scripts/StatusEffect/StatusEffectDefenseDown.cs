@@ -16,7 +16,7 @@ public class StatusEffectDefenseDown : StatusEffect
     public override void OnStartEffect(GameObject target)
     {
         startTime = Time.time;
-        Monster monster = target.GetComponent<Monster>();
+        Enemy monster = target.GetComponent<Enemy>();
         if (monster != null)
         {
             originalDefense = monster.Defense;
@@ -33,7 +33,7 @@ public class StatusEffectDefenseDown : StatusEffect
 
     public override void OnEndEffect(GameObject target)
     {
-        Monster monster = target.GetComponent<Monster>();
+        Enemy monster = target.GetComponent<Enemy>();
         if (monster != null)
         {
             monster.Defense = originalDefense;

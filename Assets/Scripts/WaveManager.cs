@@ -220,7 +220,7 @@ public class WaveManager : MonoBehaviour
             Debug.LogError("[WaveManager] 보스 ID가 없습니다!");
             return;
         }
-        Monster boss = monsterSpawner.SpawnBossById(bossId);
+        Enemy boss = monsterSpawner.SpawnBossById(bossId);
 
         if (boss != null)
         {

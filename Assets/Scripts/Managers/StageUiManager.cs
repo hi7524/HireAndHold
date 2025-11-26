@@ -87,7 +87,7 @@ public class StageUiManager : MonoBehaviour
             warningPanel.SetActive(false);
         }
     }
-    public void ShowBossHealthBar(Monster boss, string bossName)
+    public void ShowBossHealthBar(Enemy boss, string bossName)
     {
         if (bossHealthBar != null)
         {

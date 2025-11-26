@@ -11,7 +11,7 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private float horizontalRange = 2f;
 
-    private List<Monster> activeMonsters = new List<Monster>();
+    private List<Enemy> activeMonsters = new List<Enemy>();
 
 public void SpawnMonsterById(int monsterId, bool isBoss = false)
     {
@@ -30,7 +30,7 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
         spawnPos.x += UnityEngine.Random.Range(-horizontalRange, horizontalRange);
         monsterObj.transform.position = spawnPos;
 
-        Monster monster = monsterObj.GetComponent<Monster>();
+        Enemy monster = monsterObj.GetComponent<Enemy>();
         monster.transform.position = spawnPos;
     //     monster.Initialize(poolManager, monsterKey);
         monster.InitializeWithData(poolManager, key, data, isBoss);
@@ -40,7 +40,7 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
         }
     }
 
-    public void OnMonsterRemoved(Monster monster)
+    public void OnMonsterRemoved(Enemy monster)
     {
         if (activeMonsters.Contains(monster))
         {
@@ -52,7 +52,7 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
     {
         Debug.Log($"[MonsterSpawner] 활성 몬스터 {activeMonsters.Count}마리 제거");
 
-        var monstersToKill = new List<Monster>(activeMonsters);
+        var monstersToKill = new List<Enemy>(activeMonsters);
 
         foreach (var monster in monstersToKill)
         {
@@ -66,7 +66,7 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
     }
 
     // 보스 전용 스폰 (Monster 참조 반환)
-    public Monster SpawnBossById(int bossId)
+    public Enemy SpawnBossById(int bossId)
     {
         MonsterData data = DataTableManager.MonsterTable.Get(bossId);
         if (data == null)
@@ -85,7 +85,7 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
         Vector3 spawnPos = spawnPoint.position;
         bossObj.transform.position = spawnPos;
 
-        Monster boss = bossObj.GetComponent<Monster>();
+        Enemy boss = bossObj.GetComponent<Enemy>();
         boss.transform.position = spawnPos;
         boss.InitializeWithData(poolManager, bossKey, data, true); // isBoss = true
 
@@ -100,12 +100,12 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
     }
 
     // 보스 사망 대기 (UniTask)
-    public void WaitForBossDeath(Monster boss, Action onDeath)
+    public void WaitForBossDeath(Enemy boss, Action onDeath)
     {
         WaitForBossDeathAsync(boss, onDeath).Forget();
     }
 
-    private async UniTaskVoid WaitForBossDeathAsync(Monster boss, Action onDeath)
+    private async UniTaskVoid WaitForBossDeathAsync(Enemy boss, Action onDeath)
     {
         // 보스가 죽을 때까지 대기
         await UniTask.WaitUntil(() => boss == null || !boss.gameObject.activeSelf || boss.IsDead);

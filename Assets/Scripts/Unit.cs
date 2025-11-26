@@ -9,7 +9,7 @@ public class Unit : MonoBehaviour
     [SerializeField] private string projectileKey = "Projectile";
 
     private ObjectPoolManager poolManager;
-    private Monster attackTarget;
+    private Enemy attackTarget;
     private float lastAttackTime;
 
     private readonly List<UnitSkill> skills = new(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
@@ -44,16 +44,16 @@ public class Unit : MonoBehaviour
     }
 
     // 사거리에 따라 적 감지
-    private Monster FindNearestTarget()
+    private Enemy FindNearestTarget()
     {
         Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, attackRange);
 
-        Monster nearest = null;
+        Enemy nearest = null;
         float minDis = attackRange;
 
         foreach (var coll in colliders)
         {
-            Monster monster = coll.GetComponent<Monster>();
+            Enemy monster = coll.GetComponent<Enemy>();
 
             if (monster != null && !monster.IsDead)
             {
@@ -70,14 +70,14 @@ public class Unit : MonoBehaviour
     }
 
     // 타겟 공격
-    private void Attack(Monster target)
+    private void Attack(Enemy target)
     {
         // Pool 반환용 연결
         GameObject projectileObj = poolManager.Get(projectileKey);
         projectileObj.transform.position = transform.position;
         projectileObj.transform.rotation = Quaternion.identity;
 
-        UnitProjectile projectile = projectileObj.GetComponent<UnitProjectile>();
+        PlayerUnitProjectile projectile = projectileObj.GetComponent<PlayerUnitProjectile>();
         if (projectile != null)
         {
             projectile.Initialize(poolManager, projectileKey);
