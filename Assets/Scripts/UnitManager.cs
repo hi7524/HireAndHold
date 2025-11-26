@@ -4,13 +4,17 @@ using UnityEngine;
 public class UnitManager
 {
     private readonly DataTable_Unit unitTable;
-    private readonly DataTable_NormalEnforce enforceTable;
+    private readonly DataTable_NormalEnforce normalEnforceTable;
+    private readonly DataTable_HeroEnforce heroEnforceTable;
+    private readonly DataTable_HeroEnforceEffect heroEnforceEffectTable;
     private readonly Dictionary<int, PlayerUnit> ownedUnits = new Dictionary<int, PlayerUnit>();
 
-    public UnitManager(DataTable_Unit unitTable, DataTable_NormalEnforce enforceTable)
+    public UnitManager(DataTable_Unit unitTable, DataTable_NormalEnforce normalEnforceTable, DataTable_HeroEnforce heroEnforceTable, DataTable_HeroEnforceEffect heroEnforceEffectTable)
     {
         this.unitTable = unitTable;
-        this.enforceTable = enforceTable;
+        this.normalEnforceTable = normalEnforceTable;
+        this.heroEnforceTable = heroEnforceTable;
+        this.heroEnforceEffectTable = heroEnforceEffectTable;
     }
 
     public PlayerUnit AddUnit(int unitId)
@@ -28,7 +32,7 @@ public class UnitManager
         }
 
         // enforceTable 전달
-        PlayerUnit newUnit = new PlayerUnit(baseData, enforceTable);
+        PlayerUnit newUnit = new PlayerUnit(baseData, normalEnforceTable, heroEnforceTable, heroEnforceEffectTable);
         ownedUnits.Add(unitId, newUnit);
         return newUnit;
     }

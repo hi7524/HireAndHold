@@ -1,9 +1,10 @@
-public enum Windows
+﻿public enum Windows
 {
     Store,
     Unit,
     Main,
 Dungeon,
-    Stage
+    Stage,
+    Enforce
 
 }

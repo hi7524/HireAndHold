@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -33,6 +33,11 @@ public class LobbyManager : MonoBehaviour
     public void OnClickedStageButton()
     {
         windowManager.Open(Windows.Stage);
+    }
+
+    public void OnClickedEnforceButton()
+    {
+        windowManager.Open(Windows.Enforce);
     }
     public async void OnClickedLogOutButton()
     {
