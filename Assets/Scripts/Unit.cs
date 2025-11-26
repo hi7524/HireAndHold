@@ -18,8 +18,6 @@ public class Unit : MonoBehaviour
     private void Start()
     {
         poolManager = GameObject.FindWithTag(Tags.PoolManager).GetComponent<ObjectPoolManager>();
-
-        AddSkill(21001);
     }
 
     private void OnEnable()
