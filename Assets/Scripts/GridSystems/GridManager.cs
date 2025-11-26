@@ -176,18 +176,31 @@ public class GridManager : MonoBehaviour
         {
             foreach (var crossBuff in layoutData.crossBuffs)
             {
-                // 가로줄 체크
-                if (!activatedBuffs.Contains(crossBuff.horizontalBuffName) && CheckHorizontalLineFilled(crossBuff.centerPos))
+                bool horizontalFilled = CheckHorizontalLineFilled(crossBuff.centerPos);
+                bool verticalFilled = CheckVerticalLineFilled(crossBuff.centerPos);
+
+                // 가로줄 체크 및 활성화/비활성화
+                if (horizontalFilled && !activatedBuffs.Contains(crossBuff.horizontalBuffName))
                 {
                     ActivateBuff(crossBuff.horizontalBuffName);
                     activatedBuffs.Add(crossBuff.horizontalBuffName);
                 }
+                else if (!horizontalFilled && activatedBuffs.Contains(crossBuff.horizontalBuffName))
+                {
+                    DeactivateBuff(crossBuff.horizontalBuffName);
+                    activatedBuffs.Remove(crossBuff.horizontalBuffName);
+                }
 
-                // 세로줄 체크
-                if (!activatedBuffs.Contains(crossBuff.verticalBuffName) && CheckVerticalLineFilled(crossBuff.centerPos))
+                // 세로줄 체크 및 활성화/비활성화
+                if (verticalFilled && !activatedBuffs.Contains(crossBuff.verticalBuffName))
                 {
                     ActivateBuff(crossBuff.verticalBuffName);
                     activatedBuffs.Add(crossBuff.verticalBuffName);
+                }
+                else if (!verticalFilled && activatedBuffs.Contains(crossBuff.verticalBuffName))
+                {
+                    DeactivateBuff(crossBuff.verticalBuffName);
+                    activatedBuffs.Remove(crossBuff.verticalBuffName);
                 }
             }
         }
@@ -197,23 +210,33 @@ public class GridManager : MonoBehaviour
         {
             foreach (var regionBuff in layoutData.regionBuffs)
             {
-                if (!activatedBuffs.Contains(regionBuff.buffName) && CheckRegionFilled(regionBuff.regionCells))
+                bool regionFilled = CheckRegionFilled(regionBuff.regionCells);
+
+                // 영역 버프 활성화/비활성화
+                if (regionFilled && !activatedBuffs.Contains(regionBuff.buffName))
                 {
                     ActivateBuff(regionBuff.buffName);
                     activatedBuffs.Add(regionBuff.buffName);
+                }
+                else if (!regionFilled && activatedBuffs.Contains(regionBuff.buffName))
+                {
+                    DeactivateBuff(regionBuff.buffName);
+                    activatedBuffs.Remove(regionBuff.buffName);
                 }
             }
         }
 
         // 전체 채우기 버프 체크
-        if (!activatedBuffs.Contains("FullGrid"))
+        CheckFilledAllCells();
+        if (IsFilledAllGrids && !activatedBuffs.Contains("FullGrid"))
         {
-            CheckFilledAllCells();
-            if (IsFilledAllGrids)
-            {
-                ActivateBuff("FullGrid");
-                activatedBuffs.Add("FullGrid");
-            }
+            ActivateBuff("FullGrid");
+            activatedBuffs.Add("FullGrid");
+        }
+        else if (!IsFilledAllGrids && activatedBuffs.Contains("FullGrid"))
+        {
+            DeactivateBuff("FullGrid");
+            activatedBuffs.Remove("FullGrid");
         }
     }
 
@@ -277,6 +300,13 @@ public class GridManager : MonoBehaviour
     {
         Debug.Log($"버프 활성화: {buffName}");
         uiManager.UpdateInfoText($"{buffName} 버프 활성화!");
+    }
+
+    // 버프 비활성화
+    private void DeactivateBuff(string buffName)
+    {
+        Debug.Log($"버프 비활성화: {buffName}");
+        uiManager.UpdateInfoText($"{buffName} 버프 해제!");
     }
 
     // 유닛 합성시 호출
