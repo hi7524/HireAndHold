@@ -45,9 +45,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 597539fe8ce5ec3438088c8f5ca07afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridVisualizer
-  layoutData: {fileID: 11400000, guid: adebea9e7f746d043a88b4feaf7c8da6, type: 2}
+  layoutData: {fileID: 11400000, guid: 7be587958ff25574ea7bc70f080375f1, type: 2}
   gridCellPrf: {fileID: 6005388090822284764, guid: 7c0c41801944a23428df82688f300dfb, type: 3}
-  cellSize: 0.6
+  cellSize: 0.52
   space: 0.02
   poolManager: {fileID: 0}
 --- !u!114 &6959901440674583972
@@ -62,8 +62,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93d6f41b427c3b6478d5710b801ce8b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridManager
-  layoutData: {fileID: 11400000, guid: adebea9e7f746d043a88b4feaf7c8da6, type: 2}
+  layoutData: {fileID: 11400000, guid: 7be587958ff25574ea7bc70f080375f1, type: 2}
   gridVisualizer: {fileID: 6394874904344267427}
-  validColor: {r: 0.5176471, g: 0.9529412, b: 0.7611766, a: 1}
-  invalidColor: {r: 0.9339623, g: 0.5154415, b: 0.5154415, a: 1}
+  validColor: {r: 0.5882353, g: 0.9254902, b: 0.69411767, a: 1}
+  invalidColor: {r: 0.9137255, g: 0.5137255, b: 0.5176471, a: 1}
+  crossBuffColor: {r: 0.75786155, g: 0.87408805, b: 1, a: 1}
+  regionBuffColor: {r: 0.92190784, g: 0.75686276, b: 1, a: 1}
   gridUnitPrefab: {fileID: 1490772236210125429, guid: 3a8925845870d71458e2d9af1ca3248c, type: 3}
+  levelUpRewardController: {fileID: 0}
+  uiManager: {fileID: 0}
