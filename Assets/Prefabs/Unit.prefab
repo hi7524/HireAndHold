@@ -78,10 +78,10 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -782044295
-  m_SortingLayer: 1
+  m_SortingLayer: 2
   m_SortingOrder: 0
-  m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
-  m_Color: {r: 0.51686543, g: 0.6689264, b: 0.9528302, a: 1}
+  m_Sprite: {fileID: 21300000, guid: 8f09d6b0db02936488807ab7f2566939, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -142,7 +142,12 @@ MonoBehaviour:
   attackRange: 15
   attackInterval: 1
   attackDamage: 500
+  baseCritRate: 0
+  baseCritMultiplier: 1.5
   projectileKey: Projectile
+  finalAttackDamage: 0
+  finalCritRate: 0
+  finalCritMultiplier: 0
 --- !u!114 &6630921504287376387
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -155,7 +160,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fba74566ffc682c4c84a626847a8b71f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellSize: 1.1
   cellPrf: {fileID: 7561523029768047771, guid: 306089a1b45d7ee459d73ba53a5f95c2, type: 3}
   previewTrans: {fileID: 6802499784913829392}
   canPlaceInInventory: 1

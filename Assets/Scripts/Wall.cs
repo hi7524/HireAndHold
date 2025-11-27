@@ -82,7 +82,6 @@ public class Wall : MonoBehaviour, IDamagable
         currentHp -= damage;
         hpSlider.value = currentHp / maxHp;
 
-        // 흔들림 효과 (이전 애니메이션 완료 후 새로 시작)
         transform.DOComplete();
         transform.DOShakePosition(0.1f, strength: 0.05f, vibrato: 1, randomness: 90, snapping: false, fadeOut: true)
             .SetUpdate(false);
