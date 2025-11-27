@@ -13,6 +13,18 @@ public class DragManager : MonoBehaviour
     private DragState dragState;
     private IDroppable currentDropTarget;
 
+    private Camera MainCamera
+    {
+        get
+        {
+            if (mainCamera == null)
+            {
+                mainCamera = Camera.main;
+            }
+            return mainCamera;
+        }
+    }
+
     private struct DragState
     {
         public IDraggable Target;
@@ -31,11 +43,6 @@ public class DragManager : MonoBehaviour
             OriginalParent = null;
             OriginalSiblingIndex = 0;
         }
-    }
-
-    private void Start()
-    {
-        mainCamera = Camera.main;
     }
 
     private void Update()
@@ -202,7 +209,7 @@ public class DragManager : MonoBehaviour
     // World에서 드래그 가능한 오브젝트 감지
     private IDraggable DetectWorldObject(Vector2 screenPosition)
     {
-        Vector2 worldPoint = mainCamera.ScreenToWorldPoint(screenPosition);
+        Vector2 worldPoint = MainCamera.ScreenToWorldPoint(screenPosition);
         RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.zero, Mathf.Infinity, draggableLayer);
 
         if (hits.Length == 0)
@@ -273,7 +280,7 @@ public class DragManager : MonoBehaviour
     // World에서 드롭 가능한 타겟 감지
     private IDroppable DetectWorldDropTarget(Vector2 screenPosition)
     {
-        Vector2 worldPoint = mainCamera.ScreenToWorldPoint(screenPosition);
+        Vector2 worldPoint = MainCamera.ScreenToWorldPoint(screenPosition);
         RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.zero, Mathf.Infinity, draggableLayer);
 
         if (hits.Length == 0)
@@ -334,7 +341,7 @@ public class DragManager : MonoBehaviour
     // World 오브젝트를 월드 좌표로 이동
     private void MoveWorldObject(GameObject targetObj, Vector2 screenPos)
     {
-        Vector3 worldPos = mainCamera.ScreenToWorldPoint(screenPos);
+        Vector3 worldPos = MainCamera.ScreenToWorldPoint(screenPos);
         worldPos.z = 0;
         targetObj.transform.position = worldPos;
     }

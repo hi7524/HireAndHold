@@ -164,7 +164,9 @@ namespace SP1Assets.MonsterPack2D
 
         void DebugControl()
         {
+            // new input system
             if (Input.GetKeyDown(KeyCode.D))
+            
             {
                 _selectedMonsterParent.ResetMonsters();
             }
