@@ -8,7 +8,6 @@ public class MonsterCountUI : MonoBehaviour
     
     private void OnEnable()
     {
-       // StageManager 참조가 끊어졌으면 다시 찾기
         if (stageManager == null)
         {
             GameObject managerObj = GameObject.FindGameObjectWithTag("StageManager");
@@ -16,17 +15,16 @@ public class MonsterCountUI : MonoBehaviour
             if (managerObj != null)
             {
                 stageManager = managerObj.GetComponent<StageManager>();
-                Debug.Log("[MonsterCountUI] StageManager 재탐색 성공 (Tag)");
             }
             else
             {
-                Debug.LogError("[MonsterCountUI] StageManager 태그를 찾을 수 없습니다!");
+               
                 return;
             }
         }
 
         stageManager.OnMonsterCountChanged += UpdateMonsterCount;
-        Debug.Log("[MonsterCountUI] 이벤트 구독 성공");
+
     }
     
     private void OnDisable()
@@ -42,11 +40,8 @@ public class MonsterCountUI : MonoBehaviour
         if (monsterCountText != null)
         {
             monsterCountText.text = $"{remaining}";
-            Debug.Log($"[MonsterCountUI] UI 업데이트: {remaining}");
+            
         }
-        else
-        {
-            Debug.LogWarning("[MonsterCountUI] monsterCountText가 null입니다!");
-        }
+       
     }
 }

@@ -47,16 +47,10 @@ public class PlayerExperience : MonoBehaviour
 
         curPlayerExp += finalAmount;
         
-        // 로그 출력 (보너스 적용 확인용)
-        if (bonusPercent > 0)
-        {
-            Debug.Log($"[PlayerExp] 경험치 획득: {amount} → {finalAmount:F1} (+{bonusPercent}% 보너스)");
-        }
-        
         AnimateExpBar();
     }
 
-    // ** 테스트 후 지울 것
+    
     public void Cheat_LevelUp()
     {
         LevelUp();
