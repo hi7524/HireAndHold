@@ -280,7 +280,7 @@ public class GridManager : MonoBehaviour
         if (affectedCells.Count == 0)
             return;
 
-        float delayIncrement = 0.04f;
+        float delayIncrement = 0.05f;
 
         for (int i = 0; i < affectedCells.Count; i++)
         {

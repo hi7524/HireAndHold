@@ -25,11 +25,11 @@ public class Experience : MonoBehaviour
 
         targetPos = target;
 
-        transform.DOLocalMoveY(0.5f, 0.2f).SetRelative(true).SetEase(Ease.OutQuad)
+        transform.DOLocalMoveY(0.5f, 0.2f).SetRelative(true).SetEase(Ease.OutQuad).SetUpdate(false)
         .OnComplete(() =>
         {
             isMoving = true;
-            transform.DOMove(targetPos, moveTime).SetEase(Ease.InOutQuad);
+            transform.DOMove(targetPos, moveTime).SetEase(Ease.InOutQuad).SetUpdate(false);
         });
     }
 
