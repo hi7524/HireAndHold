@@ -1,5 +1,6 @@
 ﻿using Assets.HeroEditor.Common.Scripts.CharacterScripts;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace Assets.HeroEditor.Common.Scripts.EditorScripts
@@ -24,7 +25,8 @@ namespace Assets.HeroEditor.Common.Scripts.EditorScripts
 
         public void Update()
         {
-            if (Input.GetKeyDown(KeyCode.H))
+            if (Keyboard.current != null && Keyboard.current.hKey.wasPressedThisFrame)
+            
             {
                 Character.Hit();
                 Character.HitAsScale();
