@@ -33,3 +33,9 @@ public static class AnimParams
 {
     public static readonly int IsActive = Animator.StringToHash("IsActive");
 }
+
+public static class GameConstants
+{
+    public static readonly float previewCellSizeObject = 1.05f;
+    public static readonly float previewCellSizeUi = 55f;
+}

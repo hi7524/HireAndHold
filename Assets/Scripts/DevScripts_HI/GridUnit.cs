@@ -4,7 +4,6 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class GridUnit : MonoBehaviour, IDraggable
 {
-    [SerializeField] private float cellSize = 0.6f;
     [SerializeField] private GameObject cellPrf;
     [SerializeField] private Transform previewTrans;
 
@@ -146,8 +145,8 @@ public class GridUnit : MonoBehaviour, IDraggable
     {
         var cell = Instantiate(cellPrf, previewTrans);
         childrenObj.Add(cell.transform);
-        cell.transform.localScale = cellSize * Vector3.one;
-        cell.transform.localPosition = new Vector3(cellPos.x * cellSize, cellPos.y * cellSize, 0);
+        cell.transform.localScale = GameConstants.previewCellSizeObject * Vector3.one;
+        cell.transform.localPosition = new Vector3(cellPos.x * GameConstants.previewCellSizeObject, cellPos.y * GameConstants.previewCellSizeObject, 0);
 
         SpriteRenderer sr = cell.GetComponent<SpriteRenderer>();
         if (sr != null)

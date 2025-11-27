@@ -9,7 +9,6 @@ public class UnitInventorySlot : MonoBehaviour, IDraggable
     [SerializeField] private Image unitImg;
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private Transform previewObjTrans;
-    [SerializeField] private float cellUISize = 65f;
 
     public bool IsDraggable => true; // 수정 필요: 편집 시스템과 연동짓기 **
     public GameObject GameObject => gameObject;
@@ -98,7 +97,7 @@ public class UnitInventorySlot : MonoBehaviour, IDraggable
 
         // 위치 갱신
         RectTransform rect = cellObj.GetComponent<RectTransform>();
-        rect.anchoredPosition = new Vector2(cellPos.x * cellUISize, cellPos.y * cellUISize);
+        rect.anchoredPosition = new Vector2(cellPos.x * GameConstants.previewCellSizeUi, cellPos.y * GameConstants.previewCellSizeUi);
 
         // 색상 갱신
         Image img = cellObj.GetComponent<Image>();
@@ -171,8 +170,8 @@ public class UnitInventorySlot : MonoBehaviour, IDraggable
 
         // RectTransform 설정
         RectTransform rect = cellObj.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(cellUISize, cellUISize);
-        rect.anchoredPosition = new Vector2(cellPos.x * cellUISize, cellPos.y * cellUISize);
+        rect.sizeDelta = new Vector2(GameConstants.previewCellSizeUi, GameConstants.previewCellSizeUi);
+        rect.anchoredPosition = new Vector2(cellPos.x * GameConstants.previewCellSizeUi, cellPos.y * GameConstants.previewCellSizeUi);
 
         // 색상 설정
         Image img = cellObj.AddComponent<Image>();

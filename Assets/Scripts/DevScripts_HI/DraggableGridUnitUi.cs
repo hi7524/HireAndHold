@@ -19,7 +19,6 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
 
     [SerializeField] private Image unitImg;
     [SerializeField] private Transform previewObjTrans; // 드래그 중에 보여질 프리뷰 오브젝트
-    [SerializeField] private float cellUISize = 65f;
 
     public GameObject GameObject => gameObject;
     public bool IsDraggable => isDraggable;
@@ -73,7 +72,7 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
 
         if (previewHelper == null)
         {
-            previewHelper = new GridPreviewHelper(previewObjTrans, cellUISize);
+            previewHelper = new GridPreviewHelper(previewObjTrans, GameConstants.previewCellSizeUi);
         }
 
         if (previewHelper.HasCells)
