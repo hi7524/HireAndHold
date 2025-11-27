@@ -220,6 +220,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3235189517517744314}
+  - component: {fileID: 753470884036033099}
   m_Layer: 0
   m_Name: LeftEnemyDisplay
   m_TagString: Untagged
@@ -234,7 +235,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8575583964881241880}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.4265403, y: 0.4265403, z: 0.4265403}
   m_ConstrainProportionsScale: 0
@@ -249,6 +250,20 @@ RectTransform:
   m_AnchoredPosition: {x: 70, y: -64.7}
   m_SizeDelta: {x: 235, y: 73}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &753470884036033099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8575583964881241880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b11af50e1a8475c4c9ac05011fe2eb3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stageManager: {fileID: 0}
+  monsterCountText: {fileID: 3208765900706022894}
 --- !u!1 &8872899188236422570
 GameObject:
   m_ObjectHideFlags: 0

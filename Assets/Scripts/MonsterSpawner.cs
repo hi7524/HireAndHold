@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class MonsterSpawner : MonoBehaviour
 {
+    public event Action<Enemy> OnMonsterDeath;
+    
     [SerializeField] private ObjectPoolManager poolManager;
     [SerializeField] private string monsterKey = "Monster";
     [SerializeField] private string bossKey = "BossMonster"; 
@@ -34,6 +36,10 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
         monster.transform.position = spawnPos;
     //     monster.Initialize(poolManager, monsterKey);
         monster.InitializeWithData(poolManager, key, data, isBoss);
+        
+        // Enemy 사망 이벤트 구독
+        monster.OnDeath += OnMonsterRemoved;
+        
         if(!activeMonsters.Contains(monster))
         {
             activeMonsters.Add(monster);
@@ -45,12 +51,18 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
         if (activeMonsters.Contains(monster))
         {
             activeMonsters.Remove(monster);
+            
+            // 이벤트 구독 해제
+            monster.OnDeath -= OnMonsterRemoved;
+            
+            Debug.Log($"[MonsterSpawner] 몬스터 제거, OnMonsterDeath 이벤트 발생! 남은 몬스터: {activeMonsters.Count}");
+            OnMonsterDeath?.Invoke(monster);
         }
     }
     // 모든 활성 몬스터 즉시 제거
     public void KillAllMonsters()
     {
-        Debug.Log($"[MonsterSpawner] 활성 몬스터 {activeMonsters.Count}마리 제거");
+
 
         var monstersToKill = new List<Enemy>(activeMonsters);
 
@@ -89,6 +101,9 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
         boss.transform.position = spawnPos;
         boss.InitializeWithData(poolManager, bossKey, data, true); // isBoss = true
 
+        // Enemy 사망 이벤트 구독
+        boss.OnDeath += OnMonsterRemoved;
+
         if (!activeMonsters.Contains(boss))
         {
             activeMonsters.Add(boss);
@@ -109,8 +124,6 @@ public void SpawnMonsterById(int monsterId, bool isBoss = false)
     {
         // 보스가 죽을 때까지 대기
         await UniTask.WaitUntil(() => boss == null || !boss.gameObject.activeSelf || boss.IsDead);
-
-        Debug.Log("[MonsterSpawner] 보스 사망 감지!");
         
         // 리스트에서 제거
         if (boss != null)

@@ -5,18 +5,25 @@ using UnityEngine.AddressableAssets;
 
 public class StageData
     {
-        public int  STAGE_ID { get; set; }
+        public int STAGE_ID { get; set; }
         public string STAGE_NAME { get; set; }
         public int STAGE_TIME_SEC { get; set; }
         public int TOTAL_WAVE { get; set; }
+        public int WARNING_RE { get; set; }
         public int STAGE_C_EXP { get; set; }
         public int STAGE_C_GOLD { get; set; }
         public int STAGE_C_RE1_ID { get; set; }
         public int STAGE_C_RE1_CO { get; set; }
         public int STAGE_C_RE2_ID { get; set; }
         public int STAGE_C_RE2_CO { get; set; }
+        public int STAGE_C_1S_ID { get; set; }
+        public int STAGE_C_1S_CO { get; set; }
+        public int STAGE_C_2S_ID { get; set; }
+        public int STAGE_C_2S_CO { get; set; }
+        public int STAGE_C_3S_ID { get; set; }
+        public float STAGE_C_3S_CO { get; set; }
+        public int UNLOCK_CON_ID { get; set; }
         public string STAGE_MAP { get; set; }
-        
     }
 public class DataTable_Stage : DataTable
 {

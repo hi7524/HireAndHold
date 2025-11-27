@@ -14,6 +14,7 @@ public class StageUiManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI infoText;
     [Space]
     [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private GameOverPanelController gameOverPanelController;
     [SerializeField] private GameObject warningPanel;
     [SerializeField] private GameObject skillSelectPanel;
     [SerializeField] private BossHPBar bossHealthBar;
@@ -44,6 +45,21 @@ public class StageUiManager : MonoBehaviour
     public void ActiveGameOverPanel()
     {
         gameOverPanel.SetActive(true);
+    }
+    
+    public void ShowGameOverPanel(int exp, int gold)
+    {
+        Debug.Log($"[StageUiManager] GameOver - 경험치: {exp}, 골드: {gold}");
+        
+        if (gameOverPanelController != null)
+        {
+            gameOverPanelController.Show(exp, gold);
+        }
+        else
+        {
+            // Fallback: Controller가 없으면 기본 패널만 표시
+            gameOverPanel.SetActive(true);
+        }
     }
 
     public void ActiveSkillSelectPanel()
