@@ -12,10 +12,11 @@ public class MonsterData
         public int MON_HP { get; set; }
         public int MON_DEF { get; set; }
         public int MON_RANGE { get; set; }
-        public float MON_HIT_BOX_SCA{ get; set; }
+        public int MON_ATK_SPD { get; set; }
         public int MON_SPEED { get; set; }
-        public int MON_STAGE_EXP { get; set; }
         public float MON_DROP_GOLD { get; set; }
+        public float MON_ACCOUNT_EXP { get; set; }
+        public int MON_STAGE_EXP { get; set; }
         public int DROP_ITEM1_ID { get; set; }
         public int DROP_ITEM1_COUNT { get; set; }
         public int DROP_ITEM1_RATE { get; set; }
@@ -23,9 +24,6 @@ public class MonsterData
         public int DROP_ITEM2_COUNT { get; set; }
         public int DROP_ITEM2_RATE { get; set; }
         public string MON_MODEL { get; set; }
-
-
-
     }
 public class DataTable_Monster : DataTable
 {

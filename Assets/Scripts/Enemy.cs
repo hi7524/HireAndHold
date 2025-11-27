@@ -1,7 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class Enemy : MonoBehaviour, IDamagable
 {
+    public event Action<Enemy> OnDeath;
+    
+    public int MonsterId { get; private set; }
+    
     [SerializeField] private float maxHp;
     [SerializeField] private float currentHp;
     [SerializeField] public float speed;
@@ -101,6 +106,7 @@ public class Enemy : MonoBehaviour, IDamagable
         isStunned = false;
         originalSpeed = speed;
         defense = data.MON_DEF;
+        MonsterId = data.MON_ID;
 
         isBoss = boss;
 
@@ -256,22 +262,25 @@ public class Enemy : MonoBehaviour, IDamagable
 
         currentHp -= damage; //- defense;
 
-        if (currentHp <= 0)
+        if (currentHp <= 0 && !isDead)
         {
+            isDead = true; // Die() 호출 전에 먼저 설정하여 중복 방지
             Die();
         }
     }
 
     public void Die()
     {
-        if (isDead)
+        if (!isDead)
         {
+            Debug.LogWarning("[Enemy] Die() called but isDead was false - this shouldn't happen!");
             return;
         }
 
-        isDead = true;
-
         ExpItemSpawned();
+        
+        // 사망 이벤트 발생
+        OnDeath?.Invoke(this);
 
         if (poolManager != null)
         {

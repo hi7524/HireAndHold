@@ -17,6 +17,7 @@ public class WaveManager : MonoBehaviour
     private List<WaveData> currentStageWaves;
     private List<TimeEvent> registeredEvents = new List<TimeEvent>();
     private int completedWaves = 0;
+    private HashSet<int> completedWaveNums = new HashSet<int>(); // 중복 방지
     [SerializeField] private MonsterSpawner monsterSpawner;
     [SerializeField] private StageUiManager stageUiManager;
 
@@ -43,9 +44,7 @@ public class WaveManager : MonoBehaviour
         TotalWaves = currentStageWaves.Count;
         CurrentWaveNum = 0;
         completedWaves = 0;
-
-        Debug.Log($"[WaveManager] 스테이지 {stageId}: 총 {TotalWaves}개 웨이브 로드");
-
+        completedWaveNums.Clear(); // 초기화
 
         RegisterWaveEvents();
     }
@@ -55,25 +54,25 @@ public class WaveManager : MonoBehaviour
     {
         foreach (var wave in currentStageWaves)
         {
-            if (wave.WAVE_TYPE == 2)
-            {
-                int warningTime = wave.WAVE_START_T - 5; // 5초 전
-                if (warningTime >= 0)
-                {
-                    int warnMinutes = warningTime / 60;
-                    int warnSeconds = warningTime % 60;
+            // if (wave.WAVE_TYPE == 2)
+            // {
+            //     int warningTime = wave.WAVE_START_T - 5; // 5초 전
+            //     if (warningTime >= 0)
+            //     {
+            //         int warnMinutes = warningTime / 60;
+            //         int warnSeconds = warningTime % 60;
 
-                    // 클로저 캡처 방지
-                    WaveData currentWave = wave;
+            //         // 클로저 캡처 방지
+            //         WaveData currentWave = wave;
 
-                    var warningEvent = gameManager.AddTimeEvent(warnMinutes, warnSeconds, () =>
-                    {
-                        Debug.Log($"[WaveManager] 워닝 패널 표시! 시간: {warnMinutes}:{warnSeconds}");
-                        stageUiManager.ShowWarningPanel();
-                    });
-                    registeredEvents.Add(warningEvent);
-                }
-            }
+            //         var warningEvent = gameManager.AddTimeEvent(warnMinutes, warnSeconds, () =>
+            //         {
+            //             Debug.Log($"[WaveManager] 워닝 패널 표시! 시간: {warnMinutes}:{warnSeconds}");
+            //             stageUiManager.ShowWarningPanel();
+            //         });
+            //         registeredEvents.Add(warningEvent);
+            //     }
+            // }
 
             // 웨이브 시작 이벤트 등록
             int startMinutes = wave.WAVE_START_T / 60;
@@ -87,29 +86,29 @@ public class WaveManager : MonoBehaviour
             });
             registeredEvents.Add(startEvent);
 
-            // 웨이브 종료 이벤트 등록
-            int endMinutes = wave.WAVE_END_T / 60;
-            int endSeconds = wave.WAVE_END_T % 60;
-
-            WaveData endWave = wave;
-
-            var endEvent = gameManager.AddTimeEvent(endMinutes, endSeconds, () =>
+            // 웨이브 종료 이벤트 등록 (보스 웨이브는 제외 - 보스 사망 시 처리)
+            if (wave.WAVE_TYPE != 3 && wave.WAVE_TYPE != 4)
             {
-                Debug.Log($"[WaveManager] 🔔 웨이브 종료 이벤트 실행! Wave {endWave.WAVE_NUM}, Type: {endWave.WAVE_TYPE}, 시간: {endMinutes}:{endSeconds}");
+                int endMinutes = wave.WAVE_END_T / 60;
+                int endSeconds = wave.WAVE_END_T % 60;
 
-                // WAVE_TYPE 2면 워닝 타임 종료 처리
-                if (endWave.WAVE_TYPE == 2)
+                WaveData endWave = wave;
+
+                var endEvent = gameManager.AddTimeEvent(endMinutes, endSeconds, () =>
                 {
-                    Debug.Log($"[WaveManager] 워닝 타임 종료 감지! Wave {endWave.WAVE_NUM}");
-                    OnWarningTimeEnd(endWave);
-                }
 
-                EndWave(endWave);
-            });
-            registeredEvents.Add(endEvent);
+                    // WAVE_TYPE 2면 워닝 타임 종료 처리
+                    if (endWave.WAVE_TYPE == 2)
+                    {
+                        OnWarningTimeEnd(endWave);
+                    }
+
+                    EndWave(endWave);
+                });
+                registeredEvents.Add(endEvent);
+            }
         }
 
-        Debug.Log($"[WaveManager] {registeredEvents.Count}개의 웨이브 이벤트 등록 완료");
     }
 
 
@@ -123,18 +122,23 @@ public class WaveManager : MonoBehaviour
 
     private void EndWave(WaveData wave)
     {
-        Debug.Log($"[Wave {wave.WAVE_NUM}] 종료");
 
+        if (completedWaveNums.Contains(wave.WAVE_NUM))
+        {
+
+            return;
+        }
+
+
+        completedWaveNums.Add(wave.WAVE_NUM);
         completedWaves++;
         OnWaveComplete?.Invoke(wave.WAVE_NUM);
 
-        // 모든 웨이브 완료 체크
         if (completedWaves >= TotalWaves)
         {
-            Debug.Log("[WaveManager] 모든 웨이브 완료!");
             OnAllWavesComplete?.Invoke();
 
-            // StageManager에게 스테이지 클리어 알림
+
             stageManager?.CompleteStage();
         }
     }
@@ -166,12 +170,19 @@ public class WaveManager : MonoBehaviour
         float duration = endTime - startTime;
         float interval = duration / count / waveSpeed;
 
-        // 일정 간격으로 스폰
         for (int i = 0; i < count; i++)
         {
             float spawnDelay = i * interval;
-            int spawnMinutes = (int)(startTime + spawnDelay) / 60;
-            int spawnSeconds = (int)(startTime + spawnDelay) % 60;
+            float actualSpawnTime = startTime + spawnDelay;
+
+
+            if (actualSpawnTime >= endTime)
+            {
+                continue;
+            }
+
+            int spawnMinutes = (int)actualSpawnTime / 60;
+            int spawnSeconds = (int)actualSpawnTime % 60;
 
             // 클로저 캡처 방지
             int currentMonsterId = monsterId;
@@ -187,6 +198,7 @@ public class WaveManager : MonoBehaviour
 
     private void SpawnSingleMonster(int monsterId)
     {
+
         monsterSpawner.SpawnMonsterById(monsterId);
     }
 
@@ -195,44 +207,71 @@ public class WaveManager : MonoBehaviour
         // 모든 몬스터 제거
         if (monsterSpawner != null)
         {
+
             monsterSpawner.KillAllMonsters();
         }
         // 보상 패널 표시
         if (stageUiManager != null)
         {
-            Debug.Log($"[WaveManager] ShowRewardPanel() 호출");
             stageUiManager.ShowWarningReward();
         }
+
     }
 
     private void SpawnBoss(WaveData wave)
     {
-        Debug.Log($"[WaveManager] 중간보스 웨이브 {wave.WAVE_NUM} - 보스 스폰!");
+        bool isFinalBoss = wave.WAVE_TYPE == 4;
+        string bossType = isFinalBoss ? "최종보스" : "중간보스";
+
+
         gameManager.IsBoss = true;
+
         int bossId = wave.SPAWN_MON1_ID;
         if (bossId <= 0)
         {
-            Debug.LogError("[WaveManager] 보스 ID가 없습니다!");
+
             return;
         }
+
         Enemy boss = monsterSpawner.SpawnBossById(bossId);
 
         if (boss != null)
         {
             MonsterData bossData = DataTableManager.MonsterTable.Get(bossId);
-            string bossName = bossData?.MON_NAME ?? "중간보스";
+            string bossName = bossData?.MON_NAME ?? bossType;
+
+
             stageUiManager.ShowBossHealthBar(boss, bossName);
-            monsterSpawner.WaitForBossDeath(boss, () => OnBossDeath(wave));
+
+
+            monsterSpawner.WaitForBossDeath(boss, () => OnBossDeath(wave, isFinalBoss));
         }
     }
-    private void OnBossDeath(WaveData wave)
+
+    private void OnBossDeath(WaveData wave, bool isFinalBoss)
     {
-        Debug.Log($"[WaveManager] 중간보스 처치! Wave {wave.WAVE_NUM} ");
+        string bossType = isFinalBoss ? "최종보스" : "중간보스";
+
+
         gameManager.IsBoss = false;
         stageUiManager.HideBossHealthBar();
-        if (stageUiManager != null)
+
+        if (isFinalBoss)
         {
-            stageUiManager.ShowBossRewardPanel();
+
+
+            EndWave(wave);
+
+        }
+        else
+        {
+
+            if (stageUiManager != null)
+            {
+                stageUiManager.ShowBossRewardPanel();
+            }
+
+            EndWave(wave);
         }
     }
     private void ClearAllEvents()
@@ -256,10 +295,9 @@ public class WaveManager : MonoBehaviour
     {
         // 중간보스 웨이브 찾기 (WAVE_TYPE == 3)
         WaveData bossWave = currentStageWaves?.FirstOrDefault(w => w.WAVE_TYPE == 3);
-        
+
         if (bossWave == null)
         {
-            Debug.LogWarning("[WaveManager] 중간보스 웨이브를 찾을 수 없습니다!");
             return;
         }
 
@@ -269,12 +307,10 @@ public class WaveManager : MonoBehaviour
             monsterSpawner.KillAllMonsters();
         }
 
-        Debug.Log($"[WaveManager] 치트: 중간보스 소환! Wave {bossWave.WAVE_NUM}");
-        
         // 현재 웨이브를 보스 웨이브로 설정
         CurrentWaveNum = bossWave.WAVE_NUM;
         OnWaveStart?.Invoke(bossWave.WAVE_NUM);
-        
+
         // 보스 스폰
         SpawnBoss(bossWave);
     }
