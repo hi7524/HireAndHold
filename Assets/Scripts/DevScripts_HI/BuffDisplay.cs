@@ -7,6 +7,7 @@ public class BuffDisplay : MonoBehaviour
     [SerializeField] private BuffManager buffManager;
     [SerializeField] private TextMeshProUGUI buffText;
     [SerializeField] private TextMeshProUGUI detailBuffText;
+    [SerializeField] private GameObject textPanel;
 
     private void OnEnable()
     {
@@ -37,12 +38,25 @@ public class BuffDisplay : MonoBehaviour
         }
 
         detailBuffText.gameObject.SetActive(true);
-        string details = "활성화된 버프:\n";
+        string details = string.Empty;
         foreach (string buffName in activatedBuffs)
         {
             details += $"{buffName}\n";
         }
 
         detailBuffText.text = details.TrimEnd('\n');
+
+        detailBuffText.ForceMeshUpdate();
+        UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(detailBuffText.rectTransform);
+    }
+
+    public void OnPointerDownEvent()
+    {
+        textPanel.SetActive(true);
+    }
+
+    public void OnPointerUpEvent()
+    {
+        textPanel.SetActive(false);
     }
 }
