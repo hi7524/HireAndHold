@@ -21,7 +21,6 @@ public class StageManager : MonoBehaviour
         waveManager.Initialize(gameManager, this);
         if (!DataTableManager.IsInitialized)
         {
-            Debug.Log("[StageManager] DataTable 초기화 대기 중...");
             await DataTableManager.InitAsync();
         }
         CurrentStageId = 701;

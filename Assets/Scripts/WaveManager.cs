@@ -166,8 +166,6 @@ public class WaveManager : MonoBehaviour
         float duration = endTime - startTime;
         float interval = duration / count / waveSpeed;
 
-        Debug.Log($"[WaveManager] 몬스터 ID {monsterId} - {count}마리를 {interval:F2}초 간격으로 스폰");
-
         // 일정 간격으로 스폰
         for (int i = 0; i < count; i++)
         {
@@ -189,8 +187,6 @@ public class WaveManager : MonoBehaviour
 
     private void SpawnSingleMonster(int monsterId)
     {
-        Debug.Log($"[WaveManager] 몬스터 {monsterId} 스폰!");
-
         monsterSpawner.SpawnMonsterById(monsterId);
     }
 
@@ -199,7 +195,6 @@ public class WaveManager : MonoBehaviour
         // 모든 몬스터 제거
         if (monsterSpawner != null)
         {
-            Debug.Log($"[WaveManager] MonsterSpawner.KillAllMonsters() 호출");
             monsterSpawner.KillAllMonsters();
         }
         // 보상 패널 표시

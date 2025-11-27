@@ -23,8 +23,6 @@ public class PassiveSkillManager : MonoBehaviour
         skillGroups.Add(PassiveSkillType.Exp, new PassiveSkillGroup(PassiveSkillType.Exp, "획득 경험치 증가"));
         skillGroups.Add(PassiveSkillType.ShieldRegen, new PassiveSkillGroup(PassiveSkillType.ShieldRegen, "초당 방벽 회복"));
         skillGroups.Add(PassiveSkillType.BossDamage, new PassiveSkillGroup(PassiveSkillType.BossDamage, "보스 피해량 증가"));
-        
-        Debug.Log($"[PassiveSkillManager] {skillGroups.Count}개의 패시브 스킬 그룹 초기화");
     }
     
     private bool TryGetSkillType(int skillId, out PassiveSkillType skillType)
