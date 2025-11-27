@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,28 +12,32 @@ public class GridManager : MonoBehaviour
 {
     [SerializeField] private GridLayoutData layoutData;
     [SerializeField] private GridVisualizer gridVisualizer;
+    [SerializeField] private BuffManager buffManager;
     [Space]
     [SerializeField] private Color validColor;
     [SerializeField] private Color invalidColor;
     [Space]
+    [SerializeField] private Color crossBuffColor = new Color(0.9f, 0.95f, 1f, 1f);
+    [SerializeField] private Color regionBuffColor = new Color(0.95f, 1f, 0.9f, 1f);
     [SerializeField] private GameObject gridUnitPrefab;
     [Space]
     [SerializeField] private LevelUpRewardController levelUpRewardController;
-    [SerializeField] private StageUiManager uiManager;
+
 
     public int[,] gridArray { get; private set; }
-    public bool IsFilledAllGrids { get; private set; }
+    public GridLayoutData LayoutData => layoutData;
 
     private GridCell[,] gridCells;
     private HashSet<GridCell> highlightedCells = new HashSet<GridCell>();
     private Dictionary<Vector2Int, Color> coloredCell = new Dictionary<Vector2Int, Color>();
     private Dictionary<Vector2Int, Color> tempColoredCell;
-    private HashSet<string> activatedBuffs = new HashSet<string>();
+    private Dictionary<Vector2Int, Color> buffColoredCells = new Dictionary<Vector2Int, Color>(); // 버프 활성화된 셀의 색상
 
 
     private void Start()
     {
         InitializeGrid();
+        UpdateBuffColors(); // 초기 버프 색상 적용
     }
 
     // 그리드 배열 및 셀 초기화
@@ -51,7 +54,8 @@ public class GridManager : MonoBehaviour
         gridArray[pos.x, pos.y] = (int)state;
         gridCells[pos.x, pos.y].SetAcceptable(state == GridState.Empty);
 
-        CheckAllBuffConditions();
+        if (buffManager != null)
+            buffManager.CheckAllBuffConditions();
     }
 
     // GridVisualizer의 자식 오브젝트들을 순회하며 GridCell 컴포넌트 수집 및 등록
@@ -168,151 +172,200 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    // 모든 버프 조건 체크
-    private void CheckAllBuffConditions()
+    // 버프 영역의 색상 업데이트
+    public void UpdateBuffColors()
     {
-        // 십자가 버프 체크
+        // 이전 버프 색상 초기화
+        buffColoredCells.Clear();
+
+        if (layoutData == null)
+        {
+            Debug.LogError("layoutData가 null입니다!");
+            return;
+        }
+
+        // 크로스 버프 색상 적용
         if (layoutData.enableCrossBuffs)
         {
             foreach (var crossBuff in layoutData.crossBuffs)
             {
-                bool horizontalFilled = CheckHorizontalLineFilled(crossBuff.centerPos);
-                bool verticalFilled = CheckVerticalLineFilled(crossBuff.centerPos);
+                ApplyColorToHorizontalLine(crossBuff.centerPos, crossBuffColor);
+                ApplyColorToVerticalLine(crossBuff.centerPos, crossBuffColor);
 
-                // 가로줄 체크 및 활성화/비활성화
-                if (horizontalFilled && !activatedBuffs.Contains(crossBuff.horizontalBuffName))
-                {
-                    ActivateBuff(crossBuff.horizontalBuffName);
-                    activatedBuffs.Add(crossBuff.horizontalBuffName);
-                }
-                else if (!horizontalFilled && activatedBuffs.Contains(crossBuff.horizontalBuffName))
-                {
-                    DeactivateBuff(crossBuff.horizontalBuffName);
-                    activatedBuffs.Remove(crossBuff.horizontalBuffName);
-                }
-
-                // 세로줄 체크 및 활성화/비활성화
-                if (verticalFilled && !activatedBuffs.Contains(crossBuff.verticalBuffName))
-                {
-                    ActivateBuff(crossBuff.verticalBuffName);
-                    activatedBuffs.Add(crossBuff.verticalBuffName);
-                }
-                else if (!verticalFilled && activatedBuffs.Contains(crossBuff.verticalBuffName))
-                {
-                    DeactivateBuff(crossBuff.verticalBuffName);
-                    activatedBuffs.Remove(crossBuff.verticalBuffName);
-                }
+                // 중심점
+                Color.RGBToHSV(crossBuffColor, out float h, out float s, out float v);
+                Color centerColor = Color.HSVToRGB(h, Mathf.Min(s * 2f, 1f), Mathf.Min(v * 2f, 1f));
+                centerColor.a = 1f;
+                buffColoredCells[crossBuff.centerPos] = centerColor;
             }
         }
 
-        // 영역 버프 체크
+        // 리전 버프 색상 적용
         if (layoutData.enableRegionBuffs)
         {
             foreach (var regionBuff in layoutData.regionBuffs)
             {
-                bool regionFilled = CheckRegionFilled(regionBuff.regionCells);
-
-                // 영역 버프 활성화/비활성화
-                if (regionFilled && !activatedBuffs.Contains(regionBuff.buffName))
-                {
-                    ActivateBuff(regionBuff.buffName);
-                    activatedBuffs.Add(regionBuff.buffName);
-                }
-                else if (!regionFilled && activatedBuffs.Contains(regionBuff.buffName))
-                {
-                    DeactivateBuff(regionBuff.buffName);
-                    activatedBuffs.Remove(regionBuff.buffName);
-                }
+                ApplyColorToRegion(regionBuff.regionCells, regionBuffColor);
             }
         }
 
-        // 전체 채우기 버프 체크
-        CheckFilledAllCells();
-        if (IsFilledAllGrids && !activatedBuffs.Contains("FullGrid"))
-        {
-            ActivateBuff("FullGrid");
-            activatedBuffs.Add("FullGrid");
-        }
-        else if (!IsFilledAllGrids && activatedBuffs.Contains("FullGrid"))
-        {
-            DeactivateBuff("FullGrid");
-            activatedBuffs.Remove("FullGrid");
-        }
+        // 실제 셀에 색상 반영
+        ApplyBuffColorsToGrid();
     }
 
-    // 가로줄이 모두 채워졌는지 체크
-    private bool CheckHorizontalLineFilled(Vector2Int centerPos)
+    // 가로줄에 색상 적용
+    private void ApplyColorToHorizontalLine(Vector2Int centerPos, Color color)
     {
         for (int x = 0; x < layoutData.width; x++)
         {
-            if (layoutData.IsValidCell(x, centerPos.y) && gridArray[x, centerPos.y] != (int)GridState.Occupied)
-                return false;
+            Vector2Int pos = new Vector2Int(x, centerPos.y);
+            if (layoutData.IsValidCell(pos))
+            {
+                buffColoredCells[pos] = color;
+            }
         }
-        return true;
     }
 
-    // 세로줄이 모두 채워졌는지 체크
-    private bool CheckVerticalLineFilled(Vector2Int centerPos)
+    // 세로줄에 색상 적용
+    private void ApplyColorToVerticalLine(Vector2Int centerPos, Color color)
     {
         for (int y = 0; y < layoutData.height; y++)
         {
-            if (layoutData.IsValidCell(centerPos.x, y) && gridArray[centerPos.x, y] != (int)GridState.Occupied)
-                return false;
-        }
-        return true;
-    }
-
-    // 특정 영역이 모두 채워졌는지 체크
-    private bool CheckRegionFilled(List<Vector2Int> region)
-    {
-        foreach (var cell in region)
-        {
-            if (gridArray[cell.x, cell.y] != (int)GridState.Occupied)
-                return false;
-        }
-        return true;
-    }
-
-    // 칸이 모두 채워져있는지 체크
-    private void CheckFilledAllCells()
-    {
-        IsFilledAllGrids = false;
-
-        for (int x = 0; x < layoutData.width; x++)
-        {
-            for (int y = 0; y < layoutData.height; y++)
+            Vector2Int pos = new Vector2Int(centerPos.x, y);
+            if (layoutData.IsValidCell(pos))
             {
-                // 유효하지 않은 셀은 건너뛰기
-                if (!layoutData.IsValidCell(x, y))
-                    continue;
+                buffColoredCells[pos] = color;
+            }
+        }
+    }
 
-                // 유효한 셀이 비어있으면 false
-                if (gridArray[x, y] == (int)GridState.Empty)
-                    return;
+    // 리전에 색상 적용
+    private void ApplyColorToRegion(List<Vector2Int> region, Color color)
+    {
+        foreach (var pos in region)
+        {
+            if (layoutData.IsValidCell(pos))
+            {
+                buffColoredCells[pos] = color;
+            }
+        }
+    }
+
+    // 버프 색상을 실제 그리드에 반영
+    private void ApplyBuffColorsToGrid()
+    {
+        int appliedCount = 0;
+        foreach (var buffCell in buffColoredCells)
+        {
+            Vector2Int pos = buffCell.Key;
+            Color color = buffCell.Value;
+
+            // 유닛이 이미 배치된 셀은 유닛 색상 유지
+            if (!coloredCell.ContainsKey(pos))
+            {
+                if (IsWithinBounds(pos))
+                {
+                    gridCells[pos.x, pos.y].SetColor(color);
+                    appliedCount++;
+                }
+            }
+        }
+    }
+
+    // 버프 활성화 이펙트 재생
+    public void PlayBuffActivationEffect(string buffName)
+    {
+        List<Vector2Int> affectedCells = GetBuffAffectedCells(buffName);
+
+        if (affectedCells.Count == 0)
+            return;
+
+        float delayIncrement = 0.04f;
+
+        for (int i = 0; i < affectedCells.Count; i++)
+        {
+            Vector2Int pos = affectedCells[i];
+            if (IsWithinBounds(pos) && gridCells[pos.x, pos.y] != null)
+            {
+                float delay = i * delayIncrement;
+                gridCells[pos.x, pos.y].PlayBuffActivationAnimation(delay);
+            }
+        }
+    }
+
+    // 버프가 영향을 주는 셀 목록 가져오기
+    private List<Vector2Int> GetBuffAffectedCells(string buffName)
+    {
+        List<Vector2Int> cells = new List<Vector2Int>();
+
+        // 크로스 버프 체크
+        if (layoutData.enableCrossBuffs)
+        {
+            foreach (var crossBuff in layoutData.crossBuffs)
+            {
+                if (crossBuff.horizontalBuffName == buffName)
+                {
+                    // 가로줄 셀 추가
+                    for (int x = 0; x < layoutData.width; x++)
+                    {
+                        Vector2Int pos = new Vector2Int(x, crossBuff.centerPos.y);
+                        if (layoutData.IsValidCell(pos))
+                        {
+                            cells.Add(pos);
+                        }
+                    }
+                }
+                else if (crossBuff.verticalBuffName == buffName)
+                {
+                    // 세로줄 셀 추가
+                    for (int y = 0; y < layoutData.height; y++)
+                    {
+                        Vector2Int pos = new Vector2Int(crossBuff.centerPos.x, y);
+                        if (layoutData.IsValidCell(pos))
+                        {
+                            cells.Add(pos);
+                        }
+                    }
+                }
             }
         }
 
-        IsFilledAllGrids = true;
-    }
+        // 리전 버프 체크
+        if (layoutData.enableRegionBuffs)
+        {
+            foreach (var regionBuff in layoutData.regionBuffs)
+            {
+                if (regionBuff.buffName == buffName)
+                {
+                    cells.AddRange(regionBuff.regionCells);
+                }
+            }
+        }
 
-    // 버프 활성화
-    private void ActivateBuff(string buffName)
-    {
-        Debug.Log($"버프 활성화: {buffName}");
-        uiManager.UpdateInfoText($"{buffName} 버프 활성화!");
-    }
+        // 전체 그리드 버프 체크
+        if (buffName == "FullGrid")
+        {
+            for (int x = 0; x < layoutData.width; x++)
+            {
+                for (int y = 0; y < layoutData.height; y++)
+                {
+                    Vector2Int pos = new Vector2Int(x, y);
+                    if (layoutData.IsValidCell(pos))
+                    {
+                        cells.Add(pos);
+                    }
+                }
+            }
+        }
 
-    // 버프 비활성화
-    private void DeactivateBuff(string buffName)
-    {
-        Debug.Log($"버프 비활성화: {buffName}");
-        uiManager.UpdateInfoText($"{buffName} 버프 해제!");
+        return cells;
     }
 
     // 유닛 합성시 호출
     public void OnMergedUnits()
     {
-        uiManager.UpdateInfoText("유닛 합성 완료!");
+        // 
+        Debug.Log("유닛 머지");
     }
 
     // 모든 하이라이트된 셀의 색상 초기화
@@ -322,7 +375,15 @@ public class GridManager : MonoBehaviour
         {
             if (cell != null && !coloredCell.ContainsKey(cell.GridPosition))
             {
-                cell.SetColor(Color.white);
+                // 버프가 활성화된 셀이면 버프 색상으로, 아니면 흰색으로
+                if (buffColoredCells.ContainsKey(cell.GridPosition))
+                {
+                    cell.SetColor(buffColoredCells[cell.GridPosition]);
+                }
+                else
+                {
+                    cell.SetColor(Color.white);
+                }
             }
         }
         highlightedCells.Clear();
@@ -366,12 +427,20 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    // 특정 셀의 색상 정보 제거 및 흰색으로 리셋
+    // 특정 셀의 색상 정보 제거 및 기본 색상으로 리셋
     private void RemoveCellColor(Vector2Int pos)
     {
         if (coloredCell.Remove(pos))
         {
-            gridCells[pos.x, pos.y].SetColor(Color.white);
+            // 버프가 활성화된 셀이면 버프 색상으로, 아니면 흰색으로
+            if (buffColoredCells.ContainsKey(pos))
+            {
+                gridCells[pos.x, pos.y].SetColor(buffColoredCells[pos]);
+            }
+            else
+            {
+                gridCells[pos.x, pos.y].SetColor(Color.white);
+            }
         }
     }
 

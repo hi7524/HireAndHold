@@ -7,6 +7,11 @@ public class PlayerStageGold : MonoBehaviour
     public int Gold { get; private set; }
 
 
+    public void Start()
+    {
+        uiManager.UpdateStageGoldText(Gold);
+    }
+
     public void AddGold(int amount)
     {
         if (amount < 0)

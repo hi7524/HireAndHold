@@ -1,11 +1,13 @@
 using UnityEngine;
+using DG.Tweening;
 
 public class GridCell : MonoBehaviour, IDroppable
 {
     public Vector2Int GridPosition { get; private set; }
 
     private GridManager gridManager;
-    private GameObject PlacedObject;
+    private GameObject placedObject;
+    private Vector3 originalSize;
 
     private SpriteRenderer spriteRenderer;
 
@@ -15,6 +17,11 @@ public class GridCell : MonoBehaviour, IDroppable
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    private void Start()
+    {
+        originalSize = gameObject.transform.localScale;
     }
 
     public void SetGridManager(GridManager gridManager)
@@ -42,6 +49,23 @@ public class GridCell : MonoBehaviour, IDroppable
         spriteRenderer.color = color;
     }
 
+    // 버프 활성화 애니메이션 (스케일)
+    public void PlayBuffActivationAnimation(float delay = 0f)
+    {
+        transform.DOKill();
+
+        transform.localScale = originalSize;
+
+        Sequence sequence = DOTween.Sequence();
+        sequence.SetDelay(delay);
+        sequence.Append(transform.DOScale(originalSize * 1.2f, 0.1f).SetEase(Ease.OutQuad));
+        sequence.Append(transform.DOScale(originalSize, 0.12f).SetEase(Ease.InQuad));
+        sequence.OnComplete(() =>
+        {
+            transform.localScale = originalSize;
+        });
+    }
+
     public bool CanDrop(IDraggable draggable)
     {
         return canDrop;
@@ -54,9 +78,9 @@ public class GridCell : MonoBehaviour, IDroppable
         if (gridUnit != null)
         {
             // 합성 가능 여부 체크
-            if (PlacedObject != null)
+            if (placedObject != null)
             {
-                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null && CanMerge(existingUnit, gridUnit))
                 {
                     canDrop = true;
@@ -71,9 +95,9 @@ public class GridCell : MonoBehaviour, IDroppable
         if (inventorySlot != null)
         {
             // 합성 가능 여부 체크
-            if (PlacedObject != null)
+            if (placedObject != null)
             {
-                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null && CanMergeWithInventorySlot(existingUnit, inventorySlot))
                 {
                     canDrop = true;
@@ -88,9 +112,9 @@ public class GridCell : MonoBehaviour, IDroppable
         if (draggableUnitUi != null)
         {
             // 합성 가능 여부 체크
-            if (PlacedObject != null)
+            if (placedObject != null)
             {
-                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null && CanMergeWithUi(existingUnit, draggableUnitUi))
                 {
                     canDrop = true;
@@ -127,9 +151,9 @@ public class GridCell : MonoBehaviour, IDroppable
         if (gridUnit != null)
         {
             // 합성 체크: 이미 유닛이 배치되어 있는 경우
-            if (PlacedObject != null)
+            if (placedObject != null)
             {
-                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null)
                 {
                     if (TryMergeUnits(existingUnit, gridUnit))
@@ -160,7 +184,7 @@ public class GridCell : MonoBehaviour, IDroppable
             // 배치 대상 위치 스냅
             draggable.GameObject.transform.position = transform.position;
             Physics2D.SyncTransforms(); // Collider2D 위치 동기화
-            PlacedObject = draggable.GameObject;
+            placedObject = draggable.GameObject;
 
             gridUnit.SetCurrentGridCell(this);
 
@@ -182,9 +206,9 @@ public class GridCell : MonoBehaviour, IDroppable
         if (inventorySlot != null)
         {
             // 합성 체크: 이미 유닛이 배치되어 있는 경우
-            if (PlacedObject != null)
+            if (placedObject != null)
             {
-                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null)
                 {
                     if (TryMergeWithInventorySlot(existingUnit, inventorySlot))
@@ -218,7 +242,7 @@ public class GridCell : MonoBehaviour, IDroppable
             newGridUnit.SetInventoryPlaceable(true);
 
             // 생성된 GridUnit을 배치
-            PlacedObject = newGridUnit.GameObject;
+            placedObject = newGridUnit.GameObject;
             newGridUnit.SetCurrentGridCell(this);
 
             // GridManager에 그리드 정보 전달
@@ -239,9 +263,9 @@ public class GridCell : MonoBehaviour, IDroppable
         if (draggableUnitUi != null)
         {
             // 합성 체크: 이미 유닛이 배치되어 있는 경우
-            if (PlacedObject != null)
+            if (placedObject != null)
             {
-                var existingUnit = PlacedObject.GetComponent<GridUnit>();
+                var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null)
                 {
                     if (TryMergeWithUi(existingUnit, draggableUnitUi))
@@ -281,7 +305,7 @@ public class GridCell : MonoBehaviour, IDroppable
             }
 
             // 생성된 GridUnit을 배치
-            PlacedObject = newGridUnit.GameObject;
+            placedObject = newGridUnit.GameObject;
             newGridUnit.SetCurrentGridCell(this);
 
             // GridManager에 그리드 정보 전달
@@ -307,9 +331,9 @@ public class GridCell : MonoBehaviour, IDroppable
         gridManager.CopyColoredCellToTemp();
 
         // 유닛이 차지했던 모든 셀을 Empty로 설정
-        if (PlacedObject != null)
+        if (placedObject != null)
         {
-            var gridUnit = PlacedObject.GetComponent<GridUnit>();
+            var gridUnit = placedObject.GetComponent<GridUnit>();
             if (gridUnit != null)
             {
                 var occupiedCells = gridUnit.GridData.GetOccupiedCells();
@@ -326,13 +350,13 @@ public class GridCell : MonoBehaviour, IDroppable
             }
         }
 
-        PlacedObject = null;
+        placedObject = null;
     }
 
     // 드롭 실패 시 PlacedObject 복원
     public void RestorePlacedObject(GameObject obj)
     {
-        PlacedObject = obj;
+        placedObject = obj;
     }
 
     // 합성 가능 여부 체크
