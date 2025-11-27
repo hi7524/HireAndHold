@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class GenericWindow : MonoBehaviour
@@ -15,7 +15,13 @@ public class GenericWindow : MonoBehaviour
     }
     public virtual void Open()
     {
+        if (gameObject.activeSelf)
+        {
+            return;
+        }
+
         gameObject.SetActive(true);
+        GetComponent<PanelOpenEffect>()?.PlayEffect();
         OnFocus();
     }
     public virtual void Close()
