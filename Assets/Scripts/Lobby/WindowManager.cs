@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,13 +24,16 @@ public class WindowManager : MonoBehaviour
     }
     public void Open(Windows id)
     {
-        
+        if (CurrentWindow == id)
+        {
+            return;
+        }
+
         windows[(int)CurrentWindow].Close();
-      
+
         CurrentWindow = id;
-
         windows[(int)CurrentWindow].Open();
-
     }
+
 
 }
