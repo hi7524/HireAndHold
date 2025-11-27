@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
+
 #if UNITY_6000_0_OR_NEWER
 using UnityEngine.Rendering.Universal;
 #endif
@@ -17,7 +19,7 @@ namespace SP1Assets.MonsterPack2D
         float _orthoSize_Default = 1f;
         float _aspect_Default = 1920f / 1080f;
 
-        const string _assetFolderPath = "Assets/SP1/2D Monster Pack/MonsterAssets/MonsterParents";
+        const string _assetFolderPath = "Assets/DownloadAsset/SP1/2D Monster Pack/MonsterAssets/MonsterParents";
 
         [SerializeField] Transform _transform_Monsters_Parent;
         List<MonsterParent> _monsterParent_List = new List<MonsterParent>();
@@ -165,7 +167,7 @@ namespace SP1Assets.MonsterPack2D
         void DebugControl()
         {
             // new input system
-            if (Input.GetKeyDown(KeyCode.D))
+            if(Keyboard.current != null && Keyboard.current.dKey.wasPressedThisFrame)
             
             {
                 _selectedMonsterParent.ResetMonsters();
