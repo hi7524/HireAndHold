@@ -343,7 +343,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 5605763761850063276}
         m_TargetAssemblyTypeName: SkillCardUi, Assembly-CSharp
-        m_MethodName: SelectSkill
+        m_MethodName: OnCardClicked
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -367,11 +367,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   image: {fileID: 1306001220948906635}
   text: {fileID: 7380753260865205267}
-  count: 1
   starIcons:
   - {fileID: 1106152079654044833}
   - {fileID: 1409955457524463440}
   - {fileID: 5252796607550495678}
+  focusImg: {fileID: 9025256353185521389}
   defaultColor: {r: 0.11372549, g: 0.11372549, b: 0.11372549, a: 1}
   filledColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &4365988076341465061

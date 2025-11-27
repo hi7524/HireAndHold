@@ -11,8 +11,9 @@ public class SkillCardUi : BaseCardUi
     [SerializeField] private Color filledColor;
 
     private LevelUpRewardController levelUpRewardController;
-    private PassiveSkillManager passiveSkillManager;          // ← 추가
+    private PassiveSkillManager passiveSkillManager;
     private int currentSkillId = -1;
+    private bool isSelected = false;
 
 
     private void Start()
@@ -24,15 +25,19 @@ public class SkillCardUi : BaseCardUi
         }
     }
 
-    public void SetFoucs(bool value)
+    public void SetFocus(bool value)
     {
+        isSelected = value;
         focusImg.SetActive(value);
     }
 
+    public bool IsSelected => isSelected;
+
     public void SetPassiveSkillId(int skillId)
     {
-        currentSkillId = skillId;  
-        UpdateSkillUI();           
+        currentSkillId = skillId;
+        UpdateSkillUI();
+        SetFocus(false);
     }
 
     public void UpdateStarUI(int starCount)
@@ -53,34 +58,31 @@ public class SkillCardUi : BaseCardUi
         this.levelUpRewardController = levelUpRewardController;
     }
 
-    public void SelectSkill()
+    // 카드 클릭 시 선택
+    public void OnCardClicked()
     {
-        // 1. 유효성 체크
-        if (currentSkillId == -1)
-        {
-            Debug.LogWarning("선택할 스킬이 없습니다.");
-            return;
-        }
+        if (levelUpRewardController != null)
+            levelUpRewardController.OnSkillCardSelected(this);
+    }
 
+    // 실제 스킬 적용 (확인 버튼 클릭 시 호출)
+    public bool ApplySkill()
+    {
         if (passiveSkillManager == null)
-        {
-            Debug.LogError("PassiveSkillManager가 없습니다!");
-            return;
-        }
+            return false;
 
-        // 2. 패시브 스킬 적용!
         bool success = passiveSkillManager.AddOrUpgradePassiveSkill(currentSkillId);
 
-        // 3. 성공하면 게임 재개
         if (success)
         {
-            Debug.Log($"패시브 스킬 선택 완료: {currentSkillId}");
-            levelUpRewardController.OnClickConfirmBtn();  // 보상창 닫기
+            Debug.Log($"패시브 스킬 적용 완료: {currentSkillId}");
         }
         else
         {
             Debug.LogWarning("패시브 스킬 적용 실패");
         }
+
+        return success;
     }
     
     public void SetPassiveSkillManager(PassiveSkillManager manager)

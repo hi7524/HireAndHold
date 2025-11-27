@@ -29,6 +29,9 @@ public class LevelUpRewardController : MonoBehaviour
     // 현재 레벨업 보상으로 생성된 유닛들을 추적
     private readonly List<GridUnit> currentLevelUpRewardUnits = new();
 
+    // 현재 선택된 스킬 카드 추적
+    private SkillCardUi selectedSkillCard = null;
+
 
     // 초기 세팅
     private void Start()
@@ -137,9 +140,38 @@ public class LevelUpRewardController : MonoBehaviour
         }
     }
 
+    // 스킬 카드가 선택되었을 때 호출
+    public void OnSkillCardSelected(SkillCardUi clickedCard)
+    {
+        // 이전에 선택된 카드가 있으면 포커스 해제
+        if (selectedSkillCard != null)
+        {
+            selectedSkillCard.SetFocus(false);
+        }
+
+        // 새로운 카드 선택
+        selectedSkillCard = clickedCard;
+        selectedSkillCard.SetFocus(true);
+    }
+
     // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
+        // 스킬 카드가 선택된 경우 스킬 적용
+        if (selectedSkillCard != null && selectedSkillCard.IsSelected)
+        {
+            bool success = selectedSkillCard.ApplySkill();
+            if (!success)
+            {
+                Debug.LogWarning("스킬 적용 실패. 다시 선택해주세요.");
+                return;
+            }
+
+            // 선택 상태 초기화
+            selectedSkillCard.SetFocus(false);
+            selectedSkillCard = null;
+        }
+
         // 현재 레벨업 보상 유닛들의 인벤토리 배치 허용
         EnableInventoryPlacementForPreviousRewards();
 
@@ -225,6 +257,13 @@ public class LevelUpRewardController : MonoBehaviour
     {
         if (playerStageGold.UseGold(rerollCost))
         {
+            // 선택된 스킬 카드 초기화
+            if (selectedSkillCard != null)
+            {
+                selectedSkillCard.SetFocus(false);
+                selectedSkillCard = null;
+            }
+
             // 현재 레벨업 보상 유닛들의 인벤토리 배치 허용
             EnableInventoryPlacementForPreviousRewards();
 
@@ -235,7 +274,7 @@ public class LevelUpRewardController : MonoBehaviour
             for (int i = 0; i < unitCardUIs.Length; i++)
             {
                 unitCardUIs[i].SetDragState(true);
-                unitCardUIs[i].SetColor(Color.white);
+                unitCardUIs[i].SetColor();
             }
         }
     }
