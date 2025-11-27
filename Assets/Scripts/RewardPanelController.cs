@@ -19,10 +19,10 @@ public class RewardPanelController : MonoBehaviour
     [SerializeField] private GameObject warningRewardSection;
     [SerializeField] private SkillCardUi warningRewardSlot;
     
-    [Header("보스 보상 (패시브 3개 + 플레이어 스킬 1개)")]
+    [Header("보스 보상 (패시브 3개 + 플레이어 스킬 선택)")]
     [SerializeField] private GameObject bossRewardSection;
     [SerializeField] private SkillCardUi[] passiveRewardSlots; // 3개
-    [SerializeField] private SkillCardUi playerSkillSlot;
+    [SerializeField] private SkillSelectUi skillSelectUi;
     
     [Header("확인 버튼")]
     [SerializeField] private Button confirmButton;
@@ -112,13 +112,6 @@ public class RewardPanelController : MonoBehaviour
             }
         }
         
-        // 플레이어 스킬 1개 랜덤 선택
-        int playerSkillId = GetRandomPlayerSkill();
-        if (playerSkillId != -1)
-        {
-            playerSkillSlot.SetPassiveSkillId(playerSkillId);
-        }
-        
         ShowBox();
     }
 
@@ -128,7 +121,7 @@ public class RewardPanelController : MonoBehaviour
         boxRoot.SetActive(true);
         rewardDisplayPanel.SetActive(false);
         isBoxOpened = false;
-
+        boxButton.interactable = true; // 버튼 다시 활성화
     }
 
     // 상자 클릭 이벤트
@@ -145,27 +138,6 @@ public class RewardPanelController : MonoBehaviour
     
 
 
-    // 랜덤 플레이어 스킬 선택
-    private int GetRandomPlayerSkill()
-    {
-        // TODO: 플레이어 스킬 풀 정의 필요
-        // 임시로 액티브 스킬 중 랜덤 선택
-        List<SkillData> activeSkills = new List<SkillData>();
-        foreach (var skillData in DataTableManager.SkillTable.GetAll())
-        {
-            if (skillData.SKILL_ACTIVATE == 1) // 액티브 스킬 (SKILL_ACTIVATE: 1=액티브, 2=패시브)
-            {
-                activeSkills.Add(skillData);
-            }
-        }
-        
-        if (activeSkills.Count > 0)
-        {
-            return activeSkills[Random.Range(0, activeSkills.Count)].SKILL_ID;
-        }
-        return -1; // 유효한 스킬 ID가 없을 경우
-    }
-
     // 확인 버튼 클릭
     private void OnConfirmClick()
     {
@@ -175,11 +147,27 @@ public class RewardPanelController : MonoBehaviour
             passiveSkillManager.AddOrUpgradePassiveSkill(skillId);
         }
         
-        boxRoot.SetActive(false);
-        gameManager.ResumeGame();
-        gameObject.SetActive(false);
+        Debug.Log($"[RewardBox] 패시브 보상 획득 완료: {currentRewardSkillIds.Count}개의 패시브 스킬");
         
-        Debug.Log($"[RewardBox] 보상 획득 완료: {currentRewardSkillIds.Count}개의 패시브 스킬");
+        // 보스 보상이면 SkillSelectUi 열기
+        if (currentRewardType == RewardType.Boss)
+        {
+            rewardDisplayPanel.SetActive(false);
+            
+            if (skillSelectUi != null)
+            {
+                skillSelectUi.Show();
+                gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            // 워닝 타임은 바로 패널 닫기
+            rewardDisplayPanel.SetActive(false);
+            boxRoot.SetActive(false);
+            gameManager.ResumeGame();
+            gameObject.SetActive(false);
+        }
     }
 
    

@@ -19,6 +19,7 @@ public class PlayerExperience : MonoBehaviour
     private float expRequired = 15;
     private float expGrowthRate = 1.2f;
 
+    private PassiveSkillManager passiveSkillManager;
 
     private void Start()
     {
@@ -27,11 +28,31 @@ public class PlayerExperience : MonoBehaviour
 
         UpdateLevelTextUI();
         expBar.value = 0f;
+
+       
+        passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
     }
 
     public void AddExp(int amount)
     {
-        curPlayerExp += amount;
+        float finalAmount = amount;
+        float bonusPercent = 0f;
+        
+        if (passiveSkillManager != null)
+        {
+            PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
+            bonusPercent = effects.expBonus;
+            finalAmount = amount * (1f + bonusPercent / 100f);
+        }
+
+        curPlayerExp += finalAmount;
+        
+        // 로그 출력 (보너스 적용 확인용)
+        if (bonusPercent > 0)
+        {
+            Debug.Log($"[PlayerExp] 경험치 획득: {amount} → {finalAmount:F1} (+{bonusPercent}% 보너스)");
+        }
+        
         AnimateExpBar();
     }
 
