@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class Wall : MonoBehaviour, IDamagable
 {
@@ -27,8 +28,8 @@ public class Wall : MonoBehaviour, IDamagable
         isDead = false; 
 
         passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
-   
     }
+
     private void Update()
     {
         if (isDead) return;
@@ -39,6 +40,7 @@ public class Wall : MonoBehaviour, IDamagable
             RegenerateShield();
         }
     }
+
     private void RegenerateShield()
     {
         if (passiveSkillManager == null) return;
@@ -58,6 +60,7 @@ public class Wall : MonoBehaviour, IDamagable
             }
         }
     }
+
     public void Heal(int amount)
     {
         if (isDead) return;
@@ -74,10 +77,15 @@ public class Wall : MonoBehaviour, IDamagable
 
     public void TakeDamage(float damage)
     {
-        if (isDead) return; 
+        if (isDead) return;
 
         currentHp -= damage;
         hpSlider.value = currentHp / maxHp;
+
+        // 흔들림 효과 (이전 애니메이션 완료 후 새로 시작)
+        transform.DOComplete();
+        transform.DOShakePosition(0.1f, strength: 0.05f, vibrato: 1, randomness: 90, snapping: false, fadeOut: true)
+            .SetUpdate(false);
 
         if(currentHp <= 0)
         {
