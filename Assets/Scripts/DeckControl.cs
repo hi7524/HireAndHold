@@ -16,6 +16,7 @@ public class DeckControl : MonoBehaviour
     public List<DeckSlot> slots;                 
     public Transform unitListParent;           
     public Button completeButton;
+    public GameObject detailedPanel;
 
     //프리셋 버튼들
     public List<Button> presetButtons;       
@@ -49,9 +50,13 @@ public class DeckControl : MonoBehaviour
             int idx = i;
             if (presetButtons[idx] != null)
             {
-                presetButtons[idx].onClick.AddListener(() => OnClickPresetButton(idx));
+                presetButtons[idx].onClick.AddListener(() => {
+                    OnClickPresetButton(idx);
+                    OnAnyButtonClicked(presetButtons[idx]);
+                });
             }
         }
+
 
         for (int i = 0; i < presets.Length; i++)
         {
@@ -68,6 +73,7 @@ public class DeckControl : MonoBehaviour
 
     void Start()
     {
+        detailedPanel.SetActive(false);
         highlightOverlay.SetActive(false);
 
         foreach (Transform t in unitListParent)
@@ -104,6 +110,19 @@ public class DeckControl : MonoBehaviour
 
         activePresetIndex = index;
         LoadPreset(activePresetIndex);
+    }
+
+    public void OnAnyButtonClicked(Button clicked)
+    {
+        if (clicked == completeButton)
+        {
+            return;
+        }
+
+        if (isEditing)
+        {
+            ExitEditMode();
+        }
     }
 
     public void LoadPreset(int index)
@@ -176,6 +195,12 @@ public class DeckControl : MonoBehaviour
 
         foreach (var slot in slots)
         {
+            UnitData pendingUnit = slot.GetPending();
+            if (pendingUnit != null)
+            {
+                NotifyUnitCleared(pendingUnit);
+            }
+
             slot.CancelPending();
         }
 
@@ -196,22 +221,28 @@ public class DeckControl : MonoBehaviour
 
     void OnUnitCardClicked(UnitData data)
     {
-        if (!isEditing)
+        if (isEditing)
         {
-            return;
-        }
-
-
-        foreach (var slot in slots)
-        {
-            if (!slot.HasPending)
+            foreach (var slot in slots)
             {
-                slot.SetPending(data);
-                NotifyUnitAssigned(data);
-                UpdateCompleteButtonState();
-                return;
+                if (!slot.HasPending)
+                {
+                    slot.SetPending(data);
+                    NotifyUnitAssigned(data);
+                    UpdateCompleteButtonState();
+                    return;
+                }
             }
         }
+        else
+        {
+            ShowUnitDetailPanel(data);
+        }
+    }
+
+    void ShowUnitDetailPanel(UnitData data)
+    {
+        detailedPanel.SetActive(true);
     }
 
     public void NotifyUnitAssigned(UnitData data)

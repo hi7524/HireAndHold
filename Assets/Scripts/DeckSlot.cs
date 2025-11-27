@@ -49,6 +49,11 @@ public class DeckSlot : MonoBehaviour
         ApplyPendingToUI();
     }
 
+    public UnitData GetPending()
+    {
+        return pending; 
+    }
+
     public void CancelPending()
     {
         pending = committed;

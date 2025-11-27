@@ -110,8 +110,8 @@ public class EnforceUI : MonoBehaviour
             float fragments = heroEnforceSystem.TempUnitFragments.ContainsKey(testUnitId)
                 ? heroEnforceSystem.TempUnitFragments[testUnitId]
                 : 0f;
-            resourceText.text = $"골드: {normalEnforceSystem.TempGold}\n" +
-                               $"강화석: {normalEnforceSystem.TempMaterial}\n" +
+            resourceText.text = $"골드: {normalEnforceSystem.TempGold}   " +
+                               $"강화석: {normalEnforceSystem.TempMaterial}   " +
                                $"유닛 조각: {fragments}";
         }
 
