@@ -34,7 +34,7 @@ public class GridManager : MonoBehaviour
     private Dictionary<Vector2Int, Color> buffColoredCells = new Dictionary<Vector2Int, Color>(); // 버프 활성화된 셀의 색상
 
 
-    private void Start()
+    private void Awake()
     {
         InitializeGrid();
         UpdateBuffColors(); // 초기 버프 색상 적용
