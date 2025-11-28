@@ -227,6 +227,8 @@ public class BuffManager : MonoBehaviour
     // 버프 활성화
     private void ActivateBuff(string buffName)
     {
+        Debug.Log($"[BuffManager] 버프 활성화: {buffName}");
+
         if (uiManager != null)
             uiManager.UpdateInfoText($"{buffName} 버프 활성화!");
 
