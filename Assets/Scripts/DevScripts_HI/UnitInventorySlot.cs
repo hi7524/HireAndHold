@@ -114,7 +114,7 @@ public class UnitInventorySlot : MonoBehaviour, IDraggable
         // 데이터 테이블과 연결 및 수정 필요 **
         // unitImg.sprite = unitSprite;
         var unitData = DataTableManager.UnitTable.Get(UnitId);
-        nameText.text = unitData.UNIT_NAME;
+        nameText.text = unitData.NAME;
     }
 
 

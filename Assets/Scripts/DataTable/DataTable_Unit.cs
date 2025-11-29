@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -7,29 +7,24 @@ public class DataTable_Unit : DataTable
 {
     public class UnitData
     {
-        public int UNIT_ID { get; set; }
-        public string UNIT_NAME { get; set; } // String table과 연결 필요 **
-        public int UNIT_RANK { get; set; }
-        public int UNIT_LEVEL { get; set; }
-        public int UNIT_GET { get; set; }
-        public int UNIT_ATK { get; set; }
-        public int UNIT_ATKRANGE { get; set; }
-        public float UNIT_ATKCOOLTIME { get; set; }
-        public int UNIT_BOLTNUM { get; set; }
-        public int UNIT_BOLTSPEED { get; set; }
-        public int UNIT_ATK_CRT { get; set; }
-        public float UNIT_CRT_DMG { get; set; }
-        public int UNIT_SKILL1 { get; set; }
-        public int UNIT_SKILL2 { get; set; }
-        public int NORMAL_ENFORCEID { get; set; }
-        public int HERO_ENFORCEID { get; set; }
-        public string UNIT_PREFAB { get; set; }
-        public string UNIT_DESCRIPTION { get; set; } // String table과 연결 필요 **
-        public int ORDER_1 { get; set; }
-        public int ORDER_2 { get; set; }
+        public int UNIT_ID { get; set; }             // 유닛 ID
+        public string NAME { get; set; }             // 유닛 이름 // StringTable과 연결 필요**
+        public int RANK { get; set; }                // 유닛 등급
+        public int LEVEL { get; set; }               // 유닛 성급
+        public int ATTACK { get; set; }              // 유닛 공격력
+        public int ATTACK_RANGE { get; set; }        // 유닛 공격 사거리
+        public float ATTACK_COOLTIME { get; set; }   // 기본 공격 쿨타임
+        public int BOLT_NUM { get; set; }            // 기본 투사체 개수
+        public int ATTACK_CRITICAL { get; set; }     // 공격 치명타 확률 (%)
+        public float CRITICAL_DAMAGE { get; set; }   // 공격 치명타 데미지
+        public int UNIT_SKILL1 { get; set; }         // 스킬 ID 1
+        public int UNIT_SKILL2 { get; set; }         // 스킬 ID 2
+        public int NORMAL_ENFORCEID { get; set; }    // 일반 강화 ID
+        public string UNIT_ICON { get; set; }        // 유닛 아이콘
+        public int UNIT_DESCRIPTION { get; set; }    // 유닛 설명 // StringTable과 연결 필요**
     }
 
-     private readonly Dictionary<int, UnitData> table = new Dictionary<int, UnitData>();
+    private readonly Dictionary<int, UnitData> table = new Dictionary<int, UnitData>();
 
     public override async UniTask LoadAsync(string filename)
     {
