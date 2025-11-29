@@ -7,7 +7,9 @@ public class GridUnit : MonoBehaviour, IDraggable
     [SerializeField] private GameObject cellPrf;
     [SerializeField] private Transform previewTrans;
 
-    public int UnitId { get; private set; }
+    private Unit unit;
+
+    public int UnitId => unit.UnitID;
     public int StarLevel { get; private set; } = 1; // 성급 (1~3성)
     public UnitGridData GridData { get; private set; }
     public bool canPlaceInInventory = true; // 인벤토리에 보관 가능하게 할 지 여부
@@ -23,6 +25,11 @@ public class GridUnit : MonoBehaviour, IDraggable
     private List<Transform> childrenObj = new List<Transform>();
 
 
+    private void Awake()
+    {
+        unit = GetComponent<Unit>();
+    }
+
     private void Start()
     {
         CreatePreviewSprites();
@@ -31,8 +38,11 @@ public class GridUnit : MonoBehaviour, IDraggable
 
     public void SetUnitID(int unitId, int starLevel = 1)
     {
-        UnitId = unitId;
         StarLevel = Mathf.Clamp(starLevel, 1, 3);
+        if (unit != null)
+        {
+            unit.SetUnitID(unitId);
+        }
     } 
 
     public void SetInventoryPlaceable(bool value)

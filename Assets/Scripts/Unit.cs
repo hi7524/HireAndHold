@@ -33,6 +33,7 @@ public class Unit : MonoBehaviour
         UnitID = ID;
         unitData = DataTableManager.UnitTable.Get(ID);
 
+        Debug.Log($"Unit ID changed to: {ID}");
         SetStats();
     }
 
