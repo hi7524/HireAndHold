@@ -14,18 +14,18 @@ public class PlayerUnit
 
     public int HeroIndex => HeroEnforceGroupID;
 
-    private DataTable_Unit.UnitData baseData;
+    private UnitData baseData;
     private DataTable_NormalEnforce normalEnforceTable;
     private DataTable_HeroEnforce heroEnforceTable;
     private DataTable_HeroEnforceEffect heroEffectTable;
 
     private HeroSkillEffects skillEffects = new HeroSkillEffects();
 
-    // 임시 스킬들 
+    // 임시 스킬들
     private Dictionary<int, TempSkill> skills = new Dictionary<int, TempSkill>();
 
     public PlayerUnit(
-        DataTable_Unit.UnitData baseData,
+        UnitData baseData,
         DataTable_NormalEnforce normalEnforceTable,
         DataTable_HeroEnforce heroEnforceTable,
         DataTable_HeroEnforceEffect heroEffectTable)

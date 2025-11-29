@@ -490,13 +490,20 @@ public class GridManager : MonoBehaviour
     }
 
     // 그리드 유닛 생성 및 초기화
-    public GridUnit SpawnGridUnit(Vector3 position, UnitGridData gridData)
+    public GridUnit SpawnGridUnit(Vector3 position, int unitId, UnitGridData gridData)
     {
         if (gridUnitPrefab == null)
             return null;
 
         GameObject unitObj = Instantiate(gridUnitPrefab, position, Quaternion.identity);
+
+        Unit unit = unitObj.GetComponent<Unit>();
         GridUnit gridUnit = unitObj.GetComponent<GridUnit>();
+
+        if (unit != null)
+        {
+            unit.SetUnitID(unitId);
+        }
 
         if (gridUnit == null)
         {

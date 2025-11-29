@@ -230,7 +230,7 @@ public class GridCell : MonoBehaviour, IDroppable
             }
 
             // GridManager를 통해 GridUnit 생성
-            var newGridUnit = gridManager.SpawnGridUnit(transform.position, inventorySlot.GridData);
+            var newGridUnit = gridManager.SpawnGridUnit(transform.position, inventorySlot.UnitId, inventorySlot.GridData);
 
             if (newGridUnit == null)
             {
@@ -287,7 +287,7 @@ public class GridCell : MonoBehaviour, IDroppable
             }
 
             // GridManager를 통해 GridUnit 생성
-            var newGridUnit = gridManager.SpawnGridUnit(transform.position, draggableUnitUi.GridData);
+            var newGridUnit = gridManager.SpawnGridUnit(transform.position, draggableUnitUi.UnitId, draggableUnitUi.GridData);
 
             if (newGridUnit == null)
             {

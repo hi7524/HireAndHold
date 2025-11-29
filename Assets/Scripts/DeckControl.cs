@@ -6,7 +6,7 @@ using System;
 [Serializable]
 public class DeckPreset
 {
-    public UnitData[] units = new UnitData[5]; 
+    public DeckData[] units = new DeckData[5]; 
 }
 
 public class DeckControl : MonoBehaviour
@@ -27,7 +27,7 @@ public class DeckControl : MonoBehaviour
 
     // 맵
     private List<UnitCard> unitCards = new();
-    private Dictionary<UnitData, UnitCard> unitMap = new();
+    private Dictionary<DeckData, UnitCard> unitMap = new();
     private bool isEditing = false;
 
     private const string PREFS_KEY = "deck_presets_v1";
@@ -66,7 +66,7 @@ public class DeckControl : MonoBehaviour
             }
             if (presets[i].units == null || presets[i].units.Length != slots.Count)
             {
-                presets[i].units = new UnitData[slots.Count];
+                presets[i].units = new DeckData[slots.Count];
             }
         }
     }
@@ -79,7 +79,7 @@ public class DeckControl : MonoBehaviour
         foreach (Transform t in unitListParent)
         {
             var card = t.GetComponent<UnitCard>();
-            var unitData = t.GetComponent<UnitData>();
+            var unitData = t.GetComponent<DeckData>();
 
             if (card != null && unitData != null)
             {
@@ -141,7 +141,7 @@ public class DeckControl : MonoBehaviour
 
         for (int i = 0; i < slots.Count; i++)
         {
-            UnitData unit = null;
+            DeckData unit = null;
             if (preset != null && preset.units != null && i < preset.units.Length)
             {
                 unit = preset.units[i];
@@ -195,7 +195,7 @@ public class DeckControl : MonoBehaviour
 
         foreach (var slot in slots)
         {
-            UnitData pendingUnit = slot.GetPending();
+            DeckData pendingUnit = slot.GetPending();
             if (pendingUnit != null)
             {
                 NotifyUnitCleared(pendingUnit);
@@ -219,7 +219,7 @@ public class DeckControl : MonoBehaviour
         }
     }
 
-    void OnUnitCardClicked(UnitData data)
+    void OnUnitCardClicked(DeckData data)
     {
         if (isEditing)
         {
@@ -240,12 +240,12 @@ public class DeckControl : MonoBehaviour
         }
     }
 
-    void ShowUnitDetailPanel(UnitData data)
+    void ShowUnitDetailPanel(DeckData data)
     {
         detailedPanel.SetActive(true);
     }
 
-    public void NotifyUnitAssigned(UnitData data)
+    public void NotifyUnitAssigned(DeckData data)
     {
         if (data == null) return;
         if (unitMap.TryGetValue(data, out var card))
@@ -254,7 +254,7 @@ public class DeckControl : MonoBehaviour
         }
     }
 
-    public void NotifyUnitCleared(UnitData data)
+    public void NotifyUnitCleared(DeckData data)
     {
         if (data == null)
         {
@@ -374,7 +374,7 @@ public class DeckControl : MonoBehaviour
                     int? maybeId = container.items[idx++];
                     if (maybeId.HasValue)
                     {
-                        UnitData found = FindUnitDataById(maybeId.Value);
+                        DeckData found = FindUnitDataById(maybeId.Value);
                         presets[p].units[s] = found;
                     }
                     else
@@ -398,7 +398,7 @@ public class DeckControl : MonoBehaviour
         public int?[] items;
     }
 
-    private UnitData FindUnitDataById(int id)
+    private DeckData FindUnitDataById(int id)
     {
         foreach (var kv in unitMap)
         {

@@ -24,8 +24,6 @@ public class LevelUpRewardController : MonoBehaviour
     private UnitCardUi[] unitCardUIs;
     private SkillCardUi[] skillCardUIs;
 
-    private List<int> ownedUnitIdForTesting = new List<int> { 11101, 11104, 11107, 11110, 11113 }; // 테스트용***
-
     // 현재 레벨업 보상으로 생성된 유닛들을 추적
     private readonly List<GridUnit> currentLevelUpRewardUnits = new();
 
@@ -191,7 +189,7 @@ public class LevelUpRewardController : MonoBehaviour
     // 유닛 3개 중복 없이 뽑기
     public void DrawUnitID()
     {
-        List<int> tempList = new List<int>(ownedUnitIdForTesting);
+        List<int> tempList = new List<int>(PlayData.selectedUnitIds);
 
         for (int i = tempList.Count - 1; i > 0; i--)
         {
