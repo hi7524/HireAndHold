@@ -14,18 +14,18 @@ public class PlayerUnit
 
     public int HeroIndex => HeroEnforceGroupID;
 
-    private DataTable_Unit.UnitData baseData;
+    private UnitData baseData;
     private DataTable_NormalEnforce normalEnforceTable;
     private DataTable_HeroEnforce heroEnforceTable;
     private DataTable_HeroEnforceEffect heroEffectTable;
 
     private HeroSkillEffects skillEffects = new HeroSkillEffects();
 
-    // 임시 스킬들 
+    // 임시 스킬들
     private Dictionary<int, TempSkill> skills = new Dictionary<int, TempSkill>();
 
     public PlayerUnit(
-        DataTable_Unit.UnitData baseData,
+        UnitData baseData,
         DataTable_NormalEnforce normalEnforceTable,
         DataTable_HeroEnforce heroEnforceTable,
         DataTable_HeroEnforceEffect heroEffectTable)
@@ -36,10 +36,10 @@ public class PlayerUnit
         this.heroEffectTable = heroEffectTable;
 
         this.UnitID = baseData.UNIT_ID;
-        this.Level = baseData.UNIT_LEVEL;
-        this.UnitRank = baseData.UNIT_RANK;
+        this.Level = baseData.LEVEL;
+        this.UnitRank = baseData.RANK;
 
-        this.HeroEnforceGroupID = baseData.HERO_ENFORCEID;
+        this.HeroEnforceGroupID = baseData.UNIT_DESCRIPTION;
 
         InitializeTempSkills();
     }
@@ -75,7 +75,7 @@ public class PlayerUnit
     {
         get
         {
-            int baseAttack = baseData.UNIT_ATK;
+            int baseAttack = baseData.ATTACK;
 
             int normalEnforceBonus = 0;
             for (int lv = 1; lv <= NormalEnforceLevel; lv++)

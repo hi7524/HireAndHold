@@ -230,7 +230,7 @@ public class GridCell : MonoBehaviour, IDroppable
             }
 
             // GridManager를 통해 GridUnit 생성
-            var newGridUnit = gridManager.SpawnGridUnit(transform.position, inventorySlot.GridData);
+            var newGridUnit = gridManager.SpawnGridUnit(transform.position, inventorySlot.UnitId, inventorySlot.GridData);
 
             if (newGridUnit == null)
             {
@@ -287,7 +287,7 @@ public class GridCell : MonoBehaviour, IDroppable
             }
 
             // GridManager를 통해 GridUnit 생성
-            var newGridUnit = gridManager.SpawnGridUnit(transform.position, draggableUnitUi.GridData);
+            var newGridUnit = gridManager.SpawnGridUnit(transform.position, draggableUnitUi.UnitId, draggableUnitUi.GridData);
 
             if (newGridUnit == null)
             {
@@ -385,7 +385,15 @@ public class GridCell : MonoBehaviour, IDroppable
 
         // 합성 처리 성급 업그레이드
         int newStarLevel = existingUnit.StarLevel + 1;
-        existingUnit.SetUnitID(existingUnit.UnitId, newStarLevel);
+        int newUnitId = existingUnit.UnitId + 1;
+
+        // 머지 이펙트 재생 - 파티클
+        gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
+
+        // 머지 이펙트 재생 - DOTween 애니메이션
+        existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
+
+        existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         // 드래그 중이던 유닛 삭제
         Destroy(draggingUnit.gameObject);
@@ -418,7 +426,15 @@ public class GridCell : MonoBehaviour, IDroppable
 
         // 합성 처리: 성급 업그레이드
         int newStarLevel = existingUnit.StarLevel + 1;
-        existingUnit.SetUnitID(existingUnit.UnitId, newStarLevel);
+        int newUnitId = existingUnit.UnitId + 1;
+
+        // 머지 이펙트 재생 - 파티클
+        gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
+
+        // 머지 이펙트 재생 - DOTween 애니메이션
+        existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
+
+        existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         return true;
     }
@@ -449,7 +465,15 @@ public class GridCell : MonoBehaviour, IDroppable
 
         // 합성 처리: 성급 업그레이드
         int newStarLevel = existingUnit.StarLevel + 1;
-        existingUnit.SetUnitID(existingUnit.UnitId, newStarLevel);
+        int newUnitId = existingUnit.UnitId + 1;
+
+        // 머지 이펙트 재생 - 파티클
+        gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
+
+        // 머지 이펙트 재생 - DOTween 애니메이션
+        existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
+
+        existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         return true;
     }

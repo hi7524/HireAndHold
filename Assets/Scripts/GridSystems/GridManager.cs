@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,6 +23,9 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject gridUnitPrefab;
     [Space]
     [SerializeField] private LevelUpRewardController levelUpRewardController;
+    [Space]
+    [Header("Merge Effect")]
+    [SerializeField] private GameObject[] mergeEffectPrefabs; // 0: 2성, 1: 3성
 
 
     public int[,] gridArray { get; private set; }
@@ -33,11 +37,16 @@ public class GridManager : MonoBehaviour
     private Dictionary<Vector2Int, Color> tempColoredCell;
     private Dictionary<Vector2Int, Color> buffColoredCells = new Dictionary<Vector2Int, Color>(); // 버프 활성화된 셀의 색상
 
+    // 머지 이펙트 풀
+    private Dictionary<int, Queue<GameObject>> mergeEffectPools = new Dictionary<int, Queue<GameObject>>();
+    private Transform effectParent;
+
 
     private void Awake()
     {
         InitializeGrid();
         UpdateBuffColors(); // 초기 버프 색상 적용
+        InitializeMergeEffectPools(); // 머지 이펙트 풀 초기화
     }
 
     // 그리드 배열 및 셀 초기화
@@ -364,8 +373,85 @@ public class GridManager : MonoBehaviour
     // 유닛 합성시 호출
     public void OnMergedUnits()
     {
-        // 
+        //
         Debug.Log("유닛 머지");
+    }
+
+    // 머지 이펙트 풀 초기화
+    private void InitializeMergeEffectPools()
+    {
+        if (mergeEffectPrefabs == null || mergeEffectPrefabs.Length == 0)
+            return;
+
+        // 이펙트를 담을 부모 오브젝트 생성
+        GameObject parentObj = new GameObject("MergeEffects");
+        effectParent = parentObj.transform;
+        effectParent.SetParent(transform);
+
+        // 각 성급별로 풀 생성 (2성, 3성)
+        for (int i = 0; i < mergeEffectPrefabs.Length; i++)
+        {
+            if (mergeEffectPrefabs[i] == null)
+                continue;
+
+            Queue<GameObject> pool = new Queue<GameObject>();
+
+            // 각 성급별로 2개씩 미리 생성
+            for (int j = 0; j < 2; j++)
+            {
+                GameObject effect = Instantiate(mergeEffectPrefabs[i], effectParent);
+                effect.SetActive(false);
+                pool.Enqueue(effect);
+            }
+
+            mergeEffectPools[i] = pool;
+        }
+    }
+
+    // 머지 이펙트 재생
+    public void PlayMergeEffect(Vector3 position, int newStarLevel)
+    {
+        if (mergeEffectPrefabs == null || mergeEffectPrefabs.Length == 0)
+            return;
+
+        int index = newStarLevel - 2; // 2성=0, 3성=1
+        if (index >= 0 && index < mergeEffectPrefabs.Length && mergeEffectPools.ContainsKey(index))
+        {
+            GameObject effect = GetOrCreateEffect(index);
+            if (effect != null)
+            {
+                effect.transform.position = position;
+                effect.SetActive(true);
+                StartCoroutine(ReturnEffectToPool(effect, index, 2f));
+            }
+        }
+    }
+
+    // 풀에서 이펙트 가져오기 또는 새로 생성
+    private GameObject GetOrCreateEffect(int index)
+    {
+        if (mergeEffectPools[index].Count > 0)
+        {
+            // 풀에서 가져오기
+            GameObject effect = mergeEffectPools[index].Dequeue();
+            return effect;
+        }
+        else
+        {
+            // 풀이 비었으면 새로 생성
+            GameObject effect = Instantiate(mergeEffectPrefabs[index], effectParent);
+            effect.SetActive(false);
+            return effect;
+        }
+    }
+
+    // 이펙트를 풀로 반환
+    private IEnumerator ReturnEffectToPool(GameObject effect, int index, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        effect.SetActive(false);
+        mergeEffectPools[index].Enqueue(effect);
     }
 
     // 모든 하이라이트된 셀의 색상 초기화
@@ -490,13 +576,20 @@ public class GridManager : MonoBehaviour
     }
 
     // 그리드 유닛 생성 및 초기화
-    public GridUnit SpawnGridUnit(Vector3 position, UnitGridData gridData)
+    public GridUnit SpawnGridUnit(Vector3 position, int unitId, UnitGridData gridData)
     {
         if (gridUnitPrefab == null)
             return null;
 
         GameObject unitObj = Instantiate(gridUnitPrefab, position, Quaternion.identity);
+
+        Unit unit = unitObj.GetComponent<Unit>();
         GridUnit gridUnit = unitObj.GetComponent<GridUnit>();
+
+        if (unit != null)
+        {
+            unit.SetUnitID(unitId);
+        }
 
         if (gridUnit == null)
         {

@@ -6,8 +6,8 @@ public class DeckSlot : MonoBehaviour
     public Image icon;
     public Sprite emptySprite;
 
-    private UnitData committed;
-    private UnitData pending;
+    private DeckData committed;
+    private DeckData pending;
 
     private DeckControl deckControl;
 
@@ -49,7 +49,7 @@ public class DeckSlot : MonoBehaviour
         ApplyPendingToUI();
     }
 
-    public UnitData GetPending()
+    public DeckData GetPending()
     {
         return pending; 
     }
@@ -60,14 +60,14 @@ public class DeckSlot : MonoBehaviour
         ApplyCommittedToUI();
     }
 
-    public void SetCommittedExternal(UnitData data)
+    public void SetCommittedExternal(DeckData data)
     {
         committed = data;
         pending = null;
         ApplyCommittedToUI();  
     }
 
-    public void SetPending(UnitData unit)
+    public void SetPending(DeckData unit)
     {
         if (pending != null && pending != committed)
         {
@@ -105,7 +105,7 @@ public class DeckSlot : MonoBehaviour
         ApplyCommittedToUI();  
     }
 
-    public UnitData GetCommitted()
+    public DeckData GetCommitted()
     {
         return committed;
     }

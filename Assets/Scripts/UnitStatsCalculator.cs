@@ -2,12 +2,12 @@ using UnityEngine;
 
 public static class UnitStatsCalculator
 {
-   public static UnitData GetFinalStats(int unitID)
+   public static DeckData GetFinalStats(int unitID)
     {
        return null;
     }
 
-    public static UnitData GetNextLevelStats(int unitID)
+    public static DeckData GetNextLevelStats(int unitID)
     {
         
         return null;

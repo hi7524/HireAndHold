@@ -3,17 +3,22 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
-    [SerializeField] private float attackRange = 1.0f;
-    [SerializeField] private float attackInterval = 1.0f;
-    [SerializeField] private float attackDamage = 5;
-    [SerializeField] private float baseCritRate = 0f;
-    [SerializeField] private float baseCritMultiplier = 1.5f;
     [SerializeField] private string projectileKey = "Projectile";
+    
+    public int UnitID { get; private set; } = 11101;
 
-    [Header("Final Stats (Runtime)")]
-    [SerializeField] private float finalAttackDamage;
-    [SerializeField] private float finalCritRate;
-    [SerializeField] private float finalCritMultiplier;
+    private UnitData unitData;
+
+    private Stat attackDamage;
+    private Stat criticalRate;
+    private Stat criticalDamage;
+    private float attackRange;
+    private float attackInterval;
+    private int unitSkill1ID;
+    private int unitSkill2ID;
+    private string unitIconID;
+
+
     private PassiveSkillManager passiveSkillManager;
 
     private ObjectPoolManager poolManager;
@@ -23,55 +28,42 @@ public class Unit : MonoBehaviour
     private readonly List<UnitSkill> skills = new(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
 
 
+    public void SetUnitID(int ID)
+    {
+        UnitID = ID;
+        unitData = DataTableManager.UnitTable.Get(ID);
+
+        Debug.Log($"Unit ID changed to: {ID}");
+        SetStats();
+    }
+
+    private void SetStats()
+    {
+        if (unitData != null)
+        {
+            // 데이터 테이블에서 로드한 값으로 Stat 초기화
+            attackDamage = new Stat(unitData.ATTACK);
+            criticalRate = new Stat(unitData.ATTACK_CRITICAL);
+            criticalDamage = new Stat(unitData.CRITICAL_DAMAGE);
+            attackRange = unitData.ATTACK_RANGE;
+            attackInterval = unitData.ATTACK_COOLTIME;
+            unitSkill1ID = unitData.UNIT_SKILL1;
+            unitSkill2ID = unitData.UNIT_SKILL2;
+            unitIconID = unitData.UNIT_ICON;
+
+            //  저장된 영구 강화 불러오기 예시
+            // PlayerUpgradeData upgradeData = SaveManager.Instance.LoadUpgradeData();
+            // Attack.SetUpgradeValue(upgradeData.AttackUpgrade);
+            // Defense.SetUpgradeValue(upgradeData.DefenseUpgrade);
+            // MaxHealth.SetUpgradeValue(upgradeData.HealthUpgrade);
+        }
+    }
+
     private void Start()
     {
         poolManager = GameObject.FindWithTag(Tags.PoolManager).GetComponent<ObjectPoolManager>();
         passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
-
-        if (passiveSkillManager != null)
-        {
-            passiveSkillManager.OnPassiveSkillChanged += UpdateFinalStats;
-            UpdateFinalStats(); // 초기 스탯 계산
-        }
-        else
-        {
-            // 패시브 매니저 없으면 기본값 사용
-            finalAttackDamage = attackDamage;
-            finalCritRate = baseCritRate;
-            finalCritMultiplier = baseCritMultiplier;
-        }
     }
-    private void OnDestroy()
-    {
-        if (passiveSkillManager != null)
-        {
-            passiveSkillManager.OnPassiveSkillChanged -= UpdateFinalStats;
-        }
-    }
-    private void UpdateFinalStats()
-    {
-        if (passiveSkillManager == null)
-        {
-            finalAttackDamage = attackDamage;
-            finalCritRate = baseCritRate;
-            finalCritMultiplier = baseCritMultiplier;
-            return;
-        }
-
-        PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
-
-        // 최종 공격력 = 기본 공격력 * (1 + 데미지 보너스%)
-        finalAttackDamage = attackDamage * (1f + effects.damageBonus / 100f);
-
-        // 최종 치명타 확률 = 기본 확률 + 패시브 보너스
-        finalCritRate = baseCritRate + effects.critRateBonus;
-
-        // 최종 치명타 배율 = 기본 배율 + 패시브 보너스
-        finalCritMultiplier = baseCritMultiplier + (effects.critDamageBonus / 100f);
-
-    }
-
-
 
     private void OnEnable()
     {
@@ -135,9 +127,9 @@ public class Unit : MonoBehaviour
         {
             projectile.Initialize(poolManager, projectileKey);
 
-            float damage = finalAttackDamage;
+            float damage = attackDamage.Value;
 
-            // ✨ 보스 추가 데미지 (IsBoss 프로퍼티 사용)
+            // 보스 추가 데미지 (IsBoss 프로퍼티 사용)
             if (target.IsBoss && passiveSkillManager != null)
             {
                 PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
@@ -145,10 +137,10 @@ public class Unit : MonoBehaviour
             }
 
             // 치명타 판정
-            bool isCritical = Random.value < (finalCritRate / 100f);
+            bool isCritical = Random.value < (criticalRate.Value / 100f);
             if (isCritical)
             {
-                damage *= finalCritMultiplier;
+                damage *= criticalRate.Value;
             }
 
             projectile.SetDamage(damage);
