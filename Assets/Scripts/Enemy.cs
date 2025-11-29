@@ -14,7 +14,10 @@ public class Enemy : MonoBehaviour, IDamagable
     [SerializeField] private float attackRange;
     [SerializeField] private float attackCooldown;
     [SerializeField] private float defense;
+
     public float Defense { get { return defense; } set { defense = value; } }
+
+    private FloatingTextSpawner floatingTextSpawner;
 
 
     private ObjectPoolManager poolManager;
@@ -259,15 +262,22 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-
-        currentHp -= damage; //- defense;
-
-        if (currentHp <= 0 && !isDead)
+        if (floatingTextSpawner != null)
         {
-            isDead = true; // Die() 호출 전에 먼저 설정하여 중복 방지
+            Vector3 pos = transform.position + Vector3.up * 0.3f;
+            floatingTextSpawner.SpawnText(pos, damage.ToString());
+        }
+
+        currentHp -= damage;
+
+        if (currentHp <= 0)
+        {
+            isDead = true;
             Die();
         }
     }
+
+
 
     public void Die()
     {
@@ -324,6 +334,11 @@ public class Enemy : MonoBehaviour, IDamagable
     public void RestoreOriginalSpeed()
     {
         speed = originalSpeed;
+    }
+
+    public void SetFloatingTextSpawner(FloatingTextSpawner spawner)
+    {
+        floatingTextSpawner = spawner;
     }
 
 }
