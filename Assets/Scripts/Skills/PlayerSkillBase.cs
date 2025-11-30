@@ -67,7 +67,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
         }
     }
 
-    // 자식 클래스에서 구현할 메서드 // 장철희
+
     public abstract void OnUse(Vector3 spawnPoint);
 
     public void TryUse(Vector3 spawnPoint)
@@ -88,7 +88,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
         if (isOnCoolTime) return;
 
         OnUse(spawnPoint);
-        // StartCooldown(); // testing purpose
+        StartCooldown(); 
     }
 
     public void StartCooldown()

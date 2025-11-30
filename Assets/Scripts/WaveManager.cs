@@ -47,6 +47,7 @@ public class WaveManager : MonoBehaviour
         completedWaveNums.Clear(); // 초기화
 
         RegisterWaveEvents();
+        Debug.Log($"[WaveManager] Stage {stageId} 웨이브 초기화 완료. 총 웨이브 수: {TotalWaves}");
     }
 
 
@@ -142,6 +143,7 @@ public class WaveManager : MonoBehaviour
 
             stageManager?.CompleteStage();
         }
+        stageUiManager.ShowBossRewardPanel(); // Test
     }
 
     private void SpawnWaveMonsters(WaveData wave)
@@ -156,20 +158,20 @@ public class WaveManager : MonoBehaviour
         // 일반 몬스터 스폰
         if (wave.SPAWN_MON1_ID > 0 && wave.MON1_COUNT > 0)
         {
-            SpawnMonsters(wave.SPAWN_MON1_ID, wave.MON1_COUNT, wave.WAVE_SPEED, wave.WAVE_START_T, wave.WAVE_END_T);
+            SpawnMonsters(wave.SPAWN_MON1_ID, wave.MON1_COUNT, wave.WAVE_START_T, wave.WAVE_END_T);
         }
 
         if (wave.SPAWN_MON2_ID > 0 && wave.MON2_COUNT > 0)
         {
-            SpawnMonsters(wave.SPAWN_MON2_ID, wave.MON2_COUNT, wave.WAVE_SPEED, wave.WAVE_START_T, wave.WAVE_END_T);
+            SpawnMonsters(wave.SPAWN_MON2_ID, wave.MON2_COUNT, wave.WAVE_START_T, wave.WAVE_END_T);
         }
     }
 
 
-    private void SpawnMonsters(int monsterId, int count, float waveSpeed, int startTime, int endTime)
+    private void SpawnMonsters(int monsterId, int count, int startTime, int endTime)
     {
         float duration = endTime - startTime;
-        float interval = duration / count / waveSpeed;
+        float interval = duration / count ;
 
         for (int i = 0; i < count; i++)
         {
