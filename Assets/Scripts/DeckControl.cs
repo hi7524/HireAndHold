@@ -1,36 +1,37 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using System;
 
-[Serializable]
 public class DeckPreset
 {
-    public DeckData[] units = new DeckData[5]; 
+    public DeckUnitModel[] units;
 }
 
 public class DeckControl : MonoBehaviour
 {
-    // ui 
     public GameObject highlightOverlay;
-    public List<DeckSlot> slots;                 
-    public Transform unitListParent;           
+    public List<DeckSlot> slots;
+    public Transform unitListParent;
     public Button completeButton;
     public GameObject detailedPanel;
+    public List<Button> presetButtons;
+    public UnitCard cardPrefab;
 
-    //프리셋 버튼들
-    public List<Button> presetButtons;       
+    private DataTable_Unit unitTable;
 
-    //프리셋 스토리지 ? 나중을 위해서
-    public DeckPreset[] presets = new DeckPreset[5]; 
+    private UnitManager unitManager;
+
+    private List<UnitCard> unitCards = new();
+    private Dictionary<int, DeckUnitModel> unitModelMap = new();
+    private DeckPreset[] presets;
+
+    private bool isEditing = false;
     private int activePresetIndex = 0;
 
-    // 맵
-    private List<UnitCard> unitCards = new();
-    private Dictionary<DeckData, UnitCard> unitMap = new();
-    private bool isEditing = false;
-
-    private const string PREFS_KEY = "deck_presets_v1";
+    private const string PREF_KEY = "deck_presets_v1";
 
     void Awake()
     {
@@ -39,124 +40,169 @@ public class DeckControl : MonoBehaviour
             slot.SetDeckControl(this);
         }
 
-        if (completeButton != null)
-        {
-            completeButton.onClick.AddListener(OnCompleteClicked);
-            completeButton.interactable = false;
-        }
+        completeButton.onClick.AddListener(OnCompleteClicked);
 
+        // preset 버튼
         for (int i = 0; i < presetButtons.Count; i++)
         {
             int idx = i;
-            if (presetButtons[idx] != null)
-            {
-                presetButtons[idx].onClick.AddListener(() => {
-                    OnClickPresetButton(idx);
-                    OnAnyButtonClicked(presetButtons[idx]);
-                });
-            }
+            presetButtons[i].onClick.AddListener(() => OnClickPresetButton(idx));
+            presetButtons[i].onClick.AddListener(ExitEditModeIfEditing);
         }
 
+        completeButton.onClick.AddListener(ExitEditModeIfEditing);
 
+        // presets 초기화
+        presets = new DeckPreset[5];
         for (int i = 0; i < presets.Length; i++)
         {
-            if (presets[i] == null)
-            {
-                presets[i] = new DeckPreset();
-            }
-            if (presets[i].units == null || presets[i].units.Length != slots.Count)
-            {
-                presets[i].units = new DeckData[slots.Count];
-            }
+            presets[i] = new DeckPreset();
+            presets[i].units = new DeckUnitModel[5];
         }
     }
 
-    void Start()
+    async void Start()
     {
-        detailedPanel.SetActive(false);
-        highlightOverlay.SetActive(false);
+        unitTable = new DataTable_Unit();
+        await unitTable.LoadAsync("UnitTable");
 
-        foreach (Transform t in unitListParent)
+        unitManager = new UnitManager(unitTable, null, null, null);
+
+        // 유닛 추가
+        foreach (var kv in unitTable.RawTable)
         {
-            var card = t.GetComponent<UnitCard>();
-            var unitData = t.GetComponent<DeckData>();
-
-            if (card != null && unitData != null)
-            {
-                card.Init(unitData);
-                card.Setup(OnUnitCardClicked);
-                unitCards.Add(card);
-                unitMap[unitData] = card;
-            }
+            unitManager.AddUnit(kv.Key);
         }
 
+        highlightOverlay.SetActive(false);
+        detailedPanel.SetActive(false);
 
-        LoadPresetsFromPrefs();
-
+        CreateUnitCards();
+        LoadPresets();
         LoadPreset(activePresetIndex);
     }
 
+    void Update()
+    {
+        if (!isEditing)
+        {
+            return;
+        }
+
+        if (Pointer.current != null &&
+            Pointer.current.press.wasPressedThisFrame)
+        {
+            if (!IsClickOnEditableUI())
+            {
+                ExitEditMode();
+            }
+        }
+    }
+
+    bool IsClickOnEditableUI()
+    {
+        if (EventSystem.current == null)
+        {
+            return false;
+        }
+
+        if (Pointer.current == null)
+        {
+            return false;
+        }
+
+        PointerEventData pointer = new PointerEventData(EventSystem.current);
+        pointer.position = Pointer.current.position.ReadValue(); // ★ 수정된 부분
+
+        List<RaycastResult> results = new();
+        EventSystem.current.RaycastAll(pointer, results);
+
+        foreach (var r in results)
+        {
+            if (r.gameObject.GetComponent<DeckSlot>() != null)
+            {
+                return true;
+            }
+
+            if (r.gameObject.GetComponent<UnitCard>() != null)
+            {
+                return true;
+            }
+
+            if (presetButtons.Exists(b => r.gameObject.transform.IsChildOf(b.transform)))
+            {
+                return true;
+            }
+
+            if (r.gameObject.transform.IsChildOf(completeButton.transform))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void CreateUnitCards()
+    {
+        foreach (var kv in unitManager.GetAllUnits())
+        {
+            int id = kv.Key;
+            PlayerUnit pUnit = kv.Value;
+
+            UnitData data = unitTable.Get(id);
+
+            DeckUnitModel model = new DeckUnitModel
+            {
+                unitId = id,
+                unitName = data.NAME,
+                icon = Resources.Load<Sprite>(data.UNIT_ICON),
+                rawData = data,
+                playerUnit = pUnit
+            };
+
+            unitModelMap[id] = model;
+
+            UnitCard card = Instantiate(cardPrefab, unitListParent);
+            card.Init(model);
+            card.Setup(OnUnitCardClicked);
+            card.SetVisible(true);
+
+            unitCards.Add(card);
+        }
+    }
     public void OnClickPresetButton(int index)
     {
-        if (index < 0 || index >= presets.Length)
-        {
-            return;
-        }
-
         if (isEditing)
         {
             ExitEditMode();
         }
-
         activePresetIndex = index;
-        LoadPreset(activePresetIndex);
+        LoadPreset(index);
     }
 
-    public void OnAnyButtonClicked(Button clicked)
+    void LoadPreset(int index)
     {
-        if (clicked == completeButton)
+        foreach (var card in unitCards)
         {
-            return;
+            card.SetVisible(true);
         }
 
-        if (isEditing)
-        {
-            ExitEditMode();
-        }
-    }
-
-    public void LoadPreset(int index)
-    {
-        if (index < 0 || index >= presets.Length)
-        {
-            return;
-        }
-
-        foreach (var kv in unitMap)
-        {
-            kv.Value.SetVisible(true);
-        }
-
-        var preset = presets[index];
+        DeckPreset preset = presets[index];
 
         for (int i = 0; i < slots.Count; i++)
         {
-            DeckData unit = null;
-            if (preset != null && preset.units != null && i < preset.units.Length)
-            {
-                unit = preset.units[i];
-            }
+            DeckUnitModel model = preset.units[i];
+            slots[i].SetCommittedExternal(model);
 
-            slots[i].SetCommittedExternal(unit);
-
-            if (unit != null)
+            if (model != null)
             {
-                NotifyUnitAssigned(unit);
+                NotifyUnitAssigned(model);
             }
         }
 
         highlightOverlay.SetActive(false);
-        UpdateCompleteButtonState();
+        UpdateCompleteButton();
     }
 
     public void OnSlotClicked(DeckSlot slot)
@@ -170,12 +216,11 @@ public class DeckControl : MonoBehaviour
         if (slot.HasPending)
         {
             slot.ClearPending();
-            UpdateCompleteButtonState();
-            return;
+            UpdateCompleteButton();
         }
     }
 
-    public void EnterEditMode()
+    void EnterEditMode()
     {
         isEditing = true;
         highlightOverlay.SetActive(true);
@@ -185,41 +230,23 @@ public class DeckControl : MonoBehaviour
             slot.BeginEdit();
         }
 
-        UpdateCompleteButtonState();
+        UpdateCompleteButton();
     }
 
-    public void ExitEditMode()
+    void ExitEditMode()
     {
         isEditing = false;
         highlightOverlay.SetActive(false);
 
         foreach (var slot in slots)
         {
-            DeckData pendingUnit = slot.GetPending();
-            if (pendingUnit != null)
-            {
-                NotifyUnitCleared(pendingUnit);
-            }
-
             slot.CancelPending();
         }
 
-        UpdateCompleteButtonState();
+        UpdateCompleteButton();
     }
 
-    public void ToggleEditMode()
-    {
-        if (isEditing)
-        {
-            ExitEditMode();
-        }
-        else
-        {
-            EnterEditMode();
-        }
-    }
-
-    void OnUnitCardClicked(DeckData data)
+    void OnUnitCardClicked(DeckUnitModel model)
     {
         if (isEditing)
         {
@@ -227,70 +254,63 @@ public class DeckControl : MonoBehaviour
             {
                 if (!slot.HasPending)
                 {
-                    slot.SetPending(data);
-                    NotifyUnitAssigned(data);
-                    UpdateCompleteButtonState();
+                    slot.SetPending(model);
+                    NotifyUnitAssigned(model);
+                    UpdateCompleteButton();
                     return;
                 }
             }
         }
         else
         {
-            ShowUnitDetailPanel(data);
+            ExitEditModeIfEditing();
+
+            detailedPanel.SetActive(true);
         }
     }
 
-    void ShowUnitDetailPanel(DeckData data)
-    {
-        detailedPanel.SetActive(true);
-    }
 
-    public void NotifyUnitAssigned(DeckData data)
+    public void NotifyUnitAssigned(DeckUnitModel data)
     {
-        if (data == null) return;
-        if (unitMap.TryGetValue(data, out var card))
+        foreach (var card in unitCards)
         {
-            card.SetVisible(false);
-        }
-    }
-
-    public void NotifyUnitCleared(DeckData data)
-    {
-        if (data == null)
-        {
-            return;
-        }
-
-        if (unitMap.TryGetValue(data, out var card))
-        {
-            card.SetVisible(true);
-        }
-    }
-    void UpdateCompleteButtonState()
-    {
-        bool allFilled = true;
-
-        foreach (var slot in slots)
-        {
-            if (!slot.HasPending)
+            if (card.Data == data)
             {
-                allFilled = false;
-                break;
-            }
-        }
-
-        completeButton.interactable = allFilled;
-    }
-    void OnCompleteClicked()
-    {
-        if (!isEditing) return;
-
-        foreach (var slot in slots)
-        {
-            if (!slot.HasPending)
-            {
+                card.SetVisible(false);
                 return;
             }
+        }
+    }
+
+    public void NotifyUnitCleared(DeckUnitModel data)
+    {
+        foreach (var card in unitCards)
+        {
+            if (card.Data == data)
+            {
+                card.SetVisible(true);
+                return;
+            }
+        }
+    }
+    void UpdateCompleteButton()
+    {
+        foreach (var slot in slots)
+        {
+            if (!slot.HasPending)
+            {
+                completeButton.interactable = false;
+                return;
+            }
+        }
+        completeButton.interactable = true;
+    }
+
+    void OnCompleteClicked()
+    {
+        if (!isEditing)
+        {
+            return;
         }
 
         for (int i = 0; i < slots.Count; i++)
@@ -299,112 +319,29 @@ public class DeckControl : MonoBehaviour
             presets[activePresetIndex].units[i] = slots[i].GetCommitted();
         }
 
-        isEditing = false;
-        highlightOverlay.SetActive(false);
-        UpdateCompleteButtonState();
-        SavePresetsToPrefs();
+        SavePresets();
+        ExitEditMode();
     }
 
-    [Serializable]
-    private class PresetContainer
+    class SaveData { public int[] ids; }
+
+    void SavePresets()
     {
-        public string[] unitIds; 
+        
     }
 
-    private void SavePresetsToPrefs()
+    void LoadPresets()
     {
-        try
-        {
-            var wrapper = new List<int?>();
-
-
-            for (int p = 0; p < presets.Length; p++)
-            {
-                for (int s = 0; s < slots.Count; s++)
-                {
-                    var u = presets[p].units[s];
-                    if (u == null)
-                    {
-                        wrapper.Add(null);
-                    }
-                    else
-                    {
-                        wrapper.Add(u.unitId);
-                    }
-                }
-            }
-
-            string json = JsonUtility.ToJson(new SerializationIntNullable { items = wrapper.ToArray() });
-            PlayerPrefs.SetString(PREFS_KEY, json);
-            PlayerPrefs.Save();
-            Debug.Log("[덱 컨트롤 프리셋 저장 완료");
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning("프리셋 저장 실패 " + e);
-        }
+        
     }
 
-    private void LoadPresetsFromPrefs()
+    void ExitEditModeIfEditing()
     {
-        if (!PlayerPrefs.HasKey(PREFS_KEY))
+        if (isEditing)
         {
-            return;
-        }
-
-        try
-        {
-            string json = PlayerPrefs.GetString(PREFS_KEY);
-            var container = JsonUtility.FromJson<SerializationIntNullable>(json);
-            if (container == null || container.items == null)
-            {
-                return;
-            }
-
-            int idx = 0;
-            for (int p = 0; p < presets.Length; p++)
-            {
-                for (int s = 0; s < slots.Count; s++)
-                {
-                    if (idx >= container.items.Length)
-                    {
-                        break;
-                    }
-
-                    int? maybeId = container.items[idx++];
-                    if (maybeId.HasValue)
-                    {
-                        DeckData found = FindUnitDataById(maybeId.Value);
-                        presets[p].units[s] = found;
-                    }
-                    else
-                    {
-                        presets[p].units[s] = null;
-                    }
-                }
-            }
-
-            Debug.Log("덱컨트롤에서 프리셋 로드 됨");
-        }
-        catch (Exception e)
-        {
-            Debug.Log("프리셋 로드 실패" + e);
+            ExitEditMode();
         }
     }
 
-    [Serializable]
-    private class SerializationIntNullable
-    {
-        public int?[] items;
-    }
 
-    private DeckData FindUnitDataById(int id)
-    {
-        foreach (var kv in unitMap)
-        {
-            if (kv.Key.unitId == id)
-                return kv.Key;
-        }
-        return null;
-    }
 }

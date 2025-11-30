@@ -56,4 +56,6 @@ public class DataTable_Unit : DataTable
         }
         return table[unitId];
     }
+
+    public Dictionary<int, UnitData> RawTable => table;
 }
