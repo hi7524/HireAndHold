@@ -20,6 +20,8 @@ public class UnitData
     public int NORMAL_ENFORCEID { get; set; }    // 일반 강화 ID
     public string UNIT_ICON { get; set; }        // 유닛 아이콘
     public int UNIT_DESCRIPTION { get; set; }    // 유닛 설명 // StringTable과 연결 필요**
+    public string PREFAB_NAME { get; set; }
+    public string GRID_DATA { get; set; }        // 그리드 데이터 ScriptableObject 이름
 }
 
 public class DataTable_Unit : DataTable
@@ -58,4 +60,9 @@ public class DataTable_Unit : DataTable
     }
 
     public Dictionary<int, UnitData> RawTable => table;
+
+    public IEnumerable<UnitData> GetAll()
+    {
+        return table.Values;
+    }
 }

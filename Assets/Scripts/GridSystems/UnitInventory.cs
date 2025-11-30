@@ -2,17 +2,22 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 public class UnitInventory : MonoBehaviour, IDroppable
 {
     [SerializeField] private UnitInventorySlot slotPrf;
     [SerializeField] private ScrollRect scrollRect;
-    [Space]
-    [SerializeField] private DragManager dragManager;
     [SerializeField] private PlayerStageGold playerGold;
-    [SerializeField] private GridDatasForTesting gridDatas;
+    [Header("Managers")]
+    [SerializeField] private DragManager dragManager;
     [SerializeField] private StageUiManager uiManager;
+    [SerializeField] private GridManager gridManager;
+
+    private const string RewardUnitBlockedMsg = "레벨업 보상 유닛은 즉시 배치해야 합니다!";
+    private const string MinUnitRequiredMsg = "최소 1개의 유닛은 배치되어야 합니다!";
 
     private const int MaxCapacity = 16;
     private const int SellCost = 25; // 테스트용 **
@@ -23,11 +28,14 @@ public class UnitInventory : MonoBehaviour, IDroppable
     private int slotIndex;
     private Sequence dropSequence;
 
+    private Dictionary<int, UnitGridData> gridDataCache = new Dictionary<int, UnitGridData>();
+
 
     async UniTaskVoid Start()
     {
         InitializeSlots();
         await DataTableManager.InitAsync();
+        await CacheAllGridData();
         UpdateAllSlotsUi();
     }
 
@@ -45,9 +53,17 @@ public class UnitInventory : MonoBehaviour, IDroppable
 
     private void OnDestroy()
     {
-        // 트윈 정리
         dropSequence?.Kill();
         transform.DOKill();
+
+        foreach (var gridData in gridDataCache.Values)
+        {
+            if (gridData != null)
+            {
+                Addressables.Release(gridData);
+            }
+        }
+        gridDataCache.Clear();
     }
 
     // 슬롯 배열 초기화 및 생성
@@ -94,7 +110,12 @@ public class UnitInventory : MonoBehaviour, IDroppable
     {
         slots[index].gameObject.SetActive(true);
         slots[index].SetUnit(unitId, starLevel);
-        slots[index].SetGridData(gridDatas.GridDatas[unitId]);
+
+        if (gridDataCache.TryGetValue(unitId, out var gridData))
+        {
+            slots[index].UpdatePreviewImages(gridData);
+        }
+
         slots[index].UpdateUi();
     }
 
@@ -188,13 +209,49 @@ public class UnitInventory : MonoBehaviour, IDroppable
         }
     }
 
+    // 모든 유닛의 GridData를 미리 캐싱
+    private async UniTask CacheAllGridData()
+    {
+        gridDataCache.Clear();
+
+        // UnitTable의 모든 유닛에 대해 GridData 캐싱
+        var unitTable = DataTableManager.UnitTable;
+        if (unitTable == null) return;
+
+        foreach (var unitData in unitTable.GetAll())
+        {
+            if (unitData != null && !string.IsNullOrEmpty(unitData.GRID_DATA))
+            {
+                int unitId = unitData.UNIT_ID;
+
+                // 이미 캐시되어 있으면 스킵
+                if (gridDataCache.ContainsKey(unitId))
+                    continue;
+
+                var gridDataHandle = Addressables.LoadAssetAsync<UnitGridData>(unitData.GRID_DATA);
+                var gridData = await gridDataHandle.ToUniTask();
+
+                if (gridDataHandle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    gridDataCache[unitId] = gridData;
+                }
+            }
+        }
+    }
+
     // 활성 슬롯 UI 업데이트
     private void UpdateActiveSlot(int index)
     {
         int unitId = ownedUnitIds[index];
         int starLevel = ownedUnitStars[index];
         slots[index].SetUnit(unitId, starLevel);
-        slots[index].UpdatePreviewImages(gridDatas.GridDatas[unitId]);
+
+        // 캐시에서 GridData 가져오기
+        if (gridDataCache.TryGetValue(unitId, out var gridData))
+        {
+            slots[index].UpdatePreviewImages(gridData);
+        }
+
         slots[index].UpdateUi();
         slots[index].gameObject.SetActive(true);
     }
@@ -208,7 +265,7 @@ public class UnitInventory : MonoBehaviour, IDroppable
     // 드롭 가능 여부 확인
     public bool CanDrop(IDraggable draggable)
     {
-        // draggableUnitUI는 드롭할 수 없음 
+        // draggableUnitUI는 드롭할 수 없음
         var draggableUnitUi = draggable.GameObject.GetComponent<DraggableGridUnitUi>();
         if (draggableUnitUi != null)
             return false;
@@ -216,8 +273,19 @@ public class UnitInventory : MonoBehaviour, IDroppable
         var unit = draggable.GameObject.GetComponent<GridUnit>();
         if (unit != null)
         {
+            // 방금 획득한 유닛은 인벤토리에 올릴 수 없음
             if (!unit.canPlaceInInventory)
+            {
+                uiManager.UpdateInfoText(RewardUnitBlockedMsg, Color.red);
                 return false;
+            }
+
+            // 마지막 남은 유닛은 인벤토리에 올릴 수 없음
+            if (gridManager != null && gridManager.IsLastUnitOnGrid())
+            {
+                uiManager.UpdateInfoText(MinUnitRequiredMsg, Color.red);
+                return false;
+            }
         }
 
         return CanAddUnit();
@@ -247,6 +315,10 @@ public class UnitInventory : MonoBehaviour, IDroppable
         AddUnit(gridUnit.UnitId, gridUnit.StarLevel);
         gridUnit.gameObject.SetActive(false);
         PlayDropAnimation();
+
+        // 그리드에서 인벤토리로 이동 시 카운트 감소
+        if (gridManager != null)
+            gridManager.DecrementUnitCount();
     }
 
     // UnitInventorySlot 드롭 처리
