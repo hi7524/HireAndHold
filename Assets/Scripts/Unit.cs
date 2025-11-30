@@ -1,14 +1,20 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class Unit : MonoBehaviour
 {
+    [SerializeField] private Transform visualRoot;
     [SerializeField] private string projectileKey = "Projectile";
-    
+
     public int UnitID { get; private set; } = 11101;
 
+    // 유닛 데이터
     private UnitData unitData;
-
     private Stat attackDamage;
     private Stat criticalRate;
     private Stat criticalDamage;
@@ -18,23 +24,33 @@ public class Unit : MonoBehaviour
     private int unitSkill2ID;
     private string unitIconID;
 
+    // 유닛 프리팹
+    private AsyncOperationHandle<GameObject> visualHandle;
+    private CancellationTokenSource cts;
 
+    // 외부 참조
     private PassiveSkillManager passiveSkillManager;
-
     private ObjectPoolManager poolManager;
+
     private Enemy attackTarget;
     private float lastAttackTime;
 
     private readonly List<UnitSkill> skills = new(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
 
 
-    public void SetUnitID(int ID)
+    private void Awake()
+    {
+        cts = new CancellationTokenSource();
+    }
+
+    public async Task SetUnitID(int ID)
     {
         UnitID = ID;
         unitData = DataTableManager.UnitTable.Get(ID);
 
         Debug.Log($"Unit ID changed to: {ID}");
         SetStats();
+        await SetVisualPrefabAsync();
     }
 
     private void SetStats()
@@ -59,6 +75,42 @@ public class Unit : MonoBehaviour
         }
     }
 
+    public async UniTask SetVisualPrefabAsync()
+    {
+        if (unitData == null)
+        {
+            Debug.LogError($"unitData is null! UnitID: {UnitID}");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(unitData.PREFAB_NAME))
+        {
+            Debug.LogError($"PREFAB_NAME is null or empty! UnitID: {UnitID}");
+            return;
+        }
+
+        visualHandle = Addressables.LoadAssetAsync<GameObject>(unitData.PREFAB_NAME);
+        var visualPrefab = await visualHandle.ToUniTask(cancellationToken: cts.Token);
+
+        if (visualHandle.Status != AsyncOperationStatus.Succeeded)
+        {
+            Debug.LogError($"Failed to load prefab: {unitData.PREFAB_NAME}");
+            return;
+        }
+
+        // 기존 자식 오브젝트 제거
+        if (visualRoot.childCount > 0)
+        {
+            for (int i = visualRoot.childCount - 1; i >= 0; i--)
+            {
+                Destroy(visualRoot.GetChild(i).gameObject);
+            }
+        }
+
+        var visualObj = Instantiate(visualPrefab, visualRoot);
+
+    }
+
     private void Start()
     {
         poolManager = GameObject.FindWithTag(Tags.PoolManager).GetComponent<ObjectPoolManager>();
@@ -81,6 +133,17 @@ public class Unit : MonoBehaviour
         }
 
         HandleAutoSkills();
+    }
+
+    private void OnDestroy()
+    {
+        cts?.Cancel();
+        cts?.Dispose();
+
+        if (visualHandle.IsValid())
+        {
+            Addressables.Release(visualHandle);
+        }
     }
 
     public void SetPool(ObjectPoolManager poolManager)

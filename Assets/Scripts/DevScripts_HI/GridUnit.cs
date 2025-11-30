@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 [RequireComponent(typeof(Collider2D))]
 public class GridUnit : MonoBehaviour, IDraggable
@@ -23,6 +26,7 @@ public class GridUnit : MonoBehaviour, IDraggable
     private GridCell previousGridCell;
 
     private List<Transform> childrenObj = new List<Transform>();
+    private AsyncOperationHandle<UnitGridData> gridDataHandle;
 
 
     private void Awake()
@@ -36,12 +40,24 @@ public class GridUnit : MonoBehaviour, IDraggable
         SetActiveChildrenObj(false);
     }
 
-    public void SetUnitID(int unitId, int starLevel = 1)
+    public async UniTask SetUnitID(int unitId, int starLevel = 1)
     {
         StarLevel = Mathf.Clamp(starLevel, 1, 3);
         if (unit != null)
         {
-            unit.SetUnitID(unitId);
+            await unit.SetUnitID(unitId);
+
+            var unitData = DataTableManager.UnitTable.Get(unitId);
+            if (unitData != null && !string.IsNullOrEmpty(unitData.GRID_DATA))
+            {
+                gridDataHandle = Addressables.LoadAssetAsync<UnitGridData>(unitData.GRID_DATA);
+                var gridData = await gridDataHandle.ToUniTask();
+
+                if (gridDataHandle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    SetGridData(gridData);
+                }
+            }
         }
     } 
 
@@ -178,5 +194,13 @@ public class GridUnit : MonoBehaviour, IDraggable
     public void OnDropSuccess()
     {
         //
+    }
+
+    private void OnDestroy()
+    {
+        if (gridDataHandle.IsValid())
+        {
+            Addressables.Release(gridDataHandle);
+        }
     }
 }

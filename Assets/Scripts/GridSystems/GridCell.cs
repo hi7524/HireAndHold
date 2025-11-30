@@ -391,7 +391,7 @@ public class GridCell : MonoBehaviour, IDroppable
 
         // 합성 처리 성급 업그레이드
         int newStarLevel = existingUnit.StarLevel + 1;
-        int newUnitId = existingUnit.UnitId + 1;
+        int newUnitId = existingUnit.UnitId + 101;
 
         // 머지 이펙트 재생 - 파티클
         gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
