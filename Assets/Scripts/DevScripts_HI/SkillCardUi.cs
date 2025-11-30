@@ -16,7 +16,7 @@ public class SkillCardUi : BaseCardUi
     private bool isSelected = false;
 
 
-    private void Start()
+    private void Awake()
     {
         // 초기 색상 설정
         for (int i = 0; i < starIcons.Length; i++)
@@ -112,13 +112,14 @@ public class SkillCardUi : BaseCardUi
             text.text = effectData.EFFECT_NAME_KR;
 
         int starLevel = GetStarLevelFromSkillId(currentSkillId);
-        UpdateStarUI(starLevel );
+        UpdateStarUI(starLevel - 1);
     }
 
     private int GetStarLevelFromSkillId(int skillId)
     {
-        if (skillId < 222070 || skillId > 222087) return 1;
-        return (skillId - 222070) / 6 + 1;
+        if (skillId < 22070 || skillId > 22087) return 1;
+        
+        return (skillId - 22070) / 6 + 1;
     }
 
     private void SetIconColor(Image img, Color color)

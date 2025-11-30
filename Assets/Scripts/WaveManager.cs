@@ -54,25 +54,25 @@ public class WaveManager : MonoBehaviour
     {
         foreach (var wave in currentStageWaves)
         {
-            // if (wave.WAVE_TYPE == 2)
-            // {
-            //     int warningTime = wave.WAVE_START_T - 5; // 5초 전
-            //     if (warningTime >= 0)
-            //     {
-            //         int warnMinutes = warningTime / 60;
-            //         int warnSeconds = warningTime % 60;
+            if (wave.WAVE_TYPE == 2)
+            {
+                int warningTime = wave.WAVE_START_T - 5; // 5초 전
+                if (warningTime >= 0)
+                {
+                    int warnMinutes = warningTime / 60;
+                    int warnSeconds = warningTime % 60;
 
-            //         // 클로저 캡처 방지
-            //         WaveData currentWave = wave;
+                    // 클로저 캡처 방지
+                    WaveData currentWave = wave;
 
-            //         var warningEvent = gameManager.AddTimeEvent(warnMinutes, warnSeconds, () =>
-            //         {
-            //             Debug.Log($"[WaveManager] 워닝 패널 표시! 시간: {warnMinutes}:{warnSeconds}");
-            //             stageUiManager.ShowWarningPanel();
-            //         });
-            //         registeredEvents.Add(warningEvent);
-            //     }
-            // }
+                    var warningEvent = gameManager.AddTimeEvent(warnMinutes, warnSeconds, () =>
+                    {
+                        Debug.Log($"[WaveManager] 워닝 패널 표시! 시간: {warnMinutes}:{warnSeconds}");
+                        stageUiManager.ShowWarningPanel();
+                    });
+                    registeredEvents.Add(warningEvent);
+                }
+            }
 
             // 웨이브 시작 이벤트 등록
             int startMinutes = wave.WAVE_START_T / 60;
@@ -114,6 +114,7 @@ public class WaveManager : MonoBehaviour
 
     private void StartWave(WaveData wave)
     {
+        Debug.Log($"[WaveManager] StartWave: WAVE_NUM={wave.WAVE_NUM}, TYPE={wave.WAVE_TYPE}");
         CurrentWaveNum = wave.WAVE_NUM;
         OnWaveStart?.Invoke(wave.WAVE_NUM);
         SpawnWaveMonsters(wave);

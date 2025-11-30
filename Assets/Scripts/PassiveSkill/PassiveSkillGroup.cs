@@ -19,9 +19,9 @@ public class PassiveSkillGroup
     public int currentStar;  // 0~3
     
     // 스킬 ID 상수
-    private const int STAR1_BASE = 222070;
-    private const int STAR2_BASE = 222076;
-    private const int STAR3_BASE = 222082;
+    private const int STAR1_BASE = 22070;
+    private const int STAR2_BASE = 22076;
+    private const int STAR3_BASE = 22082;
     
     public PassiveSkillGroup(PassiveSkillType type, string name)
     {
