@@ -4,7 +4,6 @@ using Assets.HeroEditor.Common.Scripts.CharacterScripts.Firearms;
 using Assets.HeroEditor.Common.Scripts.CharacterScripts.Firearms.Enums;
 using HeroEditor.Common.Enums;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Assets.HeroEditor.Common.Scripts.ExampleScripts
 {
@@ -40,7 +39,7 @@ namespace Assets.HeroEditor.Common.Scripts.ExampleScripts
                 case WeaponType.Melee1H:
                 case WeaponType.Melee2H:
                 case WeaponType.MeleePaired:
-                    if (Mouse.current.leftButton.wasPressedThisFrame)
+                    if (Input.GetKeyDown(FireButton))
                     {
                         Character.Slash();
                     }
@@ -57,14 +56,14 @@ namespace Assets.HeroEditor.Common.Scripts.ExampleScripts
                     Firearm.Reload.ReloadButtonDown = Input.GetKeyDown(ReloadButton);
                     break;
 	            case WeaponType.Supplies:
-		            if (Mouse.current.leftButton.wasPressedThisFrame)
+		            if (Input.GetKeyDown(FireButton))
 		            {
 			            Character.Animator.Play(Time.frameCount % 2 == 0 ? "UseSupply" : "ThrowSupply", 0); // Play animation randomly.
 		            }
 		            break;
 			}
 
-            if (Mouse.current.leftButton.wasPressedThisFrame)
+            if (Input.GetKeyDown(FireButton))
             {
                 Character.GetReady();
             }

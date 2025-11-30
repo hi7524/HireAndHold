@@ -325,5 +325,7 @@ public class LevelUpRewardController : MonoBehaviour
             unitCardUIs[i].SetDragState(false);
             unitCardUIs[i].SetColor(new Color(0.267f, 0.267f, 0.267f));
         }
+
+        reRollBtn.interactable = false;
     }
 }

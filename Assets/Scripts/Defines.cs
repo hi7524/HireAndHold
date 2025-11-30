@@ -36,6 +36,6 @@ public static class AnimParams
 
 public static class GameConstants
 {
-    public static readonly float previewCellSizeObject = 1.05f;
+    public static readonly float previewCellSizeObject = 0.5f;
     public static readonly float previewCellSizeUi = 55f;
 }
