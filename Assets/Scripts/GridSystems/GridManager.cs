@@ -32,6 +32,7 @@ public class GridManager : MonoBehaviour
     public GridLayoutData LayoutData => layoutData;
 
     private GridCell[,] gridCells;
+    private int gridUnitCount = 0; // 그리드에 배치된 유닛 개수
     private HashSet<GridCell> highlightedCells = new HashSet<GridCell>();
     private Dictionary<Vector2Int, Color> coloredCell = new Dictionary<Vector2Int, Color>();
     private Dictionary<Vector2Int, Color> tempColoredCell;
@@ -606,5 +607,31 @@ public class GridManager : MonoBehaviour
     {
         if (levelUpRewardController != null)
             levelUpRewardController.OnLevelUpRewardUnitSpawned(unit);
+    }
+
+    // 그리드에 유닛 추가됨을 알림
+    public void IncrementUnitCount()
+    {
+        gridUnitCount++;
+    }
+
+    // 그리드에서 유닛 제거됨을 알림
+    public void DecrementUnitCount()
+    {
+        gridUnitCount--;
+        if (gridUnitCount < 0)
+            gridUnitCount = 0;
+    }
+
+    // 현재 그리드에 있는 유닛 개수 반환
+    public int GetGridUnitCount()
+    {
+        return gridUnitCount;
+    }
+
+    // 그리드에 마지막 남은 유닛인지 확인
+    public bool IsLastUnitOnGrid()
+    {
+        return gridUnitCount <= 1;
     }
 }

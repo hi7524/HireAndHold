@@ -257,6 +257,9 @@ public class GridCell : MonoBehaviour, IDroppable
                 gridManager.SetGridState(absolutePos, GridState.Occupied);
                 gridManager.SetOccupiedCellAndColor(absolutePos, newGridUnit.GridData.gridColor);
             }
+
+            // 유닛이 그리드에 배치되었음을 알림
+            gridManager.IncrementUnitCount();
         }
 
         // DraggableGridUnitUi 처리 - GridUnit 생성
@@ -320,6 +323,9 @@ public class GridCell : MonoBehaviour, IDroppable
                 gridManager.SetGridState(absolutePos, GridState.Occupied);
                 gridManager.SetOccupiedCellAndColor(absolutePos, newGridUnit.GridData.gridColor);
             }
+
+            // 유닛이 그리드에 배치되었음을 알림
+            gridManager.IncrementUnitCount();
         }
 
         gridManager.ClearAllGridsColor();
@@ -395,8 +401,9 @@ public class GridCell : MonoBehaviour, IDroppable
 
         existingUnit.SetUnitID(newUnitId, newStarLevel);
 
-        // 드래그 중이던 유닛 삭제
+        // 드래그 중이던 유닛 삭제 (2개가 1개로 합쳐지므로 카운트 감소)
         Destroy(draggingUnit.gameObject);
+        gridManager.DecrementUnitCount();
         return true;
     }
 

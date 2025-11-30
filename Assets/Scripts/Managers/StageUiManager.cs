@@ -21,6 +21,15 @@ public class StageUiManager : MonoBehaviour
     [SerializeField] private StageClearPanelController stageClearPanel;
     [SerializeField] private GameObject rewardPanel;
 
+    private FadeAndUpEffect infoTextFadeEffect;
+
+    private void Awake()
+    {
+        // FadeAndUpEffect 컴포넌트 캐싱
+        if (infoText != null)
+            infoTextFadeEffect = infoText.GetComponent<FadeAndUpEffect>();
+    }
+
     private void Update()
     {
         if (!gameManager.IsGameStarted)
@@ -130,6 +139,17 @@ public class StageUiManager : MonoBehaviour
         infoText.text = msg;
         if (color == null)
             infoText.color = Color.yellow;
-        infoText.gameObject.SetActive(true);
+        else
+            infoText.color = color.Value;
+
+        if (infoText.gameObject.activeSelf)
+        {
+            if (infoTextFadeEffect != null)
+                infoTextFadeEffect.PlayAnimation();
+        }
+        else
+        {
+            infoText.gameObject.SetActive(true);
+        }
     }
 }
