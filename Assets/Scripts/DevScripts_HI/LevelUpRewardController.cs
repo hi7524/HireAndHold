@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 public class LevelUpRewardController : MonoBehaviour
 {
-    public GridDatasForTesting gridDatasForTesting;
-
     [Header("UI Prefabs")]
     [SerializeField] private UnitCardUi unitCardUiPrf;
     [SerializeField] private SkillCardUi skillCardPrf;
@@ -30,15 +31,24 @@ public class LevelUpRewardController : MonoBehaviour
     // 현재 선택된 스킬 카드 추적
     private SkillCardUi selectedSkillCard = null;
 
+    // GridData 캐시
+    private Dictionary<int, UnitGridData> gridDataCache = new Dictionary<int, UnitGridData>();
+
 
     // 초기 세팅
-    private void Start()
+    private async void Start()
     {
         // 각 프리팹 카드 3장씩 생성
         CreateUnitCardPrf(3);
         CreateSkillCardPrf(3);
 
         playerExp.OnLevelUp += DrawLevelUpReward;
+
+        // DataTableManager 초기화 대기
+        await DataTableManager.InitAsync();
+
+        // GridData 캐싱
+        await CacheAllGridData();
 
         SelectUnitOnGameStart();
     }
@@ -58,6 +68,16 @@ public class LevelUpRewardController : MonoBehaviour
                 }
             }
         }
+
+        // 캐시된 Addressables 리소스 해제
+        foreach (var gridData in gridDataCache.Values)
+        {
+            if (gridData != null)
+            {
+                Addressables.Release(gridData);
+            }
+        }
+        gridDataCache.Clear();
     }
 
     // 레벨업 보상 유닛이 생성되었을 때 호출
@@ -186,6 +206,39 @@ public class LevelUpRewardController : MonoBehaviour
             gameManager.ResumeGame();
     }
 
+    // 모든 선택 가능한 유닛의 GridData를 미리 캐싱
+    private async UniTask CacheAllGridData()
+    {
+        gridDataCache.Clear();
+
+        foreach (int unitId in PlayData.selectedUnitIds)
+        {
+            var unitData = DataTableManager.UnitTable?.Get(unitId);
+            if (unitData != null && !string.IsNullOrEmpty(unitData.GRID_DATA))
+            {
+                var gridDataHandle = Addressables.LoadAssetAsync<UnitGridData>(unitData.GRID_DATA);
+                var gridData = await gridDataHandle.ToUniTask();
+
+                if (gridDataHandle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    gridDataCache[unitId] = gridData;
+                }
+                else
+                {
+                    Debug.LogError($"UnitID {unitId}의 GRID_DATA 로드 실패: {unitData.GRID_DATA}");
+                }
+
+                // 캐시에 저장하므로 Release하지 않음
+            }
+            else
+            {
+                Debug.LogError($"UnitID {unitId}의 GRID_DATA를 찾을 수 없습니다.");
+            }
+        }
+
+        Debug.Log($"GridData 캐싱 완료: {gridDataCache.Count}개");
+    }
+
     // 유닛 3개 중복 없이 뽑기
     public void DrawUnitID()
     {
@@ -204,7 +257,16 @@ public class LevelUpRewardController : MonoBehaviour
         {
             int unitId = tempList[i];
             unitCardUIs[i].SetUnitID(unitId);
-            unitCardUIs[i].SetGridData(gridDatasForTesting.GridDatas[unitId]);
+
+            // 캐시에서 GridData 가져오기
+            if (gridDataCache.TryGetValue(unitId, out var gridData))
+            {
+                unitCardUIs[i].SetGridData(gridData);
+            }
+            else
+            {
+                Debug.LogError($"UnitID {unitId}의 GridData가 캐시에 없습니다.");
+            }
         }
     }
     public void DrawPassiveSkills()

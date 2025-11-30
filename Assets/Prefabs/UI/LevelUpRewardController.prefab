@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 2825233175377020172}
   - component: {fileID: 298331754600960098}
   - component: {fileID: 8969676568068889782}
-  - component: {fileID: 3370350582403285189}
   - component: {fileID: 6445794222994925957}
   m_Layer: 5
   m_Name: LevelUpRewardController
@@ -93,7 +92,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c05acb16c2097a94ba02f6368419d312, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridDatasForTesting: {fileID: 3370350582403285189}
+  gridDatasForTesting: {fileID: 0}
   unitCardUiPrf: {fileID: 537899014852373020, guid: 710525fadd6c5be499151bddb8785ac4, type: 3}
   skillCardPrf: {fileID: 5605763761850063276, guid: 1e06c786d98a86242a9bc16b824e2311, type: 3}
   reRollBtn: {fileID: 2083656618542852932}
@@ -103,29 +102,6 @@ MonoBehaviour:
   playerStageGold: {fileID: 0}
   playerExp: {fileID: 0}
   passiveSkillManager: {fileID: 0}
---- !u!114 &3370350582403285189
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1492418833879989011}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4cc3cc448295e04b9374cefb448f719, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  grids:
-  - unitId: 11101
-    gridData: {fileID: 11400000, guid: f7bb50619c8af0d46b5afda779d9c5af, type: 2}
-  - unitId: 11104
-    gridData: {fileID: 11400000, guid: e0ca5727671dcfe46bb656ee2db43d17, type: 2}
-  - unitId: 11107
-    gridData: {fileID: 11400000, guid: 3766ff9f7064b6e41a554b18a61dd4e1, type: 2}
-  - unitId: 11110
-    gridData: {fileID: 11400000, guid: a8561c5c9bf703340b2199abf2fdd5d4, type: 2}
-  - unitId: 11113
-    gridData: {fileID: 11400000, guid: 41d5abea7b83cc142b7387b6c0d8a43f, type: 2}
 --- !u!222 &6445794222994925957
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -197,14 +173,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.7686275, g: 0.7725491, b: 0.75294125, a: 1}
+  m_Color: {r: 0.20784315, g: 0.19607845, b: 0.20784315, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 7d21c192f13de4828b374c2626a80e53, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 7cef282321b214f1e9ae4109f814aafe, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -364,8 +340,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4282400832
-  m_fontColor: {r: 0.2509804, g: 0.2509804, b: 0.2509804, a: 1}
+    rgba: 4291348680
+  m_fontColor: {r: 0.7830189, g: 0.7830189, b: 0.7830189, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

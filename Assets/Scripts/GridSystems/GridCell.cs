@@ -88,7 +88,10 @@ public class GridCell : MonoBehaviour, IDroppable
                 }
             }
 
-            canDrop = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells());
+            if (gridUnit.GridData != null)
+            {
+                canDrop = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells());
+            }
         }
 
         var inventorySlot = draggable.GameObject.GetComponent<UnitInventorySlot>();
@@ -105,7 +108,10 @@ public class GridCell : MonoBehaviour, IDroppable
                 }
             }
 
-            canDrop = gridManager.CanPlaceUnit(GridPosition, inventorySlot.GridData.GetOccupiedCells());
+            if (inventorySlot.GridData != null)
+            {
+                canDrop = gridManager.CanPlaceUnit(GridPosition, inventorySlot.GridData.GetOccupiedCells());
+            }
         }
 
         var draggableUnitUi = draggable.GameObject.GetComponent<DraggableGridUnitUi>();
@@ -122,7 +128,10 @@ public class GridCell : MonoBehaviour, IDroppable
                 }
             }
 
-            canDrop = gridManager.CanPlaceUnit(GridPosition, draggableUnitUi.GridData.GetOccupiedCells());
+            if (draggableUnitUi.GridData != null)
+            {
+                canDrop = gridManager.CanPlaceUnit(GridPosition, draggableUnitUi.GridData.GetOccupiedCells());
+            }
         }
     }
 
