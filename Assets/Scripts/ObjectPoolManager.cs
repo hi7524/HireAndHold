@@ -4,6 +4,7 @@ using UnityEngine.Pool;
 
 public class ObjectPoolManager : MonoBehaviour
 {
+    [SerializeField] private FloatingTextSpawner floatingTextSpawner;
 
     // possible pooling objs:
     // 몬스터, 스킬, exp 아이템....
@@ -56,7 +57,14 @@ public class ObjectPoolManager : MonoBehaviour
     private void OnGetFromPool(GameObject obj)
     {
         obj.SetActive(true);
+
+        Enemy enemy = obj.GetComponent<Enemy>();
+        if (enemy != null)
+        {
+            enemy.SetFloatingTextSpawner(floatingTextSpawner);
+        }
     }
+
 
     private void OnReleasedFromPool(GameObject obj)
     {
