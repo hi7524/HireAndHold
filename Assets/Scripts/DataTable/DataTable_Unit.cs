@@ -58,4 +58,9 @@ public class DataTable_Unit : DataTable
         }
         return table[unitId];
     }
+
+    public IEnumerable<UnitData> GetAll()
+    {
+        return table.Values;
+    }
 }
