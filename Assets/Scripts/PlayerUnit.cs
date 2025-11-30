@@ -19,6 +19,13 @@ public class PlayerUnit
     private DataTable_HeroEnforce heroEnforceTable;
     private DataTable_HeroEnforceEffect heroEffectTable;
 
+    public UnitData BaseData => baseData;
+    public DataTable_NormalEnforce NormalTable => normalEnforceTable;
+    public DataTable_HeroEnforce HeroTable => heroEnforceTable;
+    public DataTable_HeroEnforceEffect HeroEffectTable => heroEffectTable;
+    public HeroSkillEffects SkillEffects => skillEffects;
+
+
     private HeroSkillEffects skillEffects = new HeroSkillEffects();
 
     // 임시 스킬들

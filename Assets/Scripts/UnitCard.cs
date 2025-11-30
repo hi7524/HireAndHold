@@ -8,19 +8,20 @@ public class UnitCard : MonoBehaviour
     public Image icon;
     public TMP_Text nameText;
 
-    private DeckData data;
-    private Action<DeckData> onClick;
+    private DeckUnitModel data;
 
-    public DeckData Data => data;
+    private Action<DeckUnitModel> onClick;
 
-    public void Init(DeckData unit)
+    public DeckUnitModel Data => data;
+
+    public void Init(DeckUnitModel unit)
     {
         data = unit;
         icon.sprite = unit.icon;
         nameText.text = unit.unitName;
     }
 
-    public void Setup(Action<DeckData> clickAction)
+    public void Setup(Action<DeckUnitModel> clickAction)
     {
         onClick = clickAction;
     }

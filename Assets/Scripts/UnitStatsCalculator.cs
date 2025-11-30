@@ -1,15 +1,40 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public static class UnitStatsCalculator
 {
-   public static DeckData GetFinalStats(int unitID)
+    public static PlayerUnit GetFinalStats(int unitId, UnitManager unitManager)
     {
-       return null;
+        return unitManager.GetPlayerUnit(unitId);
     }
 
-    public static DeckData GetNextLevelStats(int unitID)
+    public static PlayerUnit GetNextLevelStats(int unitId, UnitManager unitManager)
     {
-        
-        return null;
+        var u = unitManager.GetPlayerUnit(unitId);
+        if (u == null)
+        {
+            return null;
+        }
+
+        var clone = new PlayerUnit(
+            u.BaseData,
+            u.NormalTable,
+            u.HeroTable,
+            u.HeroEffectTable
+        );
+
+        for (int i = 0; i < u.NormalEnforceLevel; i++)
+        {
+            clone.AddNormalEnforceLevel();
+        }
+
+        for (int i = 0; i < u.HeroEnforceLevel; i++)
+        {
+            clone.AddHeroEnforceLevel();
+        }
+
+        clone.AddNormalEnforceLevel();
+
+        return clone;
     }
+
 }

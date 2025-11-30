@@ -6,41 +6,17 @@ public class DeckSlot : MonoBehaviour
     public Image icon;
     public Sprite emptySprite;
 
-    private DeckData committed;
-    private DeckData pending;
+    private DeckUnitModel committed;
 
-    private DeckControl deckControl;
+    private DeckUnitModel pending;
+    private DeckControl deck;
 
     public bool HasCommitted => committed != null;
     public bool HasPending => pending != null;
 
     public void SetDeckControl(DeckControl control)
     {
-        deckControl = control;
-    }
-
-    private void ApplyCommittedToUI()
-    {
-        if (committed != null)
-        {
-            icon.sprite = committed.icon;
-        }
-        else
-        {
-            icon.sprite = emptySprite;
-        }
-    }
-
-    private void ApplyPendingToUI()
-    {
-        if (pending != null)
-        {
-            icon.sprite = pending.icon;
-        }
-        else
-        {
-            icon.sprite = emptySprite;
-        }
+        deck = control;
     }
 
     public void BeginEdit()
@@ -49,40 +25,23 @@ public class DeckSlot : MonoBehaviour
         ApplyPendingToUI();
     }
 
-    public DeckData GetPending()
-    {
-        return pending; 
-    }
-
     public void CancelPending()
     {
         pending = committed;
         ApplyCommittedToUI();
     }
 
-    public void SetCommittedExternal(DeckData data)
+    public void SetPending(DeckUnitModel model)
     {
-        committed = data;
-        pending = null;
-        ApplyCommittedToUI();  
-    }
-
-    public void SetPending(DeckData unit)
-    {
-        if (pending != null && pending != committed)
-        {
-            deckControl?.NotifyUnitCleared(pending);
-        }
-
-        pending = unit;
+        pending = model;
         ApplyPendingToUI();
     }
 
     public void ClearPending()
     {
-        if (pending != null && pending != committed)
+        if (pending != null)
         {
-            deckControl?.NotifyUnitCleared(pending);
+            deck.NotifyUnitCleared(pending);
         }
 
         pending = null;
@@ -91,27 +50,38 @@ public class DeckSlot : MonoBehaviour
 
     public void CommitPending()
     {
-        if (committed != pending)
+        if (committed != null)
         {
-            if (committed != null)
-            {
-                deckControl?.NotifyUnitCleared(committed);
-            }
-
-            committed = pending;
+            deck.NotifyUnitCleared(committed);
         }
 
+        committed = pending;
         pending = null;
-        ApplyCommittedToUI();  
+        ApplyCommittedToUI();
     }
 
-    public DeckData GetCommitted()
+    public DeckUnitModel GetCommitted() => committed;
+    public DeckUnitModel GetPending() => pending;
+
+    public void SetCommittedExternal(DeckUnitModel model)
     {
-        return committed;
+        committed = model;
+        pending = null;
+        ApplyCommittedToUI();
+    }
+
+    void ApplyCommittedToUI()
+    {
+        icon.sprite = committed != null ? committed.icon : emptySprite;
+    }
+
+    void ApplyPendingToUI()
+    {
+        icon.sprite = pending != null ? pending.icon : emptySprite;
     }
 
     public void OnClick()
     {
-        deckControl?.OnSlotClicked(this);
+        deck.OnSlotClicked(this);
     }
 }
