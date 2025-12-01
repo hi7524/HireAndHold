@@ -22,6 +22,7 @@ public class UnitData
     public int UNIT_DESCRIPTION { get; set; }    // 유닛 설명 // StringTable과 연결 필요**
     public string PREFAB_NAME { get; set; }
     public string GRID_DATA { get; set; }        // 그리드 데이터 ScriptableObject 이름
+    public string PROJECTILE { get; set; }
 }
 
 public class DataTable_Unit : DataTable
