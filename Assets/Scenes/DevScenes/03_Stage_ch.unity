@@ -2674,11 +2674,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameManager: {fileID: 313655619}
+  stageManager: {fileID: 0}
   panelRoot: {fileID: 550362261}
   stageNameText: {fileID: 2101106663}
   expRewardText: {fileID: 974912852}
   goldRewardText: {fileID: 538669031}
   starImages: []
+  confirmButton: {fileID: 0}
 --- !u!114 &550362264
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5069,11 +5071,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameManager: {fileID: 313655619}
+  stageManager: {fileID: 0}
   panelRoot: {fileID: 1170488454}
   titleText: {fileID: 613273973}
   expRewardText: {fileID: 1899539370}
   goldRewardText: {fileID: 1321231187}
   messageText: {fileID: 955971811}
+  retryButton: {fileID: 0}
+  lobbyButton: {fileID: 0}
 --- !u!114 &1170488457
 MonoBehaviour:
   m_ObjectHideFlags: 0

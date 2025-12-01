@@ -24,13 +24,13 @@ public class LoadingSceneManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private string loadingSceneName = "Loading";
-    [SerializeField] private float minimumLoadingTime = 1f; 
+    [SerializeField] private float minimumLoadingTime = 1f;
 
-    private LoadingRequest currentRequest;
     private CancellationTokenSource cts;
 
     private void Awake()
     {
+        // 중복 방지만 유지
         if (instance != null && instance != this)
         {
             Destroy(gameObject);
@@ -43,7 +43,7 @@ public class LoadingSceneManager : MonoBehaviour
     /// <summary>
     /// 로딩 씬을 거쳐서 다른 씬으로 이동
     /// </summary>
-    public async void LoadSceneWithLoading(LoadingRequest request)
+    public async UniTask LoadSceneWithLoading(LoadingRequest request)
     {
         cts?.Cancel();
         cts?.Dispose();
@@ -65,11 +65,11 @@ public class LoadingSceneManager : MonoBehaviour
 
     private async UniTask LoadSceneWithLoadingAsync(LoadingRequest request, CancellationToken ct)
     {
-        currentRequest = request;
         Time.timeScale = 1f;
+
         // 1. 로딩 씬으로 이동
         await Addressables.LoadSceneAsync(loadingSceneName, LoadSceneMode.Single)
-    .ToUniTask(cancellationToken: ct);
+            .ToUniTask(cancellationToken: ct);
 
         // 2. 로딩 씬이 준비될 때까지 대기
         await UniTask.WaitUntil(() => LoadingSceneUI.Instance != null, cancellationToken: ct);
@@ -77,8 +77,8 @@ public class LoadingSceneManager : MonoBehaviour
         // 3. 최소 로딩 시간 보장
         float startTime = Time.time;
 
-        // 4. 실제 로딩 작업 수행
-        await ExecuteLoadingTasksAsync(ct);
+        // 4. 실제 로딩 작업 수행 - request를 파라미터로 전달
+        await ExecuteLoadingTasksAsync(request, ct);
 
         // 5. 최소 시간 확보
         float elapsedTime = Time.time - startTime;
@@ -88,19 +88,19 @@ public class LoadingSceneManager : MonoBehaviour
         }
 
         // 6. 타겟 씬으로 이동
-        await Addressables.LoadSceneAsync(request.targetSceneName, request.loadMode).ToUniTask(cancellationToken: ct);
+        await Addressables.LoadSceneAsync(request.targetSceneName, request.loadMode)
+            .ToUniTask(cancellationToken: ct);
 
         // 7. 완료 콜백
         request.onLoadingComplete?.Invoke();
-        currentRequest = null;
     }
 
     /// <summary>
     /// 로딩 작업 실행
     /// </summary>
-    private async UniTask ExecuteLoadingTasksAsync(CancellationToken ct)
+    private async UniTask ExecuteLoadingTasksAsync(LoadingRequest request, CancellationToken ct)
     {
-        if (currentRequest.tasks.Count == 0)
+        if (request.tasks == null || request.tasks.Count == 0)
         {
             Debug.LogWarning("[LoadingManager] 로딩 작업이 없습니다.");
             return;
@@ -108,18 +108,18 @@ public class LoadingSceneManager : MonoBehaviour
 
         // 전체 가중치 계산
         float totalWeight = 0f;
-        foreach (var task in currentRequest.tasks)
+        foreach (var task in request.tasks)
         {
             totalWeight += task.weight;
         }
 
         float currentProgress = 0f;
-Debug.Log($"[LoadingManager] {totalWeight} 시작");
+        Debug.Log($"[LoadingManager] 총 {request.tasks.Count}개 작업 시작");
+
         // 각 작업 실행
-        for (int i = 0; i < currentRequest.tasks.Count; i++)
+        for (int i = 0; i < request.tasks.Count; i++)
         {
-            var task = currentRequest.tasks[i];
-            
+            var task = request.tasks[i];
 
             // UI 업데이트
             if (LoadingSceneUI.Instance != null)
@@ -127,11 +127,24 @@ Debug.Log($"[LoadingManager] {totalWeight} 시작");
                 LoadingSceneUI.Instance.UpdateLoadingText(task.taskName);
             }
 
+            // 태스크 내부 진행률 계산
+            float taskStartProgress = currentProgress;
+            float taskEndProgress = currentProgress + (task.weight / totalWeight);
+
+            var progressReporter = new Progress<float>(taskProgress =>
+            {
+                float totalProgress = Mathf.Lerp(taskStartProgress, taskEndProgress, taskProgress);
+                if (LoadingSceneUI.Instance != null)
+                {
+                    LoadingSceneUI.Instance.UpdateProgress(totalProgress);
+                }
+            });
+
             // 작업 실행
-            await task.taskAction(ct);
+            await task.taskAction(ct, progressReporter);
 
             // 진행도 업데이트
-            currentProgress += task.weight / totalWeight;
+            currentProgress = taskEndProgress;
             if (LoadingSceneUI.Instance != null)
             {
                 LoadingSceneUI.Instance.UpdateProgress(currentProgress);
@@ -141,9 +154,22 @@ Debug.Log($"[LoadingManager] {totalWeight} 시작");
         }
     }
 
+    /// <summary>
+    /// 로딩 취소
+    /// </summary>
+    public void CancelLoading()
+    {
+        cts?.Cancel();
+    }
+
     private void OnDestroy()
     {
         cts?.Cancel();
         cts?.Dispose();
+        
+        if (instance == this)
+        {
+            instance = null;
+        }
     }
 }

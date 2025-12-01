@@ -31,7 +31,8 @@ public class StageManager : MonoBehaviour
         {
             await DataTableManager.InitAsync();
         }
-        CurrentStageId = 701;
+        CurrentStageId = PageSnap.SelectedStageId;
+        Debug.Log($"[StageManager] 초기 스테이지 ID 설정: {CurrentStageId}");
         gameManager.OnGameStart += () => StartStage(CurrentStageId);
 
         // MonsterSpawner 이벤트 구독

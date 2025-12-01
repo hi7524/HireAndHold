@@ -63,6 +63,11 @@ public class AuthManager : MonoBehaviour
         }
     }
 
+    public async UniTask WaitForInitializationAsync()
+    {
+        await UniTask.WaitUntil(() => isInitialized);
+    }
+
 
     private void OnAuthStateChanged(object sender, System.EventArgs eventArgrs)
     {

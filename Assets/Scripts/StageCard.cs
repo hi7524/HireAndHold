@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class StageCard : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public class StageCard : MonoBehaviour
     [Header("UI")]
     public GameObject lockOverlay;
     public Image stageImage;
-    public Text stageName;
+    public TextMeshProUGUI  stageName;
 
     private bool isSelected = false;
 
