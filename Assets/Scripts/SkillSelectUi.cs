@@ -3,7 +3,6 @@ using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
 
 public class SkillSelectUi : MonoBehaviour
 {
@@ -18,6 +17,9 @@ public class SkillSelectUi : MonoBehaviour
     [Header("Managers")]
     [SerializeField] private SkillManager skillManager;
     [SerializeField] private GameManager gameManager;
+
+    [Header("Skill Slot UI")]
+    [SerializeField] private SkillUiControl skillSlotUI;  // 스킬 사용 UI 슬롯들
 
     public bool isBossPriceActive = false;
 
@@ -187,6 +189,7 @@ public class SkillSelectUi : MonoBehaviour
 
 
         selectedSkillIndex = randomSkillIndices[cardIndex];
+        Debug.Log($"[SkillSelectUi] 스킬 카드 선택됨: CardIndex={cardIndex}, SkillIndex={selectedSkillIndex}");
 
 
 
@@ -213,27 +216,19 @@ public class SkillSelectUi : MonoBehaviour
             selectedSkillCard.SetFocus(false);
             selectedSkillCard = null;
         }
-
-
-        SetActiveCards(false);
-
-
+        
+        OnSkillSelected?.Invoke(selectedSkillIndex);
+        
         if (skillSelectPanel != null)
         {
             skillSelectPanel.SetActive(false);
         }
-
-        OnSkillSelected?.Invoke(selectedSkillIndex);
-
-
+        SetActiveCards(false);
         if (gameManager != null)
         {
             gameManager.ResumeGame();
         }
-        else
-        {
-            Debug.LogWarning("[SkillSelectUi] gameManager가 null입니다!");
-        }
+
     }
 
     private void SetActiveCards(bool value)

@@ -2,7 +2,6 @@
 
 public class SkillManager : MonoBehaviour
 {
-    
     [SerializeField] private SkillUiControl skillUi;
     [SerializeField] private PlayerSkillBase[] skills;
     [SerializeField] private SkillSelectUi skillSelectUi;
@@ -25,12 +24,14 @@ public class SkillManager : MonoBehaviour
         var selectedSkill = skills[skillIndex];
         skillUi.gameObject.SetActive(true);
         skillUi.AddSkill(selectedSkill, new Vector3(0,3,0));
+        Debug.Log($"[SkillManager] 스킬 선택됨:");
     }
 
     public int GetTotalSkillCount()
     {
         return skills.Length;
     }
+
     public int GetSkillID(int index)
     {
         if (index < 0 || index >= skills.Length)
