@@ -24,19 +24,6 @@ public class SkillCardUi : BaseCardUi
     // SkillSelectUi용 콜백
     public Action OnCardClickedCallback;
 
-
-    private void Awake()
-    {
-        // 초기 색상 설정
-        if (starIcons != null)
-        {
-            for (int i = 0; i < starIcons.Length; i++)
-            {
-                SetIconColor(starIcons[i], defaultColor);
-            }
-        }
-    }
-
     public void SetFocus(bool value)
     {
         isSelected = value;
@@ -67,7 +54,6 @@ public class SkillCardUi : BaseCardUi
         SkillData skillData = DataTableManager.SkillTable.Get(currentSkillId);
         if (skillData == null)
         {
-            Debug.LogError($"스킬 데이터 없음: {currentSkillId}");
             return;
         }
 
@@ -122,16 +108,6 @@ public class SkillCardUi : BaseCardUi
             return false;
 
         bool success = passiveSkillManager.AddOrUpgradePassiveSkill(currentSkillId);
-
-        if (success)
-        {
-            Debug.Log($"패시브 스킬 적용 완료: {currentSkillId}");
-        }
-        else
-        {
-            Debug.LogWarning("패시브 스킬 적용 실패");
-        }
-
         return success;
     }
 
@@ -152,14 +128,12 @@ public class SkillCardUi : BaseCardUi
         SkillData skillData = DataTableManager.SkillTable.Get(currentSkillId);
         if (skillData == null)
         {
-            Debug.LogError($"스킬 데이터 없음: {currentSkillId}");
             return;
         }
 
         EffectData effectData = DataTableManager.EffectTable.Get(skillData.SKILL_EFFECT1_ID);
         if (effectData == null)
         {
-            Debug.LogError($"이펙트 데이터 없음: {skillData.SKILL_EFFECT1_ID}");
             return;
         }
 
@@ -183,7 +157,6 @@ public class SkillCardUi : BaseCardUi
 
         if (string.IsNullOrEmpty(iconAddress))
         {
-            Debug.LogWarning("스킬 아이콘 주소가 비어있습니다.");
             return;
         }
 
@@ -198,14 +171,7 @@ public class SkillCardUi : BaseCardUi
         {
             skillIcon.sprite = sprite;
         }
-        else
-        {
-            Debug.LogError($"스킬 아이콘 로드 실패: [{iconAddress}] - Status: {iconHandle.Status}");
-            if (iconHandle.OperationException != null)
-            {
-                Debug.LogError($"Exception: {iconHandle.OperationException.Message}");
-            }
-        }
+       
     }
 
     private int GetStarLevelFromSkillId(int skillId)

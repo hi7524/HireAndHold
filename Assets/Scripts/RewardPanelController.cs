@@ -72,10 +72,6 @@ public class RewardPanelController : MonoBehaviour
             // SkillCardUi에 스킬 ID 설정
             warningRewardSlot.SetPassiveSkillId(skillId);
         }
-        else
-        {
-            Debug.LogWarning("[RewardPanelController] 획득 가능한 패시브 스킬이 없습니다.");
-        }
         
         ShowBox();
     }
@@ -88,7 +84,6 @@ public class RewardPanelController : MonoBehaviour
         
         if (passiveSkillManager == null)
         {
-            Debug.LogError("[RewardPanelController] PassiveSkillManager가 할당되지 않았습니다!");
             return;
         }
           
@@ -147,7 +142,6 @@ public class RewardPanelController : MonoBehaviour
             passiveSkillManager.AddOrUpgradePassiveSkill(skillId);
         }
         
-        Debug.Log($"[RewardBox] 패시브 보상 획득 완료: {currentRewardSkillIds.Count}개의 패시브 스킬");
         
         // 보스 보상이면 SkillSelectUi 열기
         if (currentRewardType == RewardType.Boss)
