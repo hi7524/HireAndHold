@@ -22,11 +22,6 @@ public class Unit : MonoBehaviour
     private Stat attackDamage;
     private Stat criticalRate;
     private Stat criticalDamage;
-    private float attackRange;
-    private float attackInterval;
-    private int unitSkill1ID;
-    private int unitSkill2ID;
-    private string unitIconID;
 
     // 유닛 프리팹
     private AsyncOperationHandle<GameObject> visualHandle;
@@ -57,7 +52,7 @@ public class Unit : MonoBehaviour
             poolManager = poolManagerObj.GetComponent<ObjectPoolManager>();
         }
 
-        passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
+        passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>(); // JCH: 프로토타입 이후 수정하기 **
     }
 
     private void OnEnable()
@@ -69,7 +64,7 @@ public class Unit : MonoBehaviour
     {
         attackTarget = FindNearestTarget();
 
-        if (attackTarget != null && Time.time >= lastAttackTime + attackInterval)
+        if (attackTarget != null && Time.time >= lastAttackTime + unitData.ATTACK_COOLTIME)
         {
             lastAttackTime = Time.time;
             Attack(attackTarget);
@@ -108,11 +103,6 @@ public class Unit : MonoBehaviour
             attackDamage = new Stat(unitData.ATTACK);
             criticalRate = new Stat(unitData.ATTACK_CRITICAL);
             criticalDamage = new Stat(unitData.CRITICAL_DAMAGE);
-            attackRange = unitData.ATTACK_RANGE;
-            attackInterval = unitData.ATTACK_COOLTIME;
-            unitSkill1ID = unitData.UNIT_SKILL1;
-            unitSkill2ID = unitData.UNIT_SKILL2;
-            unitIconID = unitData.UNIT_ICON;
 
             //  저장된 영구 강화 불러오기 예시
             // PlayerUpgradeData upgradeData = SaveManager.Instance.LoadUpgradeData();
@@ -180,10 +170,10 @@ public class Unit : MonoBehaviour
     // 유닛의 공격 사거리 내에서 가장 가까운 살아있는 적 탐색
     private Enemy FindNearestTarget()
     {
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, attackRange);
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, unitData.ATTACK_RANGE);
 
         Enemy nearest = null;
-        float minDis = attackRange;
+        float minDis = unitData.ATTACK_RANGE;
 
         foreach (var coll in colliders)
         {
@@ -214,9 +204,11 @@ public class Unit : MonoBehaviour
             visualAnimator.SetTrigger("Slash");
         }
 
-        GameObject projectileObj = poolManager.Get(projectileKey);
-        if (projectileObj == null) 
-            return;
+        GameObject projectileObj = poolManager.Get(unitData.PROJECTILE);
+        if (projectileObj == null)
+        {
+            projectileObj = poolManager.Get("TestProjectile"); // 테스트용            
+        }
 
         projectileObj.transform.position = transform.position;
         projectileObj.transform.rotation = Quaternion.identity;
@@ -259,7 +251,7 @@ public class Unit : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.DrawWireSphere(transform.position, unitData.ATTACK_RANGE);
     }
 
     // 자동 시전 스킬, 성급 업그레이드에 따라 추가될 스킬 목록 시전
