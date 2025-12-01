@@ -69,6 +69,7 @@ public class SkillUI : MonoBehaviour
     private void OnClick()
     {
         skill.TryUse(spawnPosition);
+        Debug.Log($"[SkillUI] 스킬 사용 시도: SkillID={skill.SkillID} at Position {spawnPosition}");
     }
 
     private void UpdateCooldown(float progress)

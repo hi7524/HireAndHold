@@ -57,7 +57,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
         {
             await UniTask.Yield();
         }
-        Debug.Log("asdf")   ;
+        isOnCoolTime = false;
         skillData = DataTableManager.Get<DataTable_Skill>(DataTableIds.Skill)?.Get(skillID);
 
         if (skillData != null)
@@ -89,7 +89,6 @@ public abstract class PlayerSkillBase : MonoBehaviour
             }
         }
         if (isOnCoolTime) return;
-        Debug.Log(damage);
         OnUse(spawnPoint);
         StartCooldown(); 
     }
@@ -147,6 +146,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
         if (effectPrefab != null)
         {
             GameObject effect = Instantiate(effectPrefab, position, Quaternion.identity);
+            Debug.Log($"[PlayerSkillBase] 이펙트 생성: {effectPrefab.name} at {position}");
             Destroy(effect, lifetime);
         }
     }

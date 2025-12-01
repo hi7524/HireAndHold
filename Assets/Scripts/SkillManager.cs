@@ -24,7 +24,6 @@ public class SkillManager : MonoBehaviour
         var selectedSkill = skills[skillIndex];
         skillUi.gameObject.SetActive(true);
         skillUi.AddSkill(selectedSkill, new Vector3(0,3,0));
-        Debug.Log($"[SkillManager] 스킬 선택됨:");
     }
 
     public int GetTotalSkillCount()
