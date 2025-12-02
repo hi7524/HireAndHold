@@ -86,7 +86,6 @@ public class StageClearPanelController : MonoBehaviour
         }
         
         string stageKey = stageId.ToString();
-        int score = exp;
         
         Debug.Log($"[StageClearPanel] 스테이지 {stageKey} 결과 저장 중 (클리어: {isCleared})");
         
@@ -95,27 +94,29 @@ public class StageClearPanelController : MonoBehaviour
             // 성공: 클리어 기록
             bool saveSuccess = await DatabaseManager.Instance.RecordStageClearAsync(
                 stageKey,
-                score,
+                exp,
                 clearTime,
                 stars
             );
-            
+
             if (saveSuccess)
             {
                 // 재화 지급
                 await DatabaseManager.Instance.AddGoldAsync(gold);
-                
-                // highestStage 갱신
-                int clearedStageIndex = stageId - 701;
+
+                // 경험치 지급
+                await DatabaseManager.Instance.AddExpAsync(exp);
+
+                // highestStage 갱신 (스테이지 ID로 저장)
                 var currentUser = DatabaseManager.Instance.CurrentUser;
-                
-                if (currentUser != null && clearedStageIndex >= currentUser.profile.highestStage)
+
+                if (currentUser != null && stageId >= currentUser.profile.highestStage)
                 {
-                    currentUser.profile.highestStage = clearedStageIndex + 1;
+                    currentUser.profile.highestStage = stageId + 1;  // 다음 스테이지 ID 저장
                     await DatabaseManager.Instance.SaveProfileAsync();
                     Debug.Log($"[StageClearPanel] 최고 스테이지 갱신: {currentUser.profile.highestStage}");
                 }
-                
+
                 Debug.Log("[StageClearPanel] 클리어 데이터 저장 완료");
             }
         }
@@ -163,22 +164,25 @@ public class StageClearPanelController : MonoBehaviour
     {
         Hide();
         Time.timeScale = 1f;
-        
+
         LoadingRequest request = new LoadingRequest("Lobby");
-        
-        // 클리어 데이터 저장 Task
+
+        // 클리어 데이터 저장 + 유저 데이터 갱신
         request.AddTask("클리어 데이터 저장", async (ct) =>
         {
+            // 1. Firebase에 저장
             await SaveStageResultAsync(
-                currentStageId, 
+                currentStageId,
                 true,  // isCleared
-                currentStars, 
-                currentGold, 
-                currentExp, 
+                currentStars,
+                currentGold,
+                currentExp,
                 currentClearTime
             );
-        }, weight: 1f);
-        
+
+            
+        }, weight: 2f);
+
         await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
 }
