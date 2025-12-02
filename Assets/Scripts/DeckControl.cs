@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class DeckPreset
 {
@@ -19,6 +21,7 @@ public class DeckControl : MonoBehaviour
     public GameObject detailedPanel;
     public List<Button> presetButtons;
     public UnitCard cardPrefab;
+    public UnitInfoUI unitInfoUI;
 
     private DataTable_Unit unitTable;
 
@@ -27,11 +30,9 @@ public class DeckControl : MonoBehaviour
     private List<UnitCard> unitCards = new();
     private Dictionary<int, DeckUnitModel> unitModelMap = new();
     private DeckPreset[] presets;
-
     private bool isEditing = false;
     private int activePresetIndex = 0;
 
-    private const string PREF_KEY = "deck_presets_v1";
 
     void Awake()
     {
@@ -66,7 +67,17 @@ public class DeckControl : MonoBehaviour
         unitTable = new DataTable_Unit();
         await unitTable.LoadAsync("UnitTable");
 
-        unitManager = new UnitManager(unitTable, null, null, null);
+        var normalTable = new DataTable_NormalEnforce();
+        await normalTable.LoadAsync("NormalEnforceTable");
+
+        var heroTable = new DataTable_HeroEnforce();
+        await heroTable.LoadAsync("HeroEnforceTable");
+
+        var heroEffectTable = new DataTable_HeroEnforceEffect();
+        await heroEffectTable.LoadAsync("HeroEnforceEffectTable");
+
+        unitManager = new UnitManager(unitTable, normalTable, heroTable, heroEffectTable);
+
 
         // 유닛 추가
         foreach (var kv in unitTable.RawTable)
@@ -80,6 +91,9 @@ public class DeckControl : MonoBehaviour
         CreateUnitCards();
         LoadPresets();
         LoadPreset(activePresetIndex);
+        unitInfoUI.SetUnitManager(unitManager);
+        Debug.Log("EnforceUI에 UnitManager 전달됨");
+
     }
 
     void Update()
@@ -145,32 +159,61 @@ public class DeckControl : MonoBehaviour
 
     void CreateUnitCards()
     {
-        foreach (var kv in unitManager.GetAllUnits())
+        foreach (int unitId in PlayData.selectedUnitIds)
         {
-            int id = kv.Key;
-            PlayerUnit pUnit = kv.Value;
-
-            UnitData data = unitTable.Get(id);
+            unitManager.AddUnit(unitId);
+            UnitData data = unitTable.Get(unitId);
+            PlayerUnit pUnit = unitManager.GetPlayerUnit(unitId);
 
             DeckUnitModel model = new DeckUnitModel
             {
-                unitId = id,
+                unitId = unitId,
                 unitName = data.NAME,
-                icon = Resources.Load<Sprite>(data.UNIT_ICON),
+                iconAddress = data.UNIT_ICON,   
                 rawData = data,
                 playerUnit = pUnit
             };
 
-            unitModelMap[id] = model;
+            Addressables.LoadAssetAsync<Sprite>(model.iconAddress).Completed += (handle) =>
+            {
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    model.icon = handle.Result;
+                }
+                else
+                {
+                    Debug.LogError($"아이콘 로드 실패: {model.iconAddress}");
+                }
 
-            UnitCard card = Instantiate(cardPrefab, unitListParent);
-            card.Init(model);
-            card.Setup(OnUnitCardClicked);
-            card.SetVisible(true);
+                UnitCard card = Instantiate(cardPrefab, unitListParent);
+                card.Init(model);
+                card.Setup(OnUnitCardClicked);
+                card.SetVisible(true);
 
-            unitCards.Add(card);
+                unitCards.Add(card);
+                model.iconAddress = data.UNIT_ICON;
+                unitModelMap[unitId] = model;
+
+            };
         }
     }
+
+
+    //void AutoFillDefaultUnits()
+    //{
+    //    var defaultUnits = new int[] { 11101, 11104, 11107, 11110, 11113 };
+
+    //    for (int i = 0; i < defaultUnits.Length && i < slots.Count; i++)
+    //    {
+    //        int id = defaultUnits[i];
+    //        if (unitModelMap.ContainsKey(id))
+    //        {
+    //            slots[i].SetCommittedExternal(unitModelMap[id]);
+    //        }
+    //    }
+    //}
+
+
     public void OnClickPresetButton(int index)
     {
         if (isEditing)
@@ -240,11 +283,19 @@ public class DeckControl : MonoBehaviour
 
         foreach (var slot in slots)
         {
+            var pending = slot.GetPending();
+
             slot.CancelPending();
+
+            if (pending != null)
+            {
+                NotifyUnitCleared(pending);
+            }
         }
 
         UpdateCompleteButton();
     }
+
 
     void OnUnitCardClicked(DeckUnitModel model)
     {
@@ -266,8 +317,12 @@ public class DeckControl : MonoBehaviour
             ExitEditModeIfEditing();
 
             detailedPanel.SetActive(true);
+            unitInfoUI.SetUnit(model.unitId);
+
+            Debug.Log("선택된 유닛 " + model.unitId);
         }
     }
+
 
 
     public void NotifyUnitAssigned(DeckUnitModel data)
@@ -317,22 +372,69 @@ public class DeckControl : MonoBehaviour
         {
             slots[i].CommitPending();
             presets[activePresetIndex].units[i] = slots[i].GetCommitted();
+            var committed = slots[i].GetCommitted();
+
+            if (committed != null)
+            {
+                committed.FixMissingAddress();
+            }
+
+            PlayData.selectedDeckUnitIds[i] = committed != null ? committed.unitId : 0;
+            PlayData.selectedDeckUnitIconAddresses[i] = committed != null ? committed.iconAddress : "";
         }
+
+
+        Debug.Log("저장돰" + string.Join(",", PlayData.selectedDeckUnitIds));
 
         SavePresets();
         ExitEditMode();
     }
 
+
+
     class SaveData { public int[] ids; }
 
     void SavePresets()
     {
-        
+        for (int i = 0; i < 5; i++)
+        {
+            var model = presets[activePresetIndex].units[i];
+
+            if (model != null)
+            {
+                PlayData.selectedDeckUnitIds[i] = model.unitId;
+                PlayData.selectedDeckUnitIconAddresses[i] = model.iconAddress;
+            }
+            else
+            {
+                PlayData.selectedDeckUnitIds[i] = 0;
+                PlayData.selectedDeckUnitIconAddresses[i] = "";                
+            }
+        }
+
+        Debug.Log(" wjwkd " + string.Join(", ", PlayData.selectedDeckUnitIds));
+        Debug.Log(" 아이콘  " + string.Join(", ", PlayData.selectedDeckUnitIconAddresses));
     }
+
+
 
     void LoadPresets()
     {
-        
+        DeckPreset preset = presets[activePresetIndex];
+
+        for (int i = 0; i < 5; i++)
+        {
+            int id = PlayData.selectedDeckUnitIds[i];
+
+            if (id != 0 && unitModelMap.ContainsKey(id))
+            {
+                preset.units[i] = unitModelMap[id];
+            }
+            else
+            {
+                preset.units[i] = null;
+            }
+        }
     }
 
     void ExitEditModeIfEditing()

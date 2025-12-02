@@ -7,7 +7,6 @@ public class DeckSlot : MonoBehaviour
     public Sprite emptySprite;
 
     private DeckUnitModel committed;
-
     private DeckUnitModel pending;
     private DeckControl deck;
 
@@ -22,18 +21,36 @@ public class DeckSlot : MonoBehaviour
     public void BeginEdit()
     {
         pending = committed;
+
+        if (pending != null)
+        {
+            pending.FixMissingAddress();
+        }
+
         ApplyPendingToUI();
     }
 
     public void CancelPending()
     {
         pending = committed;
+
+        if (pending != null)
+        {
+            pending.FixMissingAddress();
+        }
+
         ApplyCommittedToUI();
     }
 
     public void SetPending(DeckUnitModel model)
     {
         pending = model;
+
+        if (pending != null)
+        {
+            pending.FixMissingAddress();
+        }
+
         ApplyPendingToUI();
     }
 
@@ -55,8 +72,19 @@ public class DeckSlot : MonoBehaviour
             deck.NotifyUnitCleared(committed);
         }
 
+        if (pending != null)
+        {
+            pending.FixMissingAddress();  
+        }
+
         committed = pending;
         pending = null;
+
+        if (committed != null)
+        {
+            committed.FixMissingAddress();
+        }
+
         ApplyCommittedToUI();
     }
 
@@ -66,6 +94,12 @@ public class DeckSlot : MonoBehaviour
     public void SetCommittedExternal(DeckUnitModel model)
     {
         committed = model;
+
+        if (committed != null)
+        {
+            committed.FixMissingAddress();
+        }
+
         pending = null;
         ApplyCommittedToUI();
     }
