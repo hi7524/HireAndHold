@@ -126,7 +126,7 @@ public class DatabaseManager : MonoBehaviour
                 lastLoginTime = now,
                 createdAt = now,
                 totalPlayTime = 0,
-                highestStage = 0,
+                highestStage = 701,
                 totalPower = 0
             },
             currency = new UserCurrency
