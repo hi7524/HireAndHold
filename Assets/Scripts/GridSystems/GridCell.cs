@@ -1,5 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
+using Cysharp.Threading.Tasks;
 
 public class GridCell : MonoBehaviour, IDroppable
 {
@@ -142,7 +143,7 @@ public class GridCell : MonoBehaviour, IDroppable
         gridManager.ChangeOccupiedCellColor();
     }
 
-    public void OnDrop(IDraggable draggable)
+    public async void OnDrop(IDraggable draggable)
     {
         // 드롭 가능 상태가 아닐 경우 배치 불가
         if (!canDrop)
@@ -165,7 +166,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null)
                 {
-                    if (TryMergeUnits(existingUnit, gridUnit))
+                    if (await TryMergeUnits(existingUnit, gridUnit))
                     {
                         // 합성 성공 - 색상 업데이트
                         Debug.Log("머지");
@@ -220,7 +221,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null)
                 {
-                    if (TryMergeWithInventorySlot(existingUnit, inventorySlot))
+                    if (await TryMergeWithInventorySlot(existingUnit, inventorySlot))
                     {
                         // 합성 성공 - 색상 업데이트
                         Debug.Log("머지");
@@ -247,7 +248,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 return;
             }
 
-            newGridUnit.SetUnitID(inventorySlot.UnitId, inventorySlot.StarLevel);
+            await newGridUnit.SetUnitID(inventorySlot.UnitId, inventorySlot.StarLevel);
             newGridUnit.SetInventoryPlaceable(true);
 
             // 생성된 GridUnit을 배치
@@ -280,7 +281,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null)
                 {
-                    if (TryMergeWithUi(existingUnit, draggableUnitUi))
+                    if (await TryMergeWithUi(existingUnit, draggableUnitUi))
                     {
                         // 합성 성공 - UI 비활성화 및 색상 업데이트
                         Debug.Log("머지");
@@ -307,7 +308,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 return;
             }
 
-            newGridUnit.SetUnitID(draggableUnitUi.UnitId, draggableUnitUi.StarLevel);
+            await newGridUnit.SetUnitID(draggableUnitUi.UnitId, draggableUnitUi.StarLevel);
 
             // 레벨업 보상 유닛인 경우 GridManager를 통해 알림
             if (draggableUnitUi.DraggableUnitType == DraggableUnitType.LevelUp)
@@ -374,6 +375,11 @@ public class GridCell : MonoBehaviour, IDroppable
         placedObject = obj;
     }
 
+    private int CalculateUpgradedUnitId(int currentUnitId)
+    {
+        return currentUnitId + 101;
+    }
+
     // 합성 가능 여부 체크
     private bool CanMerge(GridUnit existingUnit, GridUnit draggingUnit)
     {
@@ -393,14 +399,14 @@ public class GridCell : MonoBehaviour, IDroppable
     }
 
     // 유닛 합성 처리
-    private bool TryMergeUnits(GridUnit existingUnit, GridUnit draggingUnit)
+    private async UniTask<bool> TryMergeUnits(GridUnit existingUnit, GridUnit draggingUnit)
     {
         if (!CanMerge(existingUnit, draggingUnit))
             return false;
 
         // 합성 처리 성급 업그레이드
         int newStarLevel = existingUnit.StarLevel + 1;
-        int newUnitId = existingUnit.UnitId + 101;
+        int newUnitId = CalculateUpgradedUnitId(existingUnit.UnitId);
 
         // 머지 이펙트 재생 - 파티클
         gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
@@ -408,7 +414,7 @@ public class GridCell : MonoBehaviour, IDroppable
         // 머지 이펙트 재생 - DOTween 애니메이션
         existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
 
-        existingUnit.SetUnitID(newUnitId, newStarLevel);
+        await existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         // 드래그 중이던 유닛 삭제 (2개가 1개로 합쳐지므로 카운트 감소)
         Destroy(draggingUnit.gameObject);
@@ -435,14 +441,14 @@ public class GridCell : MonoBehaviour, IDroppable
     }
 
     // DraggableGridUnitUi와 유닛 합성 처리
-    private bool TryMergeWithUi(GridUnit existingUnit, DraggableGridUnitUi draggableUnitUi)
+    private async UniTask<bool> TryMergeWithUi(GridUnit existingUnit, DraggableGridUnitUi draggableUnitUi)
     {
         if (!CanMergeWithUi(existingUnit, draggableUnitUi))
             return false;
 
         // 합성 처리: 성급 업그레이드
         int newStarLevel = existingUnit.StarLevel + 1;
-        int newUnitId = existingUnit.UnitId + 1;
+        int newUnitId = CalculateUpgradedUnitId(existingUnit.UnitId);
 
         // 머지 이펙트 재생 - 파티클
         gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
@@ -450,7 +456,7 @@ public class GridCell : MonoBehaviour, IDroppable
         // 머지 이펙트 재생 - DOTween 애니메이션
         existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
 
-        existingUnit.SetUnitID(newUnitId, newStarLevel);
+        await existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         return true;
     }
@@ -474,14 +480,14 @@ public class GridCell : MonoBehaviour, IDroppable
     }
 
     // UnitInventorySlot과 유닛 합성 처리
-    private bool TryMergeWithInventorySlot(GridUnit existingUnit, UnitInventorySlot inventorySlot)
+    private async UniTask<bool> TryMergeWithInventorySlot(GridUnit existingUnit, UnitInventorySlot inventorySlot)
     {
         if (!CanMergeWithInventorySlot(existingUnit, inventorySlot))
             return false;
 
         // 합성 처리: 성급 업그레이드
         int newStarLevel = existingUnit.StarLevel + 1;
-        int newUnitId = existingUnit.UnitId + 1;
+        int newUnitId = CalculateUpgradedUnitId(existingUnit.UnitId);
 
         // 머지 이펙트 재생 - 파티클
         gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
@@ -489,7 +495,7 @@ public class GridCell : MonoBehaviour, IDroppable
         // 머지 이펙트 재생 - DOTween 애니메이션
         existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
 
-        existingUnit.SetUnitID(newUnitId, newStarLevel);
+        await existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         return true;
     }
