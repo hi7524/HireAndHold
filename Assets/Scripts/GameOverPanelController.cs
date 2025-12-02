@@ -75,15 +75,24 @@ public class GameOverPanelController : MonoBehaviour
     {
         Hide();
         Time.timeScale = 1f;
-        
+
         LoadingRequest request = new LoadingRequest("Lobby");
-        
+
         // 실패 데이터 저장 Task
         request.AddTask("플레이 데이터 저장", async (ct) =>
         {
             await SaveStageFailDataAsync(currentStageId, currentGold, currentExp);
-        }, weight: 1f);
-        
+        }, weight: 0.5f);
+
+        request.AddTask("유저 데이터 로드", async (ct) =>
+        {
+            if (DatabaseManager.Instance != null && DatabaseManager.Instance.IsInitialized)
+            {
+                await DatabaseManager.Instance.LoadUserDataAsync();
+                Debug.Log("[GameOverPanel] 유저 데이터 갱신 완료");
+            }
+        }, weight: 0.5f);
+
         await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
     

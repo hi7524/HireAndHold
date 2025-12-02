@@ -301,6 +301,44 @@ public class DatabaseManager : MonoBehaviour
 
     #endregion
 
+    #region 경험치 및 레벨 관리
+
+    /// <summary>
+    /// 유저 경험치 증가 (트랜잭션)
+    /// </summary>
+    public async UniTask<bool> AddExpAsync(int amount)
+    {
+        string path = $"users/{UserId}/profile/exp";
+
+        bool success = await database.IncrementValueAsync(path, amount);
+
+        if (success)
+        {
+            CurrentUser.profile.exp += amount;
+
+            // 레벨업 체크 (간단한 공식: 레벨 * 100)
+            int expForNextLevel = CurrentUser.profile.level * 100;
+            while (CurrentUser.profile.exp >= expForNextLevel)
+            {
+                CurrentUser.profile.exp -= expForNextLevel;
+                CurrentUser.profile.level++;
+                expForNextLevel = CurrentUser.profile.level * 100;
+
+                Debug.Log($"[DB] 레벨업! 새 레벨: {CurrentUser.profile.level}");
+            }
+
+            // 레벨이 변경되었으면 프로필 저장
+            if (CurrentUser.profile.exp < amount)
+            {
+                await SaveProfileAsync();
+            }
+        }
+
+        return success;
+    }
+
+    #endregion
+
     #region 캐릭터 관리
 
     public async UniTask<bool> AddCharacterAsync(string characterId, int star = 1)

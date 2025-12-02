@@ -51,7 +51,7 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
 
         if (DatabaseManager.Instance != null && DatabaseManager.Instance.IsInitialized)
         {
-            unlockedStage = DatabaseManager.Instance.CurrentUser?.profile?.highestStage ??  701;
+            unlockedStage = DatabaseManager.Instance.CurrentUser?.profile?.highestStage ?? 701;
             Debug.Log($"[PageSnap] 유저 최고 스테이지: {unlockedStage}");
         }
         else
