@@ -48,8 +48,10 @@ public static class DataTableManager
             LoadTableAsync<DataTable_Skill>(DataTableIds.Skill),
             LoadTableAsync<DataTable_NormalEnforce>(DataTableIds.NormalEnforce),
             LoadTableAsync<DataTable_Effect>(DataTableIds.Effect),
-            // 다른 테이블들 추가
-            // LoadTableAsync<DataTable_Item>(DataTableIds.Item),
+            LoadTableAsync<DataTable_Item>(DataTableIds.Item),
+            LoadTableAsync<DataTable_Selling>(DataTableIds.Selling),
+            LoadTableAsync<DataTable_StageLevel>(DataTableIds.StageLevel),
+           
             // LoadTableAsync<DataTable_Character>(DataTableIds.Character),
         };
 
@@ -79,6 +81,9 @@ public static class DataTableManager
     public static DataTable_Skill SkillTable => Get<DataTable_Skill>(DataTableIds.Skill);
     public static DataTable_NormalEnforce NormalEnforceTable => Get<DataTable_NormalEnforce>(DataTableIds.NormalEnforce);
     public static DataTable_Effect EffectTable => Get<DataTable_Effect>(DataTableIds.Effect);
+    public static DataTable_Item ItemTable => Get<DataTable_Item>(DataTableIds.Item);
+    public static DataTable_Selling SellingTable => Get<DataTable_Selling>(DataTableIds.Selling);
+    public static DataTable_StageLevel StageLevelTable => Get<DataTable_StageLevel>(DataTableIds.StageLevel);
 
 
     public static T Get<T>(string id) where T : DataTable

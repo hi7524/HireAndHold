@@ -6,6 +6,7 @@ using DG.Tweening;
 
 public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHandler
 {
+    public static int SelectedStageId { get; set; } = 701;
     //drag setting
     public ScrollRect scrollRect;
     public RectTransform content;
@@ -47,6 +48,17 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
 
     private void Start()
     {
+
+        if (DatabaseManager.Instance != null && DatabaseManager.Instance.IsInitialized)
+        {
+            unlockedStage = DatabaseManager.Instance.CurrentUser?.profile?.highestStage ?? 701;
+            Debug.Log($"[PageSnap] 유저 최고 스테이지: {unlockedStage}");
+        }
+        else
+        {
+            Debug.LogWarning("[PageSnap] DatabaseManager 초기화 안됨. 기본값 사용");
+        }
+
         if (stageCardPrefab != null && content.childCount == 0)
         {
             CreateStageCards();
@@ -65,7 +77,7 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
         scrollRect.inertia = true;
         scrollRect.decelerationRate = 0.035f;
 
-        InitStages();
+        // InitStages();
 
         Canvas.ForceUpdateCanvases();
 
@@ -74,20 +86,92 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
         Canvas.ForceUpdateCanvases();
         CalculatePagePositions();
         SnapToPage(0, true);
+            if (playButton != null)
+            {
+                Button btn = playButton.GetComponent<Button>();
+                if (btn != null)
+                {
+                    btn.onClick.AddListener(OnPlayButtonClick);
+                }
+            }
     }
+
+    private async void OnPlayButtonClick()
+    {
+        StageCard selectedCard = stageCards[currentIndex];
+        
+        if (selectedCard.isLocked)
+        {
+            Debug.LogWarning("잠긴 스테이지입니다.");
+            return;
+        }
+        
+        SelectedStageId = selectedCard.stageIndex;
+        
+        // Stage 씬으로 이동
+        LoadingRequest request = new LoadingRequest("Stage");
+        await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
+    }
+    
+    private void OnDestroy()
+    {
+         if (playButton != null)
+        {
+            Button btn = playButton.GetComponent<Button>();
+            if (btn != null)
+            {
+                btn.onClick.RemoveListener(OnPlayButtonClick);
+            }
+        }
+    }
+
 
     private void CreateStageCards()
     {
+        var stageTable = DataTableManager.StageTable;
+        if (stageTable == null)
+        {
+            Debug.LogError("[PageSnap] StageTable을 찾을 수 없습니다.");
+            return;
+        }
+
         for (int i = 0; i < totalStages; i++)
         {
+            int stageId = i + 701;
+            StageData stageData = stageTable.Get(stageId);
+
+            if (stageData == null)
+            {
+                Debug.LogWarning($"[PageSnap] Stage ID {stageId} 데이터를 찾을 수 없습니다.");
+                continue;
+            }
+
+            // 카드 생성
             GameObject cardObj = Instantiate(stageCardPrefab, content);
-            cardObj.name = $"StageCard_{i + 1}";
+            cardObj.name = $"StageCard_{stageId}";
 
             StageCard card = cardObj.GetComponent<StageCard>();
-
-            if (stageDataList != null && i < stageDataList.Length)
+            if (card != null)
             {
-                card.ApplyData(stageDataList[i]);
+                // stageDataList가 있으면 UI 데이터 우선 사용
+                if (stageDataList != null && i < stageDataList.Length)
+                {
+                    card.ApplyData(stageDataList[i]);
+                }
+                else
+                {
+                    // StageDataList가 없으면 DataTable에서 이름만 가져오기
+                    card.stageName.text = stageData.STAGE_NAME;
+                    card.stageIndex = stageId;
+
+                    // 잠금 여부는 유저 데이터에서 확인
+                    bool isLocked = stageId > unlockedStage;
+                    card.SetLocked(isLocked);
+                    Debug.Log($"[PageSnap] Stage ID {stageId} 잠금 여부: {isLocked}");
+
+                     // TODO: stageImage는 Addressable로 로드하거나 리소스에서 가져오기
+                // 예: card.stageImage.sprite = await Addressables.LoadAssetAsync<Sprite>($"Stage_{i}").Task;
+                }
             }
         }
     }

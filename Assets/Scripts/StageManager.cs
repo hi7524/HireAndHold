@@ -31,7 +31,8 @@ public class StageManager : MonoBehaviour
         {
             await DataTableManager.InitAsync();
         }
-        CurrentStageId = 701;
+        CurrentStageId = PageSnap.SelectedStageId;
+        Debug.Log($"[StageManager] 초기 스테이지 ID 설정: {CurrentStageId}");
         gameManager.OnGameStart += () => StartStage(CurrentStageId);
 
         // MonsterSpawner 이벤트 구독
@@ -216,6 +217,21 @@ public class StageManager : MonoBehaviour
             new LoadingRequest("Stage")
         );
     }
+
+    /// <summary>
+    /// 디버그용: 스테이지 강제 클리어
+    /// </summary>
+    public void ForceCompleteStage()
+    {
+        Debug.Log("[StageManager] 강제 클리어 실행!");
+
+        // 남은 몬스터 수를 0으로 설정
+        RemainingMonsters = 0;
+
+        // 클리어 처리
+        CompleteStage();
+    }
+
     private void OnDestroy()
     {
         gameManager.OnGameStart -= () => StartStage(CurrentStageId);

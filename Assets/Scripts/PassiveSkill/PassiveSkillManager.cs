@@ -29,10 +29,10 @@ public class PassiveSkillManager : MonoBehaviour
     {
         skillType = PassiveSkillType.Damage;
         
-        if (skillId < 222070 || skillId > 222087)
+        if (skillId < 22070 || skillId > 22087)
             return false;
         
-        int offset = (skillId - 222070) % 6;
+        int offset = (skillId - 22070) % 6;
         skillType = (PassiveSkillType)(2206 + offset);
         return true;
     }
@@ -41,13 +41,11 @@ public class PassiveSkillManager : MonoBehaviour
     {
         if (!TryGetSkillType(skillId, out PassiveSkillType skillType))
         {
-            Debug.LogError($"[PassiveSkillManager] 유효하지 않은 스킬 ID: {skillId}");
             return false;
         }
         
         if (!skillGroups.ContainsKey(skillType))
         {
-            Debug.LogError($"[PassiveSkillManager] 존재하지 않는 스킬 타입: {skillType}");
             return false;
         }
         
@@ -59,12 +57,10 @@ public class PassiveSkillManager : MonoBehaviour
             {
                 RecalculateEffects();
                 OnPassiveSkillChanged?.Invoke();
-                Debug.Log($"[PassiveSkillManager] '{group.displayName}' ★{group.currentStar}으로 업그레이드!");
                 return true;
             }
             else
             {
-                Debug.LogWarning($"[PassiveSkillManager] '{group.displayName}'은(는) 이미 최대 레벨입니다.");
                 return false;
             }
         }
@@ -73,7 +69,6 @@ public class PassiveSkillManager : MonoBehaviour
             group.currentStar = 1;
             RecalculateEffects();
             OnPassiveSkillChanged?.Invoke();
-            Debug.Log($"[PassiveSkillManager] '{group.displayName}' 획득! ★1");
             return true;
         }
     }

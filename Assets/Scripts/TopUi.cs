@@ -86,11 +86,9 @@ public class TopUi : MonoBehaviour
         speedText.text = $"{speedLevels[currentIndex]}x";
     }
 
-    private  void OnLobbyButtonClick()
+    private async void OnLobbyButtonClick()
     {
- 
-        LoadingSceneManager.Instance.LoadSceneWithLoading(new LoadingRequest("Lobby"));
-
+        await LoadingSceneManager.Instance.LoadSceneWithLoading(new LoadingRequest("Lobby"));
     }
 
     private void OnDestroy()
