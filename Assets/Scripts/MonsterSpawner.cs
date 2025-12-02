@@ -59,21 +59,20 @@ public class MonsterSpawner : MonoBehaviour
     }
     // 모든 활성 몬스터 즉시 제거
     public void KillAllMonsters()
+{
+    var monstersToKill = new List<Enemy>(activeMonsters);
+
+    foreach (var monster in monstersToKill)
     {
-
-
-        var monstersToKill = new List<Enemy>(activeMonsters);
-
-        foreach (var monster in monstersToKill)
+        if (monster != null && monster.gameObject.activeSelf)
         {
-            if (monster != null && monster.gameObject.activeSelf)
-            {
-                monster.Die();
-            }
+            
+            monster.TakeDamage(999999f); 
         }
-
-        activeMonsters.Clear();
     }
+
+    activeMonsters.Clear();
+}
 
     // 보스 전용 스폰 (Monster 참조 반환)
     public Enemy SpawnBossById(int bossId)

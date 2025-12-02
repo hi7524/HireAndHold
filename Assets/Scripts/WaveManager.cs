@@ -141,7 +141,6 @@ public class WaveManager : MonoBehaviour
             OnAllWavesComplete?.Invoke();
             stageManager?.CompleteStage();
         }
-        stageUiManager.ShowBossRewardPanel(); // Test
     }
 
     private void SpawnWaveMonsters(WaveData wave)
