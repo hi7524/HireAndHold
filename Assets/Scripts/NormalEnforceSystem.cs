@@ -98,7 +98,7 @@ public class NormalEnforceSystem
             Debug.Log($"등급 상승 {unit.UnitRank}");
         }
 
-        Debug.Log($"강화  Level {unit.NormalEnforceLevel} / +ATK {data.AttackUp}");
+        //Debug.Log($"강화  Level {unit.NormalEnforceLevel} / +ATK {data.AttackUp}");
         return true;
     }
 
