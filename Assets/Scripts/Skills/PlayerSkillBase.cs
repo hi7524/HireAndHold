@@ -30,6 +30,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
     public event Action OnCooldownEnd;
 
     protected SkillEffectApplier skillEffectApplier;
+    public bool IsSkillDataLoaded => skillData != null;
 
     protected virtual void Awake()
     {
@@ -46,28 +47,30 @@ public abstract class PlayerSkillBase : MonoBehaviour
     {
         LoadSkillDataAsync().Forget();
     }
+    public void Init()
+    {
+        LoadSkillDataAsync().Forget();
+    }
     private async UniTaskVoid LoadSkillDataAsync()
     {
         while (!DataTableManager.IsInitialized)
         {
             await UniTask.Yield();
         }
-
-        // 데이터 로드
+        isOnCoolTime = false;
         skillData = DataTableManager.Get<DataTable_Skill>(DataTableIds.Skill)?.Get(skillID);
 
         if (skillData != null)
         {
             cooldown = skillData.SKILL_COOLTIME;
-            damage = skillData.SKILL_CRT_DMG;
-            applyStatusEffect = skillData.SKILL_CRT > 0;
+            damage = DataTableManager.EffectTable.Get(skillData.SKILL_EFFECT2_ID).EFFECT_VALUE;
             statusEffectType = (StatusEffectType)skillData.SKILL_EFFECT1_ID;
             statusEffectDuration = skillData.EFFECT_TIME1;
             statusEffectValue = 0; 
         }
     }
 
-    // 자식 클래스에서 구현할 메서드 // 장철희
+
     public abstract void OnUse(Vector3 spawnPoint);
 
     public void TryUse(Vector3 spawnPoint)
@@ -86,9 +89,8 @@ public abstract class PlayerSkillBase : MonoBehaviour
             }
         }
         if (isOnCoolTime) return;
-
         OnUse(spawnPoint);
-        // StartCooldown(); // testing purpose
+        StartCooldown(); 
     }
 
     public void StartCooldown()
@@ -115,8 +117,6 @@ public abstract class PlayerSkillBase : MonoBehaviour
     }
 
 
-    // 단일 타겟에게 상태이상 적용 // 장철희
-
     protected void ApplyStatusEffectToTarget(GameObject target)
     {
         if (!applyStatusEffect || skillEffectApplier == null || target == null)
@@ -124,8 +124,6 @@ public abstract class PlayerSkillBase : MonoBehaviour
 
         skillEffectApplier.ApplyStatusEffectToTarget(target, statusEffectType, statusEffectDuration, statusEffectValue);
     }
-
-    // 범위 내 모든 적에게 상태이상 적용 // 장철희
     protected void ApplyStatusEffectInRange(Vector3 center, float range)
     {
         if (!applyStatusEffect || skillEffectApplier == null)
@@ -133,7 +131,6 @@ public abstract class PlayerSkillBase : MonoBehaviour
         skillEffectApplier.ApplyStatusEffectInRange(center, range, statusEffectType, statusEffectDuration, statusEffectValue);
     }
 
-    // 가장 가까운 적에게 상태이상 적용 // 장철희
 
     protected void ApplyStatusEffectToNearest(Vector3 position)
     {
@@ -149,6 +146,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
         if (effectPrefab != null)
         {
             GameObject effect = Instantiate(effectPrefab, position, Quaternion.identity);
+            Debug.Log($"[PlayerSkillBase] 이펙트 생성: {effectPrefab.name} at {position}");
             Destroy(effect, lifetime);
         }
     }

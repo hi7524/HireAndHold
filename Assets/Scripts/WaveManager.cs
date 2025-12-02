@@ -47,6 +47,7 @@ public class WaveManager : MonoBehaviour
         completedWaveNums.Clear(); // 초기화
 
         RegisterWaveEvents();
+        Debug.Log($"[WaveManager] Stage {stageId} 웨이브 초기화 완료. 총 웨이브 수: {TotalWaves}");
     }
 
 
@@ -54,25 +55,25 @@ public class WaveManager : MonoBehaviour
     {
         foreach (var wave in currentStageWaves)
         {
-            // if (wave.WAVE_TYPE == 2)
-            // {
-            //     int warningTime = wave.WAVE_START_T - 5; // 5초 전
-            //     if (warningTime >= 0)
-            //     {
-            //         int warnMinutes = warningTime / 60;
-            //         int warnSeconds = warningTime % 60;
+            if (wave.WAVE_TYPE == 2)
+            {
+                int warningTime = wave.WAVE_START_T - 5; // 5초 전
+                if (warningTime >= 0)
+                {
+                    int warnMinutes = warningTime / 60;
+                    int warnSeconds = warningTime % 60;
 
-            //         // 클로저 캡처 방지
-            //         WaveData currentWave = wave;
+                    // 클로저 캡처 방지
+                    WaveData currentWave = wave;
 
-            //         var warningEvent = gameManager.AddTimeEvent(warnMinutes, warnSeconds, () =>
-            //         {
-            //             Debug.Log($"[WaveManager] 워닝 패널 표시! 시간: {warnMinutes}:{warnSeconds}");
-            //             stageUiManager.ShowWarningPanel();
-            //         });
-            //         registeredEvents.Add(warningEvent);
-            //     }
-            // }
+                    var warningEvent = gameManager.AddTimeEvent(warnMinutes, warnSeconds, () =>
+                    {
+                        Debug.Log($"[WaveManager] 워닝 패널 표시! 시간: {warnMinutes}:{warnSeconds}");
+                        stageUiManager.ShowWarningPanel();
+                    });
+                    registeredEvents.Add(warningEvent);
+                }
+            }
 
             // 웨이브 시작 이벤트 등록
             int startMinutes = wave.WAVE_START_T / 60;
@@ -114,6 +115,7 @@ public class WaveManager : MonoBehaviour
 
     private void StartWave(WaveData wave)
     {
+        Debug.Log($"[WaveManager] StartWave: WAVE_NUM={wave.WAVE_NUM}, TYPE={wave.WAVE_TYPE}");
         CurrentWaveNum = wave.WAVE_NUM;
         OnWaveStart?.Invoke(wave.WAVE_NUM);
         SpawnWaveMonsters(wave);
@@ -137,10 +139,9 @@ public class WaveManager : MonoBehaviour
         if (completedWaves >= TotalWaves)
         {
             OnAllWavesComplete?.Invoke();
-
-
             stageManager?.CompleteStage();
         }
+        stageUiManager.ShowBossRewardPanel(); // Test
     }
 
     private void SpawnWaveMonsters(WaveData wave)
@@ -155,20 +156,20 @@ public class WaveManager : MonoBehaviour
         // 일반 몬스터 스폰
         if (wave.SPAWN_MON1_ID > 0 && wave.MON1_COUNT > 0)
         {
-            SpawnMonsters(wave.SPAWN_MON1_ID, wave.MON1_COUNT, wave.WAVE_SPEED, wave.WAVE_START_T, wave.WAVE_END_T);
+            SpawnMonsters(wave.SPAWN_MON1_ID, wave.MON1_COUNT, wave.WAVE_START_T, wave.WAVE_END_T);
         }
 
         if (wave.SPAWN_MON2_ID > 0 && wave.MON2_COUNT > 0)
         {
-            SpawnMonsters(wave.SPAWN_MON2_ID, wave.MON2_COUNT, wave.WAVE_SPEED, wave.WAVE_START_T, wave.WAVE_END_T);
+            SpawnMonsters(wave.SPAWN_MON2_ID, wave.MON2_COUNT, wave.WAVE_START_T, wave.WAVE_END_T);
         }
     }
 
 
-    private void SpawnMonsters(int monsterId, int count, float waveSpeed, int startTime, int endTime)
+    private void SpawnMonsters(int monsterId, int count, int startTime, int endTime)
     {
         float duration = endTime - startTime;
-        float interval = duration / count / waveSpeed;
+        float interval = duration / count ;
 
         for (int i = 0; i < count; i++)
         {

@@ -64,6 +64,7 @@ public void OnSkillBTN2()
     }
     private void TestSkill(int index, string skillName)
     {
+
         if (index < 0 || index >= skills.Length)
         {
             Debug.LogWarning($"[SkillTester] 스킬 슬롯 {index}가 비어있습니다!");
@@ -71,6 +72,7 @@ public void OnSkillBTN2()
         }
 
         PlayerSkillBase skill = skills[index];
+        skill.Init();
         if (skill == null)
         {
             Debug.LogWarning($"[SkillTester] {skillName} 스킬이 할당되지 않았습니다!");
@@ -78,7 +80,7 @@ public void OnSkillBTN2()
         }
 
         Vector3 usePosition = spawnPoint != null ? spawnPoint.position : transform.position;
-
+        
         Debug.Log($"[SkillTester] {skillName} 테스트 발동! (키: {index + 1})");
         skill.TryUse(usePosition);
     }

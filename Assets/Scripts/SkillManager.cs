@@ -2,7 +2,6 @@
 
 public class SkillManager : MonoBehaviour
 {
-    
     [SerializeField] private SkillUiControl skillUi;
     [SerializeField] private PlayerSkillBase[] skills;
     [SerializeField] private SkillSelectUi skillSelectUi;
@@ -31,6 +30,7 @@ public class SkillManager : MonoBehaviour
     {
         return skills.Length;
     }
+
     public int GetSkillID(int index)
     {
         if (index < 0 || index >= skills.Length)
@@ -40,30 +40,7 @@ public class SkillManager : MonoBehaviour
         }
         return skills[index].SkillID;
     }
-    // private void TestUseSkill(int skillIndex)
-    // {
-    //     if (skillIndex < 0 || skillIndex >= skills.Length)
-    //     {
-    //         Debug.LogWarning($"[SkillManager] 잘못된 스킬 인덱스: {skillIndex}");
-    //         return;
-    //     }
-
-    //     var skill = skills[skillIndex];
-    //     if (skill == null)
-    //     {
-    //         Debug.LogWarning($"[SkillManager] 스킬 슬롯 {skillIndex}이(가) 비어있습니다!");
-    //         return;
-    //     }
-
-    //     Vector3 usePosition = spawnPoint != null ? spawnPoint.position : transform.position;
-        
-    //     skill.TryUse(usePosition);
-    // }
-
-    // public void UseSkillByIndex(int skillIndex)
-    // {
-    //     TestUseSkill(skillIndex);
-    // }
+    
     private void OnDestroy()
     {
         skillSelectUi.OnSkillSelected -= HandleSkillSelected;

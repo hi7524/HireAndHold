@@ -115,26 +115,25 @@ public class GameInitializer : MonoBehaviour
         Debug.Log("[GameInitializer] 로비 씬 로딩 시작");
         LoadingRequest request = new LoadingRequest("Lobby");
 
-
-        // request.AddTask("Load Game Resources", async (ct) =>
-        // {
-        //     // 리소스 로드 시뮬레이션
-        //     await DatabaseManager.Instance.ReadPlayerDataAsync(AuthManager.Instance.UserId);
-        // }, weight: 0.7f);
-
-        // 예시: 데이터 초기화 작업 추가
-        request.AddTask("Initialize Game Data", async (ct) =>
+        // 데이터 테이블 로드
+        request.AddTask("데이터 테이블 로드", async (ct) =>
         {
-            // 데이터 초기화 시뮬레이션
             await DataTableManager.InitAsync();
         }, weight: 0.3f);
+
+        // 유저 데이터 로드
+        request.AddTask("유저 데이터 로드", async (ct) =>
+        {
+            await DatabaseManager.Instance.WaitForInitializationAsync();
+            await DatabaseManager.Instance.LoadUserDataAsync();
+        }, weight: 0.7f);
 
         request.onLoadingComplete = () =>
         {
             Debug.Log("로비 씬 로딩 완료!");
         };
 
-        LoadingSceneManager.Instance.LoadSceneWithLoading(request);
+        await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
 
     private void ShowLoginScreen()

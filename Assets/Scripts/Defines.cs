@@ -13,6 +13,10 @@ public static class DataTableIds
     public static readonly string HeroEnforce = "HeroEnforceTable";
     public static readonly string HeroEnforceEffect = "HeroEnforceEffectTable";
     public static readonly string Effect = "EffectTable";
+    public static readonly string Item = "ItemTable";
+    public static readonly string Selling = "SellingTable";
+    public static readonly string StageLevel = "StageLevelTable";
+
 }
 
 public static class Tags

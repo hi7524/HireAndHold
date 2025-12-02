@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -16,12 +17,13 @@ public class PlayerExperience : MonoBehaviour
     public event Action OnLevelUp;
 
     private float curPlayerExp;
-    private float expRequired = 15;
-    private float expGrowthRate = 1.2f;
+    private float expRequired;  // 초기값 없이 선언
 
     private PassiveSkillManager passiveSkillManager;
+    
 
-    private void Start()
+
+    private async UniTaskVoid Start()
     {
         Level = 1;
         curPlayerExp = 0f;
@@ -29,15 +31,34 @@ public class PlayerExperience : MonoBehaviour
         UpdateLevelTextUI();
         expBar.value = 0f;
 
-       
+        await DataTableManager.InitAsync();
+        UpdateExpRequired();
         passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
+
+    }
+
+    private void UpdateExpRequired()
+    {
+        // 다음 레벨 데이터 가져오기
+        var nextLevelData = DataTableManager.StageLevelTable.GetByLevel(Level + 1);
+
+        if (nextLevelData != null)
+        {
+            expRequired = nextLevelData.STAGE_EXP_NEED;
+        }
+        else
+        {
+            // 최대 레벨 도달 시 (레벨 50 이후)
+            Debug.LogWarning($"[PlayerExperience] 레벨 {Level}은 최대 레벨입니다.");
+            expRequired = float.MaxValue;
+        }
     }
 
     public void AddExp(int amount)
     {
         float finalAmount = amount;
         float bonusPercent = 0f;
-        
+
         if (passiveSkillManager != null)
         {
             PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
@@ -46,11 +67,11 @@ public class PlayerExperience : MonoBehaviour
         }
 
         curPlayerExp += finalAmount;
-        
+
         AnimateExpBar();
     }
 
-    
+
     public void Cheat_LevelUp()
     {
         LevelUp();
@@ -79,11 +100,10 @@ public class PlayerExperience : MonoBehaviour
     {
         Level++;
         curPlayerExp -= expRequired;
-        expRequired *= expGrowthRate;
+        UpdateExpRequired();
         OnLevelUp?.Invoke();
-
         UpdateLevelTextUI();
-        expBar.value = 0f; // 경험치바 리셋
+        expBar.value = 0f;
     }
 
     private void UpdateLevelTextUI()
