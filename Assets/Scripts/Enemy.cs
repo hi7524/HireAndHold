@@ -133,7 +133,7 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-        // 스턴 상태일 때는 움직임과 공격을 모두 정지 // 장철희
+       
         if (isStunned)
         {
             return;
@@ -262,7 +262,7 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-        if (floatingTextSpawner != null)
+        if (floatingTextSpawner != null && damage < 999999f)
         {
             Vector3 pos = transform.position + Vector3.up * 0.3f;
             floatingTextSpawner.SpawnText(pos, damage.ToString());

@@ -6,7 +6,7 @@ using DG.Tweening;
 public class Experience : MonoBehaviour
 {
     [SerializeField] float moveTime = 5f;
-    [SerializeField] private int expAmount = 5;
+    [SerializeField] private int expAmount = 10;
 
     private ExperienceCollector expCollector;
     private bool isMoving = false;

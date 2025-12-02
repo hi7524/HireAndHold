@@ -115,6 +115,7 @@ public class RewardPanelController : MonoBehaviour
     {
         boxRoot.SetActive(true);
         rewardDisplayPanel.SetActive(false);
+        confirmButton.gameObject.SetActive(false);
         isBoxOpened = false;
         boxButton.interactable = true; // 버튼 다시 활성화
     }
@@ -123,12 +124,13 @@ public class RewardPanelController : MonoBehaviour
     private void OnBoxClick()
     {
         if (isBoxOpened) return;
-        
+
         isBoxOpened = true;
         boxButton.interactable = false;
-        
+
         // 상자 열리고 보상 표시
         rewardDisplayPanel.SetActive(true);
+        confirmButton.gameObject.SetActive(true);
     }
     
 
