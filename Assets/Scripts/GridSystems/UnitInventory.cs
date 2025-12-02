@@ -15,11 +15,13 @@ public class UnitInventory : MonoBehaviour, IDroppable
     [SerializeField] private DragManager dragManager;
     [SerializeField] private StageUiManager uiManager;
     [SerializeField] private GridManager gridManager;
+    [Space]
+    [SerializeField] private LevelUpRewardController levelupController; // 임시 나중에 cahedData 한 곳으로 모으도록 수정하기 **
 
     private const string RewardUnitBlockedMsg = "레벨업 보상 유닛은 즉시 배치해야 합니다!";
     private const string MinUnitRequiredMsg = "최소 1개의 유닛은 배치되어야 합니다!";
 
-    private const int MaxCapacity = 16;
+    private const int MaxCapacity = 32;
     private const int SellCost = 25; // 테스트용 **
 
     private List<int> ownedUnitIds = new List<int>();
@@ -34,9 +36,9 @@ public class UnitInventory : MonoBehaviour, IDroppable
     async UniTaskVoid Start()
     {
         InitializeSlots();
+        UpdateAllSlotsUi();
         await DataTableManager.InitAsync();
         await CacheAllGridData();
-        UpdateAllSlotsUi();
     }
 
     private void OnEnable()
@@ -114,6 +116,24 @@ public class UnitInventory : MonoBehaviour, IDroppable
         if (gridDataCache.TryGetValue(unitId, out var gridData))
         {
             slots[index].UpdatePreviewImages(gridData);
+        }
+
+        // levelupController와 SpriteCache 유효성 검사
+        if (levelupController != null &&
+            levelupController.SpriteCache != null &&
+            levelupController.SpriteCache.TryGetValue(unitId, out var sprite))
+        {
+            slots[index].UpdateUnitSprite(sprite);
+        }
+        else
+        {
+            bool hasSpriteCache = levelupController != null && levelupController.SpriteCache != null;
+            bool hasUnitInCache = hasSpriteCache && levelupController.SpriteCache.ContainsKey(unitId);
+
+            Debug.LogWarning($"[UnitInventory] UnitID {unitId}의 스프라이트를 찾을 수 없습니다. " +
+                $"levelupController null: {levelupController == null}, " +
+                $"SpriteCache null: {!hasSpriteCache}, " +
+                $"캐시에 존재: {hasUnitInCache}");
         }
 
         slots[index].UpdateUi();
@@ -265,7 +285,7 @@ public class UnitInventory : MonoBehaviour, IDroppable
     // 드롭 가능 여부 확인
     public bool CanDrop(IDraggable draggable)
     {
-        // draggableUnitUI는 드롭할 수 없음
+        // DraggableGridUnitUi는 인벤토리에 올릴 수 없음 (이미 UI에 있는 것이므로)
         var draggableUnitUi = draggable.GameObject.GetComponent<DraggableGridUnitUi>();
         if (draggableUnitUi != null)
             return false;
@@ -291,20 +311,13 @@ public class UnitInventory : MonoBehaviour, IDroppable
         return CanAddUnit();
     }
 
-    // 드롭 처리 (GridUnit 또는 UnitInventorySlot)
+    // 드롭 처리 (GridUnit만 가능)
     public void OnDrop(IDraggable draggable)
     {
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
         {
             HandleGridUnitDrop(gridUnit);
-            return;
-        }
-
-        var inventorySlot = draggable.GameObject.GetComponent<UnitInventorySlot>();
-        if (inventorySlot != null)
-        {
-            HandleInventorySlotDrop(inventorySlot);
             return;
         }
     }
@@ -319,12 +332,6 @@ public class UnitInventory : MonoBehaviour, IDroppable
         // 그리드에서 인벤토리로 이동 시 카운트 감소
         if (gridManager != null)
             gridManager.DecrementUnitCount();
-    }
-
-    // UnitInventorySlot 드롭 처리
-    private void HandleInventorySlotDrop(UnitInventorySlot inventorySlot)
-    {
-        inventorySlot.OnDropFailed();
     }
 
     // 드롭 애니메이션 재생

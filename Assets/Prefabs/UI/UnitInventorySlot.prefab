@@ -89,7 +89,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.7735849, g: 0.7735849, b: 0.7735849, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -118,6 +118,7 @@ GameObject:
   - component: {fileID: 4893417052309515494}
   - component: {fileID: 5675461725487049538}
   - component: {fileID: 1679972663638351980}
+  - component: {fileID: 4212190462925239285}
   m_Layer: 5
   m_Name: UnitInventorySlot
   m_TagString: Untagged
@@ -197,10 +198,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62fe5f2a2813e7b49a249e145a2635c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  unitImg: {fileID: 5787823131707336928}
+  unitSprite: {fileID: 5787823131707336928}
   nameText: {fileID: 5743220146733382320}
+--- !u!114 &4212190462925239285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6724901323638103062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00e956722a406ab4ea0bf11dc7d655fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  unitImg: {fileID: 5787823131707336928}
   previewObjTrans: {fileID: 7584952920860824007}
-  cellUISize: 60
 --- !u!1 &7707240312075302058
 GameObject:
   m_ObjectHideFlags: 0

@@ -33,7 +33,7 @@ public class LevelUpRewardController : MonoBehaviour
 
     private Dictionary<int, UnitGridData> gridDataCache = new Dictionary<int, UnitGridData>();
     private Dictionary<int, Sprite> spriteCache = new Dictionary<int, Sprite>();
-
+    public Dictionary<int, Sprite> SpriteCache => spriteCache; // 테스트용**
 
     // 초기 세팅
     private async void Start()
