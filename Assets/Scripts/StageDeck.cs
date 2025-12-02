@@ -5,47 +5,63 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class StageDeck : MonoBehaviour
 {
-    public Image[] slotImages;   
-    public Sprite emptySprite;      
+    public Image[] slotImages;
+    public Sprite emptySprite;
+
     private DataTable_Unit unitTable;
+    private bool isInitialized = false;
 
     async void Start()
     {
+        await DatabaseManager.Instance.WaitForInitializationAsync();
+
         unitTable = new DataTable_Unit();
         await unitTable.LoadAsync("UnitTable");
 
+        isInitialized = true;
         Init();
     }
 
-    public void Init()
+
+    public async void Init()
     {
+        if (!isInitialized) return;
+
+        int preset = PlayData.currentSelectedPreset;
+        Debug.Log("[StageDeck] Using Preset = " + preset);
+
         for (int i = 0; i < slotImages.Length; i++)
         {
-            int index = i;
+            int unitId = PlayData.selectedDeckUnitIds[preset, i];
+            Debug.Log("[StageDeck] slot " + i + " = " + unitId);
 
-            string address = PlayData.selectedDeckUnitIconAddresses[index];
-
-
-            if (string.IsNullOrEmpty(address))
+            if (unitId == 0)
             {
-                slotImages[index].sprite = emptySprite;
+                slotImages[i].sprite = emptySprite;
                 continue;
             }
 
-            Addressables.LoadAssetAsync<Sprite>(address).Completed += (handle) =>
+            UnitData data = unitTable.Get(unitId);
+            if (data == null || string.IsNullOrEmpty(data.UNIT_ICON))
             {
+                slotImages[i].sprite = emptySprite;
+                continue;
+            }
 
-                if (handle.Status == AsyncOperationStatus.Succeeded)
-                {
-                    slotImages[index].sprite = handle.Result;
-                }
-                else
-                {
-                    slotImages[index].sprite = emptySprite;
-                }
-            };
+            string address = data.UNIT_ICON;
+
+            // 🟩 Addressables 로딩을 await로 기다림
+            var handle = Addressables.LoadAssetAsync<Sprite>(address);
+            Sprite icon = await handle.Task;
+
+            slotImages[i].sprite = icon != null ? icon : emptySprite;
         }
     }
 
 
+    public void Refresh()
+    {
+        if (!isInitialized) return;
+        Init();
+    }
 }
