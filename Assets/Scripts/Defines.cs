@@ -36,6 +36,7 @@ public static class AudioMixerParams
 public static class AnimParams
 {
     public static readonly int IsActive = Animator.StringToHash("IsActive");
+    public static readonly int Slash = Animator.StringToHash("Slash");
 }
 
 public static class GameConstants

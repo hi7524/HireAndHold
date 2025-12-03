@@ -211,7 +211,7 @@ public class Unit : MonoBehaviour
         // 공격 애니메이션 재생
         if (visualAnimator != null)
         {
-            visualAnimator.SetTrigger("Slash");
+            visualAnimator.SetTrigger(AnimParams.Slash);
         }
 
         GameObject projectileObj = poolManager.Get(unitData.PROJECTILE);

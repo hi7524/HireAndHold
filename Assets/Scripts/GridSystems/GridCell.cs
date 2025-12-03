@@ -172,6 +172,9 @@ public class GridCell : MonoBehaviour, IDroppable
             Physics2D.SyncTransforms(); // Collider2D 위치 동기화
             placedObject = draggable.GameObject;
 
+            // Sorting Order 업데이트
+            UpdateUnitSortingOrder(placedObject);
+
             gridUnit.SetCurrentGridCell(this);
 
             // GridManager에 그리드 정보 전달
@@ -240,11 +243,10 @@ public class GridCell : MonoBehaviour, IDroppable
 
             // 생성된 GridUnit을 배치
             placedObject = newGridUnit.GameObject;
-            var unit = placedObject.GetComponent<Unit>();
-            if (unit != null)
-                unit.SetSortingOrder(-GridPosition.y);
-        
-            
+
+            // Sorting Order 업데이트
+            UpdateUnitSortingOrder(placedObject);
+
             newGridUnit.SetCurrentGridCell(this);
 
             // GridManager에 그리드 정보 전달
@@ -385,5 +387,18 @@ public class GridCell : MonoBehaviour, IDroppable
         await existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         return true;
+    }
+
+    // Sorting Order 업데이트
+    private void UpdateUnitSortingOrder(GameObject unitObject)
+    {
+        if (unitObject == null)
+            return;
+
+        var unit = unitObject.GetComponent<Unit>();
+        if (unit != null)
+        {
+            unit.SetSortingOrder(-GridPosition.y);
+        }
     }
 }
