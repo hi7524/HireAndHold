@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
@@ -90,6 +90,8 @@ public class DatabaseManager : MonoBehaviour
             Debug.Log($"[DB] 신규 유저 저장 결과: {saveResult}");
         }
 
+        SyncPresetsToPlayData();
+
         return CurrentUser;
     }
 
@@ -144,24 +146,104 @@ public class DatabaseManager : MonoBehaviour
             settings = new UserSettings()
         };
 
-        // 기본 캐릭터
-        userData.characters["char_001"] = new OwnedCharacter("char_001", 1);
+        int[] initialUnitIds = { 11101, 11104, 11107, 11110, 11113 };
 
-        // 파티 프리셋 5개
+        foreach (int id in initialUnitIds)
+        {
+            string key = id.ToString();
+            if (!userData.characters.ContainsKey(key))
+                userData.characters[key] = new OwnedCharacter(key, 1);
+        }
+
         for (int i = 0; i < MAX_PRESET_COUNT; i++)
         {
             string key = $"preset_{i}";
             userData.partyPresets[key] = new PartyPreset(i);
         }
 
-        // 첫 번째 프리셋 기본 설정
-        userData.partyPresets["preset_0"].characterId = "char_001";
-        userData.partyPresets["preset_0"].skillIds.Add("skill_001");
+        var firstPreset = userData.partyPresets["preset_0"];
+        for (int i = 0; i < 5 && i < initialUnitIds.Length; i++)
+        {
+            firstPreset.characterId[i] = initialUnitIds[i].ToString();
+        }
 
         return userData;
     }
 
+
+
+    public void SyncPresetsToPlayData()
+    {
+        if (CurrentUser == null)
+            return;
+
+        PlayData.currentSelectedPreset = CurrentUser.activePresetIndex;
+
+        for (int p = 0; p < MAX_PRESET_COUNT; p++)
+        {
+            string key = $"preset_{p}";
+            if (!CurrentUser.partyPresets.TryGetValue(key, out var preset) || preset.characterId == null)
+            {
+                // 빈 프리셋
+                for (int s = 0; s < 5; s++)
+                {
+                    PlayData.selectedDeckUnitIds[p, s] = 0;
+                    PlayData.selectedDeckUnitIconAddresses[p, s] = "";
+                }
+                continue;
+            }
+
+            // characterId 리스트 길이 5 보장
+            while (preset.characterId.Count < 5)
+                preset.characterId.Add(null);
+
+            for (int s = 0; s < 5; s++)
+            {
+                int unitId = 0;
+
+                string value = preset.characterId[s];
+                if (!string.IsNullOrEmpty(value))
+                {
+                    int.TryParse(value, out unitId);
+                }
+
+                PlayData.selectedDeckUnitIds[p, s] = unitId;
+                PlayData.selectedDeckUnitIconAddresses[p, s] = "";
+            }
+        }
+    }
+
+
+    public async UniTask<bool> SavePresetFromPlayDataAsync(int index)
+    {
+        var preset = GetPreset(index);
+        if (preset == null) return false;
+
+        if (preset.characterId == null)
+        {
+            preset.characterId = new List<string>(new string[5]);
+        }
+
+        while (preset.characterId.Count < 5)
+        {
+            preset.characterId.Add(null);
+        }
+
+        for (int s = 0; s < 5; s++)
+        {
+            int unitId = PlayData.selectedDeckUnitIds[index, s];
+            preset.characterId[s] = unitId == 0 ? null : unitId.ToString();
+        }
+
+        return await SavePresetAsync(index);
+    }
+
+
+
+
     #endregion
+
+
 
     #region 부분 저장
 
@@ -523,9 +605,18 @@ public class DatabaseManager : MonoBehaviour
             return false;
         }
 
-        preset.characterId = characterId;
+        if (preset.characterId == null)
+            preset.characterId = new List<string>(new string[5]);
+
+        while (preset.characterId.Count < 5)
+            preset.characterId.Add(null);
+
+        // 일단 0번 슬롯에 세팅 (필요하면 나중에 슬롯 인덱스 추가 파라미터로 확장)
+        preset.characterId[0] = characterId;
+
         return await SavePresetAsync(presetIndex);
     }
+
 
     public async UniTask<bool> RemoveSkillFromPresetAsync(int presetIndex, string skillId)
     {

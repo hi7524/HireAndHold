@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace GameData
@@ -152,14 +152,16 @@ namespace GameData
     #endregion
 
     #region 파티 프리셋
-
     [Serializable]
     public class PartyPreset
     {
         public int index;
         public string name;
-        public string characterId;
+
+        public List<string> characterId;
+
         public List<string> skillIds;
+
         public string weaponUid;
         public string armorUid;
         public string accessoryUid;
@@ -168,22 +170,30 @@ namespace GameData
 
         public PartyPreset()
         {
+            characterId = new List<string>() { null, null, null, null, null };
             skillIds = new List<string>();
+            weaponUid = null;
+            armorUid = null;
+            accessoryUid = null;
+            isLocked = false;
+            lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
 
         public PartyPreset(int index)
         {
             this.index = index;
             this.name = $"파티 {index + 1}";
-            this.characterId = null;
-            this.skillIds = new List<string>();
-            this.weaponUid = null;
-            this.armorUid = null;
-            this.accessoryUid = null;
-            this.isLocked = false;
-            this.lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            characterId = new List<string>() { null, null, null, null, null };
+            skillIds = new List<string>();
+            weaponUid = null;
+            armorUid = null;
+            accessoryUid = null;
+            isLocked = false;
+            lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
     }
+
 
     #endregion
 
