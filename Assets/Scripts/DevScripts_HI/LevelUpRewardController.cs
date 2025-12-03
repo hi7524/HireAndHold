@@ -31,9 +31,9 @@ public class LevelUpRewardController : MonoBehaviour
     // 현재 선택된 스킬 카드 추적
     private SkillCardUi selectedSkillCard = null;
 
-    // GridData 캐시
     private Dictionary<int, UnitGridData> gridDataCache = new Dictionary<int, UnitGridData>();
-
+    private Dictionary<int, Sprite> spriteCache = new Dictionary<int, Sprite>();
+    public Dictionary<int, Sprite> SpriteCache => spriteCache; // 테스트용**
 
     // 초기 세팅
     private async void Start()
@@ -47,8 +47,8 @@ public class LevelUpRewardController : MonoBehaviour
         // DataTableManager 초기화 대기
         await DataTableManager.InitAsync();
 
-        // GridData 캐싱
-        await CacheAllGridData();
+        // GridData, Sprite 캐싱
+        await CacheAllData();
 
         SelectUnitOnGameStart();
     }
@@ -124,7 +124,6 @@ public class LevelUpRewardController : MonoBehaviour
         reRollBtn.gameObject.SetActive(true);
         UpdateRerollBtn();
 
-        // ** 수정 필요
         for (int i = 0; i < unitCardUIs.Length; i++)
         {
             unitCardUIs[i].SetDragState(true);
@@ -206,37 +205,61 @@ public class LevelUpRewardController : MonoBehaviour
             gameManager.ResumeGame();
     }
 
-    // 모든 선택 가능한 유닛의 GridData를 미리 캐싱
-    private async UniTask CacheAllGridData()
+    // 모든 선택 가능한 유닛의 GridData, sprite를 미리 캐싱
+    private async UniTask CacheAllData()
     {
         gridDataCache.Clear();
+        spriteCache.Clear();
 
         foreach (int unitId in PlayData.selectedUnitIds)
         {
             var unitData = DataTableManager.UnitTable?.Get(unitId);
-            if (unitData != null && !string.IsNullOrEmpty(unitData.GRID_DATA))
+
+            if (unitData == null)
+                return;
+
+            // GridData 저장
+            if (!string.IsNullOrEmpty(unitData.GRID_DATA))
             {
                 var gridDataHandle = Addressables.LoadAssetAsync<UnitGridData>(unitData.GRID_DATA);
                 var gridData = await gridDataHandle.ToUniTask();
 
                 if (gridDataHandle.Status == AsyncOperationStatus.Succeeded)
-                {
                     gridDataCache[unitId] = gridData;
-                }
-                else
+            }
+
+            // Sprite 정보 저장 (1성, 2성, 3성 모두 로드)
+            if (!string.IsNullOrEmpty(unitData.UNIT_ICON))
+            {
+                // 1성 스프라이트 로드 (현재 unitId)
+                var spriteDataHandle = Addressables.LoadAssetAsync<Sprite>(unitData.UNIT_ICON);
+                var sprite = await spriteDataHandle.ToUniTask();
+                if (spriteDataHandle.Status == AsyncOperationStatus.Succeeded)
+                    spriteCache[unitId] = sprite;
+
+                // 2성 스프라이트 로드 (unitId + 101)
+                int star2UnitId = unitId + 101;
+                var unitData2 = DataTableManager.UnitTable?.Get(star2UnitId);
+                if (unitData2 != null && !string.IsNullOrEmpty(unitData2.UNIT_ICON))
                 {
-                    Debug.LogError($"UnitID {unitId}의 GRID_DATA 로드 실패: {unitData.GRID_DATA}");
+                    var sprite2Handle = Addressables.LoadAssetAsync<Sprite>(unitData2.UNIT_ICON);
+                    var sprite2 = await sprite2Handle.ToUniTask();
+                    if (sprite2Handle.Status == AsyncOperationStatus.Succeeded)
+                        spriteCache[star2UnitId] = sprite2;
                 }
 
-                // 캐시에 저장하므로 Release하지 않음
-            }
-            else
-            {
-                Debug.LogError($"UnitID {unitId}의 GRID_DATA를 찾을 수 없습니다.");
+                // 3성 스프라이트 로드 (unitId + 202)
+                int star3UnitId = unitId + 202;
+                var unitData3 = DataTableManager.UnitTable?.Get(star3UnitId);
+                if (unitData3 != null && !string.IsNullOrEmpty(unitData3.UNIT_ICON))
+                {
+                    var sprite3Handle = Addressables.LoadAssetAsync<Sprite>(unitData3.UNIT_ICON);
+                    var sprite3 = await sprite3Handle.ToUniTask();
+                    if (sprite3Handle.Status == AsyncOperationStatus.Succeeded)
+                        spriteCache[star3UnitId] = sprite3;
+                }
             }
         }
-
-        Debug.Log($"GridData 캐싱 완료: {gridDataCache.Count}개");
     }
 
     // 유닛 3개 중복 없이 뽑기
@@ -262,6 +285,7 @@ public class LevelUpRewardController : MonoBehaviour
             if (gridDataCache.TryGetValue(unitId, out var gridData))
             {
                 unitCardUIs[i].SetGridData(gridData);
+                unitCardUIs[i].SetImage(spriteCache[unitId]);
             }
             else
             {
@@ -292,8 +316,8 @@ public class LevelUpRewardController : MonoBehaviour
             else
             {
                 // 스킬이 부족하면 돈을 주거나
-                Debug.LogWarning($"[LevelUpRewardController] {i+1}번째 스킬 카드를 표시할 수 없습니다.");
-                
+                Debug.LogWarning($"[LevelUpRewardController] {i + 1}번째 스킬 카드를 표시할 수 없습니다.");
+
             }
         }
     }
@@ -360,14 +384,14 @@ public class LevelUpRewardController : MonoBehaviour
     {
         skillCardUIs = new SkillCardUi[amount];
 
-    for (int i = 0; i < amount; i++)
-    {
-        var card = Instantiate(skillCardPrf, transform);
-        skillCardUIs[i] = card;
-        card.SetLevelUpRewardController(this);
-        card.SetPassiveSkillManager(passiveSkillManager);
-        card.gameObject.SetActive(false);
-    }
+        for (int i = 0; i < amount; i++)
+        {
+            var card = Instantiate(skillCardPrf, transform);
+            skillCardUIs[i] = card;
+            card.SetLevelUpRewardController(this);
+            card.SetPassiveSkillManager(passiveSkillManager);
+            card.gameObject.SetActive(false);
+        }
     }
 
     // 일부 활성화

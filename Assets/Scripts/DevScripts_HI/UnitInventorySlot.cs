@@ -1,218 +1,78 @@
-using System.Collections.Generic;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UnitInventorySlot : MonoBehaviour, IDraggable
+public class UnitInventorySlot : MonoBehaviour
 {
-    [SerializeField] private Image unitImg;
+    [SerializeField] private Image unitSprite;
     [SerializeField] private TextMeshProUGUI nameText;
-    [SerializeField] private Transform previewObjTrans;
 
-    public bool IsDraggable => true; // 수정 필요: 편집 시스템과 연동짓기 **
-    public GameObject GameObject => gameObject;
+    private DraggableGridUnitUi draggableUnitUi;
 
-    public int UnitId { get; private set; }
-    public int StarLevel { get; private set; } = 1; // 성급 (1~3성)
-    public UnitGridData GridData { get; private set; }
+    public int UnitId => draggableUnitUi != null ? draggableUnitUi.UnitId : 0;
+    public int StarLevel => draggableUnitUi != null ? draggableUnitUi.StarLevel : 1;
+    public UnitGridData GridData => draggableUnitUi != null ? draggableUnitUi.GridData : null;
 
-    private UnitInventory inventory;
 
-    private readonly List<GameObject> previewImages = new List<GameObject>();
-    private bool dropFailed = false;
+    private void Awake()
+    {
+        InitializeDraggableUnitUi();
+    }
 
+    private void InitializeDraggableUnitUi()
+    {
+        if (draggableUnitUi == null)
+        {
+            // DraggableGridUnitUi 컴포넌트 가져오기
+            draggableUnitUi = GetComponent<DraggableGridUnitUi>();
+        }
+    }
 
     public void SetUnit(int unitId, int starLevel = 1)
     {
-        this.UnitId = unitId;
-        this.StarLevel = Mathf.Clamp(starLevel, 1, 3);
+        if (draggableUnitUi != null)
+        {
+            draggableUnitUi.SetUnit(unitId, starLevel);
+            draggableUnitUi.SetDraggableUnitType(DraggableUnitType.Inventory);
+        }
     }
 
     public void SetGridData(UnitGridData gridData)
     {
-        this.GridData = gridData;
-
-        // 기존 프리뷰 이미지가 있다면 UpdatePreviewImages 사용
-        if (previewImages.Count > 0)
+        if (draggableUnitUi != null)
         {
-            UpdatePreviewImages(gridData);
-        }
-        else
-        {
-            CreatePreviewUIImages();
-            SetActivePreviewImages(false);
+            draggableUnitUi.SetGridData(gridData);
         }
     }
 
-    // GridData가 변경되었을 때 기존 미리보기 이미지들을 재사용하여 갱신
     public void UpdatePreviewImages(UnitGridData newGridData)
     {
-        if (newGridData == null)
-            return;
-
-        this.GridData = newGridData;
-
-        var occupiedCells = GridData.GetOccupiedCells();
-        // 기본 셀 (Vector2Int.zero) + 추가 셀들
-        int requiredCount = occupiedCells.Count + 1;
-
-        // 부족한 셀이 있으면 추가 생성
-        while (previewImages.Count < requiredCount)
+        if (draggableUnitUi != null)
         {
-            var cellPos = previewImages.Count == 0 ? Vector2Int.zero : occupiedCells[previewImages.Count - 1];
-            CreatePreviewUICell(cellPos);
+            draggableUnitUi.UpdatePreviewImages(newGridData);
         }
-
-        // 넘치는 셀이 있으면 삭제
-        while (previewImages.Count > requiredCount)
-        {
-            int lastIndex = previewImages.Count - 1;
-            GameObject objToRemove = previewImages[lastIndex];
-            previewImages.RemoveAt(lastIndex);
-            Destroy(objToRemove);
-        }
-
-        // 기존 셀들의 색상과 위치 갱신
-        // 첫 번째 셀 (기본 위치)
-        UpdatePreviewCell(0, Vector2Int.zero);
-
-        // 나머지 셀들
-        for (int i = 0; i < occupiedCells.Count; i++)
-        {
-            UpdatePreviewCell(i + 1, occupiedCells[i]);
-        }
-
-        SetActivePreviewImages(false);
-    }
-
-    // 개별 미리보기 셀의 위치와 색상 갱신
-    private void UpdatePreviewCell(int index, Vector2Int cellPos)
-    {
-        if (index < 0 || index >= previewImages.Count)
-            return;
-
-        GameObject cellObj = previewImages[index];
-        cellObj.name = $"PreviewCell_{cellPos.x}_{cellPos.y}";
-
-        // 위치 갱신
-        RectTransform rect = cellObj.GetComponent<RectTransform>();
-        rect.anchoredPosition = new Vector2(cellPos.x * GameConstants.previewCellSizeUi, cellPos.y * GameConstants.previewCellSizeUi);
-
-        // 색상 갱신
-        Image img = cellObj.GetComponent<Image>();
-        img.color = GridData.gridColor;
     }
 
     public void SetInventory(UnitInventory inventory)
     {
-        this.inventory = inventory;
+        if (draggableUnitUi != null)
+        {
+            draggableUnitUi.SetInventory(inventory);
+        }
     }
 
     public void UpdateUi()
     {
-        // 데이터 테이블과 연결 및 수정 필요 **
-        // unitImg.sprite = unitSprite;
-        var unitData = DataTableManager.UnitTable.Get(UnitId);
-        nameText.text = unitData.NAME;
-    }
-
-
-    public void OnDragStart()
-    {
-        SetActivePreviewImages(true);
-    }
-
-    public void OnDrag()
-    {
-    }
-
-    public void OnDragEnd()
-    {
-        SetActivePreviewImages(false);
-
-        if (!dropFailed)
+        if (nameText != null && draggableUnitUi != null)
         {
-            inventory.RemoveUnit(UnitId);
-        }
-        dropFailed = false;
-    }
-
-    public void OnDropFailed()
-    {
-        dropFailed = true;
-    }
-
-
-    // 프리뷰를 위한 이미지 생성
-    private void CreatePreviewUIImages()
-    {
-        if (GridData == null)
-            return;
-
-        var occupiedCells = GridData.GetOccupiedCells();
-
-        CreatePreviewUICell(Vector2Int.zero);
-
-        foreach (var cellPos in occupiedCells)
-        {
-            CreatePreviewUICell(cellPos);
+            var unitData = DataTableManager.UnitTable.Get(draggableUnitUi.UnitId);
+            nameText.text = unitData.NAME;
         }
     }
 
-    // 쎌 단위 이미지 생성
-    private void CreatePreviewUICell(Vector2Int cellPos)
+    public void UpdateUnitSprite(Sprite sprite)
     {
-        // UI Image GameObject 생성
-        GameObject cellObj = new($"PreviewCell_{cellPos.x}_{cellPos.y}");
-        cellObj.transform.SetParent(previewObjTrans, false);
-        previewImages.Add(cellObj);
-
-        // RectTransform 설정
-        RectTransform rect = cellObj.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(GameConstants.previewCellSizeUi, GameConstants.previewCellSizeUi);
-        rect.anchoredPosition = new Vector2(cellPos.x * GameConstants.previewCellSizeUi, cellPos.y * GameConstants.previewCellSizeUi);
-
-        // 색상 설정
-        Image img = cellObj.AddComponent<Image>();
-        img.color = GridData.gridColor;
-    }
-
-    // 미리보기 이미지 활성화 및 비활성화
-    private void SetActivePreviewImages(bool value)
-    {
-        if (previewImages == null || previewImages.Count == 0)
-            return;
-
-        if (value)
-        {
-            SetActivePreviewImages();
-        }
-        else
-        {
-            foreach (var previewImg in previewImages)
-            {
-                previewImg.SetActive(false);
-            }
-        }
-    }
-
-    // 활성화
-    private void SetActivePreviewImages()
-    {
-        if (previewImages == null || previewImages.Count == 0)
-            return;
-
-        previewObjTrans.localScale = 0.5f * Vector3.one;
-        foreach (var previewImg in previewImages)
-        {
-            previewImg.SetActive(true);
-        }
-
-        previewObjTrans.DOScale(1.0f, 0.15f);
-    }
-
-    public void OnDropSuccess()
-    {
+        if (unitSprite != null)
+            unitSprite.sprite = sprite;
     }
 }

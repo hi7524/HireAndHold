@@ -33,6 +33,8 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     private GridPreviewHelper previewHelper;
     private bool isDraggable = true;
     private Vector3 initialLocalPosition;
+    private UnitInventory inventory; // Inventory 타입일 때만 사용
+    private bool dropFailed = false;
 
 
     private void Awake()
@@ -65,6 +67,12 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
         DraggableUnitType = type;
     }
 
+    // Inventory 타입일 때 UnitInventory 참조 설정
+    public void SetInventory(UnitInventory inventory)
+    {
+        this.inventory = inventory;
+    }
+
     // 그리드 데이터 설정 및 프리뷰 초기화
     public void SetGridData(UnitGridData gridData)
     {
@@ -93,6 +101,12 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
             return;
 
         GridData = newGridData;
+
+        if (previewHelper == null)
+        {
+            previewHelper = new GridPreviewHelper(previewObjTrans, GameConstants.previewCellSizeUi);
+        }
+
         previewHelper.UpdatePreview(newGridData);
         previewHelper.Hide();
     }
@@ -117,12 +131,19 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
         // 프리뷰 셀 숨김 및 메인 이미지 불투명화
         HidePreviewCells();
         SetImageAlpha(OpaqueAlpha);
+
+        // Inventory 타입이고 드롭 실패하지 않았으면 인벤토리에서 제거
+        if (DraggableUnitType == DraggableUnitType.Inventory && !dropFailed && inventory != null)
+        {
+            inventory.RemoveUnit(UnitId);
+        }
+        dropFailed = false;
     }
 
     // 드롭 실패
     public void OnDropFailed()
     {
-
+        dropFailed = true;
     }
 
     // 드롭 성공
