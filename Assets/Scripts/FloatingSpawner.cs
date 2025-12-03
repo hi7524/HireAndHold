@@ -3,13 +3,13 @@
 public class FloatingTextSpawner : MonoBehaviour
 {
     public FloatingText floatingTextPrefab;
-    public Canvas canvas;  
+    public RectTransform floatingTextRoot;
 
     public FloatingText SpawnText(Vector3 worldPosition, string value)
     {
         Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPosition);
 
-        FloatingText newText = Instantiate(floatingTextPrefab, canvas.transform);
+        FloatingText newText = Instantiate(floatingTextPrefab, floatingTextRoot);
 
         newText.transform.position = screenPos;
         newText.SetText(value);

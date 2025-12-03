@@ -5,36 +5,42 @@ public class WindowUnitMovement : MonoBehaviour
     public RectTransform moveArea;
     public float speed = 150f;
 
-    private Vector3 target;
+    private RectTransform rectTransform;
+    private Vector2 target;
 
-    void Start()
+    private void Awake()
     {
-        transform.localPosition = GetRandomLocalPosition();
+        rectTransform = GetComponent<RectTransform>();
+    }
+
+    private void Start()
+    {
+        rectTransform.anchoredPosition = GetRandomPosition();
         PickNewTarget();
     }
 
-    void Update()
+    private void Update()
     {
-        transform.localPosition = Vector3.MoveTowards(transform.localPosition, target, speed * Time.deltaTime);
+        rectTransform.anchoredPosition = Vector2.MoveTowards(
+            rectTransform.anchoredPosition,
+            target,
+            speed * Time.deltaTime
+        );
 
-        if (Vector3.Distance(transform.localPosition, target) < 5f)
-        {
+        if (Vector2.Distance(rectTransform.anchoredPosition, target) < 5f)
             PickNewTarget();
-        }
     }
 
-    Vector3 GetRandomLocalPosition()
+    private Vector2 GetRandomPosition()
     {
         Vector2 size = moveArea.rect.size;
-
-        float x = Random.Range(-size.x / 2f, size.x / 2f);
-        float y = Random.Range(-size.y / 2f, size.y / 2f);
-
-        return moveArea.localPosition + new Vector3(x, y, 0);
+        float x = Random.Range(-size.x * 0.5f, size.x * 0.5f);
+        float y = Random.Range(-size.y * 0.5f, size.y * 0.5f);
+        return new Vector2(x, y);
     }
 
-    void PickNewTarget()
+    private void PickNewTarget()
     {
-        target = GetRandomLocalPosition();
+        target = GetRandomPosition();
     }
 }

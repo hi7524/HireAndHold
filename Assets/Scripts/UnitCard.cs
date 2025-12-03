@@ -9,8 +9,9 @@ public class UnitCard : MonoBehaviour
     public TMP_Text nameText;
 
     private DeckUnitModel data;
-
     private Action<DeckUnitModel> onClick;
+
+    private bool isAssigned = false;  
 
     public DeckUnitModel Data => data;
 
@@ -28,11 +29,26 @@ public class UnitCard : MonoBehaviour
 
     public void OnClick()
     {
+
         onClick?.Invoke(data);
     }
 
     public void SetVisible(bool visible)
     {
         gameObject.SetActive(visible);
+    }
+
+    public void SetAssigned(bool assigned)
+    {
+        isAssigned = assigned;
+
+        if (assigned)
+        {
+            icon.color = new Color(0.4f, 0.4f, 0.4f);
+        }
+        else
+        {
+            icon.color = Color.white;
+        }
     }
 }
