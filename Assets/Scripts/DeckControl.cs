@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
-using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using Cysharp.Threading.Tasks;
+using UnityEngine.UI;
 
 public class DeckPreset
 {
@@ -112,68 +113,89 @@ public class DeckControl : MonoBehaviour
 
     }
 
-    void Update()
+    private void Update()
     {
         if (!isEditing)
         {
             return;
         }
 
-        if (Pointer.current != null &&
-            Pointer.current.press.wasPressedThisFrame)
+        if (Pointer.current == null || !Pointer.current.press.wasPressedThisFrame)
         {
-            if (!IsClickOnEditableUI())
-            {
-                ExitEditMode();
-            }
-        }
-    }
-
-    bool IsClickOnEditableUI()
-    {
-        if (EventSystem.current == null || Pointer.current == null)
-        {
-            return false;
+            return;
         }
 
+        if (EventSystem.current == null)
+        {
+            return;
+        }
+    
         PointerEventData pointer = new PointerEventData(EventSystem.current);
         pointer.position = Pointer.current.position.ReadValue();
-
+    
         List<RaycastResult> results = new();
         EventSystem.current.RaycastAll(pointer, results);
-
+    
+        bool clickedEditableUI = false;
+        bool clickedAnyButton = false;
+    
         foreach (var r in results)
         {
             if (r.gameObject.GetComponent<DeckSlot>() != null)
             {
-                return true;
+                clickedEditableUI = true;
+                break;
             }
-
+    
             if (r.gameObject.GetComponent<UnitCard>() != null)
             {
-                return true;
+                clickedEditableUI = true;
+                break;
             }
-
+    
             if (presetButtons.Exists(b => r.gameObject.transform.IsChildOf(b.transform)))
             {
-                return true;
+                clickedEditableUI = true;
+                break;
             }
-
+    
             if (r.gameObject.transform.IsChildOf(completeButton.transform))
             {
-                return true;
+                clickedEditableUI = true;
+                break;
             }
         }
+    
+        if (clickedEditableUI)
+        {
+            return;
+        }
 
-        return false;
+        foreach (var r in results)
+        {
+            if (r.gameObject.GetComponent<Button>() != null)
+            {
+                clickedAnyButton = true;
+                break;
+            }
+        }
+    
+        if (clickedAnyButton)
+        {
+            ExitEditMode();
+        }
     }
+
 
     async UniTask CreateUnitCards()
     {
         List<UniTask> loadTasks = new();
 
-        foreach (int unitId in PlayData.selectedUnitIds)
+        var ownedCharacters = DatabaseManager.Instance.GetAllCharacters();
+
+        foreach (var character in ownedCharacters)
         {
+            int unitId = int.Parse(character.id);
             UnitData data = unitTable.Get(unitId);
             if (data == null)
             {
@@ -231,6 +253,7 @@ public class DeckControl : MonoBehaviour
     {
         foreach (var card in unitCards)
         {
+            card.SetAssigned(false);
             card.SetVisible(true);
         }
 
@@ -251,6 +274,7 @@ public class DeckControl : MonoBehaviour
         UpdateCompleteButton();
     }
 
+
     public void OnSlotClicked(DeckSlot slot)
     {
         if (!isEditing)
@@ -259,12 +283,29 @@ public class DeckControl : MonoBehaviour
             return;
         }
 
+        //Pending 제거
         if (slot.HasPending)
         {
+            var pending = slot.GetPending();
             slot.ClearPending();
+            NotifyUnitCleared(pending);
             UpdateCompleteButton();
+            return;
+        }
+
+        if (slot.HasCommitted)
+        {
+            var committed = slot.GetCommitted();
+            slot.SetPending(null);
+            slot.CommitPending();  
+            NotifyUnitCleared(committed);
+            UpdateCompleteButton();
+            return;
         }
     }
+
+
+
 
     void EnterEditMode()
     {
@@ -283,25 +324,35 @@ public class DeckControl : MonoBehaviour
     {
         isEditing = false;
         highlightOverlay.SetActive(false);
-
-        foreach (var slot in slots)
-        {
-            var pending = slot.GetPending();
-            slot.CancelPending();
-
-            if (pending != null)
-            {
-                NotifyUnitCleared(pending);
-            }
-        }
-
+        LoadPreset(activePresetIndex);
         UpdateCompleteButton();
     }
+
+
+
 
     void OnUnitCardClicked(DeckUnitModel model)
     {
         if (isEditing)
         {
+
+            foreach (var slot in slots)
+            {
+                var pending = slot.GetPending();
+                if (pending != null && pending.unitId == model.unitId)
+                {
+                    Debug.Log("이미편성 있음 (pending)");
+                    return;
+                }
+
+                var committed = slot.GetCommitted();
+                if (committed != null && committed.unitId == model.unitId)
+                {
+                    Debug.Log("이미편성 있음 (committed)");
+                    return;
+                }
+            }
+
             foreach (var slot in slots)
             {
                 if (!slot.HasPending)
@@ -320,9 +371,11 @@ public class DeckControl : MonoBehaviour
             detailedPanel.SetActive(true);
             unitInfoUI.SetUnit(model.unitId);
 
-            Debug.Log("선택된 유닛 " + model.unitId);
+            Debug.Log("선택된 " + model.unitId);
         }
     }
+
+
 
     public void NotifyUnitAssigned(DeckUnitModel data)
     {
@@ -330,7 +383,7 @@ public class DeckControl : MonoBehaviour
         {
             if (card.Data == data)
             {
-                card.SetVisible(false);
+                card.SetAssigned(true); 
                 return;
             }
         }
@@ -342,11 +395,12 @@ public class DeckControl : MonoBehaviour
         {
             if (card.Data == data)
             {
-                card.SetVisible(true);
+                card.SetAssigned(false);  
                 return;
             }
         }
     }
+
 
     void UpdateCompleteButton()
     {
@@ -363,8 +417,6 @@ public class DeckControl : MonoBehaviour
 
     async UniTaskVoid OnCompleteClicked()
     {
-        //PlayData.currentSelectedPreset = activePresetIndex;
-
         if (!isEditing)
         {
             return;
@@ -390,20 +442,16 @@ public class DeckControl : MonoBehaviour
             }
         }
 
-        Debug.Log("저장: " + string.Join(",", PlayData.selectedDeckUnitIds));
-
         await DatabaseManager.Instance.SavePresetFromPlayDataAsync(activePresetIndex);
 
-        ExitEditMode();
-        if (stageDeck != null)
+        ExitEditMode(); 
+        if (stageDeck != null && stageDeck.isActiveAndEnabled)
         {
-
-            if (stageDeck.isActiveAndEnabled)
-            {
-                stageDeck.Refresh();
-            }
+            stageDeck.Refresh();
         }
     }
+
+
 
     void UpdatePresetButtonsStates()
     {

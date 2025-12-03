@@ -1,12 +1,15 @@
-﻿using TMPro;
+﻿using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
 public class UnitInfoUI : MonoBehaviour
 {
     [Header("Unit Info Text")]
+    public Image unitImage;
     public TextMeshProUGUI attackText;
-    public TextMeshProUGUI unitInfoText;
+    //public TextMeshProUGUI unitInfoText;
     public TextMeshProUGUI resourceText;
 
     public TextMeshProUGUI normalLevelText;
@@ -28,6 +31,7 @@ public class UnitInfoUI : MonoBehaviour
     public TextMeshProUGUI unitName;
     public TextMeshProUGUI currentAttack;
     public TextMeshProUGUI nextAttack;
+    public Image enforceUnitImage;
 
     // 데이터 로드
 
@@ -89,13 +93,14 @@ public class UnitInfoUI : MonoBehaviour
             return;
         }
 
+        LoadUnitImage(currentUnitId).Forget();
 
         attackText.text = $"공격력: {unit.CurrentAttack}";
         currentAttack.text = $"{unit.CurrentAttack}";
         int nextA = unit.CurrentAttack + 1;
 
         nextAttack.text = $"{nextA}";
-        unitInfoText.text = $"유닛 ID: {unit.UnitID}\n랭크: {unit.UnitRank}";
+        //unitInfoText.text = $"유닛 ID: {unit.UnitID}\n랭크: {unit.UnitRank}";
         classText.text = $"등급: {unit.UnitRank}";
         unitName.text = $"{unit.UnitID}";
 
@@ -191,6 +196,26 @@ public class UnitInfoUI : MonoBehaviour
         normalEnforceSystem.TempGold += 10000;
         heroEnforceSystem.TempGold += 10000;
         UpdateUI();
+    }
+
+    private async UniTaskVoid LoadUnitImage(int unitId)
+    {
+        
+        UnitData data = unitTable.Get(unitId);
+        try
+        {
+            var sprite = await Addressables.LoadAssetAsync<Sprite>(data.UNIT_ICON).Task;
+
+            if (unitImage != null && enforceUnitImage != null)
+            {
+                unitImage.sprite = sprite;
+                enforceUnitImage.sprite = sprite;
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($" 유닛 이미지 로드 실패: {data.UNIT_ICON}, Error: {e.Message}");
+        }
     }
 
     public void OnClick_AddFragment()

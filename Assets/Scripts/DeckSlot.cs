@@ -17,28 +17,14 @@ public class DeckSlot : MonoBehaviour
     {
         deck = control;
     }
-
     public void BeginEdit()
     {
-        pending = committed;
-
-        if (pending != null)
-        {
-            pending.FixMissingAddress();
-        }
-
-        ApplyPendingToUI();
+        pending = null;
+        ApplyCommittedToUI();
     }
-
     public void CancelPending()
     {
-        pending = committed;
-
-        if (pending != null)
-        {
-            pending.FixMissingAddress();
-        }
-
+        pending = null;
         ApplyCommittedToUI();
     }
 
@@ -72,11 +58,6 @@ public class DeckSlot : MonoBehaviour
             deck.NotifyUnitCleared(committed);
         }
 
-        if (pending != null)
-        {
-            pending.FixMissingAddress();  
-        }
-
         committed = pending;
         pending = null;
 
@@ -96,9 +77,7 @@ public class DeckSlot : MonoBehaviour
         committed = model;
 
         if (committed != null)
-        {
             committed.FixMissingAddress();
-        }
 
         pending = null;
         ApplyCommittedToUI();
