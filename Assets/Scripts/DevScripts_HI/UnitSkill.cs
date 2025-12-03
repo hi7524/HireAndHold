@@ -37,7 +37,6 @@ public class UnitSkill
     // 실제 스킬 실행 로직
     protected virtual void OnExecute()
     {
-        // 1. 타겟 찾기
         Enemy target = FindTarget();
         if (target == null)
             return;

@@ -98,6 +98,7 @@ public class Unit : MonoBehaviour
 
         Debug.Log($"Unit ID changed to: {ID}");
         SetStats();
+        SetSkills();
         await SetVisualPrefabAsync();
     }
 
@@ -116,6 +117,24 @@ public class Unit : MonoBehaviour
             // Defense.SetUpgradeValue(upgradeData.DefenseUpgrade);
             // MaxHealth.SetUpgradeValue(upgradeData.HealthUpgrade);
         }
+    }
+
+    // 유닛 데이터에서 스킬 로드 및 추가
+    private void SetSkills()
+    {
+        if (unitData == null)
+            return;
+
+        // 기존 스킬 전체 제거
+        ClearAllSkills();
+
+        // UNIT_SKILL1 추가
+        if (unitData.UNIT_SKILL1 > 0)
+            AddSkill(unitData.UNIT_SKILL1);
+
+        // UNIT_SKILL2 추가
+        if (unitData.UNIT_SKILL2 > 0)
+            AddSkill(unitData.UNIT_SKILL2);
     }
 
     // 유닛 비주얼 프리팹 비동기 로드 및 인스턴스화 *TODO: 수정 필요, 로딩 미리 해두고 사용할 수 있도록
@@ -310,7 +329,6 @@ public class Unit : MonoBehaviour
 
         var skill = new UnitSkill(this, skillData);
         skills.Add(skill);
-
     }
 
     // 특정 스킬을 제거
