@@ -306,4 +306,10 @@ public class Unit : MonoBehaviour
     {
         return skills.Exists(s => s.SkillID == skillId);
     }
+
+    // 공격력 Stat 반환
+    public Stat GetAttackDamageStat()
+    {
+        return attackDamage;
+    }
 }

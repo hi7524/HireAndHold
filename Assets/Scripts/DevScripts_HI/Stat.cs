@@ -78,7 +78,7 @@ public class StatModifier
     public float Value;
     public ModifierType Type;
 
-    public StatModifier(float value, ModifierType type, object source = null)
+    public StatModifier(float value, ModifierType type)
     {
         Value = value;
         Type = type;

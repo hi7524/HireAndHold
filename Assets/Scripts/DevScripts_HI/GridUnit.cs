@@ -11,6 +11,7 @@ public class GridUnit : MonoBehaviour, IDraggable
     [SerializeField] private Transform previewTrans;
 
     private Unit unit;
+    private BattleUnitManager battleUnitManager;
 
     public int UnitId => unit.UnitID;
     public int StarLevel { get; private set; } = 1; // 성급 (1~3성)
@@ -64,6 +65,11 @@ public class GridUnit : MonoBehaviour, IDraggable
     public void SetInventoryPlaceable(bool value)
     {
         canPlaceInInventory = value;
+    }
+
+    public void SetBattleUnitManager(BattleUnitManager manager)
+    {
+        battleUnitManager = manager;
     }
 
     public void OnDragStart()
@@ -201,6 +207,11 @@ public class GridUnit : MonoBehaviour, IDraggable
         if (gridDataHandle.IsValid())
         {
             Addressables.Release(gridDataHandle);
+        }
+
+        if (battleUnitManager != null && unit != null)
+        {
+            battleUnitManager.UnregisterUnit(unit);
         }
     }
 }
