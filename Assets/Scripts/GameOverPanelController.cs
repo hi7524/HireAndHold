@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
+using UnityEngine.AddressableAssets;
 
 public class GameOverPanelController : MonoBehaviour
 {
@@ -38,6 +39,12 @@ public class GameOverPanelController : MonoBehaviour
 
     public void Show(int expReward, int goldReward)
     {
+        if (stageManager != null)
+        {
+            currentStageId = stageManager.CurrentStageId;
+            currentPlayTime = gameManager?.ElapsedTime ?? 0f;
+        }
+
         currentGold = goldReward;
         currentExp = expReward;
         SetData(expReward, goldReward);
@@ -60,15 +67,11 @@ public class GameOverPanelController : MonoBehaviour
             goldRewardText.text = $"골드+{goldReward:N0}";
     }
 
-    private void OnRetryButtonClick()
+    private async void OnRetryButtonClick()
     {
         Hide();
         Time.timeScale = 1f;
-        
-        // Stage 씬 재로드 (저장 없음)
-        LoadingSceneManager.Instance.LoadSceneWithLoading(
-            new LoadingRequest("Stage")
-        );
+        await Addressables.LoadSceneAsync("Stage");
     }
 
     private async void OnLobbyButtonClick()
@@ -76,24 +79,10 @@ public class GameOverPanelController : MonoBehaviour
         Hide();
         Time.timeScale = 1f;
 
-        LoadingRequest request = new LoadingRequest("Lobby");
-
-        // 실패 데이터 저장 Task
-        request.AddTask("플레이 데이터 저장", async (ct) =>
-        {
-            await SaveStageFailDataAsync(currentStageId, currentGold, currentExp);
-        }, weight: 0.5f);
-
-        request.AddTask("유저 데이터 로드", async (ct) =>
-        {
-            if (DatabaseManager.Instance != null && DatabaseManager.Instance.IsInitialized)
-            {
-                await DatabaseManager.Instance.LoadUserDataAsync();
-                Debug.Log("[GameOverPanel] 유저 데이터 갱신 완료");
-            }
-        }, weight: 0.5f);
-
-        await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
+        // 실패 데이터 저장
+        await SaveStageFailDataAsync(currentStageId, currentGold, currentExp);
+        
+        await Addressables.LoadSceneAsync("Lobby");
     }
     
     // 실패 데이터 저장

@@ -537,7 +537,7 @@ public class Enemy : MonoBehaviour, IDamagable
     private async UniTaskVoid DieAsync()
     {
         PlayAnimation(AnimState.Death);
-
+        OnDeath?.Invoke(this);
         float deathAnimDuration = 0.5f;
         if (visualAnimator != null)
         {
@@ -555,11 +555,12 @@ public class Enemy : MonoBehaviour, IDamagable
         }
         catch (OperationCanceledException)
         {
+            return;
         }
 
         ExpItemSpawned();
 
-        OnDeath?.Invoke(this);
+        
 
         ClearVisualChildren();
         ReleaseVisualHandle();
