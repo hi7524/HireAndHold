@@ -172,13 +172,13 @@ public class DeckControl : MonoBehaviour
     {
         List<UniTask> loadTasks = new();
 
-        foreach (int unitId in PlayData.selectedUnitIds)
+        var ownedCharacters = DatabaseManager.Instance.GetAllCharacters();
+
+        foreach (var character in ownedCharacters)
         {
+            int unitId = int.Parse(character.id);
             UnitData data = unitTable.Get(unitId);
-            if (data == null)
-            {
-                continue;
-            }
+            if (data == null) continue;
 
             var pUnit = unitManager.GetPlayerUnit(unitId);
 
