@@ -35,6 +35,7 @@ public class DeckControl : MonoBehaviour
 
     public StageDeck stageDeck;
 
+
     void Awake()
     {
         foreach (var slot in slots)
@@ -48,7 +49,7 @@ public class DeckControl : MonoBehaviour
         for (int i = 0; i < presetButtons.Count; i++)
         {
             int idx = i;
-            presetButtons[i].onClick.AddListener(() => OnClickPresetButton(idx).Forget());
+            presetButtons[i].onClick.AddListener(() => OnClickPresetButton(idx));
             presetButtons[i].onClick.AddListener(ExitEditModeIfEditing);
         }
 
@@ -91,15 +92,20 @@ public class DeckControl : MonoBehaviour
 
         foreach (var kv in unitTable.RawTable)
         {
-            
+
             unitManager.AddUnit(kv.Key);
         }
 
         highlightOverlay.SetActive(false);
         detailedPanel.SetActive(false);
-        await CreateUnitCards(); 
-        LoadPresets();              
+        await CreateUnitCards();
+
+
+        DatabaseManager.Instance.SyncPresetsToPlayData();  
+
+        LoadPresets();
         LoadPreset(activePresetIndex);
+
 
         UpdatePresetButtonsStates();
         unitInfoUI.SetUnitManager(unitManager);
@@ -205,62 +211,19 @@ public class DeckControl : MonoBehaviour
     }
 
 
-    public async UniTaskVoid OnClickPresetButton(int index)
+    public async void OnClickPresetButton(int index)
     {
-       
+        activePresetIndex = index;
+        PlayData.currentSelectedPreset = index;
+
         await DatabaseManager.Instance.SetActivePresetAsync(index);
 
-        PlayData.currentSelectedPreset = index;
-        activePresetIndex = index;
-
-        DatabaseManager.Instance.SyncPresetsToPlayData();
-
-        LoadPresets();
         LoadPreset(index);
         UpdatePresetButtonsStates();
 
         if (stageDeck != null && stageDeck.isActiveAndEnabled)
         {
             stageDeck.Refresh();
-        }
-      
-    }
-
-
-
-    void ApplyPresetToPlayData(int index)
-    {
-        DeckPreset preset = presets[index];
-
-        for (int i = 0; i < 5; i++)
-        {
-            if (preset.units[i] != null)
-            {
-                PlayData.selectedDeckUnitIds[index, i] = preset.units[i].unitId;
-                PlayData.selectedDeckUnitIconAddresses[index, i] = preset.units[i].iconAddress;
-            }
-            else
-            {
-                PlayData.selectedDeckUnitIds[index, i] = 0;
-                PlayData.selectedDeckUnitIconAddresses[index, i] = "";
-            }
-        }
-
-        Debug.Log("[DeckControl] PlayData updated for preset: " + index);
-    }
-
-
-
-    void LoadPresetFromPlayData(int index)
-    {
-        for (int s = 0; s < 5; s++)
-        {
-            int id = PlayData.selectedDeckUnitIds[index, s];
-
-            if (id != 0 && unitModelMap.ContainsKey(id))
-                presets[index].units[s] = unitModelMap[id];
-            else
-                presets[index].units[s] = null;
         }
     }
 
@@ -400,10 +363,12 @@ public class DeckControl : MonoBehaviour
 
     async UniTaskVoid OnCompleteClicked()
     {
-        PlayData.currentSelectedPreset = activePresetIndex;
+        //PlayData.currentSelectedPreset = activePresetIndex;
 
         if (!isEditing)
+        {
             return;
+        }
 
         for (int i = 0; i < slots.Count; i++)
         {

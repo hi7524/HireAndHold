@@ -90,6 +90,8 @@ public class DatabaseManager : MonoBehaviour
             Debug.Log($"[DB] 신규 유저 저장 결과: {saveResult}");
         }
 
+        SyncPresetsToPlayData();
+
         return CurrentUser;
     }
 
