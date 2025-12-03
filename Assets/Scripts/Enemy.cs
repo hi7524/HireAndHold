@@ -7,9 +7,25 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class Enemy : MonoBehaviour, IDamagable
 {
+    // === 애니메이션 상태 ===
+    public enum AnimState
+    {
+        Idle,
+        Move,
+        Attack,
+        Hit,
+        Death
+    }
+
+    // 애니메이션 파라미터 이름 (Animator에서 동일하게 설정 필요)
+    private static readonly int ANIM_IDLE = Animator.StringToHash("Idle");
+    private static readonly int ANIM_ATTACK = Animator.StringToHash("Attack");
+    private static readonly int ANIM_HIT = Animator.StringToHash("Hit");
+    private static readonly int ANIM_DEATH = Animator.StringToHash("Death");
+
     public event Action<Enemy> OnDeath;
     public int MonsterId { get; private set; }
-    
+
     [SerializeField] private float maxHp;
     [SerializeField] private float currentHp;
     [SerializeField] public float speed;
@@ -53,21 +69,26 @@ public class Enemy : MonoBehaviour, IDamagable
     private ExperienceCollector expCollector;
 
     private float lastSeparateTime;
-    private const float SEPARATE_INTERVAL = 0.1f; // 0.1초마다만 실행
+    private const float SEPARATE_INTERVAL = 0.1f;
 
     // === 비주얼 관련 필드 ===
-    [SerializeField] private Transform visualRoot; // 비주얼이 들어갈 부모 Transform
+    [SerializeField] private Transform visualRoot;
     private GameObject visualObject;
     private Animator visualAnimator;
     private AsyncOperationHandle<GameObject> visualHandle;
     private CancellationTokenSource cts;
     private string currentModelKey;
 
+    // === 애니메이션 상태 필드 ===
+    private AnimState currentAnimState = AnimState.Idle;
+    private bool isPlayingHitAnim = false;
+    private float hitAnimDuration = 0.2f;
+
     private void Awake()
     {
         originalScale = transform.localScale;
         myCollider = GetComponent<Collider2D>();
-        
+
         // visualRoot가 없으면 자신을 사용
         if (visualRoot == null)
         {
@@ -112,12 +133,17 @@ public class Enemy : MonoBehaviour, IDamagable
         {
             transform.localScale = originalScale * 1;
         }
-        
+
         // CancellationTokenSource 초기화
         cts?.Cancel();
         cts?.Dispose();
         cts = new CancellationTokenSource();
+
+        // 애니메이션 상태 초기화
+        currentAnimState = AnimState.Idle;
+        isPlayingHitAnim = false;
     }
+
     public void InitializeWithData(ObjectPoolManager manager, string key, MonsterData data, bool boss = false)
     {
         poolManager = manager;
@@ -146,11 +172,15 @@ public class Enemy : MonoBehaviour, IDamagable
         {
             transform.localScale = originalScale * 1;
         }
-        
+
         // CancellationTokenSource 초기화
         cts?.Cancel();
         cts?.Dispose();
         cts = new CancellationTokenSource();
+
+        // 애니메이션 상태 초기화
+        currentAnimState = AnimState.Idle;
+        isPlayingHitAnim = false;
     }
 
     /// <summary>
@@ -178,7 +208,7 @@ public class Enemy : MonoBehaviour, IDamagable
             ReleaseVisualHandle();
 
             currentModelKey = modelKey;
-            
+
             // Addressable로 프리팹 로드
             visualHandle = Addressables.LoadAssetAsync<GameObject>(modelKey);
             var visualPrefab = await visualHandle.ToUniTask(cancellationToken: cts.Token);
@@ -237,6 +267,95 @@ public class Enemy : MonoBehaviour, IDamagable
         currentModelKey = null;
     }
 
+    #region Animation Methods
+
+    /// <summary>
+    /// 애니메이션 상태를 변경합니다.
+    /// </summary>
+    /// <param name="state">변경할 애니메이션 상태</param>
+    public void PlayAnimation(AnimState state)
+    {
+        if (visualAnimator == null) return;
+        if (currentAnimState == state) return;
+
+        // 죽음 상태에서는 다른 애니메이션으로 전환 불가
+        if (currentAnimState == AnimState.Death && state != AnimState.Death) return;
+
+        currentAnimState = state;
+
+        // 모든 트리거 리셋
+        ResetAllAnimTriggers();
+
+        switch (state)
+        {
+            case AnimState.Idle:
+                visualAnimator.SetTrigger(ANIM_IDLE);
+                break;
+            case AnimState.Attack:
+                visualAnimator.SetTrigger(ANIM_ATTACK);
+                break;
+            case AnimState.Hit:
+                visualAnimator.SetTrigger(ANIM_HIT);
+                break;
+            case AnimState.Death:
+                visualAnimator.SetTrigger(ANIM_DEATH);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 모든 애니메이션 트리거를 리셋합니다.
+    /// </summary>
+    private void ResetAllAnimTriggers()
+    {
+        if (visualAnimator == null) return;
+
+        visualAnimator.ResetTrigger(ANIM_IDLE);
+        visualAnimator.ResetTrigger(ANIM_ATTACK);
+        visualAnimator.ResetTrigger(ANIM_HIT);
+        visualAnimator.ResetTrigger(ANIM_DEATH);
+    }
+
+    /// <summary>
+    /// 피격 애니메이션을 재생하고 일정 시간 후 이전 상태로 복귀합니다.
+    /// </summary>
+    private async UniTaskVoid PlayHitAnimationAsync()
+    {
+        if (isPlayingHitAnim || isDead) return;
+
+        isPlayingHitAnim = true;
+        AnimState previousState = currentAnimState;
+
+        PlayAnimation(AnimState.Hit);
+
+        await UniTask.Delay(TimeSpan.FromSeconds(hitAnimDuration), cancellationToken: cts.Token);
+
+        isPlayingHitAnim = false;
+
+        // 죽지 않았으면 이전 상태로 복귀
+        if (!isDead)
+        {
+            if (isAttacking)
+            {
+                PlayAnimation(AnimState.Attack);
+            }
+            else
+            {
+                PlayAnimation(AnimState.Move);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 현재 애니메이션 상태를 반환합니다.
+    /// </summary>
+    public AnimState GetCurrentAnimState()
+    {
+        return currentAnimState;
+    }
+
+    #endregion
+
     void Update()
     {
         if (isDead || targetWall == null)
@@ -244,7 +363,7 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-       
+
         if (isStunned)
         {
             return;
@@ -282,6 +401,12 @@ public class Enemy : MonoBehaviour, IDamagable
         if (targetWall == null)
         {
             return;
+        }
+
+        // 이동 애니메이션 재생
+        if (!isPlayingHitAnim && currentAnimState != AnimState.Move)
+        {
+            PlayAnimation(AnimState.Move);
         }
 
         transform.Translate(Vector3.down * speed * Time.deltaTime * defaultSpeed);
@@ -360,7 +485,13 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-       if (wallDamagable != null)
+        // 공격 애니메이션 재생
+        if (!isPlayingHitAnim)
+        {
+            PlayAnimation(AnimState.Attack);
+        }
+
+        if (wallDamagable != null)
         {
             wallDamagable.TakeDamage(attackDamage);
         }
@@ -381,14 +512,17 @@ public class Enemy : MonoBehaviour, IDamagable
 
         currentHp -= damage;
 
+        if (damage < 999999f && currentHp > 0)
+        {
+            PlayHitAnimationAsync().Forget();
+        }
+
         if (currentHp <= 0)
         {
             isDead = true;
             Die();
         }
     }
-
-
 
     public void Die()
     {
@@ -397,18 +531,40 @@ public class Enemy : MonoBehaviour, IDamagable
             Debug.LogWarning("[Enemy] Die() called but isDead was false - this shouldn't happen!");
             return;
         }
+        DieAsync().Forget();
+    }
+
+    private async UniTaskVoid DieAsync()
+    {
+        PlayAnimation(AnimState.Death);
+
+        float deathAnimDuration = 0.5f;
+        if (visualAnimator != null)
+        {
+
+            AnimatorClipInfo[] clipInfo = visualAnimator.GetCurrentAnimatorClipInfo(0);
+            if (clipInfo.Length > 0)
+            {
+                deathAnimDuration = clipInfo[0].clip.length;
+            }
+        }
+
+        try
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(deathAnimDuration), cancellationToken: cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
 
         ExpItemSpawned();
-        
-        // 사망 이벤트 발생
+
         OnDeath?.Invoke(this);
 
-        // 비주얼 정리
         ClearVisualChildren();
         ReleaseVisualHandle();
-        
-        // CancellationToken 취소
-        cts?.Cancel();
+
+        SafeCancelCts();
 
         if (poolManager != null)
         {
@@ -443,7 +599,7 @@ public class Enemy : MonoBehaviour, IDamagable
     }
 
 
-    public void SetStunned(bool stunned) 
+    public void SetStunned(bool stunned)
     {
         isStunned = stunned;
     }
@@ -459,19 +615,45 @@ public class Enemy : MonoBehaviour, IDamagable
         floatingTextSpawner = spawner;
     }
 
+    private void SafeCancelCts()
+    {
+        try
+        {
+            if (cts != null && !cts.IsCancellationRequested)
+            {
+                cts.Cancel();
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // 이미 dispose된 경우 무시
+        }
+    }
+
+    private void SafeDisposeCts()
+    {
+        try
+        {
+            cts?.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        cts = null;
+    }
+
     private void OnDisable()
     {
-        // 풀로 반환될 때 정리
         ClearVisualChildren();
         ReleaseVisualHandle();
-        cts?.Cancel();
+        SafeCancelCts();
     }
 
     private void OnDestroy()
     {
         ClearVisualChildren();
         ReleaseVisualHandle();
-        cts?.Cancel();
-        cts?.Dispose();
+        SafeCancelCts();
+        SafeDisposeCts();
     }
 }
