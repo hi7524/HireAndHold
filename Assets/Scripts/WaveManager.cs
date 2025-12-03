@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class WaveManager : MonoBehaviour
@@ -220,6 +221,11 @@ public class WaveManager : MonoBehaviour
 
     private void SpawnBoss(WaveData wave)
     {
+        SpawnBossAsync(wave).Forget();
+    }
+
+    private async UniTaskVoid SpawnBossAsync(WaveData wave)
+    {
         bool isFinalBoss = wave.WAVE_TYPE == 4;
         string bossType = isFinalBoss ? "최종보스" : "중간보스";
 
@@ -233,7 +239,7 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        Enemy boss = monsterSpawner.SpawnBossById(bossId);
+        Enemy boss = await monsterSpawner.SpawnBossByIdAsync(bossId);
 
         if (boss != null)
         {

@@ -1,0 +1,473 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Enemy
+  m_EditorClassIdentifier: 
+  m_GroupName: Enemy
+  m_GUID: 52a88c03798edea4c80adf549020621a
+  m_SerializeEntries:
+  - m_GUID: 026e33ca04c5081449860dde229a5002
+    m_Address: Monster_Bat_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 040efcc0c1aa81a4ca52b38f71897ecf
+    m_Address: Monster_Crab_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 083e14ba0526a9a44bd568c324713ac0
+    m_Address: Monster_Hog_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f1c2c3707f10ad498162a00debf98b6
+    m_Address: Monster_Crab_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 132fbcb4746026545b1510d87f66eda4
+    m_Address: Monster_Goblin_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1506f6bc5e3c13145aacb535f5cdba5a
+    m_Address: Monster_Hog_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1a74151dd7cfa8842a8c5f2e0cb14ca8
+    m_Address: Monster_Bat_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d6d50642fb7de141b660569959868cf
+    m_Address: Monster_Gnoll_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1e97aab19d9befe419b09d21d57a3ebc
+    m_Address: Monster_Beatle_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2052c6f10f435f942bf701dba016a9e2
+    m_Address: Monster_Ogre_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2246480025b658b41be26acae6860756
+    m_Address: Monster_Slime_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2264be88cb40cda44a102634534ddd8b
+    m_Address: Monster_Fishman_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2754862917b17cb44917642830a0fcfc
+    m_Address: Monster_Wolf_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2b4838a916110a0449a6a23d0803a8fb
+    m_Address: Monster_Hog_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f324d34bec60734c85b65f2edb914f5
+    m_Address: Monster_Wolf_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 364354dbe6031c941be47a290f3fa969
+    m_Address: Monster_HermitCrab_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3a011076e8b5e8140a7f5b7548c1d489
+    m_Address: Monster_Slime_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3a03bf3d2fca15b4e94847f33ce0f42d
+    m_Address: Monster_Crab_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3d536bf8e990ffc4d863314f28701dde
+    m_Address: Monster_Ogre_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4161a71356733b04294ea073338da704
+    m_Address: Monster_Mushman_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44a9294420c41604e8658dd8d75d40c8
+    m_Address: Monster_HermitCrab_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44d1a1cd51b95284e9657587bca5ba6a
+    m_Address: Monster_Ogre_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4798984740ce3274cae8c521146e6f30
+    m_Address: Monster_Beatle_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4adda309aa09a7a418d6be3c9e0d885d
+    m_Address: Monster_Larva_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4c3f9d863c83bd8438f601c9909fdbe1
+    m_Address: Monster_HermitCrab_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4e815c0a2807cf94f9f56159dcd21ebe
+    m_Address: Monster_Goblin_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 502ece8020810a84ea7c3ca13197480c
+    m_Address: Monster_Fishman_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 507a319d5ba73f6418076007a273ee34
+    m_Address: Monster_Spider_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5302d5dd53d81554cabd079db9b15591
+    m_Address: Monster_Golem_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 603b9461f8fdf93478cac8baadec8e72
+    m_Address: Monster_Fishman_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 67305d5a70a7e1b4997a0269eaf1ee1d
+    m_Address: Monster_Bat_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 690d6af2c70cb8742bd1ac94f42d131d
+    m_Address: Monster_Gnoll_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 69fe1dfa572631341ba3338807245d82
+    m_Address: Monster_Goblin_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6a67fb4c9d2f3d54cb56a5aaee54fe99
+    m_Address: Monster_Beatle_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6ad5d25e62a5a7842ac7a0f233ca0aec
+    m_Address: Monster_Spider_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6c36807a477fae34fb8a84128f08772b
+    m_Address: Monster_Wolf_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7677d418cb6581845ab45dc6fc8ea7ff
+    m_Address: Monster_Golem_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 771ffe540df8caf49bdd5d2b50fe0bc7
+    m_Address: Monster_Goblin_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 77cecd47169368f468f0a42f0a4fdb89
+    m_Address: Monster_Hog_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 78e6cba6c86a25d4eae5c178781f4ccb
+    m_Address: Monster_Larva_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a93768955e1ae84981fd3211b186ad6
+    m_Address: Monster_Golem_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 84997efedbb2b8e4fa5d6e311c65535e
+    m_Address: Monster_Mushman_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8826b6ad1ef2d73468f1560be8124fcf
+    m_Address: Monster_Ogre_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 90549595312f7b54ba28a3a68b9a5c85
+    m_Address: Monster_Spider_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 933382ac74663aa4fb5245ce80759a1a
+    m_Address: Monster_Beatle_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 97279803b3d089742b4f34e1b000b6db
+    m_Address: Monster_Slime_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9abaaaa25e10fd04a847336911c35ca6
+    m_Address: Monster_Beatle_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9b007202504623248bbbd9c9dd9c06dc
+    m_Address: Monster_Slime_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9db56b2b25a50ad4cbb4a0dcdd366e8d
+    m_Address: Monster_Slime_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a2a81b77a6e4214489ce0877856ff264
+    m_Address: Monster_Wolf_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a71fe3e86aa6dde4dbb1ab52823bd08b
+    m_Address: Monster_Spider_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab602bd11ffa1864eaac4466ac324564
+    m_Address: Monster_Golem_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b10b9e4fca75c70408f5278d28b34bc1
+    m_Address: Monster_Golem_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bce028f06ecdcb84bbb61fcca6741121
+    m_Address: Monster_HermitCrab_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf21948c42625ff4ca68e091ca0539c4
+    m_Address: Monster_Mushman_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf6c1876a13d78442a84895e3f9f646b
+    m_Address: Monster_Gnoll_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bfa7ac18b10998b4daee4f0a7eb03d41
+    m_Address: Monster_Fishman_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bfcd8394ec496224c8cdf92a865948e8
+    m_Address: Monster_Wolf_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c26797f932688544ba47d0deb3ddc770
+    m_Address: Monster_Ogre_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c7eb2a0a7f9e6094982b80e27044fcd5
+    m_Address: Monster_Larva_0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb4ce9d989441394e96ecf4692634805
+    m_Address: Monster_Crab_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cfdf5b11a93e74f41915b1b8ce45691c
+    m_Address: Monster_Hog_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cff7834a7ac1ec941a73ab9d5fb0478c
+    m_Address: Monster_Larva_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d88f9d76d8abbce4bbc543e2ce8092f7
+    m_Address: Monster_HermitCrab_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dbb87fc47c4e4f3468f8b5ad1bb013f9
+    m_Address: Monster_Goblin_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e1185913af802284d97c8180d8cdf234
+    m_Address: Monster_Larva_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2d4283ee5a821e43baa2913fa5e99cf
+    m_Address: Monster_Bat_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea7690b402d065d419aacd55002f00d8
+    m_Address: Monster_Spider_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3d7bf7502482304bb1d9bdc7fa6153a
+    m_Address: Monster_Crab_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f6c2a58e018f2ce45913eebd360f1046
+    m_Address: Monster_Bat_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f85fdd7b4d1da2b449dcc1cf9c30427d
+    m_Address: Monster_Gnoll_0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f8dca569a7afc734791ba3c8fb2426bd
+    m_Address: Monster_Fishman_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f9e92294f7dd8124bb4326ed4d1fae9f
+    m_Address: Monster_Gnoll_0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd15a34313c9f8a4aacf84d66ee48949
+    m_Address: Monster_Mushman_0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd5756371d857fd49bc164587703b72b
+    m_Address: Monster_Mushman_0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: f1935f492e26fb9428dd7a49655a5290, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 038c63e72500ff848aa31b83856d0fe2, type: 2}
+    - {fileID: 11400000, guid: fb8b8390365e6084e899d66c6f54a43a, type: 2}

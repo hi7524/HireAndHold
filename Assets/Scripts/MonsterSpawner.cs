@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class MonsterSpawner : MonoBehaviour
 {
@@ -16,6 +18,11 @@ public class MonsterSpawner : MonoBehaviour
     private List<Enemy> activeMonsters = new List<Enemy>();
 
     public void SpawnMonsterById(int monsterId, bool isBoss = false)
+    {
+        SpawnMonsterByIdAsync(monsterId, isBoss).Forget();
+    }
+
+    private async UniTaskVoid SpawnMonsterByIdAsync(int monsterId, bool isBoss = false)
     {
         MonsterData data = DataTableManager.MonsterTable.Get(monsterId);
         if (data == null)
@@ -34,8 +41,13 @@ public class MonsterSpawner : MonoBehaviour
 
         Enemy monster = monsterObj.GetComponent<Enemy>();
         monster.transform.position = spawnPos;
-        //     monster.Initialize(poolManager, monsterKey);
         monster.InitializeWithData(poolManager, key, data, isBoss);
+
+        // Addressable로 MON_MODEL 로드 및 적용
+        if (!string.IsNullOrEmpty(data.MON_MODEL))
+        {
+            await monster.LoadVisualAsync(data.MON_MODEL);
+        }
 
         // Enemy 사망 이벤트 구독
         monster.OnDeath += OnMonsterRemoved;
@@ -74,8 +86,8 @@ public class MonsterSpawner : MonoBehaviour
     activeMonsters.Clear();
 }
 
-    // 보스 전용 스폰 (Monster 참조 반환)
-    public Enemy SpawnBossById(int bossId)
+    // 보스 전용 스폰 (Monster 참조 반환) - 비동기 버전
+    public async UniTask<Enemy> SpawnBossByIdAsync(int bossId)
     {
         MonsterData data = DataTableManager.MonsterTable.Get(bossId);
         if (data == null)
@@ -96,6 +108,12 @@ public class MonsterSpawner : MonoBehaviour
         boss.transform.position = spawnPos;
         boss.InitializeWithData(poolManager, bossKey, data, true); // isBoss = true
 
+        // Addressable로 MON_MODEL 로드 및 적용
+        if (!string.IsNullOrEmpty(data.MON_MODEL))
+        {
+            await boss.LoadVisualAsync(data.MON_MODEL);
+        }
+
         // Enemy 사망 이벤트 구독
         boss.OnDeath += OnMonsterRemoved;
 
@@ -105,6 +123,12 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         return boss;
+    }
+
+    // 보스 전용 스폰 (Fire and forget 방식 - 콜백 사용)
+    public void SpawnBossById(int bossId, Action<Enemy> onSpawned = null)
+    {
+        SpawnBossByIdAsync(bossId).ContinueWith(boss => onSpawned?.Invoke(boss)).Forget();
     }
 
     // 보스 사망 대기 (UniTask)
