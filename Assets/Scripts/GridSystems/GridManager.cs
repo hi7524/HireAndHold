@@ -14,6 +14,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GridLayoutData layoutData;
     [SerializeField] private GridVisualizer gridVisualizer;
     [SerializeField] private BuffManager buffManager;
+    [SerializeField] private BattleUnitManager unitManager;
     [Space]
     [SerializeField] private Color validColor;
     [SerializeField] private Color invalidColor;
@@ -371,13 +372,6 @@ public class GridManager : MonoBehaviour
         return cells;
     }
 
-    // 유닛 합성시 호출
-    public void OnMergedUnits()
-    {
-        //
-        Debug.Log("유닛 머지");
-    }
-
     // 머지 이펙트 풀 초기화
     private void InitializeMergeEffectPools()
     {
@@ -587,11 +581,6 @@ public class GridManager : MonoBehaviour
         Unit unit = unitObj.GetComponent<Unit>();
         GridUnit gridUnit = unitObj.GetComponent<GridUnit>();
 
-        if (unit != null)
-        {
-            unit.SetUnitID(unitId);
-        }
-
         if (gridUnit == null)
         {
             Destroy(unitObj);
@@ -599,6 +588,18 @@ public class GridManager : MonoBehaviour
         }
 
         gridUnit.SetGridData(gridData);
+        gridUnit.SetBattleUnitManager(unitManager);
+
+        if (unit != null)
+        {
+            unit.SetUnitID(unitId);
+
+            if (unitManager != null)
+            {
+                unitManager.RegisterUnit(unit);
+            }
+        }
+
         return gridUnit;
     }
 

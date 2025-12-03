@@ -147,7 +147,6 @@ public class GridCell : MonoBehaviour, IDroppable
                 {
                     if (await TryMergeUnits(existingUnit, gridUnit))
                     {
-                        gridManager.OnMergedUnits();
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
                         return;
@@ -172,6 +171,9 @@ public class GridCell : MonoBehaviour, IDroppable
             draggable.GameObject.transform.position = transform.position;
             Physics2D.SyncTransforms(); // Collider2D 위치 동기화
             placedObject = draggable.GameObject;
+
+            // Sorting Order 업데이트
+            UpdateUnitSortingOrder(placedObject);
 
             gridUnit.SetCurrentGridCell(this);
 
@@ -202,7 +204,6 @@ public class GridCell : MonoBehaviour, IDroppable
                     {
                         // 합성 성공 - UI 비활성화 및 색상 업데이트
                         Debug.Log("머지");
-                        gridManager.OnMergedUnits();
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
                         return;
@@ -242,6 +243,10 @@ public class GridCell : MonoBehaviour, IDroppable
 
             // 생성된 GridUnit을 배치
             placedObject = newGridUnit.GameObject;
+
+            // Sorting Order 업데이트
+            UpdateUnitSortingOrder(placedObject);
+
             newGridUnit.SetCurrentGridCell(this);
 
             // GridManager에 그리드 정보 전달
@@ -384,4 +389,16 @@ public class GridCell : MonoBehaviour, IDroppable
         return true;
     }
 
+    // Sorting Order 업데이트
+    private void UpdateUnitSortingOrder(GameObject unitObject)
+    {
+        if (unitObject == null)
+            return;
+
+        var unit = unitObject.GetComponent<Unit>();
+        if (unit != null)
+        {
+            unit.SetSortingOrder(-GridPosition.y);
+        }
+    }
 }
