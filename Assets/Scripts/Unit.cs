@@ -211,7 +211,7 @@ public class Unit : MonoBehaviour
         }
 
         projectileObj.transform.position = transform.position;
-        projectileObj.transform.rotation = Quaternion.identity;
+        // projectileObj.transform.rotation = Quaternion.identity;
 
         PlayerUnitProjectile projectile = projectileObj.GetComponent<PlayerUnitProjectile>();
         if (projectile == null) return;

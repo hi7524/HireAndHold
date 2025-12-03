@@ -4,14 +4,19 @@ public class PlayerUnitProjectile : MonoBehaviour
 {
     [SerializeField] private float lifeTime = 3f;
     [SerializeField] private float launchSpeed = 5f;
+    [SerializeField] private ParticleSystem mainProjectile;
+    [SerializeField] private ParticleSystem hitEffect;
+    [SerializeField] private float rotationOffset = 0f; // 프리팹마다 기본 회전이 다를 경우 조정
 
     private ObjectPoolManager poolManager;
     private string poolKey;
+
     private float damage;
-    private Vector2 direction;
     private float spawnTime;
-    private Rigidbody2D rb;
+    private bool hasHit = false;
+    private Vector2 direction;
     private Transform target;
+    private Rigidbody2D rb;
 
     public void Initialize(ObjectPoolManager manager, string key)
     {
@@ -31,6 +36,8 @@ public class PlayerUnitProjectile : MonoBehaviour
 
     public void SetTarget(Transform target)
     {
+        this.target = target;
+
         if (target != null)
         {
             direction = (target.position - transform.position).normalized;
@@ -44,11 +51,20 @@ public class PlayerUnitProjectile : MonoBehaviour
     public void Launch()
     {
         spawnTime = Time.time;
+        hasHit = false;
+
+        if (mainProjectile != null)
+            mainProjectile.gameObject.SetActive(true);
+
+        if (hitEffect != null)
+            hitEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
         if (target != null)
         {
-            Vector2 direction = (target.transform.position - transform.position).normalized;
-            rb.AddForce(direction * launchSpeed, ForceMode2D.Impulse);
+            direction = (target.transform.position - transform.position).normalized;
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            Debug.Log($"Direction: {direction}, Angle: {angle}");
+            transform.rotation = Quaternion.Euler(0, 0, angle + rotationOffset);
         }
     }
 
@@ -65,11 +81,32 @@ public class PlayerUnitProjectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (hasHit)
+            return;
+
         Enemy m = collision.GetComponent<Enemy>();
         if (m != null && !m.IsDead)
         {
+            hasHit = true;
+
             m.TakeDamage(damage);
-            gameObject.SetActive(false);
+
+            if (mainProjectile != null)
+                mainProjectile.gameObject.SetActive(false);
+
+            if (hitEffect != null)
+                hitEffect.Play();
+
+            // 정지
+            rb.linearVelocity = Vector2.zero;
+            launchSpeed = 0f;
+
+        
         }
+    }
+
+    private void OnParticleSystemStopped()
+    {
+        poolManager.Release(poolKey, gameObject);
     }
 }
