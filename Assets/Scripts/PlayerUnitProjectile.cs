@@ -63,7 +63,6 @@ public class PlayerUnitProjectile : MonoBehaviour
         {
             direction = (target.transform.position - transform.position).normalized;
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            Debug.Log($"Direction: {direction}, Angle: {angle}");
             transform.rotation = Quaternion.Euler(0, 0, angle + rotationOffset);
         }
     }
@@ -100,8 +99,6 @@ public class PlayerUnitProjectile : MonoBehaviour
             // 정지
             rb.linearVelocity = Vector2.zero;
             launchSpeed = 0f;
-
-        
         }
     }
 

@@ -16,7 +16,6 @@ public static class DataTableIds
     public static readonly string Item = "ItemTable";
     public static readonly string Selling = "SellingTable";
     public static readonly string StageLevel = "StageLevelTable";
-
 }
 
 public static class Tags
@@ -37,10 +36,16 @@ public static class AnimParams
 {
     public static readonly int IsActive = Animator.StringToHash("IsActive");
     public static readonly int Slash = Animator.StringToHash("Slash");
+    public static readonly int Cast = Animator.StringToHash("Cast");
 }
 
 public static class GameConstants
 {
     public static readonly float previewCellSizeObject = 0.5f;
     public static readonly float previewCellSizeUi = 55f;
+}
+
+public static class PoolKey
+{
+    public static readonly string UnitSkill = "UnitSkill";
 }

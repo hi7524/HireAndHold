@@ -17,6 +17,9 @@ public class Unit : MonoBehaviour
     [SerializeField] private string projectileKey = "Projectile";
 
     public int UnitID { get; private set; } = 11101;
+    public Enemy AttackTarget { get; private set; }
+    public ObjectPoolManager GetPoolManager() => poolManager;
+    public Animator GetAnimator() => visualAnimator;
 
     // 유닛 데이터
     private UnitData unitData;
@@ -32,7 +35,6 @@ public class Unit : MonoBehaviour
     private PassiveSkillManager passiveSkillManager;
     private ObjectPoolManager poolManager;
 
-    private Enemy attackTarget;
     private float lastAttackTime;
     private GameObject visualObject;
     private Animator visualAnimator;
@@ -56,6 +58,7 @@ public class Unit : MonoBehaviour
         }
 
         passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>(); // JCH: 프로토타입 이후 수정하기 **
+        //AddSkill(21001);
     }
 
     private void OnEnable()
@@ -65,12 +68,12 @@ public class Unit : MonoBehaviour
 
     private void Update()
     {
-        attackTarget = FindNearestTarget();
+        AttackTarget = FindNearestTarget();
 
-        if (attackTarget != null && Time.time >= lastAttackTime + unitData.ATTACK_COOLTIME)
+        if (AttackTarget != null && Time.time >= lastAttackTime + unitData.ATTACK_COOLTIME)
         {
             lastAttackTime = Time.time;
-            Attack(attackTarget);
+            Attack(AttackTarget);
         }
 
         HandleAutoSkills();
@@ -95,6 +98,7 @@ public class Unit : MonoBehaviour
 
         Debug.Log($"Unit ID changed to: {ID}");
         SetStats();
+        SetSkills();
         await SetVisualPrefabAsync();
     }
 
@@ -115,7 +119,25 @@ public class Unit : MonoBehaviour
         }
     }
 
-    // 유닛 비주얼 프리팹 비동기 로드 및 인스턴스화
+    // 유닛 데이터에서 스킬 로드 및 추가
+    private void SetSkills()
+    {
+        if (unitData == null)
+            return;
+
+        // 기존 스킬 전체 제거
+        ClearAllSkills();
+
+        // UNIT_SKILL1 추가
+        if (unitData.UNIT_SKILL1 > 0)
+            AddSkill(unitData.UNIT_SKILL1);
+
+        // UNIT_SKILL2 추가
+        if (unitData.UNIT_SKILL2 > 0)
+            AddSkill(unitData.UNIT_SKILL2);
+    }
+
+    // 유닛 비주얼 프리팹 비동기 로드 및 인스턴스화 *TODO: 수정 필요, 로딩 미리 해두고 사용할 수 있도록
     public async UniTask SetVisualPrefabAsync()
     {
         if (unitData == null)
@@ -178,7 +200,7 @@ public class Unit : MonoBehaviour
     }
 
     // 유닛의 공격 사거리 내에서 가장 가까운 살아있는 적 탐색
-    private Enemy FindNearestTarget()
+    public Enemy FindNearestTarget()
     {
         Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, unitData.ATTACK_RANGE);
 
@@ -257,6 +279,28 @@ public class Unit : MonoBehaviour
         return damage;
     }
 
+    // 스킬용 데미지 계산 (치명타율/치명타 데미지 커스터마이징 가능)
+    public float CalculateDamage(Enemy target, float baseDamage, float critRate, float critDamage)
+    {
+        float damage = baseDamage;
+
+        // 보스 추가 데미지 적용
+        if (target.IsBoss && passiveSkillManager != null)
+        {
+            PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
+            damage *= 1f + effects.bossDamageBonus / PercentToDivider;
+        }
+
+        // 치명타 판정 및 적용
+        bool isCritical = Random.value < (critRate / PercentToDivider);
+        if (isCritical)
+        {
+            damage *= critDamage;
+        }
+
+        return damage;
+    }
+
     // 사거리 시각화
     private void OnDrawGizmosSelected()
     {
@@ -285,7 +329,6 @@ public class Unit : MonoBehaviour
 
         var skill = new UnitSkill(this, skillData);
         skills.Add(skill);
-
     }
 
     // 특정 스킬을 제거
