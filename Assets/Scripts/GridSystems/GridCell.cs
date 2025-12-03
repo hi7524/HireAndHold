@@ -147,7 +147,6 @@ public class GridCell : MonoBehaviour, IDroppable
                 {
                     if (await TryMergeUnits(existingUnit, gridUnit))
                     {
-                        gridManager.OnMergedUnits();
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
                         return;
@@ -202,7 +201,6 @@ public class GridCell : MonoBehaviour, IDroppable
                     {
                         // 합성 성공 - UI 비활성화 및 색상 업데이트
                         Debug.Log("머지");
-                        gridManager.OnMergedUnits();
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
                         return;
@@ -242,6 +240,11 @@ public class GridCell : MonoBehaviour, IDroppable
 
             // 생성된 GridUnit을 배치
             placedObject = newGridUnit.GameObject;
+            var unit = placedObject.GetComponent<Unit>();
+            if (unit != null)
+                unit.SetSortingOrder(-GridPosition.y);
+        
+            
             newGridUnit.SetCurrentGridCell(this);
 
             // GridManager에 그리드 정보 전달
@@ -383,5 +386,4 @@ public class GridCell : MonoBehaviour, IDroppable
 
         return true;
     }
-
 }

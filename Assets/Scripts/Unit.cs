@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 // 플레이어 유닛을 관리하는 클래스
@@ -35,6 +36,8 @@ public class Unit : MonoBehaviour
     private float lastAttackTime;
     private GameObject visualObject;
     private Animator visualAnimator;
+    private SortingGroup sortingGroup;
+
 
     private readonly List<UnitSkill> skills = new(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
 
@@ -143,11 +146,18 @@ public class Unit : MonoBehaviour
         if (visualObject != null)
         {
             visualAnimator = visualObject.GetComponentInChildren<Animator>();
-            if (visualAnimator == null)
+            sortingGroup = visualObject.GetComponentInChildren<SortingGroup>();
+            if (sortingGroup == null)
             {
-                Debug.LogWarning($"Animator not found in visual prefab: {unitData.PREFAB_NAME}");
+                Debug.LogError("소팅그룹안됨");
             }
         }
+    }
+
+    // 소팅 그룹의 소팅 오더 변경
+    public void SetSortingOrder(int order)
+    {
+        sortingGroup.sortingOrder = order;
     }
 
     // 캐싱된 비주얼 오브젝트 제거

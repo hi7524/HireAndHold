@@ -372,13 +372,6 @@ public class GridManager : MonoBehaviour
         return cells;
     }
 
-    // 유닛 합성시 호출
-    public void OnMergedUnits()
-    {
-        //
-        Debug.Log("유닛 머지");
-    }
-
     // 머지 이펙트 풀 초기화
     private void InitializeMergeEffectPools()
     {
