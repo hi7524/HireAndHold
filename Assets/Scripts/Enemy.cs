@@ -1,15 +1,19 @@
 ﻿using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class Enemy : MonoBehaviour, IDamagable
 {
     public event Action<Enemy> OnDeath;
-    
     public int MonsterId { get; private set; }
     
     [SerializeField] private float maxHp;
     [SerializeField] private float currentHp;
     [SerializeField] public float speed;
+    [SerializeField] private float defaultSpeed;
     [SerializeField] private float attackDamage;
     [SerializeField] private float attackRange;
     [SerializeField] private float attackCooldown;
@@ -51,11 +55,24 @@ public class Enemy : MonoBehaviour, IDamagable
     private float lastSeparateTime;
     private const float SEPARATE_INTERVAL = 0.1f; // 0.1초마다만 실행
 
+    // === 비주얼 관련 필드 ===
+    [SerializeField] private Transform visualRoot; // 비주얼이 들어갈 부모 Transform
+    private GameObject visualObject;
+    private Animator visualAnimator;
+    private AsyncOperationHandle<GameObject> visualHandle;
+    private CancellationTokenSource cts;
+    private string currentModelKey;
 
     private void Awake()
     {
         originalScale = transform.localScale;
         myCollider = GetComponent<Collider2D>();
+        
+        // visualRoot가 없으면 자신을 사용
+        if (visualRoot == null)
+        {
+            visualRoot = transform;
+        }
     }
 
     void Start()
@@ -88,13 +105,18 @@ public class Enemy : MonoBehaviour, IDamagable
         if (isBoss)
         {
             currentHp = maxHp;
-            speed *= 0.7f;
+            speed *= 1.5f;
             transform.localScale = originalScale * 3f;
         }
         else
         {
             transform.localScale = originalScale * 1;
         }
+        
+        // CancellationTokenSource 초기화
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = new CancellationTokenSource();
     }
     public void InitializeWithData(ObjectPoolManager manager, string key, MonsterData data, bool boss = false)
     {
@@ -124,6 +146,95 @@ public class Enemy : MonoBehaviour, IDamagable
         {
             transform.localScale = originalScale * 1;
         }
+        
+        // CancellationTokenSource 초기화
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = new CancellationTokenSource();
+    }
+
+    /// <summary>
+    /// Addressable을 사용하여 비주얼 모델을 비동기로 로드합니다.
+    /// </summary>
+    /// <param name="modelKey">MonsterTable의 MON_MODEL 값 (Addressable 키)</param>
+    public async UniTask LoadVisualAsync(string modelKey)
+    {
+        if (string.IsNullOrEmpty(modelKey))
+        {
+            Debug.LogWarning($"[Enemy] MON_MODEL is null or empty! MonsterId: {MonsterId}");
+            return;
+        }
+
+        // 같은 모델이 이미 로드되어 있으면 스킵
+        if (currentModelKey == modelKey && visualObject != null)
+        {
+            return;
+        }
+
+        try
+        {
+            // 이전 비주얼 정리
+            ClearVisualChildren();
+            ReleaseVisualHandle();
+
+            currentModelKey = modelKey;
+            
+            // Addressable로 프리팹 로드
+            visualHandle = Addressables.LoadAssetAsync<GameObject>(modelKey);
+            var visualPrefab = await visualHandle.ToUniTask(cancellationToken: cts.Token);
+
+            if (visualHandle.Status != AsyncOperationStatus.Succeeded)
+            {
+                Debug.LogError($"[Enemy] Failed to load visual prefab: {modelKey}");
+                return;
+            }
+
+            // 프리팹 인스턴스화
+            visualObject = Instantiate(visualPrefab, visualRoot);
+            visualObject.transform.localPosition = Vector3.zero;
+            visualObject.transform.localRotation = Quaternion.identity;
+            visualObject.transform.localScale = Vector3.one;
+
+            // Animator 캐싱
+            visualAnimator = visualObject.GetComponentInChildren<Animator>();
+            if (visualAnimator == null)
+            {
+                Debug.LogWarning($"[Enemy] Animator not found in visual prefab: {modelKey}");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 정상적인 상황
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[Enemy] Error loading visual {modelKey}: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 비주얼 자식 오브젝트를 제거합니다.
+    /// </summary>
+    private void ClearVisualChildren()
+    {
+        if (visualObject != null)
+        {
+            Destroy(visualObject);
+            visualObject = null;
+            visualAnimator = null;
+        }
+    }
+
+    /// <summary>
+    /// Addressable 핸들을 릴리즈합니다.
+    /// </summary>
+    private void ReleaseVisualHandle()
+    {
+        if (visualHandle.IsValid())
+        {
+            Addressables.Release(visualHandle);
+        }
+        currentModelKey = null;
     }
 
     void Update()
@@ -173,7 +284,7 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-        transform.Translate(Vector3.down * speed * Time.deltaTime);
+        transform.Translate(Vector3.down * speed * Time.deltaTime * defaultSpeed);
 
         if (Time.time >= lastSeparateTime + SEPARATE_INTERVAL)
         {
@@ -292,6 +403,13 @@ public class Enemy : MonoBehaviour, IDamagable
         // 사망 이벤트 발생
         OnDeath?.Invoke(this);
 
+        // 비주얼 정리
+        ClearVisualChildren();
+        ReleaseVisualHandle();
+        
+        // CancellationToken 취소
+        cts?.Cancel();
+
         if (poolManager != null)
         {
             poolManager.Release(poolKey, gameObject);
@@ -341,4 +459,19 @@ public class Enemy : MonoBehaviour, IDamagable
         floatingTextSpawner = spawner;
     }
 
+    private void OnDisable()
+    {
+        // 풀로 반환될 때 정리
+        ClearVisualChildren();
+        ReleaseVisualHandle();
+        cts?.Cancel();
+    }
+
+    private void OnDestroy()
+    {
+        ClearVisualChildren();
+        ReleaseVisualHandle();
+        cts?.Cancel();
+        cts?.Dispose();
+    }
 }

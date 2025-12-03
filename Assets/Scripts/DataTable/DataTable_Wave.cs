@@ -17,6 +17,8 @@ public class WaveData
         public int SPAWN_MON2_ID { get; set; }
         public int MON2_COUNT { get; set; }
         public float WAVE_SPEED { get; set; }
+        public float MON_EXP_UP { get; set; }
+        public float MON_HP_UP { get; set; }
 
     }
 public class DataTable_Wave : DataTable
