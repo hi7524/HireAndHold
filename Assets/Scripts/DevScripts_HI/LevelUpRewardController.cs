@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 public class LevelUpRewardController : MonoBehaviour
@@ -41,8 +38,9 @@ public class LevelUpRewardController : MonoBehaviour
 
 
     // 초기 세팅
-    private async void Start()
+    private void Start()
     {
+        // 로딩 씬에서 DataTableManager와 AddressablePreloader가 이미 초기화됨
         confirmBtn.interactable = false; // 처음 시작시 확인 버튼 비활성화
 
         // 각 프리팹 카드 3장씩 생성
@@ -51,11 +49,8 @@ public class LevelUpRewardController : MonoBehaviour
 
         playerExp.OnLevelUp += DrawLevelUpReward;
 
-        // DataTableManager 초기화 대기
-        await DataTableManager.InitAsync();
-
-        // GridData, Sprite 캐싱
-        await CacheAllData();
+        // GridData, Sprite 캐싱 (AddressablePreloader에서 가져옴)
+        CacheAllData();
 
         SelectUnitOnGameStart();
     }
@@ -76,15 +71,9 @@ public class LevelUpRewardController : MonoBehaviour
             }
         }
 
-        // 캐시된 Addressables 리소스 해제
-        foreach (var gridData in gridDataCache.Values)
-        {
-            if (gridData != null)
-            {
-                Addressables.Release(gridData);
-            }
-        }
+        // 캐시 클리어 (AddressablePreloader가 관리하므로 Release 불필요)
         gridDataCache.Clear();
+        spriteCache.Clear();
     }
 
     // 레벨업 보상 유닛이 생성되었을 때 호출
@@ -223,8 +212,8 @@ public class LevelUpRewardController : MonoBehaviour
             gameManager.ResumeGame();
     }
 
-    // 모든 선택 가능한 유닛의 GridData, sprite를 미리 캐싱
-    private async UniTask CacheAllData()
+    // 모든 선택 가능한 유닛의 GridData, sprite를 미리 캐싱 (AddressablePreloader에서 가져옴)
+    private void CacheAllData()
     {
         gridDataCache.Clear();
         spriteCache.Clear();
@@ -234,46 +223,41 @@ public class LevelUpRewardController : MonoBehaviour
             var unitData = DataTableManager.UnitTable?.Get(unitId);
 
             if (unitData == null)
-                return;
+                continue;
 
-            // GridData 저장
+            // GridData 캐시에서 가져오기
             if (!string.IsNullOrEmpty(unitData.GRID_DATA))
             {
-                var gridDataHandle = Addressables.LoadAssetAsync<UnitGridData>(unitData.GRID_DATA);
-                var gridData = await gridDataHandle.ToUniTask();
-
-                if (gridDataHandle.Status == AsyncOperationStatus.Succeeded)
+                var gridData = AddressablePreloader.Instance.GetCachedGridData(unitData.GRID_DATA);
+                if (gridData != null)
                     gridDataCache[unitId] = gridData;
             }
 
-            // Sprite 정보 저장 (1성, 2성, 3성 모두 로드)
+            // Sprite 캐시에서 가져오기 (1성, 2성, 3성 모두)
             if (!string.IsNullOrEmpty(unitData.UNIT_ICON))
             {
-                // 1성 스프라이트 로드 (현재 unitId)
-                var spriteDataHandle = Addressables.LoadAssetAsync<Sprite>(unitData.UNIT_ICON);
-                var sprite = await spriteDataHandle.ToUniTask();
-                if (spriteDataHandle.Status == AsyncOperationStatus.Succeeded)
+                // 1성 스프라이트
+                var sprite = AddressablePreloader.Instance.GetCachedSprite(unitData.UNIT_ICON);
+                if (sprite != null)
                     spriteCache[unitId] = sprite;
 
-                // 2성 스프라이트 로드 (unitId + 101)
+                // 2성 스프라이트 (unitId + 101)
                 int star2UnitId = unitId + 101;
                 var unitData2 = DataTableManager.UnitTable?.Get(star2UnitId);
                 if (unitData2 != null && !string.IsNullOrEmpty(unitData2.UNIT_ICON))
                 {
-                    var sprite2Handle = Addressables.LoadAssetAsync<Sprite>(unitData2.UNIT_ICON);
-                    var sprite2 = await sprite2Handle.ToUniTask();
-                    if (sprite2Handle.Status == AsyncOperationStatus.Succeeded)
+                    var sprite2 = AddressablePreloader.Instance.GetCachedSprite(unitData2.UNIT_ICON);
+                    if (sprite2 != null)
                         spriteCache[star2UnitId] = sprite2;
                 }
 
-                // 3성 스프라이트 로드 (unitId + 202)
+                // 3성 스프라이트 (unitId + 202)
                 int star3UnitId = unitId + 202;
                 var unitData3 = DataTableManager.UnitTable?.Get(star3UnitId);
                 if (unitData3 != null && !string.IsNullOrEmpty(unitData3.UNIT_ICON))
                 {
-                    var sprite3Handle = Addressables.LoadAssetAsync<Sprite>(unitData3.UNIT_ICON);
-                    var sprite3 = await sprite3Handle.ToUniTask();
-                    if (sprite3Handle.Status == AsyncOperationStatus.Succeeded)
+                    var sprite3 = AddressablePreloader.Instance.GetCachedSprite(unitData3.UNIT_ICON);
+                    if (sprite3 != null)
                         spriteCache[star3UnitId] = sprite3;
                 }
             }

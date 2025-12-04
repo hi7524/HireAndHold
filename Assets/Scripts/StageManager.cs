@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class StageManager : MonoBehaviour
 {
@@ -24,13 +22,11 @@ public class StageManager : MonoBehaviour
     [SerializeField] private StageUiManager stageUiManager;
     [SerializeField] private MonsterSpawner monsterSpawner;
 
-    private async UniTaskVoid Start()
+    private void Start()
     {
+        // 로딩 씬에서 DataTableManager가 이미 초기화됨
         waveManager.Initialize(gameManager, this);
-        if (!DataTableManager.IsInitialized)
-        {
-            await DataTableManager.InitAsync();
-        }
+
         CurrentStageId = PageSnap.SelectedStageId;
         Debug.Log($"[StageManager] 초기 스테이지 ID 설정: {CurrentStageId}");
         gameManager.OnGameStart += () => StartStage(CurrentStageId);
@@ -39,7 +35,6 @@ public class StageManager : MonoBehaviour
         if (monsterSpawner != null)
         {
             monsterSpawner.OnMonsterDeath += OnMonsterKilled;
-
         }
     }
 

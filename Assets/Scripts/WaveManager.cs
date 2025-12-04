@@ -221,34 +221,25 @@ public class WaveManager : MonoBehaviour
 
     private void SpawnBoss(WaveData wave)
     {
-        SpawnBossAsync(wave).Forget();
-    }
-
-    private async UniTaskVoid SpawnBossAsync(WaveData wave)
-    {
         bool isFinalBoss = wave.WAVE_TYPE == 4;
         string bossType = isFinalBoss ? "최종보스" : "중간보스";
-
 
         gameManager.IsBoss = true;
 
         int bossId = wave.SPAWN_MON1_ID;
         if (bossId <= 0)
         {
-
             return;
         }
 
-        Enemy boss = await monsterSpawner.SpawnBossByIdAsync(bossId);
+        Enemy boss = monsterSpawner.SpawnBossById(bossId);
 
         if (boss != null)
         {
             MonsterData bossData = DataTableManager.MonsterTable.Get(bossId);
             string bossName = bossData?.MON_NAME ?? bossType;
 
-
             stageUiManager.ShowBossHealthBar(boss, bossName);
-
 
             monsterSpawner.WaitForBossDeath(boss, () => OnBossDeath(wave, isFinalBoss));
         }

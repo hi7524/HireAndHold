@@ -190,10 +190,10 @@ public class Enemy : MonoBehaviour, IDamagable
     }
 
     /// <summary>
-    /// Addressable을 사용하여 비주얼 모델을 비동기로 로드합니다.
+    /// 캐시에서 비주얼 모델을 동기적으로 로드합니다.
     /// </summary>
     /// <param name="modelKey">MonsterTable의 MON_MODEL 값 (Addressable 키)</param>
-    public async UniTask LoadVisualAsync(string modelKey)
+    public void LoadVisual(string modelKey)
     {
         if (string.IsNullOrEmpty(modelKey))
         {
@@ -207,44 +207,48 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-        try
+        // 이전 비주얼 정리
+        ClearVisualChildren();
+        ReleaseVisualHandle();
+
+        currentModelKey = modelKey;
+        GameObject visualPrefab = null;
+
+        // 캐시에서 먼저 시도
+        if (AddressablePreloader.Instance != null && AddressablePreloader.Instance.HasCachedPrefab(modelKey))
         {
-            // 이전 비주얼 정리
-            ClearVisualChildren();
-            ReleaseVisualHandle();
-
-            currentModelKey = modelKey;
-
-            // Addressable로 프리팹 로드
+            visualPrefab = AddressablePreloader.Instance.GetCachedPrefab(modelKey);
+        }
+        else
+        {
+            // 캐시에 없으면 동기 로드 (fallback)
             visualHandle = Addressables.LoadAssetAsync<GameObject>(modelKey);
-            var visualPrefab = await visualHandle.ToUniTask(cancellationToken: cts.Token);
+            visualPrefab = visualHandle.WaitForCompletion();
 
             if (visualHandle.Status != AsyncOperationStatus.Succeeded)
             {
                 Debug.LogError($"[Enemy] Failed to load visual prefab: {modelKey}");
                 return;
             }
-
-            // 프리팹 인스턴스화
-            visualObject = Instantiate(visualPrefab, visualRoot);
-            visualObject.transform.localPosition = Vector3.zero;
-            visualObject.transform.localRotation = Quaternion.identity;
-            visualObject.transform.localScale = Vector3.one;
-
-            // Animator 캐싱
-            visualAnimator = visualObject.GetComponentInChildren<Animator>();
-            if (visualAnimator == null)
-            {
-                Debug.LogWarning($"[Enemy] Animator not found in visual prefab: {modelKey}");
-            }
         }
-        catch (OperationCanceledException)
+
+        if (visualPrefab == null)
         {
-            // 취소됨 - 정상적인 상황
+            Debug.LogError($"[Enemy] Visual prefab is null: {modelKey}");
+            return;
         }
-        catch (Exception e)
+
+        // 프리팹 인스턴스화
+        visualObject = Instantiate(visualPrefab, visualRoot);
+        visualObject.transform.localPosition = Vector3.zero;
+        visualObject.transform.localRotation = Quaternion.identity;
+        visualObject.transform.localScale = Vector3.one;
+
+        // Animator 캐싱
+        visualAnimator = visualObject.GetComponentInChildren<Animator>();
+        if (visualAnimator == null)
         {
-            Debug.LogError($"[Enemy] Error loading visual {modelKey}: {e.Message}");
+            Debug.LogWarning($"[Enemy] Animator not found in visual prefab: {modelKey}");
         }
     }
 

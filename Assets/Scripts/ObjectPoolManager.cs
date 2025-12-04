@@ -1,10 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class ObjectPoolManager : MonoBehaviour
 {
@@ -37,74 +34,83 @@ public class ObjectPoolManager : MonoBehaviour
     public Dictionary<string, IObjectPool<GameObject>> pools = new Dictionary<string, IObjectPool<GameObject>>();
 
 
-    // Addressable Asset 로드 후 풀 생성
-    private async void Awake()
+    // 타이틀→로비에서 AddressablePreloader가 이미 로드 완료함
+    // 동기적으로 캐시에서 가져와서 풀 생성
+    private void Awake()
     {
-        await LoadAllAddressableAssets();
+        LoadAllAssetsFromCache();
 
-        foreach(var item in poolItems)
+        foreach (var item in poolItems)
         {
             if (item.isLabel)
             {
-                // null 체크 추가
                 if (item.cachedPrefabs == null || item.cachedPrefabs.Count == 0)
                     continue;
 
-                // Label로 로드된 여러 Asset에 대해 각각 풀 생성
-                foreach(var prefab in item.cachedPrefabs)
+                foreach (var prefab in item.cachedPrefabs)
                 {
                     CreatePoolForPrefab(prefab.name, prefab, item.defaultCapacity, item.maxSize);
                 }
             }
             else
             {
-                // 단일 Asset에 대해 풀 생성
+                // cachedPrefab이 없으면 풀 생성 건너뛰기
+                if (item.cachedPrefab == null)
+                {
+                    Debug.LogWarning($"[ObjectPoolManager] '{item.key}' 풀 생성 실패 - 프리팹 없음");
+                    continue;
+                }
                 CreatePool(item);
             }
         }
+
+        Debug.Log("[ObjectPoolManager] 모든 풀 생성 완료");
     }
 
-    // 모든 Addressable Asset을 병렬로 로드
-    private async Task LoadAllAddressableAssets()
+    // AddressablePreloader 캐시에서 에셋 가져오기 (없으면 동기 로드)
+    private void LoadAllAssetsFromCache()
     {
-        List<Task> loadTasks = new List<Task>();
-
-        foreach(var item in poolItems)
+        foreach (var item in poolItems)
         {
-            loadTasks.Add(LoadAddressableAsset(item));
-        }
+            if (string.IsNullOrEmpty(item.addressableKey))
+                continue;
 
-        await Task.WhenAll(loadTasks);
-        Debug.Log("모든 어드레서블 에셋 로드 완료");
-    }
-
-    // 단일 또는 Label 기반 Addressable Asset 로드
-    private async Task LoadAddressableAsset(PoolItem item)
-    {
-        if (string.IsNullOrEmpty(item.addressableKey))
-            return;
-
-        if (item.isLabel)
-        {
-            // Label로 여러 개 로드
-            AsyncOperationHandle<IList<GameObject>> handle =
-                Addressables.LoadAssetsAsync<GameObject>(item.addressableKey, null);
-            await handle.Task;
-
-            if (handle.Status == AsyncOperationStatus.Succeeded)
+            if (item.isLabel)
             {
-                item.cachedPrefabs = new List<GameObject>(handle.Result);
+                // Label은 동기 로드로 처리
+                var handle = Addressables.LoadAssetsAsync<GameObject>(item.addressableKey, null);
+                handle.WaitForCompletion();
+
+                if (handle.Status == UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationStatus.Succeeded)
+                {
+                    item.cachedPrefabs = new List<GameObject>(handle.Result);
+                }
             }
-        }
-        else
-        {
-            // 단일 Asset 로드
-            AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(item.addressableKey);
-            await handle.Task;
-
-            if (handle.Status == AsyncOperationStatus.Succeeded)
+            else
             {
-                item.cachedPrefab = handle.Result;
+                // 캐시에서 먼저 시도
+                var cachedPrefab = AddressablePreloader.Instance != null
+                    ? AddressablePreloader.Instance.GetCachedPrefab(item.addressableKey)
+                    : null;
+                if (cachedPrefab != null)
+                {
+                    item.cachedPrefab = cachedPrefab;
+                }
+                else
+                {
+                    // 캐시에 없으면 동기 로드 (fallback)
+                    var handle = Addressables.LoadAssetAsync<GameObject>(item.addressableKey);
+                    item.cachedPrefab = handle.WaitForCompletion();
+
+                    if (item.cachedPrefab != null)
+                    {
+                        Debug.Log($"[ObjectPoolManager] '{item.addressableKey}' 동기 로드 완료");
+                    }
+                    else
+                    {
+                        Debug.LogError($"[ObjectPoolManager] '{item.addressableKey}' 로드 실패");
+                    }
+                }
             }
         }
     }

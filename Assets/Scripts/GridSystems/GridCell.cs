@@ -1,6 +1,5 @@
 using UnityEngine;
 using DG.Tweening;
-using Cysharp.Threading.Tasks;
 
 public class GridCell : MonoBehaviour, IDroppable
 {
@@ -93,6 +92,12 @@ public class GridCell : MonoBehaviour, IDroppable
             {
                 canDrop = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells());
             }
+            else
+            {
+                // GridData가 아직 로드되지 않았으면 배치 불가
+                canDrop = false;
+            }
+            return;
         }
 
         // DraggableGridUnitUi 처리 (Inventory와 LevelUp 모두 통합)
@@ -114,6 +119,11 @@ public class GridCell : MonoBehaviour, IDroppable
             {
                 canDrop = gridManager.CanPlaceUnit(GridPosition, draggableUnitUi.GridData.GetOccupiedCells());
             }
+            else
+            {
+                // GridData가 아직 로드되지 않았으면 배치 불가
+                canDrop = false;
+            }
         }
     }
 
@@ -124,7 +134,7 @@ public class GridCell : MonoBehaviour, IDroppable
         gridManager.ChangeOccupiedCellColor();
     }
 
-    public async void OnDrop(IDraggable draggable)
+    public void OnDrop(IDraggable draggable)
     {
         // 드롭 가능 상태가 아닐 경우 배치 불가
         if (!canDrop)
@@ -145,7 +155,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null)
                 {
-                    if (await TryMergeUnits(existingUnit, gridUnit))
+                    if (TryMergeUnits(existingUnit, gridUnit))
                     {
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
@@ -200,7 +210,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 var existingUnit = placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null)
                 {
-                    if (await TryMergeWithUi(existingUnit, draggableUnitUi))
+                    if (TryMergeWithUi(existingUnit, draggableUnitUi))
                     {
                         // 합성 성공 - UI 비활성화 및 색상 업데이트
                         Debug.Log("머지");
@@ -226,7 +236,7 @@ public class GridCell : MonoBehaviour, IDroppable
                 return;
             }
 
-            await newGridUnit.SetUnitID(draggableUnitUi.UnitId, draggableUnitUi.StarLevel);
+            newGridUnit.SetUnitID(draggableUnitUi.UnitId, draggableUnitUi.StarLevel);
 
             // 타입에 따라 다른 처리
             if (draggableUnitUi.DraggableUnitType == DraggableUnitType.LevelUp)
@@ -327,7 +337,7 @@ public class GridCell : MonoBehaviour, IDroppable
     }
 
     // 유닛 합성 처리
-    private async UniTask<bool> TryMergeUnits(GridUnit existingUnit, GridUnit draggingUnit)
+    private bool TryMergeUnits(GridUnit existingUnit, GridUnit draggingUnit)
     {
         if (!CanMerge(existingUnit, draggingUnit))
             return false;
@@ -342,7 +352,7 @@ public class GridCell : MonoBehaviour, IDroppable
         // 머지 이펙트 재생 - DOTween 애니메이션
         existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
 
-        await existingUnit.SetUnitID(newUnitId, newStarLevel);
+        existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         // 드래그 중이던 유닛 삭제 (2개가 1개로 합쳐지므로 카운트 감소)
         Destroy(draggingUnit.gameObject);
@@ -369,7 +379,7 @@ public class GridCell : MonoBehaviour, IDroppable
     }
 
     // DraggableGridUnitUi와 유닛 합성 처리
-    private async UniTask<bool> TryMergeWithUi(GridUnit existingUnit, DraggableGridUnitUi draggableUnitUi)
+    private bool TryMergeWithUi(GridUnit existingUnit, DraggableGridUnitUi draggableUnitUi)
     {
         if (!CanMergeWithUi(existingUnit, draggableUnitUi))
             return false;
@@ -384,7 +394,7 @@ public class GridCell : MonoBehaviour, IDroppable
         // 머지 이펙트 재생 - DOTween 애니메이션
         existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
 
-        await existingUnit.SetUnitID(newUnitId, newStarLevel);
+        existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         return true;
     }

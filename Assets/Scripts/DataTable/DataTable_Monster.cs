@@ -58,4 +58,9 @@ public class DataTable_Monster : DataTable
         }
         return dictionary[key];
     }
+
+    public IEnumerable<MonsterData> GetAll()
+    {
+        return dictionary.Values;
+    }
 }

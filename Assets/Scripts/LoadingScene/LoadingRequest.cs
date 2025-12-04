@@ -23,4 +23,9 @@ public class LoadingRequest
     {
         tasks.Add(new LoadingTask(taskName, taskAction, weight));
     }
+
+    public void AddTask(string taskName, Func<CancellationToken, IProgress<float>, UniTask> taskAction, float weight = 1f)
+    {
+        tasks.Add(new LoadingTask(taskName, taskAction, weight));
+    }
 }

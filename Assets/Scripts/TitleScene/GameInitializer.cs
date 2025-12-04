@@ -119,14 +119,20 @@ public class GameInitializer : MonoBehaviour
         request.AddTask("데이터 테이블 로드", async (ct) =>
         {
             await DataTableManager.InitAsync();
-        }, weight: 0.3f);
+        }, weight: 0.2f);
 
         // 유저 데이터 로드
         request.AddTask("유저 데이터 로드", async (ct) =>
         {
             await DatabaseManager.Instance.WaitForInitializationAsync();
             await DatabaseManager.Instance.LoadUserDataAsync();
-        }, weight: 0.7f);
+        }, weight: 0.2f);
+
+        // 게임 리소스 프리로드 (몬스터/유닛 비주얼, GridData 등)
+        request.AddTask("게임 리소스 로드", async (ct, progress) =>
+        {
+            await AddressablePreloader.Instance.PreloadAllAsync(ct, progress);
+        }, weight: 0.6f);
 
         request.onLoadingComplete = () =>
         {

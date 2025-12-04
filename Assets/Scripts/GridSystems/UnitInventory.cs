@@ -1,9 +1,6 @@
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 public class UnitInventory : MonoBehaviour, IDroppable
@@ -33,12 +30,12 @@ public class UnitInventory : MonoBehaviour, IDroppable
     private Dictionary<int, UnitGridData> gridDataCache = new Dictionary<int, UnitGridData>();
 
 
-    async UniTaskVoid Start()
+    private void Start()
     {
+        // 로딩 씬에서 DataTableManager와 AddressablePreloader가 이미 초기화됨
         InitializeSlots();
         UpdateAllSlotsUi();
-        await DataTableManager.InitAsync();
-        await CacheAllGridData();
+        CacheAllGridDataFromPreloader();
     }
 
     private void OnEnable()
@@ -58,13 +55,7 @@ public class UnitInventory : MonoBehaviour, IDroppable
         dropSequence?.Kill();
         transform.DOKill();
 
-        foreach (var gridData in gridDataCache.Values)
-        {
-            if (gridData != null)
-            {
-                Addressables.Release(gridData);
-            }
-        }
+        // AddressablePreloader가 에셋 관리하므로 Release 불필요
         gridDataCache.Clear();
     }
 
@@ -229,12 +220,11 @@ public class UnitInventory : MonoBehaviour, IDroppable
         }
     }
 
-    // 모든 유닛의 GridData를 미리 캐싱
-    private async UniTask CacheAllGridData()
+    // AddressablePreloader에서 캐싱된 GridData 가져오기
+    private void CacheAllGridDataFromPreloader()
     {
         gridDataCache.Clear();
 
-        // UnitTable의 모든 유닛에 대해 GridData 캐싱
         var unitTable = DataTableManager.UnitTable;
         if (unitTable == null) return;
 
@@ -244,14 +234,12 @@ public class UnitInventory : MonoBehaviour, IDroppable
             {
                 int unitId = unitData.UNIT_ID;
 
-                // 이미 캐시되어 있으면 스킵
                 if (gridDataCache.ContainsKey(unitId))
                     continue;
 
-                var gridDataHandle = Addressables.LoadAssetAsync<UnitGridData>(unitData.GRID_DATA);
-                var gridData = await gridDataHandle.ToUniTask();
-
-                if (gridDataHandle.Status == AsyncOperationStatus.Succeeded)
+                // AddressablePreloader에서 이미 로드된 GridData 가져오기
+                var gridData = AddressablePreloader.Instance.GetCachedGridData(unitData.GRID_DATA);
+                if (gridData != null)
                 {
                     gridDataCache[unitId] = gridData;
                 }
