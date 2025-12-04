@@ -175,18 +175,20 @@ public class StageClearPanelController : MonoBehaviour
         Hide();
         Time.timeScale = 1f;
 
-        // 클리어 데이터 저장
-        await SaveStageResultAsync(
-            currentStageId,
-            true,
-            currentStars,
-            currentGold,
-            currentExp,
-            currentClearTime
-        );
+        LoadingRequest request = new LoadingRequest("Lobby");
+        request.AddTask("클리어 데이터 저장", async (ct) =>
+        {
+            await SaveStageResultAsync(
+                currentStageId,
+                true,
+                currentStars,
+                currentGold,
+                currentExp,
+                currentClearTime
+            );
+        }, weight: 2f);
 
-        // 로비로 이동 (로딩씬 없이)
-        await Addressables.LoadSceneAsync("Lobby");
+        await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
 
     private async void OnNextStageButtonClick()

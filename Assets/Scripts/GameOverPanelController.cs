@@ -71,7 +71,9 @@ public class GameOverPanelController : MonoBehaviour
     {
         Hide();
         Time.timeScale = 1f;
-        await Addressables.LoadSceneAsync("Stage");
+
+        LoadingRequest request = new LoadingRequest("Stage");
+        await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
 
     private async void OnLobbyButtonClick()
@@ -79,10 +81,13 @@ public class GameOverPanelController : MonoBehaviour
         Hide();
         Time.timeScale = 1f;
 
-        // 실패 데이터 저장
-        await SaveStageFailDataAsync(currentStageId, currentGold, currentExp);
-        
-        await Addressables.LoadSceneAsync("Lobby");
+        LoadingRequest request = new LoadingRequest("Lobby");
+        request.AddTask("실패 데이터 저장", async (ct) =>
+        {
+            await SaveStageFailDataAsync(currentStageId, currentGold, currentExp);
+        }, weight: 1f);
+
+        await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
     
     // 실패 데이터 저장
