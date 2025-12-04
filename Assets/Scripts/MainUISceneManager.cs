@@ -6,7 +6,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class MainUISceneManager : MonoBehaviour
 {
-    public GameObject uiUnitWrapperPrefab;   
+    public GameObject uiUnitWrapperPrefab;
     public RectTransform moveArea;
     public int spawnCount = 4;
 
