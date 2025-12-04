@@ -51,11 +51,11 @@ public class HeroEnforceSystem
         var enforceData =
             heroEnforceTable.FindByLevelAndIndex(nextLevel, unit.HeroIndex);
 
-        if (enforceData == null)
-        {
-            Debug.LogError($"[HeroEnforce] 데이터를 찾을 수 없음 → HeroIndex={unit.HeroIndex}, Level={nextLevel}");
-            return false;
-        }
+        //if (enforceData == null)
+        //{
+        //    Debug.LogError($"[HeroEnforce] 데이터를 찾을 수 없음 → HeroIndex={unit.HeroIndex}, Level={nextLevel}");
+        //    return false;
+        //}
 
         if (!HasEnoughResources(enforceData, unitId, out string reason))
         {

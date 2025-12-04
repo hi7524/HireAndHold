@@ -20,9 +20,7 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
 
     public StageUIData[] stageDataList;
 
-
     //Play Button
-
     public GameObject playButton;
 
     private RectTransform[] pages;
@@ -30,7 +28,7 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
     private float[] pagePositions;
     private int currentIndex = 0;
     private bool isDragging = false;
-
+    private bool isSnapping = false;
 
     private void Awake()
     {
@@ -39,17 +37,14 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
             scrollRect = GetComponent<ScrollRect>();
         }
 
-
         if (content == null)
         {
             content = scrollRect.content;
         }
-
     }
 
     private void Start()
     {
-
         if (DatabaseManager.Instance != null && DatabaseManager.Instance.IsInitialized)
         {
             unlockedStage = DatabaseManager.Instance.CurrentUser?.profile?.highestStage ?? 701;
@@ -59,7 +54,9 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
         {
             Debug.LogWarning("[PageSnap] DatabaseManager 초기화 안됨. 기본값 사용");
         }
+
         totalStages = DataTableManager.StageTable.GetAll().Count();
+
         if (stageCardPrefab != null && content.childCount == 0)
         {
             CreateStageCards();
@@ -78,16 +75,14 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
         scrollRect.inertia = true;
         scrollRect.decelerationRate = 0.035f;
 
-        // InitStages();
-
         Canvas.ForceUpdateCanvases();
-
         SetContentPadding();
-
         Canvas.ForceUpdateCanvases();
         CalculatePagePositions();
+
         int highestStage = Mathf.Clamp(unlockedStage - 701, 0, totalStages - 1);
         SnapToPage(highestStage, true);
+
         if (playButton != null)
         {
             Button btn = playButton.GetComponent<Button>();
@@ -95,6 +90,15 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
             {
                 btn.onClick.AddListener(OnPlayButtonClick);
             }
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // DOTween 애니메이션 중에는 ScrollRect의 velocity를 강제로 0으로
+        if (isSnapping && DOTween.IsTweening(content))
+        {
+            scrollRect.velocity = Vector2.zero;
         }
     }
 
@@ -117,6 +121,8 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
 
     private void OnDestroy()
     {
+        DOTween.Kill(content);
+
         if (playButton != null)
         {
             Button btn = playButton.GetComponent<Button>();
@@ -126,7 +132,6 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
             }
         }
     }
-
 
     private void CreateStageCards()
     {
@@ -170,29 +175,15 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
                     bool isLocked = stageId > unlockedStage;
                     card.SetLocked(isLocked);
                     Debug.Log($"[PageSnap] Stage ID {stageId} 잠금 여부: {isLocked}");
-
-                    // TODO: stageImage는 Addressable로 로드하거나 리소스에서 가져오기
-                    // 예: card.stageImage.sprite = await Addressables.LoadAssetAsync<Sprite>($"Stage_{i}").Task;
                 }
             }
         }
     }
 
-
     private void CollectStageCards()
     {
         stageCards = content.GetComponentsInChildren<StageCard>(true);
         pages = stageCards.Select(c => c.GetComponent<RectTransform>()).ToArray();
-    }
-
-    private void InitStages()
-    {
-        for (int i = 0; i < stageCards.Length; i++)
-        {
-            StageCard card = stageCards[i];
-            card.stageIndex = i + 1;
-            card.SetLocked((i + 1) > unlockedStage);
-        }
     }
 
     private void SetContentPadding()
@@ -204,13 +195,11 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
 
         RectTransform viewport = scrollRect.viewport != null ? scrollRect.viewport : (RectTransform)scrollRect.transform;
         float viewportWidth = viewport.rect.width;
-
         float cardWidth = pages[0].rect.width;
 
         HorizontalOrVerticalLayoutGroup layoutGroup = content.GetComponent<HorizontalOrVerticalLayoutGroup>();
         if (layoutGroup == null)
         {
-
             return;
         }
 
@@ -235,32 +224,30 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
     public void OnBeginDrag(PointerEventData eventData)
     {
         isDragging = true;
+        isSnapping = false;
+
+        // 진행 중인 모든 DOTween 애니메이션 중단
         DOTween.Kill(content);
 
+        // 드래그 시작 시 inertia 활성화
         scrollRect.inertia = true;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        UpdateNearestPage();
-    }
-    private void UpdateNearestPage()
-    {
-        int nearest = GetNearestPageIndex();
-
-        if (nearest != currentIndex)
-        {
-            currentIndex = nearest;
-
-            ApplySelection(currentIndex);
-        }
+        // 드래그 중에는 Selection 업데이트 하지 않음
+        // 떨림 현상의 주요 원인이었던 부분
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
         isDragging = false;
-        int nearest = GetNearestPageIndex();
 
+        // 드래그 종료 시 velocity를 즉시 0으로 만들어 떨림 방지
+        scrollRect.velocity = Vector2.zero;
+        scrollRect.inertia = false;
+
+        int nearest = GetNearestPageIndex();
         SnapToPage(nearest, false);
     }
 
@@ -304,7 +291,6 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
         MoveContentSmooth(targetPos, index, samePage);
     }
 
-
     private bool IsSamePage(int index)
     {
         return currentIndex == index;
@@ -314,14 +300,24 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
     {
         content.anchoredPosition = targetPos;
         scrollRect.inertia = false;
+        scrollRect.velocity = Vector2.zero;
+        isSnapping = false;
     }
-
 
     private void MoveContentSmooth(Vector2 targetPos, int index, bool samePage)
     {
+        // 기존 애니메이션 중단
         DOTween.Kill(content);
 
-        content.DOAnchorPos(targetPos, snapDuration).SetEase(Ease.OutCubic).OnStart(() => OnSnapStart(index)).OnComplete(() => OnSnapComplete(index, samePage));
+        // 스냅 시작 전에 ScrollRect 상태 완전히 리셋
+        scrollRect.velocity = Vector2.zero;
+        scrollRect.inertia = false;
+        isSnapping = true;
+
+        content.DOAnchorPos(targetPos, snapDuration)
+            .SetEase(Ease.OutCubic)
+            .OnStart(() => OnSnapStart(index))
+            .OnComplete(() => OnSnapComplete(index, samePage));
     }
 
     private void OnSnapStart(int index)
@@ -331,6 +327,7 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
 
     private void OnSnapComplete(int index, bool samePage)
     {
+        isSnapping = false;
         scrollRect.inertia = false;
         scrollRect.velocity = Vector2.zero;
 
@@ -340,14 +337,12 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
         }
     }
 
-
     private void ApplySelection(int index)
     {
         if (index < 0 || index >= stageCards.Length)
         {
             return;
         }
-
 
         StageCard selectedCard = stageCards[index];
 
