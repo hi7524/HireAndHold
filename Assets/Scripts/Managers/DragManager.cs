@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
@@ -45,20 +45,59 @@ public class DragManager : MonoBehaviour
         }
     }
 
+    // -----------------------------
+    // 🔥 Pointer.current 제거 버전
+    // -----------------------------
+
+    private bool IsPressed()
+    {
+        if (Touchscreen.current != null)
+            return Touchscreen.current.primaryTouch.press.isPressed;
+
+        return Mouse.current?.leftButton.isPressed == true;
+    }
+
+    private bool PressedThisFrame()
+    {
+        if (Touchscreen.current != null)
+            return Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
+
+        return Mouse.current?.leftButton.wasPressedThisFrame == true;
+    }
+
+    private bool ReleasedThisFrame()
+    {
+        if (Touchscreen.current != null)
+            return Touchscreen.current.primaryTouch.press.wasReleasedThisFrame;
+
+        return Mouse.current?.leftButton.wasReleasedThisFrame == true;
+    }
+
+    private Vector2 GetPointerPosition()
+    {
+        if (Touchscreen.current != null)
+            return Touchscreen.current.primaryTouch.position.ReadValue();
+
+        return Mouse.current.position.ReadValue();
+    }
+
+    // -----------------------------
+    // 🔥 드래그 Update (InputSystem-safe)
+    // -----------------------------
     private void Update()
     {
-        if (!isDragEnabled || Pointer.current == null)
+        if (!isDragEnabled)
             return;
 
-        if (Pointer.current.press.wasPressedThisFrame)
+        if (PressedThisFrame())
         {
             HandleDragStart();
         }
-        else if (Pointer.current.press.isPressed && dragState.IsDragging)
+        else if (IsPressed() && dragState.IsDragging)
         {
             HandleDragging();
         }
-        else if (Pointer.current.press.wasReleasedThisFrame && dragState.IsDragging)
+        else if (ReleasedThisFrame() && dragState.IsDragging)
         {
             HandleDragEnd();
         }
@@ -73,7 +112,9 @@ public class DragManager : MonoBehaviour
     // 드래그 시작 처리: 드래그 대상 감지 및 초기 상태 설정
     private void HandleDragStart()
     {
-        dragState.Target = DetectDraggable(out dragState.IsUI);
+        Vector2 pointerPosition = GetPointerPosition();
+        dragState.Target = DetectDraggable(pointerPosition, out dragState.IsUI);
+
         if (!dragState.IsDragging)
             return;
 
@@ -98,7 +139,9 @@ public class DragManager : MonoBehaviour
     // 드래그 종료 처리: 드롭 성공/실패 처리 및 상태 리셋
     private void HandleDragEnd()
     {
-        IDroppable dropTarget = DetectDropTarget();
+        Vector2 pointerPosition = GetPointerPosition();
+        IDroppable dropTarget = DetectDropTarget(pointerPosition);
+
         bool dropSuccess = dropTarget != null && dropTarget.CanDrop(dragState.Target);
 
         if (dropSuccess)
@@ -130,7 +173,8 @@ public class DragManager : MonoBehaviour
     // 드롭 타겟 변경 감지 및 Enter/Exit 이벤트 처리
     private void UpdateDropTarget()
     {
-        IDroppable newDropTarget = DetectDropTarget();
+        Vector2 pointerPosition = GetPointerPosition();
+        IDroppable newDropTarget = DetectDropTarget(pointerPosition);
 
         if (newDropTarget == currentDropTarget)
             return;
@@ -167,11 +211,12 @@ public class DragManager : MonoBehaviour
         }
     }
 
-    // 드래그 가능한 오브젝트 감지 (UI 우선, 그 다음 World)
-    private IDraggable DetectDraggable(out bool isUI)
+    // -----------------------------
+    // 🔥 드래그 가능한 오브젝트 감지
+    // -----------------------------
+    private IDraggable DetectDraggable(Vector2 pointerPosition, out bool isUI)
     {
-        Vector2 pointerPosition = Pointer.current.position.ReadValue();
-
+        // 1) UI 우선 검사
         IDraggable uiDraggable = DetectUIObject(pointerPosition);
         if (uiDraggable != null)
         {
@@ -179,11 +224,11 @@ public class DragManager : MonoBehaviour
             return uiDraggable;
         }
 
+        // 2) 월드 검사
         isUI = false;
         return DetectWorldObject(pointerPosition);
     }
 
-    // UI에서 드래그 가능한 오브젝트 감지
     private IDraggable DetectUIObject(Vector2 screenPosition)
     {
         PointerEventData pointerData = new PointerEventData(EventSystem.current)
@@ -206,11 +251,12 @@ public class DragManager : MonoBehaviour
         return null;
     }
 
-    // World에서 드래그 가능한 오브젝트 감지
     private IDraggable DetectWorldObject(Vector2 screenPosition)
     {
         Vector2 worldPoint = MainCamera.ScreenToWorldPoint(screenPosition);
-        RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.zero, Mathf.Infinity, draggableLayer);
+
+        // 🔥 zero vector 제거 (Android에서 안정성 문제)
+        RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.down, 0.01f, draggableLayer);
 
         if (hits.Length == 0)
             return null;
@@ -242,11 +288,11 @@ public class DragManager : MonoBehaviour
         return topDraggable;
     }
 
-    // 드롭 가능한 타겟 감지 (UI 우선, 그 다음 World)
-    private IDroppable DetectDropTarget()
+    // -----------------------------
+    // 🔥 드롭 타겟 감지
+    // -----------------------------
+    private IDroppable DetectDropTarget(Vector2 pointerPosition)
     {
-        Vector2 pointerPosition = Pointer.current.position.ReadValue();
-
         IDroppable uiDroppable = DetectUIDropTarget(pointerPosition);
         if (uiDroppable != null)
             return uiDroppable;
@@ -254,7 +300,6 @@ public class DragManager : MonoBehaviour
         return DetectWorldDropTarget(pointerPosition);
     }
 
-    // UI에서 드롭 가능한 타겟 감지
     private IDroppable DetectUIDropTarget(Vector2 screenPosition)
     {
         PointerEventData pointerData = new PointerEventData(EventSystem.current)
@@ -269,19 +314,17 @@ public class DragManager : MonoBehaviour
         {
             var droppable = result.gameObject.GetComponentInParent<IDroppable>();
             if (droppable != null)
-            {
                 return droppable;
-            }
         }
 
         return null;
     }
 
-    // World에서 드롭 가능한 타겟 감지
     private IDroppable DetectWorldDropTarget(Vector2 screenPosition)
     {
         Vector2 worldPoint = MainCamera.ScreenToWorldPoint(screenPosition);
-        RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.zero, Mathf.Infinity, draggableLayer);
+
+        RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.down, 0.01f, draggableLayer);
 
         if (hits.Length == 0)
             return null;
@@ -289,7 +332,7 @@ public class DragManager : MonoBehaviour
         return FindTopDroppable(hits);
     }
 
-    // Raycast 결과에서 가장 위에 있는 드롭 가능한 타겟 찾기 (SortingOrder 기준)
+    // Raycast 결과에서 가장 위에 있는 드롭 가능한 타겟 찾기
     private IDroppable FindTopDroppable(RaycastHit2D[] hits)
     {
         IDroppable topDroppable = null;
@@ -316,7 +359,7 @@ public class DragManager : MonoBehaviour
     // 드래그 중인 오브젝트를 마우스 위치로 이동
     private void MoveDraggingObject(GameObject targetObj)
     {
-        Vector2 screenPos = Pointer.current.position.ReadValue();
+        Vector2 screenPos = GetPointerPosition();
 
         if (dragState.IsUI)
         {
