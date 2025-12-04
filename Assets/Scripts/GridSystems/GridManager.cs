@@ -65,6 +65,10 @@ public class GridManager : MonoBehaviour
 
         RegisterCells();
         UpdateBuffColors();
+
+        // GridCell Collider2D가 Physics2D에 등록되도록 동기화 (씬 전환 시 감지 문제 해결)
+        Physics2D.SyncTransforms();
+
         IsInitialized = true;
     }
 

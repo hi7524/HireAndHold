@@ -44,6 +44,9 @@ public class GridVisualizer : MonoBehaviour
                 // cell.GetComponent<SpriteDropZone>().poolManager = poolManager;
             }
         }
+
+        // GridCell 생성 후 Physics2D 동기화 (씬 전환 시 Collider2D 감지 문제 해결)
+        Physics2D.SyncTransforms();
     }
 
     public void ClearGrid()
