@@ -51,12 +51,28 @@ public class GridUnit : MonoBehaviour, IDraggable
             var unitData = DataTableManager.UnitTable.Get(unitId);
             if (unitData != null && !string.IsNullOrEmpty(unitData.GRID_DATA))
             {
-                gridDataHandle = Addressables.LoadAssetAsync<UnitGridData>(unitData.GRID_DATA);
-                var gridData = await gridDataHandle.ToUniTask();
-
-                if (gridDataHandle.Status == AsyncOperationStatus.Succeeded)
+                // 캐시에서 먼저 시도
+                var cachedGridData = AddressablePreloader.Instance.GetCachedGridData(unitData.GRID_DATA);
+                if (cachedGridData != null)
                 {
-                    SetGridData(gridData);
+                    // 캐시 사용 시 기존 핸들 정리
+                    if (gridDataHandle.IsValid())
+                    {
+                        Addressables.Release(gridDataHandle);
+                        gridDataHandle = default;
+                    }
+                    SetGridData(cachedGridData);
+                }
+                else
+                {
+                    // 캐시에 없으면 직접 로드 (fallback)
+                    gridDataHandle = Addressables.LoadAssetAsync<UnitGridData>(unitData.GRID_DATA);
+                    var gridData = await gridDataHandle.ToUniTask();
+
+                    if (gridDataHandle.Status == AsyncOperationStatus.Succeeded)
+                    {
+                        SetGridData(gridData);
+                    }
                 }
             }
         }

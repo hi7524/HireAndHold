@@ -98,7 +98,15 @@ public class ObjectPoolManager : MonoBehaviour
         }
         else
         {
-            // 단일 Asset 로드
+            // 캐시에서 먼저 시도
+            var cachedPrefab = AddressablePreloader.Instance.GetCachedPrefab(item.addressableKey);
+            if (cachedPrefab != null)
+            {
+                item.cachedPrefab = cachedPrefab;
+                return;
+            }
+
+            // 캐시에 없으면 직접 로드 (fallback)
             AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(item.addressableKey);
             await handle.Task;
 

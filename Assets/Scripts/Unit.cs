@@ -137,7 +137,7 @@ public class Unit : MonoBehaviour
             AddSkill(unitData.UNIT_SKILL2);
     }
 
-    // 유닛 비주얼 프리팹 비동기 로드 및 인스턴스화 *TODO: 수정 필요, 로딩 미리 해두고 사용할 수 있도록
+    // 유닛 비주얼 프리팹 비동기 로드 및 인스턴스화
     public async UniTask SetVisualPrefabAsync()
     {
         if (unitData == null)
@@ -152,13 +152,24 @@ public class Unit : MonoBehaviour
             return;
         }
 
-        visualHandle = Addressables.LoadAssetAsync<GameObject>(unitData.PREFAB_NAME);
-        var visualPrefab = await visualHandle.ToUniTask(cancellationToken: cts.Token);
+        GameObject visualPrefab = null;
 
-        if (visualHandle.Status != AsyncOperationStatus.Succeeded)
+        // 캐시에서 먼저 시도
+        if (AddressablePreloader.Instance.HasCachedPrefab(unitData.PREFAB_NAME))
         {
-            Debug.LogError($"Failed to load prefab: {unitData.PREFAB_NAME}");
-            return;
+            visualPrefab = AddressablePreloader.Instance.GetCachedPrefab(unitData.PREFAB_NAME);
+        }
+        else
+        {
+            // 캐시에 없으면 직접 로드 (fallback)
+            visualHandle = Addressables.LoadAssetAsync<GameObject>(unitData.PREFAB_NAME);
+            visualPrefab = await visualHandle.ToUniTask(cancellationToken: cts.Token);
+
+            if (visualHandle.Status != AsyncOperationStatus.Succeeded)
+            {
+                Debug.LogError($"Failed to load prefab: {unitData.PREFAB_NAME}");
+                return;
+            }
         }
 
         ClearVisualChildren();

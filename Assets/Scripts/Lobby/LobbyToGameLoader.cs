@@ -11,19 +11,17 @@ public class LobbyToGameLoader : MonoBehaviour
     {
         LoadingRequest request = new LoadingRequest("Stage");
 
-        // 예시: 리소스 로드 작업 추가
-        request.AddTask("Load Game Resources", async (ct) =>
+        // 리소스 프리로드 확인 (이미 타이틀->로비에서 로드됨)
+        request.AddTask("리소스 확인", async (ct) =>
         {
-            // 리소스 로드 시뮬레이션
-            await UniTask.Delay(2000, cancellationToken: ct);
-        }, weight: 0.7f);
-
-        // 예시: 데이터 초기화 작업 추가
-        request.AddTask("Initialize Game Data", async (ct) =>
-        {
-            // 데이터 초기화 시뮬레이션
-            await UniTask.Delay(1000, cancellationToken: ct);
-        }, weight: 0.3f);
+            // 프리로드가 완료되지 않았으면 대기 (안전장치)
+            if (!AddressablePreloader.Instance.IsLoaded)
+            {
+                await AddressablePreloader.Instance.PreloadAllAsync(ct);
+            }
+            // 최소 로딩 표시 시간
+            await UniTask.Delay(300, cancellationToken: ct);
+        }, weight: 1.0f);
 
         request.onLoadingComplete = () =>
         {

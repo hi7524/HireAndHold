@@ -214,15 +214,24 @@ public class Enemy : MonoBehaviour, IDamagable
             ReleaseVisualHandle();
 
             currentModelKey = modelKey;
+            GameObject visualPrefab = null;
 
-            // Addressable로 프리팹 로드
-            visualHandle = Addressables.LoadAssetAsync<GameObject>(modelKey);
-            var visualPrefab = await visualHandle.ToUniTask(cancellationToken: cts.Token);
-
-            if (visualHandle.Status != AsyncOperationStatus.Succeeded)
+            // 캐시에서 먼저 시도
+            if (AddressablePreloader.Instance.HasCachedPrefab(modelKey))
             {
-                Debug.LogError($"[Enemy] Failed to load visual prefab: {modelKey}");
-                return;
+                visualPrefab = AddressablePreloader.Instance.GetCachedPrefab(modelKey);
+            }
+            else
+            {
+                // 캐시에 없으면 직접 로드 (fallback)
+                visualHandle = Addressables.LoadAssetAsync<GameObject>(modelKey);
+                visualPrefab = await visualHandle.ToUniTask(cancellationToken: cts.Token);
+
+                if (visualHandle.Status != AsyncOperationStatus.Succeeded)
+                {
+                    Debug.LogError($"[Enemy] Failed to load visual prefab: {modelKey}");
+                    return;
+                }
             }
 
             // 프리팹 인스턴스화
