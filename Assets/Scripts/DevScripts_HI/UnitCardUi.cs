@@ -9,6 +9,7 @@ public class UnitCardUi : BaseCardUi
     [SerializeField] private float cellUISize = 20f;
 
     private int unitId;
+    private UnitData unitData;
     private UnitGridData gridUnitData;
     private Image img;
     private Color originalColor;
@@ -30,7 +31,6 @@ public class UnitCardUi : BaseCardUi
         VisualizeGridData();
 
         draggableUnitUI.OnUnitDroppedSuccessfully += HandleUnitDropSuccess;
-
     }
 
     private void OnDestroy()
@@ -61,6 +61,9 @@ public class UnitCardUi : BaseCardUi
         this.unitId = unitId;
         draggableUnitUI.SetUnit(unitId);
         draggableUnitUI.SetDraggableUnitType(DraggableUnitType.LevelUp);
+
+        unitData = DataTableManager.UnitTable?.Get(unitId);
+        SetTitleText(unitData.StringName);
     }
 
     public void SetGridData(UnitGridData gridData)

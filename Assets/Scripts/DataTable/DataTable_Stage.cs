@@ -4,30 +4,34 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 public class StageData
-    {
-        public int STAGE_ID { get; set; }
-        public string STAGE_NAME { get; set; }
-        public int STAGE_TIME_SEC { get; set; }
-        public int TOTAL_WAVE { get; set; }
-        public int WARNING_RE { get; set; }
-        public int STAGE_C_EXP { get; set; }
-        public int STAGE_C_GOLD { get; set; }
-        public int STAGE_C_RE1_ID { get; set; }
-        public int STAGE_C_RE1_CO { get; set; }
-        public int STAGE_C_RE2_ID { get; set; }
-        public int STAGE_C_RE2_CO { get; set; }
-        public int STAGE_C_1S_ID { get; set; }
-        public int STAGE_C_1S_CO { get; set; }
-        public int STAGE_C_2S_ID { get; set; }
-        public int STAGE_C_2S_CO { get; set; }
-        public int STAGE_C_3S_ID { get; set; }
-        public float STAGE_C_3S_CO { get; set; }
-        public int UNLOCK_CON_ID { get; set; }
-        public string STAGE_MAP { get; set; }
-    }
+{
+    public int STAGE_ID { get; set; }
+    public int STAGE_NAME { get; set; }
+    public int STAGE_TIME_SEC { get; set; }
+    public int TOTAL_WAVE { get; set; }
+    public int WARNING_RE { get; set; }
+    public int STAGE_C_EXP { get; set; }
+    public int STAGE_C_GOLD { get; set; }
+    public int STAGE_C_RE1_ID { get; set; }
+    public int STAGE_C_RE1_CO { get; set; }
+    public int STAGE_C_RE2_ID { get; set; }
+    public int STAGE_C_RE2_CO { get; set; }
+    public int STAGE_C_1S_ID { get; set; }
+    public int STAGE_C_1S_CO { get; set; }
+    public int STAGE_C_2S_ID { get; set; }
+    public int STAGE_C_2S_CO { get; set; }
+    public int STAGE_C_3S_ID { get; set; }
+    public float STAGE_C_3S_CO { get; set; }
+    public int UNLOCK_CON_ID { get; set; }
+    public string STAGE_MAP { get; set; }
+
+    // StringTable 연동
+    public string StringName => DataTableManager.StringTable?.Get(STAGE_NAME);
+}
+
 public class DataTable_Stage : DataTable
 {
-    
+
 
     private readonly Dictionary<int, StageData> dictionary = new Dictionary<int, StageData>();
 
@@ -39,7 +43,7 @@ public class DataTable_Stage : DataTable
         var textAsset = await Addressables.LoadAssetAsync<TextAsset>(path).ToUniTask();
 
         var list = LoadCSV<StageData>(textAsset.text);
-        
+
         foreach (var item in list)
         {
             if (!dictionary.ContainsKey(item.STAGE_ID))

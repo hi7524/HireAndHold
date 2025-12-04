@@ -254,7 +254,7 @@ public class DeckControl : MonoBehaviour
             var model = new DeckUnitModel
             {
                 unitId = unitId,
-                unitName = data.NAME,
+                unitName = data.StringName,
                 iconAddress = data.UNIT_ICON,
                 rawData = data,
                 playerUnit = pUnit

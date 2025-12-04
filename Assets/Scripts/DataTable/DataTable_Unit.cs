@@ -6,7 +6,7 @@ using UnityEngine.AddressableAssets;
 public class UnitData
 {
     public int UNIT_ID { get; set; }             // 유닛 ID
-    public string NAME { get; set; }             // 유닛 이름 // StringTable과 연결 필요**
+    public int NAME { get; set; }             // 유닛 이름 키 (StringTable)
     public int RANK { get; set; }                // 유닛 등급
     public int LEVEL { get; set; }               // 유닛 성급
     public int ATTACK { get; set; }              // 유닛 공격력
@@ -19,10 +19,14 @@ public class UnitData
     public int UNIT_SKILL2 { get; set; }         // 스킬 ID 2
     public int NORMAL_ENFORCEID { get; set; }    // 일반 강화 ID
     public string UNIT_ICON { get; set; }        // 유닛 아이콘
-    public int UNIT_DESCRIPTION { get; set; }    // 유닛 설명 // StringTable과 연결 필요**
+    public int UNIT_DESCRIPTION { get; set; }    // 유닛 설명 키 (StringTable)
     public string PREFAB_NAME { get; set; }
     public string GRID_DATA { get; set; }        // 그리드 데이터 ScriptableObject 이름
     public string PROJECTILE { get; set; }
+
+    // StringTable 연동
+    public string StringName => DataTableManager.StringTable?.Get(NAME);
+    public string StringDescription => DataTableManager.StringTable?.Get(UNIT_DESCRIPTION);
 }
 
 public class DataTable_Unit : DataTable

@@ -66,7 +66,7 @@ public class UnitInventorySlot : MonoBehaviour
         if (nameText != null && draggableUnitUi != null)
         {
             var unitData = DataTableManager.UnitTable.Get(draggableUnitUi.UnitId);
-            nameText.text = unitData.NAME;
+            nameText.text = unitData.StringName;
         }
     }
 

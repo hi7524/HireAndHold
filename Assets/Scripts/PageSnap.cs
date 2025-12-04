@@ -163,7 +163,7 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
                 else
                 {
                     // StageDataList가 없으면 DataTable에서 이름만 가져오기
-                    card.stageName.text = stageData.STAGE_NAME;
+                    card.stageName.text = stageData.StringName;
                     card.stageIndex = stageId;
 
                     // 잠금 여부는 유저 데이터에서 확인

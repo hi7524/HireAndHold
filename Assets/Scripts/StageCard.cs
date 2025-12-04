@@ -11,7 +11,7 @@ public class StageCard : MonoBehaviour
     [Header("UI")]
     public GameObject lockOverlay;
     public Image stageImage;
-    public TextMeshProUGUI  stageName;
+    public TextMeshProUGUI stageName;
 
     private bool isSelected = false;
 

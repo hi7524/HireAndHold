@@ -162,7 +162,7 @@ public class StageManager : MonoBehaviour
         if (stageUiManager != null && CurrentStageData != null)
         {
             stageUiManager.ShowStageClearPanel(
-                CurrentStageData.STAGE_NAME,
+                CurrentStageData.StringName,
                 totalExp,
                 totalGold,
                 stars
