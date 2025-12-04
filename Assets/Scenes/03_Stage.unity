@@ -1930,7 +1930,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: asdf
+  m_text: item
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
   m_sharedMaterial: {fileID: -2522021900909612901, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
@@ -3005,6 +3005,7 @@ MonoBehaviour:
   goldRewardText: {fileID: 538669031}
   starImages: []
   confirmButton: {fileID: 1931403371}
+  nextStageButton: {fileID: 1892364123}
 --- !u!114 &550362266
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5532,12 +5533,12 @@ MonoBehaviour:
   gameManager: {fileID: 313655619}
   stageManager: {fileID: 1847491321}
   panelRoot: {fileID: 1170488454}
-  titleText: {fileID: 0}
-  expRewardText: {fileID: 0}
-  goldRewardText: {fileID: 0}
-  messageText: {fileID: 0}
-  retryButton: {fileID: 0}
-  lobbyButton: {fileID: 0}
+  titleText: {fileID: 850226092}
+  expRewardText: {fileID: 490433515}
+  goldRewardText: {fileID: 136256232}
+  messageText: {fileID: 997318273}
+  retryButton: {fileID: 1800591661}
+  lobbyButton: {fileID: 1231006353}
 --- !u!114 &1170488459
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7024,6 +7025,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   buffManager: {fileID: 692316291}
+  passiveSkillManager: {fileID: 1100007649}
 --- !u!224 &1416464218 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2903548929442354246, guid: ba9aab56d880d3a4a9912c588a3f54fe, type: 3}
@@ -9460,7 +9462,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 0
+  m_Interactable: 1
   m_TargetGraphic: {fileID: 1892364124}
   m_OnClick:
     m_PersistentCalls:
