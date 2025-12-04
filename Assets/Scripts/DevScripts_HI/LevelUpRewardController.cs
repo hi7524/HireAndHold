@@ -12,6 +12,7 @@ public class LevelUpRewardController : MonoBehaviour
     [SerializeField] private SkillCardUi skillCardPrf;
     [Header("UI")]
     [SerializeField] private Button reRollBtn;
+    [SerializeField] private Button confirmBtn;
     [Header("Others")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private StageUiManager uiManager;
@@ -35,9 +36,15 @@ public class LevelUpRewardController : MonoBehaviour
     private Dictionary<int, Sprite> spriteCache = new Dictionary<int, Sprite>();
     public Dictionary<int, Sprite> SpriteCache => spriteCache; // 테스트용**
 
+    private bool isSelectedReward = false;
+    private int defaultGoldReward = 25;
+
+
     // 초기 세팅
     private async void Start()
     {
+        confirmBtn.interactable = false; // 처음 시작시 확인 버튼 비활성화
+
         // 각 프리팹 카드 3장씩 생성
         CreateUnitCardPrf(3);
         CreateSkillCardPrf(3);
@@ -138,6 +145,9 @@ public class LevelUpRewardController : MonoBehaviour
     // 실제 보상 뽑기
     private void DrawReward()
     {
+        // 보상 획득 여부 설정
+        isSelectedReward = false;
+
         // 기존 카드들을 모두 비활성화
         SetActiveCards(skillCardUIs, false);
         SetActiveCards(unitCardUIs, false);
@@ -169,11 +179,19 @@ public class LevelUpRewardController : MonoBehaviour
         // 새로운 카드 선택
         selectedSkillCard = clickedCard;
         selectedSkillCard.SetFocus(true);
+        isSelectedReward = true;
     }
 
     // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
+        // 보상을 선택하지 않은채로 확인 버튼을 누를 경우 25G 지급
+        if (!isSelectedReward)
+        {
+            playerStageGold.AddGold(defaultGoldReward);
+            uiManager.UpdateInfoText($"보상 선택을 패스하고 {defaultGoldReward}G 지급");
+        }
+
         // 스킬 카드가 선택된 경우 스킬 적용
         if (selectedSkillCard != null && selectedSkillCard.IsSelected)
         {
@@ -317,7 +335,6 @@ public class LevelUpRewardController : MonoBehaviour
             {
                 // 스킬이 부족하면 돈을 주거나
                 Debug.LogWarning($"[LevelUpRewardController] {i + 1}번째 스킬 카드를 표시할 수 없습니다.");
-
             }
         }
     }
@@ -413,5 +430,7 @@ public class LevelUpRewardController : MonoBehaviour
         }
 
         reRollBtn.interactable = false;
+        confirmBtn.interactable = true;
+        isSelectedReward = true;
     }
 }
