@@ -129,9 +129,4 @@ public class GameManager : MonoBehaviour
         Debug.Log($"<color=#E155E1>{msg}</color>");
     }
     
-    public void OnLobbyButtonClick()
-    {
-        Time.timeScale = 1f;
-        LoadingSceneManager.Instance.LoadSceneWithLoading(new LoadingRequest("Lobby"));
-    }
 }

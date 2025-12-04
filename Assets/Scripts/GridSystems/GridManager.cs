@@ -31,6 +31,7 @@ public class GridManager : MonoBehaviour
 
     public int[,] gridArray { get; private set; }
     public GridLayoutData LayoutData => layoutData;
+    public bool IsInitialized { get; private set; } = false;
 
     private GridCell[,] gridCells;
     private int gridUnitCount = 0; // 그리드에 배치된 유닛 개수
@@ -46,17 +47,32 @@ public class GridManager : MonoBehaviour
 
     private void Awake()
     {
-        InitializeGrid();
-        UpdateBuffColors(); // 초기 버프 색상 적용
-        InitializeMergeEffectPools(); // 머지 이펙트 풀 초기화
+        InitializeGridArrays();
+        InitializeMergeEffectPools();
     }
 
-    // 그리드 배열 및 셀 초기화
-    private void InitializeGrid()
+    private void Start()
+    {
+        // Start에서 초기화하여 모든 Awake가 완료된 후 실행되도록 보장
+        EnsureInitialized();
+    }
+
+    // 외부에서 초기화 상태 보장을 위해 호출 가능
+    public void EnsureInitialized()
+    {
+        if (IsInitialized)
+            return;
+
+        RegisterCells();
+        UpdateBuffColors();
+        IsInitialized = true;
+    }
+
+    // 그리드 배열 초기화 (셀 등록 전)
+    private void InitializeGridArrays()
     {
         gridArray = new int[layoutData.width, layoutData.height];
         gridCells = new GridCell[layoutData.width, layoutData.height];
-        RegisterCells();
     }
 
     // 그리드 셀 상태 설정 (Empty, Occupied, Unavailable)

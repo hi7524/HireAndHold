@@ -73,6 +73,13 @@ public class GridCell : MonoBehaviour, IDroppable
 
     public void OnDragEnter(IDraggable draggable)
     {
+        // GridManager 초기화 보장
+        if (gridManager == null || !gridManager.IsInitialized)
+        {
+            canDrop = false;
+            return;
+        }
+
         // GridUnit 배치 가능 여부 판정 및 판정에 따라 색상 변경
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
