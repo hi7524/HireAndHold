@@ -1,16 +1,22 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class PanelToggle : MonoBehaviour
 {
     public GameObject targetPanel;
-    public GameObject overlay;   // 전체 화면 클릭 감지용 투명 배경
+    public GameObject overlay;
 
     public void TogglePanel()
     {
-        bool isActive = !targetPanel.activeSelf;
+        bool show = !targetPanel.activeSelf;
+        targetPanel.SetActive(show);
 
-        targetPanel.SetActive(isActive);
+        if (show)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(targetPanel.GetComponent<RectTransform>());
+        }
+
         if (overlay != null)
-            overlay.SetActive(isActive);
+            overlay.SetActive(show);
     }
 }

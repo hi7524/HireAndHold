@@ -1,46 +1,43 @@
 ﻿using UnityEngine;
 
-public class WindowUnitMovement : MonoBehaviour
+public class WorldUnitMovement : MonoBehaviour
 {
     public RectTransform moveArea;
-    public float speed = 150f;
+    public Camera cam;
+    public float speed = 0.5f;
 
-    private RectTransform rectTransform;
-    private Vector2 target;
-
-    private void Awake()
-    {
-        rectTransform = GetComponent<RectTransform>();
-    }
+    private Vector3 target;
 
     private void Start()
     {
-        rectTransform.anchoredPosition = GetRandomPosition();
         PickNewTarget();
     }
 
     private void Update()
     {
-        rectTransform.anchoredPosition = Vector2.MoveTowards(
-            rectTransform.anchoredPosition,
-            target,
-            speed * Time.deltaTime
-        );
+        transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
 
-        if (Vector2.Distance(rectTransform.anchoredPosition, target) < 5f)
+        if (Vector3.Distance(transform.position, target) < 0.1f)
+        {
             PickNewTarget();
-    }
-
-    private Vector2 GetRandomPosition()
-    {
-        Vector2 size = moveArea.rect.size;
-        float x = Random.Range(-size.x * 0.5f, size.x * 0.5f);
-        float y = Random.Range(-size.y * 0.5f, size.y * 0.5f);
-        return new Vector2(x, y);
+        }
     }
 
     private void PickNewTarget()
     {
-        target = GetRandomPosition();
+        target = GetRandomWorldPoint(moveArea, cam);
+        target.z = 0f;
+    }
+
+    private Vector3 GetRandomWorldPoint(RectTransform area, Camera cam)
+    {
+        Vector3[] corners = new Vector3[4];
+        area.GetWorldCorners(corners);
+
+        float x = Random.Range(corners[0].x, corners[2].x);
+        float y = Random.Range(corners[0].y, corners[2].y);
+
+        Vector3 screen = new Vector3(x, y, 10f);
+        return cam.ScreenToWorldPoint(screen);
     }
 }
