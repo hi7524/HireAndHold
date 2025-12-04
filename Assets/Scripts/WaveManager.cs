@@ -58,7 +58,7 @@ public class WaveManager : MonoBehaviour
         {
             if (wave.WAVE_TYPE == 2)
             {
-                int warningTime = wave.WAVE_START_T - 5; // 5초 전
+                int warningTime = wave.WAVE_START_T - 6; // 6초 전
                 if (warningTime >= 0)
                 {
                     int warnMinutes = warningTime / 60;

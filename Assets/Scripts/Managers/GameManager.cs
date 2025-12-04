@@ -21,6 +21,8 @@ public class GameManager : MonoBehaviour
 
     private StageTimeEventScheduler timeScheduler = new StageTimeEventScheduler();
 
+    public float SchedulerTime => timeScheduler.ElapsedTime;
+
 
 
     private void Start()

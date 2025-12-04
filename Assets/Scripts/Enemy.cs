@@ -11,7 +11,6 @@ public class Enemy : MonoBehaviour, IDamagable
     public enum AnimState
     {
         Idle,
-        Move,
         Attack,
         Hit,
         Death
@@ -19,6 +18,7 @@ public class Enemy : MonoBehaviour, IDamagable
 
     // 애니메이션 파라미터 이름 (Animator에서 동일하게 설정 필요)
     private static readonly int ANIM_IDLE = Animator.StringToHash("Idle");
+    private static readonly int ANIM_MOVE = Animator.StringToHash("Move");
     private static readonly int ANIM_ATTACK = Animator.StringToHash("Attack");
     private static readonly int ANIM_HIT = Animator.StringToHash("Hit");
     private static readonly int ANIM_DEATH = Animator.StringToHash("Death");
@@ -142,6 +142,9 @@ public class Enemy : MonoBehaviour, IDamagable
         // 애니메이션 상태 초기화
         currentAnimState = AnimState.Idle;
         isPlayingHitAnim = false;
+
+        // 이벤트 초기화 (풀에서 재사용 시 중복 구독 방지)
+        OnDeath = null;
     }
 
     public void InitializeWithData(ObjectPoolManager manager, string key, MonsterData data, bool boss = false)
@@ -181,6 +184,9 @@ public class Enemy : MonoBehaviour, IDamagable
         // 애니메이션 상태 초기화
         currentAnimState = AnimState.Idle;
         isPlayingHitAnim = false;
+
+        // 이벤트 초기화 (풀에서 재사용 시 중복 구독 방지)
+        OnDeath = null;
     }
 
     /// <summary>
@@ -341,7 +347,7 @@ public class Enemy : MonoBehaviour, IDamagable
             }
             else
             {
-                PlayAnimation(AnimState.Move);
+                PlayAnimation(AnimState.Idle);
             }
         }
     }
@@ -404,9 +410,9 @@ public class Enemy : MonoBehaviour, IDamagable
         }
 
         // 이동 애니메이션 재생
-        if (!isPlayingHitAnim && currentAnimState != AnimState.Move)
+        if (!isPlayingHitAnim && currentAnimState != AnimState.Idle)
         {
-            PlayAnimation(AnimState.Move);
+            PlayAnimation(AnimState.Idle);
         }
 
         transform.Translate(Vector3.down * speed * Time.deltaTime * defaultSpeed);

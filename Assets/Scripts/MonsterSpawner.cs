@@ -43,12 +43,6 @@ public class MonsterSpawner : MonoBehaviour
         monster.transform.position = spawnPos;
         monster.InitializeWithData(poolManager, key, data, isBoss);
 
-        // Addressable로 MON_MODEL 로드 및 적용
-        if (!string.IsNullOrEmpty(data.MON_MODEL))
-        {
-            await monster.LoadVisualAsync(data.MON_MODEL);
-        }
-
         // Enemy 사망 이벤트 구독
         monster.OnDeath += OnMonsterRemoved;
 
@@ -56,6 +50,14 @@ public class MonsterSpawner : MonoBehaviour
         {
             activeMonsters.Add(monster);
         }
+        // Addressable로 MON_MODEL 로드 및 적용
+        if (!string.IsNullOrEmpty(data.MON_MODEL))
+        {
+            await monster.LoadVisualAsync(data.MON_MODEL);
+        }
+
+
+
     }
 
     public void OnMonsterRemoved(Enemy monster)
@@ -71,20 +73,18 @@ public class MonsterSpawner : MonoBehaviour
     }
     // 모든 활성 몬스터 즉시 제거
     public void KillAllMonsters()
-{
-    var monstersToKill = new List<Enemy>(activeMonsters);
-
-    foreach (var monster in monstersToKill)
     {
-        if (monster != null && monster.gameObject.activeSelf)
+        var monstersToKill = new List<Enemy>(activeMonsters);
+
+        foreach (var monster in monstersToKill)
         {
-            
-            monster.TakeDamage(999999f); 
+            if (monster != null && monster.gameObject.activeSelf)
+            {
+
+                monster.TakeDamage(999999f);
+            }
         }
     }
-
-    activeMonsters.Clear();
-}
 
     // 보스 전용 스폰 (Monster 참조 반환) - 비동기 버전
     public async UniTask<Enemy> SpawnBossByIdAsync(int bossId)
@@ -108,14 +108,16 @@ public class MonsterSpawner : MonoBehaviour
         boss.transform.position = spawnPos;
         boss.InitializeWithData(poolManager, bossKey, data, true); // isBoss = true
 
+        // Enemy 사망 이벤트 구독
+        boss.OnDeath += OnMonsterRemoved;
+        
         // Addressable로 MON_MODEL 로드 및 적용
         if (!string.IsNullOrEmpty(data.MON_MODEL))
         {
             await boss.LoadVisualAsync(data.MON_MODEL);
         }
 
-        // Enemy 사망 이벤트 구독
-        boss.OnDeath += OnMonsterRemoved;
+
 
         if (!activeMonsters.Contains(boss))
         {
@@ -141,13 +143,6 @@ public class MonsterSpawner : MonoBehaviour
     {
         // 보스가 죽을 때까지 대기
         await UniTask.WaitUntil(() => boss == null || !boss.gameObject.activeSelf || boss.IsDead);
-
-        // 리스트에서 제거
-        if (boss != null)
-        {
-            OnMonsterRemoved(boss);
-        }
-
         // 콜백 실행
         onDeath?.Invoke();
     }
