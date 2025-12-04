@@ -7,11 +7,11 @@ public class DataTable_String : DataTable
 {
     public class Data
     {
-        public string ID { get; set; }
+        public int ID { get; set; }
         public string String { get; set; }
     }
 
-    private readonly Dictionary<string, string> dictionary = new Dictionary<string, string>();
+    private readonly Dictionary<int, string> dictionary = new Dictionary<int, string>();
 
     public override async UniTask LoadAsync(string filename)
     {
@@ -35,7 +35,7 @@ public class DataTable_String : DataTable
         }
     }
 
-    public string Get(string key)
+    public string Get(int key)
     {
         if (!dictionary.ContainsKey(key))
         {

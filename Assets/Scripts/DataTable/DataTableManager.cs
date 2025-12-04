@@ -39,7 +39,7 @@ public static class DataTableManager
         // 모든 테이블을 병렬로 로드
         var loadTasks = new List<UniTask>
         {
-            // LoadTableAsync<DataTable_String>(DataTableIds.String),
+            LoadTableAsync<DataTable_String>(DataTableIds.String),
             LoadTableAsync<DataTable_Stage>(DataTableIds.Stage),
             LoadTableAsync<DataTable_Monster>(DataTableIds.Monster),
             LoadTableAsync<DataTable_Wave>(DataTableIds.Wave),
@@ -72,7 +72,7 @@ public static class DataTableManager
         tables.Add(id, table);
     }
 
-    // public static DataTable_String StringTable => Get<DataTable_String>(DataTableIds.String);
+    public static DataTable_String StringTable => Get<DataTable_String>(DataTableIds.String);
     public static DataTable_Stage StageTable => Get<DataTable_Stage>(DataTableIds.Stage);
     public static DataTable_Monster MonsterTable => Get<DataTable_Monster>(DataTableIds.Monster);
     public static DataTable_Wave WaveTable => Get<DataTable_Wave>(DataTableIds.Wave);
