@@ -1,61 +1,58 @@
-﻿using Cysharp.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class StageDeck : MonoBehaviour
 {
     public Image[] slotImages;
     public Sprite emptySprite;
-    private DataTable_Unit unitTable;
-    private bool isInitialized = false;
 
-    async void Start()
+    private void Start()
     {
-        await DatabaseManager.Instance.WaitForInitializationAsync();
-        unitTable = new DataTable_Unit();
-        await unitTable.LoadAsync("UnitTable");
-        isInitialized = true;
+        // 로딩 씬에서 DataTableManager와 AddressablePreloader가 이미 초기화됨
         Init();
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
-        if (isInitialized)
+        // Start 이후에 활성화될 때만 Init 호출
+        if (DataTableManager.IsInitialized)
         {
             Init();
         }
     }
 
-    public async void Init()
+    public void Init()
     {
-        if (!isInitialized)
-        {
-            return;
-        }
         int preset = PlayData.currentSelectedPreset;
         Debug.Log("[StageDeck] Using Preset = " + preset);
+
         for (int i = 0; i < slotImages.Length; i++)
         {
             int unitId = PlayData.selectedDeckUnitIds[preset, i];
             Debug.Log("[StageDeck] slot " + i + " = " + unitId);
+
             if (unitId == 0)
             {
                 slotImages[i].sprite = emptySprite;
                 continue;
             }
-            UnitData data = unitTable.Get(unitId);
-            slotImages[i].sprite = await Addressables.LoadAssetAsync<Sprite>(data.UNIT_ICON);
+
+            // DataTableManager에서 유닛 데이터 가져오기
+            var unitData = DataTableManager.UnitTable?.Get(unitId);
+            if (unitData == null || string.IsNullOrEmpty(unitData.UNIT_ICON))
+            {
+                slotImages[i].sprite = emptySprite;
+                continue;
+            }
+
+            // AddressablePreloader에서 캐싱된 스프라이트 가져오기
+            var sprite = AddressablePreloader.Instance.GetCachedSprite(unitData.UNIT_ICON);
+            slotImages[i].sprite = sprite != null ? sprite : emptySprite;
         }
     }
 
     public void Refresh()
     {
-        if (!isInitialized)
-        {
-            return;
-        }
         Init();
     }
 }

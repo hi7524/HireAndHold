@@ -7,25 +7,22 @@ public class LobbyToGameLoader : MonoBehaviour
     {
         LoadGameScene();
     }
+
     private void LoadGameScene()
     {
+        // 타이틀 → 로비에서 이미 모든 초기화 완료됨
+        // (DataTableManager, AddressablePreloader, DatabaseManager)
         LoadingRequest request = new LoadingRequest("Stage");
 
-        // 리소스 프리로드 확인 (이미 타이틀->로비에서 로드됨)
-        request.AddTask("리소스 확인", async (ct) =>
+        // 최소 로딩 화면 표시 (이미 초기화 완료 상태)
+        request.AddTask("게임 준비", async (ct) =>
         {
-            // 프리로드가 완료되지 않았으면 대기 (안전장치)
-            if (!AddressablePreloader.Instance.IsLoaded)
-            {
-                await AddressablePreloader.Instance.PreloadAllAsync(ct);
-            }
-            // 최소 로딩 표시 시간
             await UniTask.Delay(300, cancellationToken: ct);
         }, weight: 1.0f);
 
         request.onLoadingComplete = () =>
         {
-            Debug.Log("게임 씬 로딩 완료!");
+            Debug.Log("[LobbyToGameLoader] Stage 씬 로딩 완료!");
         };
 
         LoadingSceneManager.Instance.LoadSceneWithLoading(request);

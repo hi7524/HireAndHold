@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Rendering;
@@ -91,7 +89,7 @@ public class Unit : MonoBehaviour
     }
 
     // 유닛 ID 설정 및 데이터 로드
-    public async Task SetUnitID(int ID)
+    public void SetUnitID(int ID)
     {
         UnitID = ID;
         unitData = DataTableManager.UnitTable.Get(ID);
@@ -99,7 +97,7 @@ public class Unit : MonoBehaviour
         Debug.Log($"Unit ID changed to: {ID}");
         SetStats();
         SetSkills();
-        await SetVisualPrefabAsync();
+        SetVisualPrefab();
     }
 
     // 데이터 테이블에서 로드한 값으로 유닛 스탯 초기화
@@ -137,8 +135,8 @@ public class Unit : MonoBehaviour
             AddSkill(unitData.UNIT_SKILL2);
     }
 
-    // 유닛 비주얼 프리팹 비동기 로드 및 인스턴스화
-    public async UniTask SetVisualPrefabAsync()
+    // 유닛 비주얼 프리팹 동기 로드 및 인스턴스화
+    public void SetVisualPrefab()
     {
         if (unitData == null)
         {
@@ -155,21 +153,27 @@ public class Unit : MonoBehaviour
         GameObject visualPrefab = null;
 
         // 캐시에서 먼저 시도
-        if (AddressablePreloader.Instance.HasCachedPrefab(unitData.PREFAB_NAME))
+        if (AddressablePreloader.Instance != null && AddressablePreloader.Instance.HasCachedPrefab(unitData.PREFAB_NAME))
         {
             visualPrefab = AddressablePreloader.Instance.GetCachedPrefab(unitData.PREFAB_NAME);
         }
         else
         {
-            // 캐시에 없으면 직접 로드 (fallback)
+            // 캐시에 없으면 동기 로드 (fallback)
             visualHandle = Addressables.LoadAssetAsync<GameObject>(unitData.PREFAB_NAME);
-            visualPrefab = await visualHandle.ToUniTask(cancellationToken: cts.Token);
+            visualPrefab = visualHandle.WaitForCompletion();
 
             if (visualHandle.Status != AsyncOperationStatus.Succeeded)
             {
                 Debug.LogError($"Failed to load prefab: {unitData.PREFAB_NAME}");
                 return;
             }
+        }
+
+        if (visualPrefab == null)
+        {
+            Debug.LogError($"Visual prefab is null: {unitData.PREFAB_NAME}");
+            return;
         }
 
         ClearVisualChildren();

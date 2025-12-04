@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 public class LevelUpRewardController : MonoBehaviour
@@ -41,8 +38,9 @@ public class LevelUpRewardController : MonoBehaviour
 
 
     // 초기 세팅
-    private async void Start()
+    private void Start()
     {
+        // 로딩 씬에서 DataTableManager와 AddressablePreloader가 이미 초기화됨
         confirmBtn.interactable = false; // 처음 시작시 확인 버튼 비활성화
 
         // 각 프리팹 카드 3장씩 생성
@@ -50,9 +48,6 @@ public class LevelUpRewardController : MonoBehaviour
         CreateSkillCardPrf(3);
 
         playerExp.OnLevelUp += DrawLevelUpReward;
-
-        // DataTableManager 초기화 대기
-        await DataTableManager.InitAsync();
 
         // GridData, Sprite 캐싱 (AddressablePreloader에서 가져옴)
         CacheAllData();
