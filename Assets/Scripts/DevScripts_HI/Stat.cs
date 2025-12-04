@@ -30,6 +30,13 @@ public class Stat
         cachedValue = null;
     }
 
+    // 기본값 변경 (합성 시 모디파이어 보존용)
+    public void SetBaseValue(float value)
+    {
+        baseValue = value;
+        cachedValue = null;
+    }
+
     public void AddModifier(StatModifier modifier)
     {
         modifiers.Add(modifier);

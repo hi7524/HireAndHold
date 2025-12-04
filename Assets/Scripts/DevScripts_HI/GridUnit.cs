@@ -43,8 +43,8 @@ public class GridUnit : MonoBehaviour, IDraggable
     public void SetUnitID(int unitId, int starLevel = 1)
     {
         StarLevel = Mathf.Clamp(starLevel, 1, 3);
-        // Unit.SetUnitID()는 GridManager.SpawnGridUnit()에서 이미 호출되므로
-        // 여기서 다시 호출하면 Stat이 재생성되어 패시브/버프 modifier가 사라짐
+        // 합성 시 UpdateUnitID 호출 - Stat 모디파이어 보존하면서 유닛 데이터/스킬/비주얼 업데이트
+        unit.UpdateUnitID(unitId);
     } 
 
     public void SetInventoryPlaceable(bool value)
