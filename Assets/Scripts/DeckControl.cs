@@ -105,6 +105,7 @@ public class DeckControl : MonoBehaviour
         DatabaseManager.Instance.SyncPresetsToPlayData();  
 
         LoadPresets();
+        AutoFillPresetIfEmpty(activePresetIndex);
         LoadPreset(activePresetIndex);
 
 
@@ -112,6 +113,52 @@ public class DeckControl : MonoBehaviour
         unitInfoUI.SetUnitManager(unitManager);
 
     }
+    private async void AutoFillPresetIfEmpty(int presetIndex)
+    {
+        DeckPreset preset = presets[presetIndex];
+
+        bool isEmpty = true;
+        for (int i = 0; i < preset.units.Length; i++)
+        {
+            if (preset.units[i] != null)
+            {
+                isEmpty = false;
+                break;
+            }
+        }
+
+        if (!isEmpty)
+        {
+            return;
+        }
+
+  
+        var owned = DatabaseManager.Instance.GetAllCharacters();
+
+        if (owned.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < 5 && i < owned.Count; i++)
+        {
+            int unitId = int.Parse(owned[i].id);
+
+            if (!unitModelMap.ContainsKey(unitId))
+                continue;
+
+            DeckUnitModel model = unitModelMap[unitId];
+            preset.units[i] = model;
+
+            PlayData.selectedDeckUnitIds[presetIndex, i] = model.unitId;
+            PlayData.selectedDeckUnitIconAddresses[presetIndex, i] = model.iconAddress;
+        }
+
+        await DatabaseManager.Instance.SavePresetFromPlayDataAsync(presetIndex);
+
+        Debug.Log($"[AutoFillPresetIfEmpty] Preset {presetIndex} 자동 편성 완료");
+    }
+
 
     private void Update()
     {

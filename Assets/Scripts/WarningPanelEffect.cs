@@ -1,7 +1,4 @@
-﻿using System;
-using Cysharp.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 
 public class WarningPanelEffect : MonoBehaviour
 {
@@ -9,14 +6,30 @@ public class WarningPanelEffect : MonoBehaviour
     [SerializeField] private float scaleDownSize = 0.8f;
     [SerializeField] private float scaleDuration = 0.3f;
     [SerializeField] private int scaleLoopCount = 3;
-
     [SerializeField] private float blinkDuration = 0.2f;
     [SerializeField] private int blinkCount = 5;
-
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private RectTransform targetTransform;
 
     private Vector3 originalScale;
+    private bool isPlaying = false;
+
+    // Scale animation state
+    private int currentScaleLoop = 0;
+    private float scaleTimer = 0f;
+    private Vector3 scaleStart;
+    private Vector3 scaleTarget;
+    private bool isScalingUp = true;
+    private bool isScaleFinishing = false;
+    private bool scaleAnimationComplete = false;
+
+    // Blink animation state
+    private int currentBlinkCount = 0;
+    private float blinkTimer = 0f;
+    private float alphaStart;
+    private float alphaTarget;
+    private bool isFadingOut = true;
+    private bool blinkAnimationComplete = false;
 
     private void Awake()
     {
@@ -24,115 +37,168 @@ public class WarningPanelEffect : MonoBehaviour
         {
             targetTransform = GetComponent<RectTransform>();
         }
-
         if (canvasGroup == null)
         {
             canvasGroup = GetComponent<CanvasGroup>();
         }
-
         originalScale = targetTransform.localScale;
     }
 
     private void OnEnable()
     {
-        PlayWarningEffect().Forget();
+        StartWarningEffect();
     }
 
-    private async UniTaskVoid PlayWarningEffect()
+    private void StartWarningEffect()
     {
+        isPlaying = true;
+
+        // Reset scale animation state
+        currentScaleLoop = 0;
+        scaleTimer = 0f;
+        isScalingUp = true;
+        isScaleFinishing = false;
+        scaleAnimationComplete = false;
+        scaleStart = originalScale;
+        scaleTarget = originalScale * scaleUpSize;
+
+        // Reset blink animation state
+        currentBlinkCount = 0;
+        blinkTimer = 0f;
+        isFadingOut = true;
+        blinkAnimationComplete = false;
+        alphaStart = 1f;
+        alphaTarget = 0.3f;
+
+        // Reset visual state
         targetTransform.localScale = originalScale;
         if (canvasGroup != null)
         {
             canvasGroup.alpha = 1f;
         }
-
-
-        await UniTask.WhenAll( PlayScaleAnimation(), PlayBlinkAnimation());
     }
 
-    private async UniTask PlayScaleAnimation()
+    private void Update()
     {
-        for (int i = 0; i < scaleLoopCount; i++)
+        if (!isPlaying) return;
+
+        bool scaleComplete = UpdateScaleAnimation();
+        bool blinkComplete = UpdateBlinkAnimation();
+
+        if (scaleComplete && blinkComplete)
         {
-
-            await ScaleTo(originalScale * scaleUpSize, scaleDuration);
-
-            await ScaleTo(originalScale * scaleDownSize, scaleDuration);
+            isPlaying = false;
         }
-
-
-        await ScaleTo(originalScale, scaleDuration * 0.5f);
     }
 
-    private async UniTask ScaleTo(Vector3 targetScale, float duration)
+    private bool UpdateScaleAnimation()
     {
-        Vector3 startScale = targetTransform.localScale;
-        float elapsed = 0f;
+        if (scaleAnimationComplete) return true;
 
-        while (elapsed < duration)
+        scaleTimer += Time.unscaledDeltaTime;
+
+        float duration = isScaleFinishing ? scaleDuration * 0.5f : scaleDuration;
+        float t = scaleTimer / duration;
+        float easeT = Mathf.Sin(t * Mathf.PI * 0.5f);
+
+        targetTransform.localScale = Vector3.Lerp(scaleStart, scaleTarget, easeT);
+
+        if (scaleTimer >= duration)
         {
-            elapsed += Time.unscaledDeltaTime;
-            float t = elapsed / duration;
+            targetTransform.localScale = scaleTarget;
+            scaleTimer = 0f;
 
-            float easeT = Mathf.Sin(t * Mathf.PI * 0.5f);
+            if (isScaleFinishing)
+            {
+                scaleAnimationComplete = true;
+                return true;
+            }
 
-            targetTransform.localScale = Vector3.Lerp(startScale, targetScale, easeT);
+            if (isScalingUp)
+            {
+                // Switch to scale down
+                scaleStart = scaleTarget;
+                scaleTarget = originalScale * scaleDownSize;
+                isScalingUp = false;
+            }
+            else
+            {
+                // Complete one loop
+                currentScaleLoop++;
 
-            await UniTask.Yield();
+                if (currentScaleLoop >= scaleLoopCount)
+                {
+                    // Start finishing animation
+                    scaleStart = scaleTarget;
+                    scaleTarget = originalScale;
+                    isScaleFinishing = true;
+                }
+                else
+                {
+                    // Switch to scale up
+                    scaleStart = scaleTarget;
+                    scaleTarget = originalScale * scaleUpSize;
+                    isScalingUp = true;
+                }
+            }
         }
 
-        targetTransform.localScale = targetScale;
+        return false;
     }
 
-    private async UniTask PlayBlinkAnimation()
+    private bool UpdateBlinkAnimation()
     {
-        if (canvasGroup == null)
+        if (canvasGroup == null || blinkAnimationComplete) return true;
+
+        blinkTimer += Time.unscaledDeltaTime;
+        float t = blinkTimer / blinkDuration;
+
+        canvasGroup.alpha = Mathf.Lerp(alphaStart, alphaTarget, t);
+
+        if (blinkTimer >= blinkDuration)
         {
-            return;
+            canvasGroup.alpha = alphaTarget;
+            blinkTimer = 0f;
+
+            if (isFadingOut)
+            {
+                // Switch to fade in
+                alphaStart = 0.3f;
+                alphaTarget = 1f;
+                isFadingOut = false;
+            }
+            else
+            {
+                // Complete one blink
+                currentBlinkCount++;
+
+                if (currentBlinkCount >= blinkCount)
+                {
+                    canvasGroup.alpha = 1f;
+                    blinkAnimationComplete = true;
+                    return true;
+                }
+                else
+                {
+                    // Switch to fade out
+                    alphaStart = 1f;
+                    alphaTarget = 0.3f;
+                    isFadingOut = true;
+                }
+            }
         }
 
-        for (int i = 0; i < blinkCount; i++)
-        {
-            await FadeTo(0.3f, blinkDuration);
-
-
-            await FadeTo(1f, blinkDuration);
-        }
-
-        canvasGroup.alpha = 1f;
-    }
-
-    private async UniTask FadeTo(float targetAlpha, float duration)
-    {
-        if (canvasGroup == null)
-        {
-            return;
-        }
-
-        float startAlpha = canvasGroup.alpha;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = elapsed / duration;
-
-            canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-
-            await UniTask.Yield();
-        }
-
-        canvasGroup.alpha = targetAlpha;
+        return false;
     }
 
     private void OnDisable()
     {
+        isPlaying = false;
 
         if (targetTransform != null)
         {
             targetTransform.localScale = originalScale;
         }
-
         if (canvasGroup != null)
         {
             canvasGroup.alpha = 1f;

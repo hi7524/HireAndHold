@@ -1,63 +1,85 @@
 ﻿using Cysharp.Threading.Tasks;
+using GameData;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Rendering;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class MainUISceneManager : MonoBehaviour
 {
-    public GameObject uiUnitWrapperPrefab;
-    public RectTransform moveArea;
-    public int spawnCount = 4;
-
-    private int uiUnitLayer;
-
-    private void Awake()
-    {
-        uiUnitLayer = LayerMask.NameToLayer("UIUnitLayer");
-    }
+    public Transform worldUnitRoot;
 
     private async void Start()
     {
         var owned = DatabaseManager.Instance.GetAllCharacters();
-        if (owned.Count == 0) return;
+        if (owned.Count < 2)
+        { 
+            return;
+            }
 
-        for (int i = 0; i < spawnCount; i++)
+        List<int> selectedUnits = GetTwoUniqueUnitIds(owned);
+
+        for (int i = 0; i < selectedUnits.Count; i++)
         {
-            int r = Random.Range(0, owned.Count);
-            int unitId = int.Parse(owned[r].id);
+            int unitId = selectedUnits[i];
+            Vector3 spawnPos = GetSpawnPosition(i);
 
-            await SpawnUIUnit(unitId);
+            await SpawnUnit(unitId, spawnPos);
         }
     }
 
-    private async UniTask SpawnUIUnit(int unitId)
+    private List<int> GetTwoUniqueUnitIds(List<OwnedCharacter> owned)
     {
+        List<int> result = new List<int>();
 
-        GameObject wrapper = Instantiate(uiUnitWrapperPrefab, moveArea);
-        WindowUnitMovement mover = wrapper.GetComponent<WindowUnitMovement>();
-        mover.moveArea = moveArea;
+        int r1 = Random.Range(0, owned.Count);
+        result.Add(int.Parse(owned[r1].id));
 
-        Transform visualRoot = wrapper.transform.Find("VisualRoot");
+        int r2;
+        do
+        {
+            r2 = Random.Range(0, owned.Count);
+        }
+        while (r2 == r1);
 
-        UnitData data = DataTableManager.UnitTable.Get(unitId);
-        var handle = Addressables.LoadAssetAsync<GameObject>(data.PREFAB_NAME);
-        GameObject combatPrefab = await handle.ToUniTask();
+        result.Add(int.Parse(owned[r2].id));
 
-
-        GameObject visual = Instantiate(combatPrefab, visualRoot);
-
-        visual.transform.localScale = Vector3.one * 3f;
-        visual.transform.localPosition = Vector3.zero;
-
-        SetLayerRecursively(visual, uiUnitLayer);
-
+        return result;
     }
 
-    private void SetLayerRecursively(GameObject obj, int layer)
+    private Vector3 GetSpawnPosition(int index)
     {
-        obj.layer = layer;
-        foreach (Transform child in obj.transform)
-            SetLayerRecursively(child.gameObject, layer);
+        if (index == 0)
+        {
+            return new Vector3(-1f, 1.5f, -1f);
+        }
+
+        return new Vector3(1f, -1f, -1f);
+    }
+
+    private async UniTask SpawnUnit(int unitId, Vector3 position)
+    {
+        GameObject wrapper = new GameObject($"Unit_{unitId}");
+        wrapper.transform.position = position;
+        wrapper.transform.SetParent(worldUnitRoot);
+
+        UnitData data = DataTableManager.UnitTable.Get(unitId);
+        GameObject combatPrefab = await Addressables.LoadAssetAsync<GameObject>(data.PREFAB_NAME);
+
+        GameObject visual = Instantiate(combatPrefab, wrapper.transform);
+        visual.transform.localScale = Vector3.one * 0.4f;
+
+        foreach (var r in visual.GetComponentsInChildren<SpriteRenderer>())
+        {
+            r.sortingLayerName = "LobbyWorld";
+            r.sortingOrder = 1;
+        }
+
+        var group = visual.GetComponentInChildren<SortingGroup>();
+        if (group != null)
+        {
+            group.sortingLayerName = "LobbyWorld";
+            group.sortingOrder = 1;
+        }
     }
 }
