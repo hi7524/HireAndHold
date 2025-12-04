@@ -43,41 +43,8 @@ public class GridUnit : MonoBehaviour, IDraggable
     public void SetUnitID(int unitId, int starLevel = 1)
     {
         StarLevel = Mathf.Clamp(starLevel, 1, 3);
-        if (unit != null)
-        {
-            unit.SetUnitID(unitId);
-
-            var unitData = DataTableManager.UnitTable.Get(unitId);
-            if (unitData != null && !string.IsNullOrEmpty(unitData.GRID_DATA))
-            {
-                // 캐시에서 먼저 시도
-                var cachedGridData = AddressablePreloader.Instance != null
-                    ? AddressablePreloader.Instance.GetCachedGridData(unitData.GRID_DATA)
-                    : null;
-
-                if (cachedGridData != null)
-                {
-                    // 캐시 사용 시 기존 핸들 정리
-                    if (gridDataHandle.IsValid())
-                    {
-                        Addressables.Release(gridDataHandle);
-                        gridDataHandle = default;
-                    }
-                    SetGridData(cachedGridData);
-                }
-                else
-                {
-                    // 캐시에 없으면 동기 로드 (fallback)
-                    gridDataHandle = Addressables.LoadAssetAsync<UnitGridData>(unitData.GRID_DATA);
-                    var gridData = gridDataHandle.WaitForCompletion();
-
-                    if (gridDataHandle.Status == AsyncOperationStatus.Succeeded)
-                    {
-                        SetGridData(gridData);
-                    }
-                }
-            }
-        }
+        // Unit.SetUnitID()는 GridManager.SpawnGridUnit()에서 이미 호출되므로
+        // 여기서 다시 호출하면 Stat이 재생성되어 패시브/버프 modifier가 사라짐
     } 
 
     public void SetInventoryPlaceable(bool value)
