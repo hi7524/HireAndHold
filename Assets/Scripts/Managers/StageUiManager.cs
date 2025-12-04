@@ -35,7 +35,7 @@ public class StageUiManager : MonoBehaviour
         if (!gameManager.IsGameStarted)
             return;
 
-        UpdateTimerText(gameManager.ElapsedTime);
+        UpdateTimerText(gameManager.SchedulerTime);
     }
 
     private void UpdateTimerText(float elapsedTime)

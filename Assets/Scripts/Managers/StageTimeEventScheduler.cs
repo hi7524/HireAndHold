@@ -19,6 +19,8 @@ public class StageTimeEventScheduler
     private float elapsedTime;
     private List<TimeEvent> scheduledEvents = new List<TimeEvent>();
 
+    public float ElapsedTime => elapsedTime;
+
     // 이벤트 추가
     public TimeEvent AddTimeEvent(float triggerTime, Action callback)
     {

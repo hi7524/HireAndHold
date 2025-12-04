@@ -262,18 +262,18 @@ public class Unit : MonoBehaviour
     {
         float damage = attackDamage.Value;
 
-        // 보스 추가 데미지 적용
+        // 보스 추가 데미지 (PassiveSkillManager에서 직접 가져옴 - 보스만 해당이라 Stat 시스템 밖에서 처리)
         if (target.IsBoss && passiveSkillManager != null)
         {
             PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
             damage *= 1f + effects.bossDamageBonus / PercentToDivider;
         }
 
-        // 치명타 판정 및 적용
+        // 치명타 판정 - 이제 criticalRate.Value에 패시브 보너스가 포함됨
         bool isCritical = Random.value < (criticalRate.Value / PercentToDivider);
         if (isCritical)
         {
-            damage *= criticalDamage.Value;
+            damage *= criticalDamage.Value; // 패시브 보너스 포함
         }
 
         return damage;
@@ -364,5 +364,16 @@ public class Unit : MonoBehaviour
     public Stat GetAttackDamageStat()
     {
         return attackDamage;
+    }
+
+    public Stat GetCriticalRateStat()
+    {
+        return criticalRate;
+    }
+
+    // 치명타 데미지 Stat 반환
+    public Stat GetCriticalDamageStat()
+    {
+        return criticalDamage;
     }
 }

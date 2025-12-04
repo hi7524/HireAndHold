@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
+using System;
 
 public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHandler
 {
@@ -58,7 +59,7 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
         {
             Debug.LogWarning("[PageSnap] DatabaseManager 초기화 안됨. 기본값 사용");
         }
-
+        totalStages = DataTableManager.StageTable.GetAll().Count();
         if (stageCardPrefab != null && content.childCount == 0)
         {
             CreateStageCards();
@@ -85,37 +86,38 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
 
         Canvas.ForceUpdateCanvases();
         CalculatePagePositions();
-        SnapToPage(0, true);
-            if (playButton != null)
+        int highestStage = Mathf.Clamp(unlockedStage - 701, 0, totalStages - 1);
+        SnapToPage(highestStage, true);
+        if (playButton != null)
+        {
+            Button btn = playButton.GetComponent<Button>();
+            if (btn != null)
             {
-                Button btn = playButton.GetComponent<Button>();
-                if (btn != null)
-                {
-                    btn.onClick.AddListener(OnPlayButtonClick);
-                }
+                btn.onClick.AddListener(OnPlayButtonClick);
             }
+        }
     }
 
     private async void OnPlayButtonClick()
     {
         StageCard selectedCard = stageCards[currentIndex];
-        
+
         if (selectedCard.isLocked)
         {
             Debug.LogWarning("잠긴 스테이지입니다.");
             return;
         }
-        
+
         SelectedStageId = selectedCard.stageIndex;
-        
+
         // Stage 씬으로 이동
         LoadingRequest request = new LoadingRequest("Stage");
         await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
-    
+
     private void OnDestroy()
     {
-         if (playButton != null)
+        if (playButton != null)
         {
             Button btn = playButton.GetComponent<Button>();
             if (btn != null)
@@ -169,8 +171,8 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
                     card.SetLocked(isLocked);
                     Debug.Log($"[PageSnap] Stage ID {stageId} 잠금 여부: {isLocked}");
 
-                     // TODO: stageImage는 Addressable로 로드하거나 리소스에서 가져오기
-                // 예: card.stageImage.sprite = await Addressables.LoadAssetAsync<Sprite>($"Stage_{i}").Task;
+                    // TODO: stageImage는 Addressable로 로드하거나 리소스에서 가져오기
+                    // 예: card.stageImage.sprite = await Addressables.LoadAssetAsync<Sprite>($"Stage_{i}").Task;
                 }
             }
         }

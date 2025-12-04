@@ -2,20 +2,22 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
+using UnityEngine.AddressableAssets;
 
 public class StageClearPanelController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private GameManager gameManager;
-     [SerializeField] private StageManager stageManager;
+    [SerializeField] private StageManager stageManager;
     [SerializeField] private GameObject panelRoot;
-    
+
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI stageNameText;
     [SerializeField] private TextMeshProUGUI expRewardText;
     [SerializeField] private TextMeshProUGUI goldRewardText;
-    [SerializeField] private Image[] starImages; 
+    [SerializeField] private Image[] starImages;
     [SerializeField] private Button confirmButton;
+    [SerializeField] private Button nextStageButton;
 
      private int currentStageId;
     private int currentStars;
@@ -23,11 +25,15 @@ public class StageClearPanelController : MonoBehaviour
     private int currentExp;
     private float currentClearTime;
     
-     private void Awake()
+    private void Awake()
     {
         if (confirmButton != null)
         {
             confirmButton.onClick.AddListener(OnConfirmButtonClick);
+        }
+        if (nextStageButton != null)
+        {
+            nextStageButton.onClick.AddListener(OnNextStageButtonClick);
         }
     }
 
@@ -158,6 +164,10 @@ public class StageClearPanelController : MonoBehaviour
         {
             confirmButton.onClick.RemoveListener(OnConfirmButtonClick);
         }
+        if (nextStageButton != null)
+        {
+            nextStageButton.onClick.RemoveListener(OnNextStageButtonClick);
+        }
     }
 
     private async void OnConfirmButtonClick()
@@ -165,22 +175,41 @@ public class StageClearPanelController : MonoBehaviour
         Hide();
         Time.timeScale = 1f;
 
-        LoadingRequest request = new LoadingRequest("Lobby");
+        // 클리어 데이터 저장
+        await SaveStageResultAsync(
+            currentStageId,
+            true,
+            currentStars,
+            currentGold,
+            currentExp,
+            currentClearTime
+        );
 
-        // 클리어 데이터 저장 + 유저 데이터 갱신
+        // 로비로 이동 (로딩씬 없이)
+        await Addressables.LoadSceneAsync("Lobby");
+    }
+
+    private async void OnNextStageButtonClick()
+    {
+        Hide();
+        Time.timeScale = 1f;
+
+        // 다음 스테이지로 설정
+        int nextStageId = currentStageId + 1;
+        PageSnap.SelectedStageId = nextStageId;
+
+        LoadingRequest request = new LoadingRequest("Stage");
+
         request.AddTask("클리어 데이터 저장", async (ct) =>
         {
-            // 1. Firebase에 저장
             await SaveStageResultAsync(
                 currentStageId,
-                true,  // isCleared
+                true,
                 currentStars,
                 currentGold,
                 currentExp,
                 currentClearTime
             );
-
-            
         }, weight: 2f);
 
         await LoadingSceneManager.Instance.LoadSceneWithLoading(request);

@@ -208,15 +208,6 @@ public class StageManager : MonoBehaviour
 
         gameManager.GameEnd();
     }
-    public void RestartStage()
-    {
-
-        // 현재 씬을 다시 로드
-        Time.timeScale = 1f;
-        LoadingSceneManager.Instance.LoadSceneWithLoading(
-            new LoadingRequest("Stage")
-        );
-    }
 
     /// <summary>
     /// 디버그용: 스테이지 강제 클리어

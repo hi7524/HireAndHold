@@ -59,4 +59,8 @@ public class DataTable_Stage : DataTable
         }
         return dictionary[key];
     }
+    public IEnumerable<StageData> GetAll()
+    {
+        return dictionary.Values;
+    }
 }

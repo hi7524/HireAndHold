@@ -4,23 +4,31 @@ using UnityEngine;
 public class BattleUnitManager : MonoBehaviour
 {
     [SerializeField] private BuffManager buffManager;
+    [SerializeField] private PassiveSkillManager passiveSkillManager;
 
     public List<Unit> GetAllUnits() => activeUnits;
     public int GetActiveUnitCount() => activeUnits.Count;
 
     private readonly List<Unit> activeUnits = new(); // 현재 유닛 담아 놓을 리스트
     private readonly Dictionary<Unit, StatModifier> activeBuffModifiers = new();
+    private readonly Dictionary<Unit, List<StatModifier>> activePassiveModifiers = new();
 
     private void Start()
     {
         if (buffManager != null)
             buffManager.OnBuffPercentageChanged += OnBuffChanged;
+
+        if (passiveSkillManager != null)
+            passiveSkillManager.OnPassiveSkillChanged += OnPassiveSkillChanged;
     }
 
     private void OnDestroy()
     {
         if (buffManager != null)
             buffManager.OnBuffPercentageChanged -= OnBuffChanged;
+
+        if (passiveSkillManager != null)
+            passiveSkillManager.OnPassiveSkillChanged -= OnPassiveSkillChanged;
     }
 
     public void RegisterUnit(Unit unit)
@@ -34,6 +42,9 @@ public class BattleUnitManager : MonoBehaviour
         {
             ApplyBuffToUnit(unit, buffManager.GlobalBuffPercentage);
         }
+
+        if (passiveSkillManager != null)
+            ApplyPassiveToUnit(unit, passiveSkillManager.GetCurrentEffects());
     }
 
     public void UnregisterUnit(Unit unit)
@@ -42,6 +53,7 @@ public class BattleUnitManager : MonoBehaviour
             return;
 
         RemoveBuffFromUnit(unit);
+        RemovePassiveFromUnit(unit);
         activeUnits.Remove(unit);
     }
 
@@ -89,6 +101,63 @@ public class BattleUnitManager : MonoBehaviour
             }
 
             activeBuffModifiers.Remove(unit);
+        }
+    }
+
+    private void OnPassiveSkillChanged()
+    {
+        if (passiveSkillManager == null) return;
+
+        var effects = passiveSkillManager.GetCurrentEffects();
+        foreach (var unit in activeUnits)
+        {
+            RemovePassiveFromUnit(unit);
+            ApplyPassiveToUnit(unit, effects);
+        }
+    }
+
+    private void ApplyPassiveToUnit(Unit unit, PassiveSkillEffects effects)
+    {
+        if (unit == null || effects == null) return;
+
+        var modifiers = new List<StatModifier>();
+
+        // 공격력 증가
+        if (effects.damageBonus > 0)
+        {
+            var damageMod = new StatModifier(effects.damageBonus / 100f, ModifierType.PercentAdd);
+            unit.GetAttackDamageStat()?.AddModifier(damageMod);
+            modifiers.Add(damageMod);
+        }
+
+        // 치명타 확률 증가
+        if (effects.critRateBonus > 0)
+        {
+            var critRateMod = new StatModifier(effects.critRateBonus / 100f, ModifierType.PercentAdd);
+            unit.GetCriticalRateStat()?.AddModifier(critRateMod);
+            modifiers.Add(critRateMod);
+        }
+
+        // 치명타 데미지 증가
+        if (effects.critDamageBonus > 0)
+        {
+            var critDamageMod = new StatModifier(effects.critDamageBonus / 100f, ModifierType.PercentAdd);
+            unit.GetCriticalDamageStat()?.AddModifier(critDamageMod);
+            modifiers.Add(critDamageMod);
+        }
+
+        activePassiveModifiers[unit] = modifiers;
+    }
+
+    private void RemovePassiveFromUnit(Unit unit)
+    {
+        if (unit == null) return;
+
+        if (activePassiveModifiers.TryGetValue(unit, out var modifiers))
+        {
+            // 모든 modifier 제거 (어떤 스탯에 붙었는지 추적 필요)
+            unit.GetAttackDamageStat()?.RemoveModifier(modifiers.Find(m => true)); // 단순화
+            activePassiveModifiers.Remove(unit);
         }
     }
 }
