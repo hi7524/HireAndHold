@@ -58,7 +58,7 @@ public class GridCell : MonoBehaviour, IDroppable
 
         Sequence sequence = DOTween.Sequence();
         sequence.SetDelay(delay);
-        sequence.Append(transform.DOScale(originalSize * 1.2f, 0.1f).SetEase(Ease.OutQuad));
+        sequence.Append(transform.DOScale(originalSize * 1.5f, 0.1f).SetEase(Ease.OutQuad));
         sequence.Append(transform.DOScale(originalSize, 0.12f).SetEase(Ease.InQuad));
         sequence.OnComplete(() =>
         {
