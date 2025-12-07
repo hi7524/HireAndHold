@@ -47,18 +47,51 @@ public class DragManager : MonoBehaviour
 
     private void Update()
     {
-        if (!isDragEnabled || Pointer.current == null)
+        if (!isDragEnabled)
             return;
 
-        if (Pointer.current.press.wasPressedThisFrame)
+        // Pointer.current가 null인 경우 처리 (안드로이드 빌드에서 간헐적 발생 가능)
+        var pointer = Pointer.current;
+        if (pointer == null)
+        {
+            // 터치스크린으로 폴백 시도
+            var touchscreen = Touchscreen.current;
+            if (touchscreen != null && touchscreen.primaryTouch.press.isPressed)
+            {
+                HandleTouchInput(touchscreen);
+                return;
+            }
+            return;
+        }
+
+        if (pointer.press.wasPressedThisFrame)
         {
             HandleDragStart();
         }
-        else if (Pointer.current.press.isPressed && dragState.IsDragging)
+        else if (pointer.press.isPressed && dragState.IsDragging)
         {
             HandleDragging();
         }
-        else if (Pointer.current.press.wasReleasedThisFrame && dragState.IsDragging)
+        else if (pointer.press.wasReleasedThisFrame && dragState.IsDragging)
+        {
+            HandleDragEnd();
+        }
+    }
+
+    // 터치스크린 입력 처리 (Pointer.current가 null일 때 폴백)
+    private void HandleTouchInput(Touchscreen touchscreen)
+    {
+        var touch = touchscreen.primaryTouch;
+
+        if (touch.press.wasPressedThisFrame)
+        {
+            HandleDragStart();
+        }
+        else if (touch.press.isPressed && dragState.IsDragging)
+        {
+            HandleDragging();
+        }
+        else if (touch.press.wasReleasedThisFrame && dragState.IsDragging)
         {
             HandleDragEnd();
         }
@@ -68,6 +101,20 @@ public class DragManager : MonoBehaviour
     public void SetDragEnabled(bool value)
     {
         isDragEnabled = value;
+    }
+
+    // 현재 포인터 위치 가져오기 (Pointer.current 또는 Touchscreen 폴백)
+    private Vector2 GetCurrentPointerPosition()
+    {
+        var pointer = Pointer.current;
+        if (pointer != null)
+            return pointer.position.ReadValue();
+
+        var touchscreen = Touchscreen.current;
+        if (touchscreen != null)
+            return touchscreen.primaryTouch.position.ReadValue();
+
+        return Vector2.zero;
     }
 
     // 드래그 시작 처리: 드래그 대상 감지 및 초기 상태 설정
@@ -170,7 +217,7 @@ public class DragManager : MonoBehaviour
     // 드래그 가능한 오브젝트 감지 (UI 우선, 그 다음 World)
     private IDraggable DetectDraggable(out bool isUI)
     {
-        Vector2 pointerPosition = Pointer.current.position.ReadValue();
+        Vector2 pointerPosition = GetCurrentPointerPosition();
 
         IDraggable uiDraggable = DetectUIObject(pointerPosition);
         if (uiDraggable != null)
@@ -245,7 +292,7 @@ public class DragManager : MonoBehaviour
     // 드롭 가능한 타겟 감지 (UI 우선, 그 다음 World)
     private IDroppable DetectDropTarget()
     {
-        Vector2 pointerPosition = Pointer.current.position.ReadValue();
+        Vector2 pointerPosition = GetCurrentPointerPosition();
 
         IDroppable uiDroppable = DetectUIDropTarget(pointerPosition);
         if (uiDroppable != null)
@@ -316,7 +363,7 @@ public class DragManager : MonoBehaviour
     // 드래그 중인 오브젝트를 마우스 위치로 이동
     private void MoveDraggingObject(GameObject targetObj)
     {
-        Vector2 screenPos = Pointer.current.position.ReadValue();
+        Vector2 screenPos = GetCurrentPointerPosition();
 
         if (dragState.IsUI)
         {
