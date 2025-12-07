@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using Cysharp.Threading.Tasks;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class SkillUI : MonoBehaviour
 {
@@ -9,6 +12,7 @@ public class SkillUI : MonoBehaviour
 
     private PlayerSkillBase skill;
     private Vector3 spawnPosition;
+    private AsyncOperationHandle<Sprite> iconHandle;
 
     public bool IsInitialized => skill != null;
 
@@ -27,7 +31,7 @@ public class SkillUI : MonoBehaviour
         SetupCooldownMask();
 
         // 스킬 아이콘 로드
-        LoadSkillIcon();
+        LoadSkillIconAsync().Forget();
     }
 
     private void SetupCooldownMask()
@@ -37,7 +41,7 @@ public class SkillUI : MonoBehaviour
         cooldownMask.fillAmount = 0f;  // 초기에는 쿨타임 없음 (스킬 사용 가능)
     }
 
-    private void LoadSkillIcon()
+    private async UniTaskVoid LoadSkillIconAsync()
     {
         if (skill == null)
         {
@@ -57,14 +61,19 @@ public class SkillUI : MonoBehaviour
             return;
         }
 
-        // 공백 제거
         iconAddress = iconAddress.Trim();
 
-        // 캐시된 Sprite 로드
-        if (AddressablePreloader.Instance == null) return;
+        // 기존 핸들 해제
+        if (iconHandle.IsValid())
+        {
+            Addressables.Release(iconHandle);
+        }
 
-        var sprite = AddressablePreloader.Instance.GetCachedSprite(iconAddress);
-        if (sprite != null && icon != null)
+        // Addressables로 Sprite 로드
+        iconHandle = Addressables.LoadAssetAsync<Sprite>(iconAddress);
+        var sprite = await iconHandle.ToUniTask();
+
+        if (iconHandle.Status == AsyncOperationStatus.Succeeded && icon != null)
         {
             icon.sprite = sprite;
         }
@@ -96,6 +105,12 @@ public class SkillUI : MonoBehaviour
         {
             skill.OnCooldownProgress -= UpdateCooldown;
             skill.OnCooldownEnd -= ResetCooldown;
+        }
+
+        // Addressables 리소스 해제
+        if (iconHandle.IsValid())
+        {
+            Addressables.Release(iconHandle);
         }
     }
 }
