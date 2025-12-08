@@ -21,18 +21,22 @@ public class SkillEffectApplier : MonoBehaviour
 
     public void ApplyStatusEffectInRange(Vector3 center, float range, StatusEffectType type, float duration, float value)
     {
-        GameObject[] monsters = GameObject.FindGameObjectsWithTag("Monster");
+        if (MonsterSpawner.Instance == null) return;
+
+        var monsters = MonsterSpawner.Instance.GetActiveMonsters();
         int affectedCount = 0;
 
         // range가 Infinity 또는 음수면 전체 공격
         bool isGlobalEffect = float.IsInfinity(range) || range < 0f;
 
-        foreach (GameObject monster in monsters)
+        foreach (Enemy monster in monsters)
         {
+            if (monster == null || !monster.gameObject.activeSelf) continue;
+
             if (isGlobalEffect)
             {
                 // 전역 효과: 거리 체크 없이 모든 몬스터에게 적용
-                ApplyStatusEffectToTarget(monster, type, duration, value);
+                ApplyStatusEffectToTarget(monster.gameObject, type, duration, value);
                 affectedCount++;
             }
             else
@@ -42,7 +46,7 @@ public class SkillEffectApplier : MonoBehaviour
 
                 if (distance <= range)
                 {
-                    ApplyStatusEffectToTarget(monster, type, duration, value);
+                    ApplyStatusEffectToTarget(monster.gameObject, type, duration, value);
                     affectedCount++;
                 }
             }
@@ -94,17 +98,21 @@ public class SkillEffectApplier : MonoBehaviour
 
     private GameObject FindNearestMonster(Vector3 position)
     {
-        GameObject[] monsters = GameObject.FindGameObjectsWithTag("Monster");
+        if (MonsterSpawner.Instance == null) return null;
+
+        var monsters = MonsterSpawner.Instance.GetActiveMonsters();
         GameObject nearest = null;
         float minDistance = Mathf.Infinity;
 
-        foreach (GameObject monster in monsters)
+        foreach (Enemy monster in monsters)
         {
+            if (monster == null || !monster.gameObject.activeSelf) continue;
+
             float distance = Vector3.Distance(position, monster.transform.position);
             if (distance < minDistance)
             {
                 minDistance = distance;
-                nearest = monster;
+                nearest = monster.gameObject;
             }
         }
 

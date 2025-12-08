@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class MonsterSpawner : MonoBehaviour
 {
+    public static MonsterSpawner Instance { get; private set; }
+
     public event Action<Enemy> OnMonsterDeath;
 
     [SerializeField] private ObjectPoolManager poolManager;
@@ -14,6 +16,16 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private float horizontalRange = 2f;
 
     private List<Enemy> activeMonsters = new List<Enemy>();
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    /// <summary>
+    /// 현재 활성화된 모든 몬스터 리스트 반환 (읽기 전용)
+    /// </summary>
+    public IReadOnlyList<Enemy> GetActiveMonsters() => activeMonsters;
 
     public void SpawnMonsterById(int monsterId, bool isBoss = false)
     {

@@ -154,16 +154,20 @@ public abstract class PlayerSkillBase : MonoBehaviour
     // 범위 내 모든 적에게 데미지 적용
     protected int DamageEnemiesInRange(Vector3 center, float range)
     {
-        GameObject[] monsters = GameObject.FindGameObjectsWithTag("Monster");
+        if (MonsterSpawner.Instance == null) return 0;
+
+        var monsters = MonsterSpawner.Instance.GetActiveMonsters();
         int hitCount = 0;
 
-        foreach (GameObject monster in monsters)
+        foreach (Enemy monster in monsters)
         {
+            if (monster == null || !monster.gameObject.activeSelf) continue;
+
             float distance = Vector3.Distance(center, monster.transform.position);
 
             if (distance <= range)
             {
-                monster.GetComponent<IDamagable>()?.TakeDamage(damage);
+                monster.TakeDamage(damage);
                 hitCount++;
             }
         }

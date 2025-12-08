@@ -9,18 +9,21 @@ public class SupernovaSkill : PlayerSkillBase
     
     public override void OnUse(Vector3 spawnPoint)
     {
-       
         SpawnEffect(supernovaEffectPrefab, spawnPoint, effectLifetime);
-        
-        GameObject[] monsters = GameObject.FindGameObjectsWithTag("Monster");
+
+        if (MonsterSpawner.Instance == null) return;
+
+        var monsters = MonsterSpawner.Instance.GetActiveMonsters();
         int hitCount = 0;
-        
-        foreach (GameObject monster in monsters)
+
+        foreach (Enemy monster in monsters)
         {
-            monster.GetComponent<IDamagable>()?.TakeDamage(damage);
+            if (monster == null || !monster.gameObject.activeSelf) continue;
+
+            monster.TakeDamage(damage);
             hitCount++;
         }
-        
+
         Debug.Log($"[Supernova] 슈퍼노바 발동! 전체 {hitCount}마리 타격, 데미지: {damage}");
     }
 }
