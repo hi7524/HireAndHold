@@ -109,6 +109,20 @@ public class DragManager : MonoBehaviour
         isDragEnabled = value;
     }
 
+    // 현재 포인터 위치 가져오기 (Pointer.current 또는 Touchscreen 폴백)
+    private Vector2 GetCurrentPointerPosition()
+    {
+        var pointer = Pointer.current;
+        if (pointer != null)
+            return pointer.position.ReadValue();
+
+        var touchscreen = Touchscreen.current;
+        if (touchscreen != null)
+            return touchscreen.primaryTouch.position.ReadValue();
+
+        return Vector2.zero;
+    }
+
     // 드래그 시작 처리: 드래그 대상 감지 및 초기 상태 설정
     private void HandleDragStart()
     {

@@ -22,6 +22,7 @@ public class Unit : MonoBehaviour
     // 유닛 데이터
     private UnitData unitData;
     private Stat attackDamage;
+    private Stat attackCooltime;
     private Stat criticalRate;
     private Stat criticalDamage;
 
@@ -100,12 +101,51 @@ public class Unit : MonoBehaviour
         SetVisualPrefab();
     }
 
+    // 유닛 ID 업데이트 (합성 시 Stat 모디파이어 보존)
+    public void UpdateUnitID(int ID)
+    {
+        UnitID = ID;
+        unitData = DataTableManager.UnitTable.Get(ID);
+
+        Debug.Log($"Unit ID updated (preserving modifiers) to: {ID}");
+        UpdateStatBaseValues();
+        SetSkills();
+        SetVisualPrefab();
+    }
+
+    // Stat 기본값만 업데이트 (모디파이어 보존)
+    private void UpdateStatBaseValues()
+    {
+        if (unitData == null) return;
+
+        if (attackDamage != null)
+            attackDamage.SetBaseValue(unitData.ATTACK);
+        else
+            attackDamage = new Stat(unitData.ATTACK);
+
+        if (attackCooltime != null)
+            attackCooltime.SetBaseValue(unitData.ATTACK_COOLTIME);
+        else
+            attackCooltime = new Stat(unitData.ATTACK_COOLTIME);
+
+        if (criticalRate != null)
+            criticalRate.SetBaseValue(unitData.ATTACK_CRITICAL);
+        else
+            criticalRate = new Stat(unitData.ATTACK_CRITICAL);
+
+        if (criticalDamage != null)
+            criticalDamage.SetBaseValue(unitData.CRITICAL_DAMAGE);
+        else
+            criticalDamage = new Stat(unitData.CRITICAL_DAMAGE);
+    }
+
     // 데이터 테이블에서 로드한 값으로 유닛 스탯 초기화
     private void SetStats()
     {
         if (unitData != null)
         {
             attackDamage = new Stat(unitData.ATTACK);
+            attackCooltime = new Stat(unitData.ATTACK_COOLTIME);
             criticalRate = new Stat(unitData.ATTACK_CRITICAL);
             criticalDamage = new Stat(unitData.CRITICAL_DAMAGE);
 
@@ -390,5 +430,11 @@ public class Unit : MonoBehaviour
     public Stat GetCriticalDamageStat()
     {
         return criticalDamage;
+    }
+
+    // 공격 쿨타임 Stat 반환
+    public Stat GetAttackCooltimeStat()
+    {
+        return attackCooltime;
     }
 }
