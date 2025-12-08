@@ -150,7 +150,7 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     public void OnDropSuccess()
     {
         // 유닛을 비활성화하고 성공 이벤트를 발생
-        gameObject.SetActive(false);
+        //gameObject.SetActive(false);
         OnUnitDroppedSuccessfully?.Invoke();
     }
 

@@ -1,5 +1,40 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2535963113898683232
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7266631046975652432}
+  m_Layer: 5
+  m_Name: PreviewObjTrans
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &7266631046975652432
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2535963113898683232}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4970113392032586620}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &3543455603380307566
 GameObject:
   m_ObjectHideFlags: 0
@@ -12,8 +47,9 @@ GameObject:
   - component: {fileID: 7713210239743070817}
   - component: {fileID: 1077730129380983917}
   - component: {fileID: 600338887622531064}
+  - component: {fileID: 317952543297696487}
   m_Layer: 5
-  m_Name: Slot
+  m_Name: TestSlot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -92,9 +128,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 4799017441370092475}
+  draggableUnitUi: {fileID: 317952543297696487}
   imgText: {fileID: 2277764277586855997}
   idText: {fileID: 2780817463413273019}
   nameText: {fileID: 2355891557497132732}
+--- !u!114 &317952543297696487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3543455603380307566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00e956722a406ab4ea0bf11dc7d655fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  unitImg: {fileID: 4799017441370092475}
+  previewObjTrans: {fileID: 7266631046975652432}
 --- !u!1 &3867039543365148429
 GameObject:
   m_ObjectHideFlags: 0
@@ -126,6 +177,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5075663941212019472}
+  - {fileID: 7266631046975652432}
   m_Father: {fileID: 7783467729169730142}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}

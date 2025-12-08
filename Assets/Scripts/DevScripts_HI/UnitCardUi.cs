@@ -14,11 +14,12 @@ public class UnitCardUi : BaseCardUi
     private Image img;
     private Color originalColor;
 
-    // 드롭 성공 이벤트
     public event Action OnUnitDropSuccess;
+    private Action OnSelfDeactivateHandler;
 
     // 프리뷰 헬퍼
     private GridPreviewHelper previewHelper;
+
 
     private void Awake()
     {
@@ -30,7 +31,9 @@ public class UnitCardUi : BaseCardUi
     {
         VisualizeGridData();
 
+
         draggableUnitUI.OnUnitDroppedSuccessfully += HandleUnitDropSuccess;
+        draggableUnitUI.OnUnitDroppedSuccessfully += OnSelfDeactivateHandler;
     }
 
     private void OnDestroy()
@@ -38,6 +41,7 @@ public class UnitCardUi : BaseCardUi
         if (draggableUnitUI != null)
         {
             draggableUnitUI.OnUnitDroppedSuccessfully -= HandleUnitDropSuccess;
+            draggableUnitUI.OnUnitDroppedSuccessfully -= OnSelfDeactivateHandler;
         }
     }
 

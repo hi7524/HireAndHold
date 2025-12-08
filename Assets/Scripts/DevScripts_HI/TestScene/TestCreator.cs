@@ -18,9 +18,11 @@ public class TestUnitCreator : MonoBehaviour
         foreach (var unit in unitTable)
         {
             var slot = Instantiate(slotPrf, unitScrollRect.content);
+            var unitGrid = await Addressables.LoadAssetAsync<UnitGridData>(unit.GRID_DATA).Task;
 
             slot.SetID(unit.UNIT_ID);
             slot.SetNameText(unit.StringName);
+            slot.SetDraggableUnitData(unit.UNIT_ID, unit.LEVEL, unitGrid);
 
             var sprite = await Addressables.LoadAssetAsync<Sprite>(unit.UNIT_ICON).Task;
             slot.SetSprite(sprite);
