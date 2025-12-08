@@ -11,12 +11,12 @@ public class Wall : MonoBehaviour, IDamagable
     [Header("Managers")]
     [SerializeField] GameManager gameManager;
     [SerializeField] StageManager stageManager;
+    [SerializeField] PassiveSkillManager passiveSkillManager;
 
     public float CurrentHp => currentHp;
     public float MaxHp => maxHp;
-    private bool isDead = false; 
+    private bool isDead = false;
 
-    private PassiveSkillManager passiveSkillManager;
     private float regenTimer = 0f;
     private const float REGEN_INTERVAL = 1f; // 1초마다 회복
 
@@ -25,9 +25,7 @@ public class Wall : MonoBehaviour, IDamagable
     {
         currentHp = maxHp;
         hpSlider.value = 1f;
-        isDead = false; 
-
-        passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
+        isDead = false;
     }
 
     private void Update()

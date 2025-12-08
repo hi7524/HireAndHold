@@ -15,11 +15,23 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private float horizontalRange = 2f;
 
+    [Header("Enemy Scene References")]
+    [SerializeField] private Transform wallTransform;
+    [SerializeField] private ExperienceCollector expCollector;
+
     private List<Enemy> activeMonsters = new List<Enemy>();
 
     private void Awake()
     {
         Instance = this;
+
+        // Enemy에서 사용할 씬 참조 설정
+        Enemy.SetSceneReferences(wallTransform, expCollector);
+    }
+
+    private void OnDestroy()
+    {
+        Enemy.ClearSceneReferences();
     }
 
     /// <summary>

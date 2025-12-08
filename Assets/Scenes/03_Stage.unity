@@ -5413,6 +5413,10 @@ PrefabInstance:
       propertyPath: expBarLerpSpeed
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 1913429411606003872, guid: 19c7f90625d7f6e4d9109d2bcd049027, type: 3}
+      propertyPath: passiveSkillManager
+      value: 
+      objectReference: {fileID: 1100007649}
     - target: {fileID: 5794123827993759418, guid: 19c7f90625d7f6e4d9109d2bcd049027, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -7297,6 +7301,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buffManager: {fileID: 692316291}
   passiveSkillManager: {fileID: 1100007649}
+  poolManager: {fileID: 455573300}
 --- !u!224 &1416464218 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2903548929442354246, guid: ba9aab56d880d3a4a9912c588a3f54fe, type: 3}
@@ -8375,6 +8380,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 95a2fefe9e022904c911f4c79fbaa46e, type: 3}
+--- !u!114 &1566081198 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 871905939202352377, guid: 95a2fefe9e022904c911f4c79fbaa46e, type: 3}
+  m_PrefabInstance: {fileID: 1566081197}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f3e94cf6b463074faff35c2175d888a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1596745650
 GameObject:
   m_ObjectHideFlags: 0
@@ -9600,6 +9616,7 @@ MonoBehaviour:
   gameManager: {fileID: 313655619}
   stageUiManager: {fileID: 1213958860}
   monsterSpawner: {fileID: 1960643256}
+  wall: {fileID: 2133929937}
 --- !u!4 &1847491322
 Transform:
   m_ObjectHideFlags: 0
@@ -10171,6 +10188,8 @@ MonoBehaviour:
   bossKey: BossMonster
   spawnPoint: {fileID: 1960643257}
   horizontalRange: 2
+  wallTransform: {fileID: 2133929939}
+  expCollector: {fileID: 1566081198}
 --- !u!4 &1960643257
 Transform:
   m_ObjectHideFlags: 0
@@ -11732,6 +11751,7 @@ MonoBehaviour:
   hpSlider: {fileID: 8678738156131881887}
   gameManager: {fileID: 313655619}
   stageManager: {fileID: 1847491321}
+  passiveSkillManager: {fileID: 1100007649}
 --- !u!212 &2133929938
 SpriteRenderer:
   m_ObjectHideFlags: 0

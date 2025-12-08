@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -159,7 +160,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
         var monsters = MonsterSpawner.Instance.GetActiveMonsters();
         int hitCount = 0;
 
-        foreach (Enemy monster in monsters)
+        foreach (Enemy monster in monsters.ToArray())
         {
             if (monster == null || !monster.gameObject.activeSelf) continue;
 

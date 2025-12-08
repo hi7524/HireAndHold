@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
     // 게임 일시 정지
     public void PauseGame()
     {
-        if (!IsGameStarted)
+        if (!IsGameStarted || IsPausedGame)
             return;
 
         GameManagerLog("일시 정지");

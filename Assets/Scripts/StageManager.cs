@@ -21,6 +21,7 @@ public class StageManager : MonoBehaviour
     [SerializeField] private GameManager gameManager;
     [SerializeField] private StageUiManager stageUiManager;
     [SerializeField] private MonsterSpawner monsterSpawner;
+    [SerializeField] private Wall wall;
 
     private void Start()
     {
@@ -172,8 +173,6 @@ public class StageManager : MonoBehaviour
 
     private int CalculateStars()
     {
-        Wall wall = GameObject.FindWithTag("Wall")?.GetComponent<Wall>();
-
         if (wall == null)
         {
             return 1;

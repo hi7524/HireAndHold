@@ -225,9 +225,7 @@ public class DragManager : MonoBehaviour
         }
     }
 
-    // -----------------------------
-    // 🔥 드래그 가능한 오브젝트 감지
-    // -----------------------------
+
     private IDraggable DetectDraggable(Vector2 pointerPosition, out bool isUI)
     {
         // 1) UI 우선 검사
@@ -269,7 +267,6 @@ public class DragManager : MonoBehaviour
     {
         Vector2 worldPoint = MainCamera.ScreenToWorldPoint(screenPosition);
 
-        // 🔥 zero vector 제거 (Android에서 안정성 문제)
         RaycastHit2D[] hits = Physics2D.RaycastAll(worldPoint, Vector2.down, 0.01f, draggableLayer);
 
         if (hits.Length == 0)
@@ -302,9 +299,6 @@ public class DragManager : MonoBehaviour
         return topDraggable;
     }
 
-    // -----------------------------
-    // 🔥 드롭 타겟 감지
-    // -----------------------------
     private IDroppable DetectDropTarget(Vector2 pointerPosition)
     {
         IDroppable uiDroppable = DetectUIDropTarget(pointerPosition);

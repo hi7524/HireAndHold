@@ -66,7 +66,10 @@ public class Enemy : MonoBehaviour, IDamagable
 
     private Collider2D myCollider;
     private IDamagable wallDamagable;
-    private ExperienceCollector expCollector;
+
+    // 씬에서 주입받는 참조 (Initialize에서 설정)
+    private static Transform cachedWall;
+    private static ExperienceCollector cachedExpCollector;
 
     private float lastSeparateTime;
     private const float SEPARATE_INTERVAL = 0.1f;
@@ -100,13 +103,32 @@ public class Enemy : MonoBehaviour, IDamagable
     {
         currentHp = maxHp;
         nextAttackTime = 0f;
-        targetWall = GameObject.FindWithTag("Wall")?.transform;
+
+        // 캐시된 참조 사용
+        targetWall = cachedWall;
         if (targetWall != null)
         {
             wallDamagable = targetWall.GetComponent<IDamagable>();
         }
-        expCollector = GameObject.FindWithTag("Collector")?.GetComponent<ExperienceCollector>();
     }
+
+    /// <summary>
+    /// 씬 시작 시 한 번만 호출하여 공통 참조를 캐싱
+    /// MonsterSpawner 또는 GameManager에서 호출
+    /// </summary>
+    public static void SetSceneReferences(Transform wall, ExperienceCollector expCollector)
+    {
+        cachedWall = wall;
+        cachedExpCollector = expCollector;
+    }
+
+    public static void ClearSceneReferences()
+    {
+        cachedWall = null;
+        cachedExpCollector = null;
+    }
+
+    public static ExperienceCollector GetExpCollector() => cachedExpCollector;
 
     public void Initialize(ObjectPoolManager manager, string key, bool boss = false)
     {
@@ -602,9 +624,9 @@ public class Enemy : MonoBehaviour, IDamagable
             expObj.transform.position = transform.position;
 
             Experience exp = expObj.GetComponent<Experience>();
-            if (exp != null && expCollector != null)
+            if (exp != null && cachedExpCollector != null)
             {
-                exp.SetExpCollecter(expCollector);
+                exp.SetExpCollecter(cachedExpCollector);
             }
         }
     }

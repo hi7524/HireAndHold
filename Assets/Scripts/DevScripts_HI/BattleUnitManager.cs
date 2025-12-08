@@ -5,6 +5,7 @@ public class BattleUnitManager : MonoBehaviour
 {
     [SerializeField] private BuffManager buffManager;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
+    [SerializeField] private ObjectPoolManager poolManager;
 
     public List<Unit> GetAllUnits() => activeUnits;
     public int GetActiveUnitCount() => activeUnits.Count;
@@ -12,6 +13,12 @@ public class BattleUnitManager : MonoBehaviour
     private readonly List<Unit> activeUnits = new(); // 현재 유닛 담아 놓을 리스트
     private readonly Dictionary<Unit, StatModifier> activeBuffModifiers = new();
     private readonly Dictionary<Unit, List<StatModifier>> activePassiveModifiers = new();
+
+    private void Awake()
+    {
+        // Unit에서 사용할 씬 참조 설정
+        Unit.SetSceneReferences(poolManager, passiveSkillManager);
+    }
 
     private void Start()
     {
@@ -24,6 +31,8 @@ public class BattleUnitManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        Unit.ClearSceneReferences();
+
         if (buffManager != null)
             buffManager.OnBuffPercentageChanged -= OnBuffChanged;
 
@@ -155,8 +164,12 @@ public class BattleUnitManager : MonoBehaviour
 
         if (activePassiveModifiers.TryGetValue(unit, out var modifiers))
         {
-            // 모든 modifier 제거 (어떤 스탯에 붙었는지 추적 필요)
-            unit.GetAttackDamageStat()?.RemoveModifier(modifiers.Find(m => true)); // 단순화
+            foreach (var mod in modifiers)
+            {
+                unit.GetAttackDamageStat()?.RemoveModifier(mod);
+                unit.GetCriticalRateStat()?.RemoveModifier(mod);
+                unit.GetCriticalDamageStat()?.RemoveModifier(mod);
+            }
             activePassiveModifiers.Remove(unit);
         }
     }
