@@ -39,7 +39,7 @@ public class MonsterSpawner : MonoBehaviour
     /// </summary>
     public IReadOnlyList<Enemy> GetActiveMonsters() => activeMonsters;
 
-    public void SpawnMonsterById(int monsterId, bool isBoss = false)
+    public void SpawnMonsterById(int monsterId, bool isBoss = false, float hpMultiplier = 1f, float expMultiplier = 1f)
     {
         MonsterData data = DataTableManager.MonsterTable.Get(monsterId);
         if (data == null)
@@ -58,7 +58,7 @@ public class MonsterSpawner : MonoBehaviour
 
         Enemy monster = monsterObj.GetComponent<Enemy>();
         monster.transform.position = spawnPos;
-        monster.InitializeWithData(poolManager, key, data, isBoss);
+        monster.InitializeWithData(poolManager, key, data, isBoss, hpMultiplier, expMultiplier);
 
         // Enemy 사망 이벤트 구독
         monster.OnDeath += OnMonsterRemoved;

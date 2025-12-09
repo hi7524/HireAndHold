@@ -153,29 +153,28 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        // 일반 몬스터 스폰
+        // 일반 몬스터 스폰 - HP/EXP 배율 전달
         if (wave.SPAWN_MON1_ID > 0 && wave.MON1_COUNT > 0)
         {
-            SpawnMonsters(wave.SPAWN_MON1_ID, wave.MON1_COUNT, wave.WAVE_START_T, wave.WAVE_END_T);
+            SpawnMonsters(wave.SPAWN_MON1_ID, wave.MON1_COUNT, wave.WAVE_START_T, wave.WAVE_END_T, wave.MON_HP_UP, wave.MON_EXP_UP);
         }
 
         if (wave.SPAWN_MON2_ID > 0 && wave.MON2_COUNT > 0)
         {
-            SpawnMonsters(wave.SPAWN_MON2_ID, wave.MON2_COUNT, wave.WAVE_START_T, wave.WAVE_END_T);
+            SpawnMonsters(wave.SPAWN_MON2_ID, wave.MON2_COUNT, wave.WAVE_START_T, wave.WAVE_END_T, wave.MON_HP_UP, wave.MON_EXP_UP);
         }
     }
 
 
-    private void SpawnMonsters(int monsterId, int count, int startTime, int endTime)
+    private void SpawnMonsters(int monsterId, int count, int startTime, int endTime, float hpMultiplier, float expMultiplier)
     {
         float duration = endTime - startTime;
-        float interval = duration / count ;
+        float interval = duration / count;
 
         for (int i = 0; i < count; i++)
         {
             float spawnDelay = i * interval;
             float actualSpawnTime = startTime + spawnDelay;
-
 
             if (actualSpawnTime >= endTime)
             {
@@ -187,20 +186,20 @@ public class WaveManager : MonoBehaviour
 
             // 클로저 캡처 방지
             int currentMonsterId = monsterId;
+            float currentHpMult = hpMultiplier;
+            float currentExpMult = expMultiplier;
 
             var spawnEvent = gameManager.AddTimeEvent(spawnMinutes, spawnSeconds, () =>
             {
-                SpawnSingleMonster(currentMonsterId);
+                SpawnSingleMonster(currentMonsterId, currentHpMult, currentExpMult);
             });
             registeredEvents.Add(spawnEvent);
         }
     }
 
-
-    private void SpawnSingleMonster(int monsterId)
+    private void SpawnSingleMonster(int monsterId, float hpMultiplier, float expMultiplier)
     {
-
-        monsterSpawner.SpawnMonsterById(monsterId);
+        monsterSpawner.SpawnMonsterById(monsterId, false, hpMultiplier, expMultiplier);
     }
 
     private void OnWarningTimeEnd(WaveData wave)

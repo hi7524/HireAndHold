@@ -47,6 +47,10 @@ public class Enemy : MonoBehaviour, IDamagable
 
     [SerializeField] private string expKey = "Exp";
 
+    // 웨이브별 EXP 배율 관련
+    private int baseStageExp = 10;
+    private float expMultiplier = 1f;
+
     private bool isAttacking = false;
     private bool isDead = false;
     private bool isStunned = false;
@@ -169,12 +173,12 @@ public class Enemy : MonoBehaviour, IDamagable
         OnDeath = null;
     }
 
-    public void InitializeWithData(ObjectPoolManager manager, string key, MonsterData data, bool boss = false)
+    public void InitializeWithData(ObjectPoolManager manager, string key, MonsterData data, bool boss = false, float hpMultiplier = 1f, float expMultiplier = 1f)
     {
         poolManager = manager;
         poolKey = key;
         isDead = false;
-        maxHp = data.MON_HP;
+        maxHp = data.MON_HP * hpMultiplier;
         currentHp = maxHp;
         speed = data.MON_SPEED;
         attackDamage = data.MON_ATK;
@@ -183,6 +187,10 @@ public class Enemy : MonoBehaviour, IDamagable
         originalSpeed = speed;
         defense = data.MON_DEF;
         MonsterId = data.MON_ID;
+
+        // EXP 배율 저장
+        baseStageExp = data.MON_STAGE_EXP;
+        this.expMultiplier = expMultiplier;
 
         isBoss = boss;
 
@@ -616,7 +624,6 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-
         GameObject expObj = poolManager.Get("Exp");
 
         if (expObj != null)
@@ -624,9 +631,11 @@ public class Enemy : MonoBehaviour, IDamagable
             expObj.transform.position = transform.position;
 
             Experience exp = expObj.GetComponent<Experience>();
-            if (exp != null && cachedExpCollector != null)
+            if (exp != null)
             {
-                exp.SetExpCollecter(cachedExpCollector);
+                // 최종 EXP = 기본값 × 배율
+                int finalExp = Mathf.RoundToInt(baseStageExp * expMultiplier);
+                exp.Initialize(finalExp, cachedExpCollector, poolManager);
             }
         }
     }
