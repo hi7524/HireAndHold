@@ -5,21 +5,23 @@ using UnityEngine;
 
 public class StageUiManager : MonoBehaviour
 {
+    [Header("Manager")]
     [SerializeField] private GameManager gameManager;
-    [Space]
+     [Header("Uis")]
     [SerializeField] private GameObject gameControllBtns;
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TextMeshProUGUI goldText;
     [SerializeField] private TextMeshProUGUI speedLevelText;
     [SerializeField] private TextMeshProUGUI infoText;
-    [Space]
-    [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private BossHPBar bossHealthBar;
     [SerializeField] private GameOverPanelController gameOverPanelController;
+     [Header("Panels")]
+    [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject warningPanel;
     [SerializeField] private GameObject skillSelectPanel;
-    [SerializeField] private BossHPBar bossHealthBar;
     [SerializeField] private StageClearPanelController stageClearPanel;
     [SerializeField] private GameObject rewardPanel;
+    [SerializeField] private GameObject levelUpRewardPanel;
 
     private FadeAndUpEffect infoTextFadeEffect;
 
