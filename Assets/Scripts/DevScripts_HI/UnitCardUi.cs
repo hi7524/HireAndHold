@@ -31,6 +31,7 @@ public class UnitCardUi : BaseCardUi
     {
         VisualizeGridData();
 
+        OnSelfDeactivateHandler = () => draggableUnitUI.gameObject.SetActive(false);
 
         draggableUnitUI.OnUnitDroppedSuccessfully += HandleUnitDropSuccess;
         draggableUnitUI.OnUnitDroppedSuccessfully += OnSelfDeactivateHandler;
