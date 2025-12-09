@@ -4,12 +4,10 @@ using UnityEngine.SceneManagement;
 
 public class LobbyManager : MonoBehaviour
 {
-    private WindowManager windowManager;
+    [SerializeField] private WindowManager windowManager;
 
-    [System.Obsolete]
     private void Start()
     {
-        windowManager = FindObjectOfType<WindowManager>();
         Time.timeScale = 1f;
     }
 

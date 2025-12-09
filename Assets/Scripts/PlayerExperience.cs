@@ -11,6 +11,7 @@ public class PlayerExperience : MonoBehaviour
     [SerializeField] private Slider expBar;
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private float expBarFillDuration = 0.5f;
+    [SerializeField] private PassiveSkillManager passiveSkillManager;
 
     public int Level { get; private set; }
 
@@ -18,9 +19,6 @@ public class PlayerExperience : MonoBehaviour
 
     private float curPlayerExp;
     private float expRequired;  // 초기값 없이 선언
-
-    private PassiveSkillManager passiveSkillManager;
-    
 
 
     private async UniTaskVoid Start()
@@ -33,8 +31,6 @@ public class PlayerExperience : MonoBehaviour
 
         await DataTableManager.InitAsync();
         UpdateExpRequired();
-        passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
-
     }
 
     private void UpdateExpRequired()

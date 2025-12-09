@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class MonsterSpawner : MonoBehaviour
 {
+    public static MonsterSpawner Instance { get; private set; }
+
     public event Action<Enemy> OnMonsterDeath;
 
     [SerializeField] private ObjectPoolManager poolManager;
@@ -13,9 +15,31 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private float horizontalRange = 2f;
 
+    [Header("Enemy Scene References")]
+    [SerializeField] private Transform wallTransform;
+    [SerializeField] private ExperienceCollector expCollector;
+
     private List<Enemy> activeMonsters = new List<Enemy>();
 
-    public void SpawnMonsterById(int monsterId, bool isBoss = false)
+    private void Awake()
+    {
+        Instance = this;
+
+        // Enemy에서 사용할 씬 참조 설정
+        Enemy.SetSceneReferences(wallTransform, expCollector);
+    }
+
+    private void OnDestroy()
+    {
+        Enemy.ClearSceneReferences();
+    }
+
+    /// <summary>
+    /// 현재 활성화된 모든 몬스터 리스트 반환 (읽기 전용)
+    /// </summary>
+    public IReadOnlyList<Enemy> GetActiveMonsters() => activeMonsters;
+
+    public void SpawnMonsterById(int monsterId, bool isBoss = false, float hpMultiplier = 1f, float expMultiplier = 1f)
     {
         MonsterData data = DataTableManager.MonsterTable.Get(monsterId);
         if (data == null)
@@ -34,7 +58,7 @@ public class MonsterSpawner : MonoBehaviour
 
         Enemy monster = monsterObj.GetComponent<Enemy>();
         monster.transform.position = spawnPos;
-        monster.InitializeWithData(poolManager, key, data, isBoss);
+        monster.InitializeWithData(poolManager, key, data, isBoss, hpMultiplier, expMultiplier);
 
         // Enemy 사망 이벤트 구독
         monster.OnDeath += OnMonsterRemoved;

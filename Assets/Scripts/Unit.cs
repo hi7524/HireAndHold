@@ -30,8 +30,9 @@ public class Unit : MonoBehaviour
     private AsyncOperationHandle<GameObject> visualHandle;
     private CancellationTokenSource cts;
 
-    // 외부 참조
-    private PassiveSkillManager passiveSkillManager;
+    // 외부 참조 (Initialize에서 설정)
+    private static PassiveSkillManager cachedPassiveSkillManager;
+    private static ObjectPoolManager cachedPoolManager;
     private ObjectPoolManager poolManager;
 
     private float lastAttackTime;
@@ -50,14 +51,23 @@ public class Unit : MonoBehaviour
 
     private void Start()
     {
-        var poolManagerObj = GameObject.FindWithTag(Tags.PoolManager);
-        if (poolManagerObj != null)
-        {
-            poolManager = poolManagerObj.GetComponent<ObjectPoolManager>();
-        }
+        // 캐시된 참조 사용
+        poolManager = cachedPoolManager;
+    }
 
-        passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>(); // JCH: 프로토타입 이후 수정하기 **
-        //AddSkill(21001);
+    /// <summary>
+    /// 씬 시작 시 한 번만 호출하여 공통 참조를 캐싱
+    /// </summary>
+    public static void SetSceneReferences(ObjectPoolManager poolMgr, PassiveSkillManager passiveMgr)
+    {
+        cachedPoolManager = poolMgr;
+        cachedPassiveSkillManager = passiveMgr;
+    }
+
+    public static void ClearSceneReferences()
+    {
+        cachedPoolManager = null;
+        cachedPassiveSkillManager = null;
     }
 
     private void OnEnable()
@@ -318,9 +328,9 @@ public class Unit : MonoBehaviour
         float damage = attackDamage.Value;
 
         // 보스 추가 데미지 (PassiveSkillManager에서 직접 가져옴 - 보스만 해당이라 Stat 시스템 밖에서 처리)
-        if (target.IsBoss && passiveSkillManager != null)
+        if (target.IsBoss && cachedPassiveSkillManager != null)
         {
-            PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
+            PassiveSkillEffects effects = cachedPassiveSkillManager.GetCurrentEffects();
             damage *= 1f + effects.bossDamageBonus / PercentToDivider;
         }
 
@@ -340,9 +350,9 @@ public class Unit : MonoBehaviour
         float damage = baseDamage;
 
         // 보스 추가 데미지 적용
-        if (target.IsBoss && passiveSkillManager != null)
+        if (target.IsBoss && cachedPassiveSkillManager != null)
         {
-            PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
+            PassiveSkillEffects effects = cachedPassiveSkillManager.GetCurrentEffects();
             damage *= 1f + effects.bossDamageBonus / PercentToDivider;
         }
 
