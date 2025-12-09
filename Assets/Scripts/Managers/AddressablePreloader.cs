@@ -30,6 +30,7 @@ public class AddressablePreloader : MonoBehaviour
     private Dictionary<string, GameObject> cachedPrefabs = new Dictionary<string, GameObject>();
     private Dictionary<string, UnitGridData> cachedGridData = new Dictionary<string, UnitGridData>();
     private Dictionary<string, Sprite> cachedSprites = new Dictionary<string, Sprite>();
+    private Dictionary<string, Sprite> cachedMaps = new Dictionary<string, Sprite>();
     private List<AsyncOperationHandle> handles = new List<AsyncOperationHandle>();
 
     public bool IsLoaded { get; private set; } = false;
@@ -59,6 +60,7 @@ public class AddressablePreloader : MonoBehaviour
         var prefabKeys = new List<string>();
         var gridDataKeys = new List<string>();
         var spriteKeys = new List<string>();
+        var mapKeys = new List<string>();
 
         // 1. 몬스터 비주얼 키 수집
         var monsterTable = DataTableManager.MonsterTable.GetAll();
@@ -98,7 +100,19 @@ public class AddressablePreloader : MonoBehaviour
             }
         }
 
-        int total = prefabKeys.Count + gridDataKeys.Count + spriteKeys.Count;
+        // 3. 스테이지 맵 키 수집
+        var stageTable = DataTableManager.StageTable.GetAll();
+        foreach (var stage in stageTable)
+        {
+            if (!string.IsNullOrEmpty(stage.STAGE_MAP) &&
+                !mapKeys.Contains(stage.STAGE_MAP) &&
+                IsValidAddressableKey(stage.STAGE_MAP))
+            {
+                mapKeys.Add(stage.STAGE_MAP);
+            }
+        }
+
+        int total = prefabKeys.Count + gridDataKeys.Count + spriteKeys.Count + mapKeys.Count;
         int completed = 0;
 
         if (total == 0)
@@ -140,10 +154,20 @@ public class AddressablePreloader : MonoBehaviour
             }));
         }
 
+        // 맵 로드 태스크 추가
+        foreach (var key in mapKeys)
+        {
+            loadTasks.Add(LoadMapWithProgress(key, ct, () =>
+            {
+                completed++;
+                progress?.Report((float)completed / total);
+            }));
+        }
+
         await UniTask.WhenAll(loadTasks);
 
         IsLoaded = true;
-        Debug.Log($"[AddressablePreloader] 프리로드 완료: {cachedPrefabs.Count} 프리팹, {cachedGridData.Count} GridData, {cachedSprites.Count} Sprite");
+        Debug.Log($"[AddressablePreloader] 프리로드 완료: {cachedPrefabs.Count} 프리팹, {cachedGridData.Count} GridData, {cachedSprites.Count} Sprite, {cachedMaps.Count} 맵");
     }
 
     private async UniTask LoadPrefabWithProgress(string key, CancellationToken ct, Action onComplete)
@@ -175,6 +199,18 @@ public class AddressablePreloader : MonoBehaviour
         try
         {
             await LoadAndCacheSprite(key, ct);
+        }
+        finally
+        {
+            onComplete?.Invoke();
+        }
+    }
+
+    private async UniTask LoadMapWithProgress(string key, CancellationToken ct, Action onComplete)
+    {
+        try
+        {
+            await LoadAndCacheMap(key, ct);
         }
         finally
         {
@@ -260,6 +296,32 @@ public class AddressablePreloader : MonoBehaviour
         }
     }
 
+    private async UniTask LoadAndCacheMap(string key, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(key) || cachedMaps.ContainsKey(key))
+            return;
+
+        try
+        {
+            var handle = Addressables.LoadAssetAsync<Sprite>(key);
+            handles.Add(handle);
+            var mapSprite = await handle.ToUniTask(cancellationToken: ct);
+
+            if (handle.Status == AsyncOperationStatus.Succeeded && mapSprite != null)
+            {
+                cachedMaps[key] = mapSprite;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 정상적인 상황
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[AddressablePreloader] 맵 로드 실패: {key}, {e.Message}");
+        }
+    }
+
     /// <summary>
     /// 캐싱된 프리팹 가져오기
     /// </summary>
@@ -327,6 +389,28 @@ public class AddressablePreloader : MonoBehaviour
     }
 
     /// <summary>
+    /// 캐싱된 맵 스프라이트 가져오기
+    /// </summary>
+    public Sprite GetCachedMap(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return null;
+
+        return cachedMaps.TryGetValue(key, out var map) ? map : null;
+    }
+
+    /// <summary>
+    /// 맵이 캐싱되어 있는지 확인
+    /// </summary>
+    public bool HasCachedMap(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return false;
+
+        return cachedMaps.ContainsKey(key);
+    }
+
+    /// <summary>
     /// 유효한 Addressable 키인지 확인 (폴더 경로나 플레이스홀더 텍스트 필터링)
     /// </summary>
     private bool IsValidAddressableKey(string key)
@@ -362,6 +446,7 @@ public class AddressablePreloader : MonoBehaviour
         cachedPrefabs.Clear();
         cachedGridData.Clear();
         cachedSprites.Clear();
+        cachedMaps.Clear();
 
         if (instance == this)
         {

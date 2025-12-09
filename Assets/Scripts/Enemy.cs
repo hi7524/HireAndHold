@@ -17,8 +17,6 @@ public class Enemy : MonoBehaviour, IDamagable
     }
 
     // 애니메이션 파라미터 이름 (Animator에서 동일하게 설정 필요)
-    private static readonly int ANIM_IDLE = Animator.StringToHash("Idle");
-    private static readonly int ANIM_MOVE = Animator.StringToHash("Move");
     private static readonly int ANIM_ATTACK = Animator.StringToHash("Attack");
     private static readonly int ANIM_HIT = Animator.StringToHash("Hit");
     private static readonly int ANIM_DEATH = Animator.StringToHash("Death");
@@ -328,9 +326,7 @@ public class Enemy : MonoBehaviour, IDamagable
 
         switch (state)
         {
-            case AnimState.Idle:
-                visualAnimator.SetTrigger(ANIM_IDLE);
-                break;
+            
             case AnimState.Attack:
                 visualAnimator.SetTrigger(ANIM_ATTACK);
                 break;
@@ -350,7 +346,7 @@ public class Enemy : MonoBehaviour, IDamagable
     {
         if (visualAnimator == null) return;
 
-        visualAnimator.ResetTrigger(ANIM_IDLE);
+        
         visualAnimator.ResetTrigger(ANIM_ATTACK);
         visualAnimator.ResetTrigger(ANIM_HIT);
         visualAnimator.ResetTrigger(ANIM_DEATH);
@@ -402,7 +398,6 @@ public class Enemy : MonoBehaviour, IDamagable
         {
             return;
         }
-
 
         if (isStunned)
         {

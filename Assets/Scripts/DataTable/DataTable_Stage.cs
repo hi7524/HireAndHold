@@ -22,7 +22,6 @@ public class StageData
     public int STAGE_C_2S_CO { get; set; }
     public int STAGE_C_3S_ID { get; set; }
     public float STAGE_C_3S_CO { get; set; }
-    public int UNLOCK_CON_ID { get; set; }
     public string STAGE_MAP { get; set; }
 
     // StringTable 연동

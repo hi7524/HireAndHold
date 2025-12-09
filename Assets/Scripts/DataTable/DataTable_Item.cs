@@ -8,7 +8,6 @@ public class ItemData
 {
     public int ITEM_ID { get; set; }
     public string ITEM_NAME { get; set; }
-    public string ITEM_NAME_KR { get; set; }
     public int ITEM_TYPE { get; set; }
     public int ITEM_STACK { get; set; }
     public int PACKAGE_ID { get; set; }

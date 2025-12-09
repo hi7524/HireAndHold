@@ -22,6 +22,8 @@ public class StageManager : MonoBehaviour
     [SerializeField] private StageUiManager stageUiManager;
     [SerializeField] private MonsterSpawner monsterSpawner;
     [SerializeField] private Wall wall;
+    [SerializeField] private SpriteRenderer mapSpriteRenderer1;
+    [SerializeField] private SpriteRenderer mapSpriteRenderer2;
 
     private void Start()
     {
@@ -30,6 +32,11 @@ public class StageManager : MonoBehaviour
 
         CurrentStageId = PageSnap.SelectedStageId;
         Debug.Log($"[StageManager] 초기 스테이지 ID 설정: {CurrentStageId}");
+        CurrentStageData = DataTableManager.StageTable.Get(CurrentStageId);
+        if (CurrentStageData != null)
+        {
+            LoadStageMap(CurrentStageData.STAGE_MAP);
+        }
         gameManager.OnGameStart += () => StartStage(CurrentStageId);
 
         // MonsterSpawner 이벤트 구독
@@ -52,6 +59,9 @@ public class StageManager : MonoBehaviour
 
         CurrentStageId = stageId;
 
+        // 맵 스프라이트 적용
+        LoadStageMap(CurrentStageData.STAGE_MAP);
+
         // 총 적 수 계산
         TotalMonsters = CalculateTotalMonsters(stageId);
         RemainingMonsters = TotalMonsters;
@@ -63,6 +73,33 @@ public class StageManager : MonoBehaviour
         OnStageStart?.Invoke(stageId);
         waveManager.InitializeWaves(stageId);
 
+    }
+
+    private void LoadStageMap(string mapKey)
+    {
+        if (mapSpriteRenderer1 == null)
+        {
+            Debug.LogWarning("[StageManager] mapSpriteRenderer가 할당되지 않았습니다.");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(mapKey))
+        {
+            Debug.LogWarning("[StageManager] 맵 키가 비어있습니다.");
+            return;
+        }
+
+        Sprite mapSprite = AddressablePreloader.Instance?.GetCachedMap(mapKey);
+        if (mapSprite != null)
+        {
+            mapSpriteRenderer1.sprite = mapSprite;
+            mapSpriteRenderer2.sprite = mapSprite;
+            Debug.Log($"[StageManager] 맵 스프라이트 적용: {mapKey}");
+        }
+        else
+        {
+            Debug.LogWarning($"[StageManager] 맵 스프라이트를 찾을 수 없습니다: {mapKey}");
+        }
     }
 
     // 스테이지의 총 적 수 계산
