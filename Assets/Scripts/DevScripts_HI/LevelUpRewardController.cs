@@ -13,7 +13,6 @@ public class LevelUpRewardController : MonoBehaviour
     [Header("Others")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private StageUiManager uiManager;
-    [SerializeField] private UnitInventory inventory;
     [SerializeField] private PlayerStageGold playerStageGold;
     [SerializeField] private PlayerExperience playerExp;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
@@ -40,16 +39,12 @@ public class LevelUpRewardController : MonoBehaviour
     // 초기 세팅
     private void Start()
     {
-        // 로딩 씬에서 DataTableManager와 AddressablePreloader가 이미 초기화됨
-        confirmBtn.interactable = false; // 처음 시작시 확인 버튼 비활성화
-
         // 각 프리팹 카드 3장씩 생성
         CreateUnitCardPrf(3);
         CreateSkillCardPrf(3);
 
         playerExp.OnLevelUp += DrawLevelUpReward;
-
-        // GridData, Sprite 캐싱 (AddressablePreloader에서 가져옴)
+        playerStageGold.OnChangeGold += UpdateRerollBtn;
         CacheAllData();
 
         SelectUnitOnGameStart();
@@ -58,6 +53,7 @@ public class LevelUpRewardController : MonoBehaviour
     private void OnDestroy()
     {
         playerExp.OnLevelUp -= DrawLevelUpReward;
+        playerStageGold.OnChangeGold -= UpdateRerollBtn;
 
         // UnitCardUI 이벤트 구독 해제
         if (unitCardUIs != null)
@@ -106,20 +102,20 @@ public class LevelUpRewardController : MonoBehaviour
         SetActiveCards(unitCardUIs, true);
 
         // 관련 UI 활성화 및 비활성화
-        inventory.gameObject.SetActive(true);
-        reRollBtn.gameObject.SetActive(true);
+        uiManager.SetLevelUpRewardPanelActive(true);
         uiManager.SetGameControllBtnsActive(false);
+
+        // 리롤 버튼 상태 갱신
         UpdateRerollBtn();
+
+        // 게임 시작 시에만 확인 버튼 비활성화 (보상 선택 필수)
+        if (confirmBtn != null)
+            confirmBtn.interactable = false;
     }
 
     // 레벌업시 보상 랜덤 뽑기
     public void DrawLevelUpReward()
     {
-        // 관련 UI 업데이트
-        inventory.gameObject.SetActive(true);
-        reRollBtn.gameObject.SetActive(true);
-        UpdateRerollBtn();
-
         for (int i = 0; i < unitCardUIs.Length; i++)
         {
             unitCardUIs[i].SetDragState(true);
@@ -128,13 +124,20 @@ public class LevelUpRewardController : MonoBehaviour
 
         DrawReward();
 
+        // 리롤 버튼 상태 갱신
+        UpdateRerollBtn();
+
+        // 레벨업 시에는 확인 버튼 항상 활성화 (보상 패스 가능)
+        if (confirmBtn != null)
+            confirmBtn.interactable = true;
+
         gameManager.PauseGame();
     }
 
     // 실제 보상 뽑기
     private void DrawReward()
     {
-        // 보상 획득 여부 설정
+        // 보상 획득 여부 초기화 (새로운 보상이므로 리셋)
         isSelectedReward = false;
 
         // 기존 카드들을 모두 비활성화
@@ -169,11 +172,17 @@ public class LevelUpRewardController : MonoBehaviour
         selectedSkillCard = clickedCard;
         selectedSkillCard.SetFocus(true);
         isSelectedReward = true;
+
+        // 스킬 선택 시 확인 버튼 활성화
+        if (confirmBtn != null)
+            confirmBtn.interactable = true;
     }
 
     // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
+        Debug.Log("[LevelUpRewardController] OnClickConfirmBtn 호출됨");
+
         // 보상을 선택하지 않은채로 확인 버튼을 누를 경우 25G 지급
         if (!isSelectedReward)
         {
@@ -199,11 +208,8 @@ public class LevelUpRewardController : MonoBehaviour
         // 현재 레벨업 보상 유닛들의 인벤토리 배치 허용
         EnableInventoryPlacementForPreviousRewards();
 
-        // 관련 UI 비활성화 및 활성화
-        SetActiveCards(skillCardUIs, false);
-        SetActiveCards(unitCardUIs, false);
-        inventory.gameObject.SetActive(false);
-        reRollBtn.gameObject.SetActive(false);
+        // 관련 UI 비활성화 및 활성화 (패널을 끄면 자식들도 자동으로 꺼짐)
+        uiManager.SetLevelUpRewardPanelActive(false);
         uiManager.SetGameControllBtnsActive(true);
 
         if (!gameManager.IsGameStarted)
@@ -331,6 +337,10 @@ public class LevelUpRewardController : MonoBehaviour
     // 리롤 버튼 상호작용 상태 설정
     private void UpdateRerollBtn()
     {
+        // 이미 보상을 획득했으면 리롤 버튼 상태 업데이트 안 함
+        if (isSelectedReward)
+            return;
+
         if (playerStageGold.Gold < rerollCost)
             reRollBtn.interactable = false;
         else
@@ -352,8 +362,7 @@ public class LevelUpRewardController : MonoBehaviour
             // 현재 레벨업 보상 유닛들의 인벤토리 배치 허용
             EnableInventoryPlacementForPreviousRewards();
 
-            DrawReward();
-            UpdateRerollBtn();
+            DrawReward(); // DrawReward 내부에서 isSelectedReward = false로 초기화됨
 
             // 리롤 시 카드 드래그 다시 활성화
             for (int i = 0; i < unitCardUIs.Length; i++)
@@ -361,6 +370,9 @@ public class LevelUpRewardController : MonoBehaviour
                 unitCardUIs[i].SetDragState(true);
                 unitCardUIs[i].SetColor();
             }
+
+            // 리롤 후 버튼 상태 갱신
+            UpdateRerollBtn();
         }
     }
 
@@ -414,7 +426,10 @@ public class LevelUpRewardController : MonoBehaviour
         }
 
         reRollBtn.interactable = false;
-        confirmBtn.interactable = true;
         isSelectedReward = true;
+
+        // 유닛 드롭 시 확인 버튼 활성화
+        if (confirmBtn != null)
+            confirmBtn.interactable = true;
     }
 }

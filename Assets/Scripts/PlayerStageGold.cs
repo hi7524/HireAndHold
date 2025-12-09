@@ -1,10 +1,13 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class PlayerStageGold : MonoBehaviour
 {
     [SerializeField] private StageUiManager uiManager;
 
     public int Gold { get; private set; }
+
+    public event Action OnChangeGold;
 
 
     public void Start()
@@ -19,6 +22,7 @@ public class PlayerStageGold : MonoBehaviour
         
         Gold += amount;
         uiManager.UpdateStageGoldText(Gold);
+        OnChangeGold?.Invoke();
     }
 
     public bool UseGold(int amount)
@@ -28,6 +32,7 @@ public class PlayerStageGold : MonoBehaviour
 
         Gold -= amount;
         uiManager.UpdateStageGoldText(Gold);
+        OnChangeGold?.Invoke();
         return true;
     }
 }

@@ -11,8 +11,10 @@ public class PlayerExperience : MonoBehaviour
     [SerializeField] private Slider expBar;
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private float expBarFillDuration = 0.5f;
+    [Space]
     [SerializeField] private PassiveSkillManager passiveSkillManager;
-
+    [SerializeField] private StageUiManager uiManager;
+ 
     public int Level { get; private set; }
 
     public event Action OnLevelUp;
@@ -97,6 +99,7 @@ public class PlayerExperience : MonoBehaviour
         Level++;
         curPlayerExp -= expRequired;
         UpdateExpRequired();
+        uiManager.SetLevelUpRewardPanelActive(true);
         OnLevelUp?.Invoke();
         UpdateLevelTextUI();
         expBar.value = 0f;
