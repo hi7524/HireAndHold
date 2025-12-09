@@ -20,6 +20,7 @@ public class DeckControl : MonoBehaviour
     public List<DeckSlot> slots;
     public Transform unitListParent;
     public Button completeButton;
+    public Button editButton;
     public GameObject detailedPanel;
     public List<Button> presetButtons;
     public UnitCard cardPrefab;
@@ -45,6 +46,7 @@ public class DeckControl : MonoBehaviour
         }
 
         completeButton.onClick.AddListener(() => OnCompleteClicked().Forget());
+        editButton.onClick.AddListener(OnEditButtonClicked); 
 
         // preset 버튼
         for (int i = 0; i < presetButtons.Count; i++)
@@ -53,8 +55,6 @@ public class DeckControl : MonoBehaviour
             presetButtons[i].onClick.AddListener(() => OnClickPresetButton(idx));
             presetButtons[i].onClick.AddListener(ExitEditModeIfEditing);
         }
-
-        completeButton.onClick.AddListener(ExitEditModeIfEditing);
 
         // presets 배열 초기화 
         presets = new DeckPreset[5];
@@ -102,7 +102,7 @@ public class DeckControl : MonoBehaviour
         await CreateUnitCards();
 
 
-        DatabaseManager.Instance.SyncPresetsToPlayData();  
+        DatabaseManager.Instance.SyncPresetsToPlayData();
 
         LoadPresets();
         AutoFillPresetIfEmpty(activePresetIndex);
@@ -110,6 +110,7 @@ public class DeckControl : MonoBehaviour
 
 
         UpdatePresetButtonsStates();
+        UpdateEditButton(); 
         unitInfoUI.SetUnitManager(unitManager);
 
     }
@@ -132,7 +133,7 @@ public class DeckControl : MonoBehaviour
             return;
         }
 
-  
+
         var owned = DatabaseManager.Instance.GetAllCharacters();
 
         if (owned.Count == 0)
@@ -156,7 +157,7 @@ public class DeckControl : MonoBehaviour
 
         await DatabaseManager.Instance.SavePresetFromPlayDataAsync(presetIndex);
 
-        Debug.Log($"[AutoFillPresetIfEmpty] Preset {presetIndex} 자동 편성 완료");
+        Debug.Log($" Preset {presetIndex} 자동 편성 완료");
     }
 
 
@@ -176,16 +177,16 @@ public class DeckControl : MonoBehaviour
         {
             return;
         }
-    
+
         PointerEventData pointer = new PointerEventData(EventSystem.current);
         pointer.position = Pointer.current.position.ReadValue();
-    
+
         List<RaycastResult> results = new();
         EventSystem.current.RaycastAll(pointer, results);
-    
+
         bool clickedEditableUI = false;
         bool clickedAnyButton = false;
-    
+
         foreach (var r in results)
         {
             if (r.gameObject.GetComponent<DeckSlot>() != null)
@@ -193,26 +194,32 @@ public class DeckControl : MonoBehaviour
                 clickedEditableUI = true;
                 break;
             }
-    
+
             if (r.gameObject.GetComponent<UnitCard>() != null)
             {
                 clickedEditableUI = true;
                 break;
             }
-    
+
             if (presetButtons.Exists(b => r.gameObject.transform.IsChildOf(b.transform)))
             {
                 clickedEditableUI = true;
                 break;
             }
-    
+
             if (r.gameObject.transform.IsChildOf(completeButton.transform))
             {
                 clickedEditableUI = true;
                 break;
             }
+
+            if (r.gameObject.transform.IsChildOf(editButton.transform))
+            {
+                clickedEditableUI = true;
+                break;
+            }
         }
-    
+
         if (clickedEditableUI)
         {
             return;
@@ -226,7 +233,7 @@ public class DeckControl : MonoBehaviour
                 break;
             }
         }
-    
+
         if (clickedAnyButton)
         {
             ExitEditMode();
@@ -261,17 +268,17 @@ public class DeckControl : MonoBehaviour
             };
 
             var loadTask = Addressables.LoadAssetAsync<Sprite>(model.iconAddress).Task.AsUniTask().ContinueWith(result =>
-                {
-                    model.icon = result;
+            {
+                model.icon = result;
 
-                    var card = GameObject.Instantiate(cardPrefab, unitListParent);
-                    card.Init(model);
-                    card.Setup(OnUnitCardClicked);
-                    card.SetVisible(true);
+                var card = GameObject.Instantiate(cardPrefab, unitListParent);
+                card.Init(model);
+                card.Setup(OnUnitCardClicked);
+                card.SetVisible(true);
 
-                    unitCards.Add(card);
-                    unitModelMap[unitId] = model;
-                });
+                unitCards.Add(card);
+                unitModelMap[unitId] = model;
+            });
 
             loadTasks.Add(loadTask);
         }
@@ -310,6 +317,7 @@ public class DeckControl : MonoBehaviour
         {
             DeckUnitModel model = preset.units[i];
             slots[i].SetCommittedExternal(model);
+            slots[i].SetInteractable(false);
 
             if (model != null)
             {
@@ -321,16 +329,21 @@ public class DeckControl : MonoBehaviour
         UpdateCompleteButton();
     }
 
+    void OnEditButtonClicked()
+    {
+        if (!isEditing)
+        {
+            EnterEditMode();
+        }
+    }
 
     public void OnSlotClicked(DeckSlot slot)
     {
         if (!isEditing)
         {
-            EnterEditMode();
             return;
         }
 
-        //Pending 제거
         if (slot.HasPending)
         {
             var pending = slot.GetPending();
@@ -344,15 +357,12 @@ public class DeckControl : MonoBehaviour
         {
             var committed = slot.GetCommitted();
             slot.SetPending(null);
-            slot.CommitPending();  
+            slot.CommitPending();
             NotifyUnitCleared(committed);
             UpdateCompleteButton();
             return;
         }
     }
-
-
-
 
     void EnterEditMode()
     {
@@ -362,9 +372,11 @@ public class DeckControl : MonoBehaviour
         foreach (var slot in slots)
         {
             slot.BeginEdit();
+            slot.SetInteractable(true);
         }
 
         UpdateCompleteButton();
+        UpdateEditButton();
     }
 
     void ExitEditMode()
@@ -372,11 +384,15 @@ public class DeckControl : MonoBehaviour
         isEditing = false;
         highlightOverlay.SetActive(false);
         LoadPreset(activePresetIndex);
+
+        foreach (var slot in slots)
+        {
+            slot.SetInteractable(false);
+        }
+
         UpdateCompleteButton();
+        UpdateEditButton();
     }
-
-
-
 
     void OnUnitCardClicked(DeckUnitModel model)
     {
@@ -388,28 +404,38 @@ public class DeckControl : MonoBehaviour
                 var pending = slot.GetPending();
                 if (pending != null && pending.unitId == model.unitId)
                 {
-                    Debug.Log("이미편성 있음 (pending)");
+                    slot.ClearPending();
+                    NotifyUnitCleared(model);
+                    UpdateCompleteButton();
+                    Debug.Log($"슬롯에서 제거: {model.unitName}");
                     return;
                 }
 
                 var committed = slot.GetCommitted();
                 if (committed != null && committed.unitId == model.unitId)
                 {
-                    Debug.Log("이미편성 있음 (committed)");
+                    slot.SetPending(null);
+                    slot.CommitPending();
+                    NotifyUnitCleared(model);
+                    UpdateCompleteButton();
+                    Debug.Log($"슬롯에서 제거: {model.unitName}");
                     return;
                 }
             }
 
             foreach (var slot in slots)
             {
-                if (!slot.HasPending)
+                if (!slot.HasCommitted && !slot.HasPending)
                 {
                     slot.SetPending(model);
                     NotifyUnitAssigned(model);
                     UpdateCompleteButton();
+                    Debug.Log($"빈 슬롯에 배치: {model.unitName}");
                     return;
                 }
             }
+
+            Debug.Log("빈 슬롯이 없음.");
         }
         else
         {
@@ -418,7 +444,7 @@ public class DeckControl : MonoBehaviour
             detailedPanel.SetActive(true);
             unitInfoUI.SetUnit(model.unitId);
 
-            Debug.Log("선택된 " + model.unitId);
+            Debug.Log("선택된 유닛: " + model.unitId);
         }
     }
 
@@ -430,7 +456,7 @@ public class DeckControl : MonoBehaviour
         {
             if (card.Data == data)
             {
-                card.SetAssigned(true); 
+                card.SetAssigned(true);
                 return;
             }
         }
@@ -442,7 +468,7 @@ public class DeckControl : MonoBehaviour
         {
             if (card.Data == data)
             {
-                card.SetAssigned(false);  
+                card.SetAssigned(false);
                 return;
             }
         }
@@ -451,15 +477,43 @@ public class DeckControl : MonoBehaviour
 
     void UpdateCompleteButton()
     {
-        foreach (var slot in slots)
+        if (!isEditing)
         {
-            if (!slot.HasPending)
+            completeButton.interactable = false;
+            completeButton.gameObject.SetActive(false);
+            return;
+        }
+
+        completeButton.gameObject.SetActive(true);
+
+        bool hasChanges = false;
+
+        for (int i = 0; i < slots.Count; i++)
+        {
+            var slot = slots[i];
+            var committed = slot.GetCommitted();
+            var pending = slot.GetPending();
+
+            if (committed != pending)
             {
-                completeButton.interactable = false;
-                return;
+                hasChanges = true;
+                break;
             }
         }
-        completeButton.interactable = true;
+
+        completeButton.interactable = hasChanges;
+    }
+
+    void UpdateEditButton()
+    {
+        if (isEditing)
+        {
+            editButton.gameObject.SetActive(false); 
+        }
+        else
+        {
+            editButton.gameObject.SetActive(true); 
+        }
     }
 
     async UniTaskVoid OnCompleteClicked()
@@ -469,9 +523,14 @@ public class DeckControl : MonoBehaviour
             return;
         }
 
+        FillEmptySlotsWithRandomUnits();
+
         for (int i = 0; i < slots.Count; i++)
         {
-            slots[i].CommitPending();
+            if (slots[i].HasPending)
+            {
+                slots[i].CommitPending();
+            }
 
             var committed = slots[i].GetCommitted();
             presets[activePresetIndex].units[i] = committed;
@@ -491,10 +550,59 @@ public class DeckControl : MonoBehaviour
 
         await DatabaseManager.Instance.SavePresetFromPlayDataAsync(activePresetIndex);
 
-        ExitEditMode(); 
+        ExitEditMode();
         if (stageDeck != null && stageDeck.isActiveAndEnabled)
         {
             stageDeck.Refresh();
+        }
+    }
+
+    void FillEmptySlotsWithRandomUnits()
+    {
+
+        HashSet<int> assignedUnitIds = new HashSet<int>();
+
+        foreach (var slot in slots)
+        {
+            var pending = slot.GetPending();
+            if (pending != null)
+            {
+                assignedUnitIds.Add(pending.unitId);
+            }
+            else
+            {
+                var committed = slot.GetCommitted();
+                if (committed != null)
+                {
+                    assignedUnitIds.Add(committed.unitId);
+                }
+            }
+        }
+
+        List<DeckUnitModel> availableUnits = new List<DeckUnitModel>();
+
+        foreach (var kv in unitModelMap)
+        {
+            if (!assignedUnitIds.Contains(kv.Key))
+            {
+                availableUnits.Add(kv.Value);
+            }
+        }
+
+        foreach (var slot in slots)
+        {
+            if (!slot.HasPending && !slot.HasCommitted && availableUnits.Count > 0)
+            {
+                int randomIndex = UnityEngine.Random.Range(0, availableUnits.Count);
+                DeckUnitModel randomUnit = availableUnits[randomIndex];
+
+                slot.SetPending(randomUnit);
+                NotifyUnitAssigned(randomUnit);
+
+                availableUnits.RemoveAt(randomIndex);
+
+                Debug.Log($"빈 슬롯에 랜덤 배치: {randomUnit.unitName}");
+            }
         }
     }
 

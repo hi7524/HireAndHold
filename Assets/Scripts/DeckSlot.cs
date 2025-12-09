@@ -77,7 +77,9 @@ public class DeckSlot : MonoBehaviour
         committed = model;
 
         if (committed != null)
+        {
             committed.FixMissingAddress();
+        }
 
         pending = null;
         ApplyCommittedToUI();
@@ -96,5 +98,13 @@ public class DeckSlot : MonoBehaviour
     public void OnClick()
     {
         deck.OnSlotClicked(this);
+    }
+    public void SetInteractable(bool interactable)
+    {
+        var button = GetComponent<Button>();
+        if (button != null)
+        {
+            button.interactable = interactable;
+        }
     }
 }
