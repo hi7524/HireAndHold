@@ -10,7 +10,6 @@ public class UnitData
     public int RANK { get; set; }                // 유닛 등급
     public int LEVEL { get; set; }               // 유닛 성급
     public int ATTACK { get; set; }              // 유닛 공격력
-    public float ATTACK_RANGE { get; set; }      // 유닛 공격 사거리
     public float ATTACK_COOLTIME { get; set; }   // 기본 공격 쿨타임
     public int BOLT_NUM { get; set; }            // 기본 투사체 개수
     public float ATTACK_CRITICAL { get; set; }   // 공격 치명타 확률 (%)

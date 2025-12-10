@@ -25,6 +25,8 @@ public class GridManager : MonoBehaviour
     [Space]
     [SerializeField] private LevelUpRewardController levelUpRewardController;
     [Space]
+    [SerializeField] private AttackTriggerZone attackTriggerZone;
+    [Space]
     [Header("Merge Effect")]
     [SerializeField] private GameObject[] mergeEffectPrefabs; // 0: 2성, 1: 3성
 
@@ -617,6 +619,12 @@ public class GridManager : MonoBehaviour
             if (unitManager != null)
             {
                 unitManager.RegisterUnit(unit);
+            }
+
+            // AttackTriggerZone 연결
+            if (attackTriggerZone != null)
+            {
+                unit.SetAttackZone(attackTriggerZone);
             }
         }
 
