@@ -70,7 +70,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.64
+  m_Radius: 0.2
 --- !u!50 &6908712333835450721
 Rigidbody2D:
   serializedVersion: 5
@@ -114,6 +114,7 @@ MonoBehaviour:
   launchSpeed: 8
   mainProjectile: {fileID: 0}
   hitEffect: {fileID: 4475477214116135850}
+  rotationOffset: 0
 --- !u!1001 &4111798195769955214
 PrefabInstance:
   m_ObjectHideFlags: 0
