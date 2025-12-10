@@ -17,8 +17,6 @@ public class Enemy : MonoBehaviour, IDamagable
     }
 
     // 애니메이션 파라미터 이름 (Animator에서 동일하게 설정 필요)
-    private static readonly int ANIM_IDLE = Animator.StringToHash("Idle");
-    private static readonly int ANIM_MOVE = Animator.StringToHash("Move");
     private static readonly int ANIM_ATTACK = Animator.StringToHash("Attack");
     private static readonly int ANIM_HIT = Animator.StringToHash("Hit");
     private static readonly int ANIM_DEATH = Animator.StringToHash("Death");
@@ -69,6 +67,7 @@ public class Enemy : MonoBehaviour, IDamagable
 
 
     private Collider2D myCollider;
+    private Rigidbody2D rb;
     private IDamagable wallDamagable;
 
     // 씬에서 주입받는 참조 (Initialize에서 설정)
@@ -95,6 +94,7 @@ public class Enemy : MonoBehaviour, IDamagable
     {
         originalScale = transform.localScale;
         myCollider = GetComponent<Collider2D>();
+        rb = GetComponent<Rigidbody2D>();
 
         // visualRoot가 없으면 자신을 사용
         if (visualRoot == null)
@@ -328,9 +328,7 @@ public class Enemy : MonoBehaviour, IDamagable
 
         switch (state)
         {
-            case AnimState.Idle:
-                visualAnimator.SetTrigger(ANIM_IDLE);
-                break;
+            
             case AnimState.Attack:
                 visualAnimator.SetTrigger(ANIM_ATTACK);
                 break;
@@ -350,7 +348,7 @@ public class Enemy : MonoBehaviour, IDamagable
     {
         if (visualAnimator == null) return;
 
-        visualAnimator.ResetTrigger(ANIM_IDLE);
+        
         visualAnimator.ResetTrigger(ANIM_ATTACK);
         visualAnimator.ResetTrigger(ANIM_HIT);
         visualAnimator.ResetTrigger(ANIM_DEATH);
@@ -403,7 +401,6 @@ public class Enemy : MonoBehaviour, IDamagable
             return;
         }
 
-
         if (isStunned)
         {
             return;
@@ -414,14 +411,20 @@ public class Enemy : MonoBehaviour, IDamagable
             CheckWallProximity();
         }
 
-        if (!isAttacking)
-        {
-            MoveTowardsWall();
-        }
-        else
+        if (isAttacking)
         {
             TryAttackWall();
         }
+    }
+
+    void FixedUpdate()
+    {
+        if (isDead || targetWall == null || isStunned || isAttacking)
+        {
+            return;
+        }
+
+        MoveTowardsWall();
     }
     private void CheckWallProximity()
     {
@@ -449,7 +452,8 @@ public class Enemy : MonoBehaviour, IDamagable
             PlayAnimation(AnimState.Idle);
         }
 
-        transform.Translate(Vector3.down * speed * Time.deltaTime * defaultSpeed);
+        Vector2 newPosition = rb.position + Vector2.down * speed * Time.fixedDeltaTime * defaultSpeed;
+        rb.MovePosition(newPosition);
 
         if (Time.time >= lastSeparateTime + SEPARATE_INTERVAL)
         {
@@ -488,7 +492,7 @@ public class Enemy : MonoBehaviour, IDamagable
 
     private void SeparateFromOthers()
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 0.5f);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(rb.position, 0.5f);
 
         foreach (var hit in hits)
         {
@@ -498,12 +502,12 @@ public class Enemy : MonoBehaviour, IDamagable
             }
             if (hit.CompareTag("Monster"))
             {
-                Vector3 dir = transform.position - hit.transform.position;
+                Vector2 dir = rb.position - (Vector2)hit.transform.position;
                 float distance = dir.magnitude;
 
                 if (distance < 0.4f && distance > 0.1f)
                 {
-                    transform.position += dir.normalized * (0.4f - distance) * 0.25f;
+                    rb.MovePosition(rb.position + dir.normalized * (0.4f - distance) * 0.25f);
                 }
             }
         }
