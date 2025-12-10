@@ -33,7 +33,6 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     private GridPreviewHelper previewHelper;
     private bool isDraggable = true;
     private Vector3 initialLocalPosition;
-    private UnitInventory inventory; // Inventory 타입일 때만 사용
     private bool dropFailed = false;
 
 
@@ -65,12 +64,6 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     public void SetDraggableUnitType(DraggableUnitType type)
     {
         DraggableUnitType = type;
-    }
-
-    // Inventory 타입일 때 UnitInventory 참조 설정
-    public void SetInventory(UnitInventory inventory)
-    {
-        this.inventory = inventory;
     }
 
     // 그리드 데이터 설정 및 프리뷰 초기화
@@ -132,11 +125,6 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
         HidePreviewCells();
         SetImageAlpha(OpaqueAlpha);
 
-        // Inventory 타입이고 드롭 실패하지 않았으면 인벤토리에서 제거
-        if (DraggableUnitType == DraggableUnitType.Inventory && !dropFailed && inventory != null)
-        {
-            inventory.RemoveUnit(UnitId);
-        }
         dropFailed = false;
     }
 

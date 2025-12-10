@@ -32,6 +32,12 @@ public class StageUiManager : MonoBehaviour
             infoTextFadeEffect = infoText.GetComponent<FadeAndUpEffect>();
     }
 
+    private void Start()
+    {
+        // 시작시 초기 활성화
+        levelUpRewardPanel.SetActive(true);
+    }
+
     private void Update()
     {
         if (!gameManager.IsGameStarted)
@@ -60,8 +66,6 @@ public class StageUiManager : MonoBehaviour
     
     public void ShowGameOverPanel(int exp, int gold)
     {
-        Debug.Log($"[StageUiManager] GameOver - 경험치: {exp}, 골드: {gold}");
-        
         if (gameOverPanelController != null)
         {
             gameOverPanelController.Show(exp, gold);
@@ -71,6 +75,13 @@ public class StageUiManager : MonoBehaviour
             // Fallback: Controller가 없으면 기본 패널만 표시
             gameOverPanel.SetActive(true);
         }
+    }
+
+    public void SetLevelUpRewardPanelActive(bool value)
+    {
+        Debug.Log($"[StageUiManager] SetLevelUpRewardPanelActive({value}) 호출됨");
+        levelUpRewardPanel.SetActive(value);
+        Debug.Log($"[StageUiManager] levelUpRewardPanel.activeSelf = {levelUpRewardPanel.activeSelf}");
     }
 
     public void ActiveSkillSelectPanel()
