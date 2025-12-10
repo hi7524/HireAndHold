@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using Assets.HeroEditor.Common.Scripts.CharacterScripts;
 
 /// <summary>
 // 플레이어 유닛을 관리하는 클래스
@@ -42,7 +43,7 @@ public class Unit : MonoBehaviour
     private GameObject visualObject;
     private Animator visualAnimator;
     private SortingGroup sortingGroup;
-
+    private AnimationEvents animationEvents;
 
     private readonly List<UnitSkill> skills = new(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
 
@@ -271,11 +272,19 @@ public class Unit : MonoBehaviour
         ClearVisualChildren();
         visualObject = Instantiate(visualPrefab, visualRoot);
 
-        // visualObject의 자식 오브젝트에서 Animator 캐싱
+        // visualObject의 자식 오브젝트에서 Animator, AnimationEvents 캐싱
         if (visualObject != null)
         {
             visualAnimator = visualObject.GetComponentInChildren<Animator>();
             sortingGroup = visualObject.GetComponentInChildren<SortingGroup>();
+            animationEvents = visualObject.GetComponentInChildren<AnimationEvents>();
+
+            // AnimationEvents 이벤트 구독
+            if (animationEvents != null)
+            {
+                animationEvents.OnCustomEvent += OnAnimationEvent;
+            }
+
             if (sortingGroup == null)
             {
                 Debug.LogError("소팅그룹안됨");
@@ -292,6 +301,13 @@ public class Unit : MonoBehaviour
     // 캐싱된 비주얼 오브젝트 제거
     private void ClearVisualChildren()
     {
+        // AnimationEvents 이벤트 구독 해제
+        if (animationEvents != null)
+        {
+            animationEvents.OnCustomEvent -= OnAnimationEvent;
+            animationEvents = null;
+        }
+
         if (visualObject != null)
         {
             Destroy(visualObject);
@@ -300,6 +316,17 @@ public class Unit : MonoBehaviour
         }
     }
 
+    // 애니메이션 이벤트 콜백
+    private void OnAnimationEvent(string eventName)
+    {
+        switch (eventName)
+        {
+            case "ReleaseArrow":
+            case "Hit":
+                FireProjectile();
+                break;
+        }
+    }
 
     // ObjectPoolManager 설정
     public void SetPool(ObjectPoolManager poolManager)
@@ -344,6 +371,9 @@ public class Unit : MonoBehaviour
     {
         if (poolManager == null || target == null) return;
 
+        // 공격 대상을 임시 저장 (애니메이션 이벤트에서 사용)
+        AttackTarget = target;
+
         // 공격 애니메이션 재생
         if (visualAnimator != null)
         {
@@ -352,25 +382,35 @@ public class Unit : MonoBehaviour
             else
                 visualAnimator.SetTrigger(AnimParams.Slash);
         }
+        else
+        {
+            // Animator가 없으면 즉시 발사
+            FireProjectile();
+        }
+    }
+
+    // 실제 발사체 발사 (애니메이션 이벤트에서 호출)
+    public void FireProjectile()
+    {
+        if (poolManager == null || AttackTarget == null) return;
 
         GameObject projectileObj = poolManager.Get(unitData.PROJECTILE);
         if (projectileObj == null)
         {
-            projectileObj = poolManager.Get("TestProjectile"); // 테스트용            
+            projectileObj = poolManager.Get("TestProjectile"); // 테스트용
         }
 
         projectileObj.transform.position = transform.position;
-        // projectileObj.transform.rotation = Quaternion.identity;
 
         PlayerUnitProjectile projectile = projectileObj.GetComponent<PlayerUnitProjectile>();
         if (projectile == null) return;
 
         projectile.Initialize(poolManager, projectileKey);
 
-        float damage = CalculateDamage(target);
+        float damage = CalculateDamage(AttackTarget);
 
         projectile.SetDamage(damage);
-        projectile.SetTarget(target.transform);
+        projectile.SetTarget(AttackTarget.transform);
         projectile.Launch();
     }
 
