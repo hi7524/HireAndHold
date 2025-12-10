@@ -45,9 +45,7 @@ public class DragManager : MonoBehaviour
         }
     }
 
-    // -----------------------------
-    // 🔥 Pointer.current 제거 버전
-    // -----------------------------
+    //  Pointer.current 제거 버전
 
     private bool IsPressed()
     {
@@ -81,9 +79,7 @@ public class DragManager : MonoBehaviour
         return Mouse.current.position.ReadValue();
     }
 
-    // -----------------------------
-    // 🔥 드래그 Update (InputSystem-safe)
-    // -----------------------------
+    // 드래그 Update (InputSystem-safe)
     private void Update()
     {
         if (!isDragEnabled)
@@ -109,29 +105,23 @@ public class DragManager : MonoBehaviour
         isDragEnabled = value;
     }
 
-    // 현재 포인터 위치 가져오기 (Pointer.current 또는 Touchscreen 폴백)
-    private Vector2 GetCurrentPointerPosition()
-    {
-        var pointer = Pointer.current;
-        if (pointer != null)
-            return pointer.position.ReadValue();
-
-        var touchscreen = Touchscreen.current;
-        if (touchscreen != null)
-            return touchscreen.primaryTouch.position.ReadValue();
-
-        return Vector2.zero;
-    }
 
     // 드래그 시작 처리: 드래그 대상 감지 및 초기 상태 설정
     private void HandleDragStart()
     {
-        Vector2 pointerPosition = GetPointerPosition();
-        dragState.Target = DetectDraggable(pointerPosition, out dragState.IsUI);
-
-        if (!dragState.IsDragging)
+        // 이미 드래그 중이면 새로운 드래그를 시작하지 않음
+        if (dragState.IsDragging)
             return;
 
+        Vector2 pointerPosition = GetPointerPosition();
+        IDraggable newTarget = DetectDraggable(pointerPosition, out bool isUI);
+
+        if (newTarget == null || !newTarget.IsDraggable)
+            return;
+
+        // 새로운 드래그 상태 설정
+        dragState.Target = newTarget;
+        dragState.IsUI = isUI;
         dragState.OriginalPosition = dragState.Target.GameObject.transform.position;
 
         if (dragState.IsUI && rootCanvas != null)
@@ -153,35 +143,53 @@ public class DragManager : MonoBehaviour
     // 드래그 종료 처리: 드롭 성공/실패 처리 및 상태 리셋
     private void HandleDragEnd()
     {
+        // 드래그 중이 아니면 처리하지 않음
+        if (!dragState.IsDragging)
+            return;
+
+        // 드래그 종료 처리를 위한 임시 변수 저장
+        IDraggable draggingTarget = dragState.Target;
+        bool wasUI = dragState.IsUI;
+        Transform originalParent = dragState.OriginalParent;
+        int originalSiblingIndex = dragState.OriginalSiblingIndex;
+        Vector3 originalPosition = dragState.OriginalPosition;
+
+        // 먼저 상태를 리셋하여 빠른 재입력 시 충돌 방지
+        dragState.Reset();
+
         Vector2 pointerPosition = GetPointerPosition();
         IDroppable dropTarget = DetectDropTarget(pointerPosition);
 
-        bool dropSuccess = dropTarget != null && dropTarget.CanDrop(dragState.Target);
+        bool dropSuccess = dropTarget != null && dropTarget.CanDrop(draggingTarget);
 
         if (dropSuccess)
         {
-            dropTarget.OnDrop(dragState.Target);
-            dragState.Target.OnDropSuccess();
+            dropTarget.OnDrop(draggingTarget);
+            draggingTarget.OnDropSuccess();
         }
         else
         {
-            ResetDraggablePosition();
-            dragState.Target.OnDropFailed();
+            // 임시 저장된 원본 위치로 복원
+            draggingTarget.GameObject.transform.position = originalPosition;
+
+            if (!wasUI)
+            {
+                Physics2D.SyncTransforms();
+            }
+
+            draggingTarget.OnDropFailed();
         }
 
-        if (dragState.IsUI && dragState.OriginalParent != null)
+        if (wasUI && originalParent != null)
         {
-            RestoreUIParent(dragState.Target.GameObject.transform);
+            draggingTarget.GameObject.transform.SetParent(originalParent, true);
+            draggingTarget.GameObject.transform.SetSiblingIndex(originalSiblingIndex);
         }
 
-        if (currentDropTarget != null)
-        {
-            currentDropTarget.OnDragExit(dragState.Target);
-            currentDropTarget = null;
-        }
+        currentDropTarget?.OnDragExit(draggingTarget);
+        currentDropTarget = null;
 
-        dragState.Target.OnDragEnd();
-        dragState.Reset();
+        draggingTarget.OnDragEnd();
     }
 
     // 드롭 타겟 변경 감지 및 Enter/Exit 이벤트 처리
@@ -207,23 +215,6 @@ public class DragManager : MonoBehaviour
         targetTransform.SetAsLastSibling();
     }
 
-    // UI 오브젝트를 원래 부모로 복원
-    private void RestoreUIParent(Transform targetTransform)
-    {
-        targetTransform.SetParent(dragState.OriginalParent, true);
-        targetTransform.SetSiblingIndex(dragState.OriginalSiblingIndex);
-    }
-
-    // 드래그 오브젝트를 원래 위치로 복원 (드롭 실패 시)
-    private void ResetDraggablePosition()
-    {
-        dragState.Target.GameObject.transform.position = dragState.OriginalPosition;
-
-        if (!dragState.IsUI)
-        {
-            Physics2D.SyncTransforms();
-        }
-    }
 
 
     private IDraggable DetectDraggable(Vector2 pointerPosition, out bool isUI)
