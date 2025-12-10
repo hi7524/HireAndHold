@@ -9,7 +9,7 @@ public class DeckUnitModel
     public string iconAddress;
     public Sprite icon;
     public UnitData rawData;
-    public int enhanceLevel;
+    public int enforceLevel;
 
     public void FixMissingAddress()
     {

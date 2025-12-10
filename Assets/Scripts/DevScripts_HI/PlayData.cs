@@ -9,6 +9,8 @@ public class CachedCharacter
     public int level;
     public int exp;
     public int awakening;
+
+    public int enforceLevel;
 }
 
 public static class PlayData
@@ -103,7 +105,8 @@ public static class PlayData
                 star = character.star,
                 level = character.level,
                 exp = character.exp,
-                awakening = character.awakening
+                awakening = character.awakening,
+                enforceLevel = character.enforceLevel
             };
         }
 

@@ -98,6 +98,7 @@ public class DeckControl : MonoBehaviour
         }
         
         await CreateUnitCards();
+        LoadPresets();
         await LoadAndSetupPresets();
         UpdateAllUI();
         unitInfoUI.SetUnitManager(battleUnitManager);
@@ -126,9 +127,14 @@ public class DeckControl : MonoBehaviour
     async UniTask LoadAndSetupPresets()
     {
         DatabaseManager.Instance.SyncPresetsToPlayData();
-        LoadPresets();
-        await AutoFillPresetIfEmpty(activePresetIndex);
+
+        for (int i = 0; i < 5; i++)
+        {
+            await AutoFillPresetIfEmpty(i);
+        }
+
         LoadPreset(activePresetIndex);
+
     }
 
     async UniTask CreateUnitCards()
@@ -141,29 +147,33 @@ public class DeckControl : MonoBehaviour
             int unitId = int.Parse(character.id);
             UnitData data = unitTable.Get(unitId);
             if (data == null)
-            {
                 continue;
-            }
+
+            // DatabaseManager 캐릭터 데이터 → 강화 레벨 가져오기
+            int enforceLevel = character.enforceLevel;
 
             var model = new DeckUnitModel
             {
                 unitId = unitId,
                 unitName = data.StringName,
                 iconAddress = data.UNIT_ICON,
-                rawData = data
-                
+                rawData = data,
+
+                enforceLevel = enforceLevel 
             };
 
             var loadTask = Addressables.LoadAssetAsync<Sprite>(model.iconAddress).Task.AsUniTask()
                 .ContinueWith(result =>
                 {
                     model.icon = result;
+
                     var card = Instantiate(cardPrefab, unitListParent);
                     card.Init(model);
                     card.Setup(OnUnitCardClicked);
                     card.SetVisible(true);
+
                     unitCards.Add(card);
-                    unitModelMap[unitId] = model;
+                    unitModelMap[unitId] = model;  // 강화 정보 포함된 모델 저장
                 });
 
             loadTasks.Add(loadTask);
@@ -171,6 +181,7 @@ public class DeckControl : MonoBehaviour
 
         await UniTask.WhenAll(loadTasks);
     }
+
 
     private async UniTask AutoFillPresetIfEmpty(int presetIndex)
     {
@@ -188,6 +199,7 @@ public class DeckControl : MonoBehaviour
 
         if (!isEmpty)
         {
+            Debug.Log($"Preset {presetIndex} 이미 있음 no 자동채움");
             return;
         }
 
@@ -269,9 +281,19 @@ public class DeckControl : MonoBehaviour
             {
                 int id = PlayData.selectedDeckUnitIds[p, i];
 
-                if (id != 0 && unitModelMap.ContainsKey(id))
+                if (id != 0)
                 {
-                    preset.units[i] = unitModelMap[id];
+                    if (unitModelMap.ContainsKey(id))
+                        preset.units[i] = unitModelMap[id];
+                    else
+                    {
+         
+                        preset.units[i] = new DeckUnitModel
+                        {
+                            unitId = id,
+                            iconAddress = PlayData.selectedDeckUnitIconAddresses[p, i]
+                        };
+                    }
                 }
                 else
                 {
