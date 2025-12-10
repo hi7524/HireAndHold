@@ -5,14 +5,17 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
+/// <summary>
 // 플레이어 유닛을 관리하는 클래스
 // 유닛의 스탯, 비주얼, 공격, 스킬 시스템 담당
+/// </summary>
 public class Unit : MonoBehaviour
 {
     private const float PercentToDivider = 100f;
 
     [SerializeField] private Transform visualRoot;
     [SerializeField] private string projectileKey = "Projectile";
+    [SerializeField] private AttackTriggerZone attackTriggerZone;
 
     public int UnitID { get; private set; } = 11101;
     public Enemy AttackTarget { get; private set; }
@@ -299,26 +302,32 @@ public class Unit : MonoBehaviour
         this.poolManager = poolManager;
     }
 
-    // 유닛의 공격 사거리 내에서 가장 가까운 살아있는 적 탐색
+    // AttackTriggerZone 설정
+    public void SetAttackZone(AttackTriggerZone zone)
+    {
+        this.attackTriggerZone = zone;
+    }
+
+    // AttackTriggerZone 내에서 가장 가까운 살아있는 적 탐색
     public Enemy FindNearestTarget()
     {
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, unitData.ATTACK_RANGE);
+        if (attackTriggerZone == null) return null;
+
+        var enemies = attackTriggerZone.GetEnemiesInZone();
+        if (enemies.Count == 0) return null;
 
         Enemy nearest = null;
-        float minDis = unitData.ATTACK_RANGE;
+        float minDistance = float.MaxValue;
 
-        foreach (var coll in colliders)
+        foreach (var enemy in enemies)
         {
-            Enemy monster = coll.GetComponent<Enemy>();
+            if (enemy == null || enemy.IsDead) continue;
 
-            if (monster != null && !monster.IsDead)
+            float distance = Vector3.Distance(transform.position, enemy.transform.position);
+            if (distance < minDistance)
             {
-                float distance = Vector3.Distance(transform.position, coll.transform.position);
-                if (distance < minDis)
-                {
-                    minDis = distance;
-                    nearest = monster;
-                }
+                minDistance = distance;
+                nearest = enemy;
             }
         }
 
@@ -401,12 +410,11 @@ public class Unit : MonoBehaviour
         return damage;
     }
 
-    // 사거리 시각화
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, unitData.ATTACK_RANGE);
-    }
+    // AttackTriggerZone 시각화 (필요시)
+    // private void OnDrawGizmosSelected()
+    // {
+    //     // AttackTriggerZone이 BoxCollider2D를 사용하므로 별도 시각화 불필요
+    // }
 
     // 자동 시전 스킬, 성급 업그레이드에 따라 추가될 스킬 목록 시전
     private void HandleAutoSkills()
