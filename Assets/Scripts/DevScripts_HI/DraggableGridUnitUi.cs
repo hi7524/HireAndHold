@@ -17,7 +17,8 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     private const float PreviewFinalScale = 1.0f;
     private const float PreviewScaleDuration = 0.15f;
 
-    [SerializeField] private Image unitImg;
+    [SerializeField] private Image unitImg; // 드래그 영역 이미지 (투명)
+    [SerializeField] private Image actualUnitImg; // 실제 유닛 이미지 (드래그 시 투명하게)
     [SerializeField] private Transform previewObjTrans; // 드래그 중에 보여질 프리뷰 오브젝트
 
     public GameObject GameObject => gameObject;
@@ -145,7 +146,10 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     // 유닛 이미지의 투명도 조정
     private void SetImageAlpha(float alpha)
     {
-        unitImg.color = new Color(1, 1, 1, alpha);
+        if (actualUnitImg != null)
+        {
+            actualUnitImg.color = new Color(1, 1, 1, alpha);
+        }
     }
 
     // 프리뷰 셀 활성화
