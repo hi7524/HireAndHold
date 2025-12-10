@@ -100,7 +100,20 @@ public class AddressablePreloader : MonoBehaviour
             }
         }
 
-        // 3. 스테이지 맵 키 수집
+        // 3. 패시브 스킬 아이콘 키 수집 (ID: 22070~22087)
+        var skillTable = DataTableManager.SkillTable;
+        for (int skillId = 22070; skillId <= 22087; skillId++)
+        {
+            var skill = skillTable.Get(skillId);
+            if (skill != null && !string.IsNullOrEmpty(skill.SKILL_ICON) &&
+                !spriteKeys.Contains(skill.SKILL_ICON) &&
+                IsValidAddressableKey(skill.SKILL_ICON))
+            {
+                spriteKeys.Add(skill.SKILL_ICON);
+            }
+        }
+
+        // 4. 스테이지 맵 키 수집
         var stageTable = DataTableManager.StageTable.GetAll();
         foreach (var stage in stageTable)
         {

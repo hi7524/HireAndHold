@@ -12,6 +12,7 @@ public class TestSceneController : MonoBehaviour
     [SerializeField] private ExperienceCollector expCollector;
     [SerializeField] private ObjectPoolManager poolManager;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
+    [SerializeField] private FloatingTextSpawner floatingTextSpawner;
     
     [Header("Test Controllers")]
     [SerializeField] private TestMonsterSpawnController monsterSpawnController;
@@ -31,21 +32,46 @@ public class TestSceneController : MonoBehaviour
     public PassiveSkillManager PassiveSkillManager => passiveSkillManager;
     public Transform WallTransform => wallTransform;
     public ExperienceCollector ExpCollector => expCollector;
+    public FloatingTextSpawner FloatingTextSpawner => floatingTextSpawner;
     
     private async void Awake()
     {
         Instance = this;
-        
+
+        // 할당되지 않은 참조들 자동 탐색
+        AutoFindReferences();
+
         // DataTable 초기화 대기
         await DataTableManager.InitAsync();
-        
+
         // 씬 참조 설정 (Enemy, Unit에서 사용)
         SetupSceneReferences();
-        
+
         // 각 컨트롤러 초기화
         InitializeControllers();
-        
+
         Debug.Log("[TestSceneController] 테스트 씬 초기화 완료");
+    }
+
+    private void AutoFindReferences()
+    {
+        if (wallTransform == null)
+            wallTransform = GameObject.FindWithTag("Wall")?.transform;
+
+        if (expCollector == null)
+            expCollector = FindFirstObjectByType<ExperienceCollector>();
+
+        if (poolManager == null)
+            poolManager = FindFirstObjectByType<ObjectPoolManager>();
+
+        if (passiveSkillManager == null)
+            passiveSkillManager = FindFirstObjectByType<PassiveSkillManager>();
+
+        if (floatingTextSpawner == null)
+            floatingTextSpawner = FindFirstObjectByType<FloatingTextSpawner>();
+
+        if (monsterSpawnController == null)
+            monsterSpawnController = FindFirstObjectByType<TestMonsterSpawnController>();
     }
     
     private void SetupSceneReferences()
