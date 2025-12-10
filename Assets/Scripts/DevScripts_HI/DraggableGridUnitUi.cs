@@ -145,7 +145,7 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
     // 유닛 이미지의 투명도 조정
     private void SetImageAlpha(float alpha)
     {
-        unitImg.color = new Color(1, 1, 1, alpha);
+        //unitImg.color = new Color(1, 1, 1, alpha);
     }
 
     // 프리뷰 셀 활성화
