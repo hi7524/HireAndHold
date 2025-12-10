@@ -178,14 +178,17 @@ public class Unit : MonoBehaviour
     {
         string id = UnitID.ToString();
         var character = DatabaseManager.Instance.GetCharacter(id);
+
         if (character == null)
         {
+            Debug.LogError($"[Enforce] 캐릭터 데이터 없음: {id}");
             return;
         }
 
         int enforceLv = character.enforceLevel;
         if (enforceLv <= 0)
         {
+            Debug.Log($"[Enforce] 강화레벨 0 → 적용 없음 (ID:{id})");
             return;
         }
 
@@ -202,6 +205,8 @@ public class Unit : MonoBehaviour
         }
 
         attackDamage.AddModifier(new StatModifier(totalAtkUp, ModifierType.Flat));
+
+        Debug.Log($"[Enforce 적용됨] Unit:{UnitID}, 강화Lv:{enforceLv}, " + $"추가Atk:{totalAtkUp}, 최종Atk:{attackDamage.Value}");
     }
 
     // 유닛 데이터에서 스킬 로드 및 추가

@@ -320,16 +320,32 @@ public class DatabaseManager : MonoBehaviour
     {
         string path = $"users/{UserId}/currency/gold";
 
-        bool success = await database.IncrementValueAsync(path, amount);
-
-        if (success)
+        try
         {
-            CurrentUser.currency.gold += amount;
-            PlayData.SetGoldImmediate(CurrentUser.currency.gold);
-        }
+            Debug.Log("[GoldTest] Increment 시작");
 
-        return success;
+            bool success = await database.IncrementValueAsync(path, amount);
+
+            Debug.Log($"[GoldTest] Increment 결과 = {success}");
+
+            if (success)
+            {
+                CurrentUser.currency.gold += amount;
+                PlayData.SetGoldImmediate(CurrentUser.currency.gold);
+            }
+
+            var (value, ok) = await database.GetDataAsync<object>(path);
+            Debug.Log($"[GoldCheck] value={value}, type={value?.GetType()}");
+
+            return success;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[GoldTest ERROR] {e}");
+            return false;
+        }
     }
+
 
     /// <summary>
     /// 다이아 증감 (트랜잭션)
@@ -470,6 +486,27 @@ public class DatabaseManager : MonoBehaviour
 
         return await SaveCharacterAsync(characterId);
     }
+
+    public async UniTask SetEnforceLevelAsync(string characterId, int newLevel)
+    {
+        if (CurrentUser == null)
+        {
+            Debug.LogError("CurrentUser is null! Enforce 저장 실패");
+            return;
+        }
+
+        if (!CurrentUser.characters.ContainsKey(characterId))
+        {
+            Debug.LogError($"Character {characterId} 를 찾을 수 없음");
+            return;
+        }
+
+        CurrentUser.characters[characterId].enforceLevel = newLevel;
+
+        await SaveCharacterAsync(characterId);
+        Debug.Log($"[DB] 강화레벨 저장 완료: ID={characterId}, enforce={newLevel}");
+    }
+
 
     public OwnedCharacter GetCharacter(string characterId)
     {
