@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using GameData;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -9,223 +10,174 @@ public class UnitInfoUI : MonoBehaviour
     [Header("Unit Info Text")]
     public Image unitImage;
     public TextMeshProUGUI attackText;
-    //public TextMeshProUGUI unitInfoText;
-    public TextMeshProUGUI resourceText;
 
     public TextMeshProUGUI normalLevelText;
     public TextMeshProUGUI normalCostText;
     public TextMeshProUGUI classText;
+
     public Button normalEnforceButton;
 
-    public TextMeshProUGUI heroLevelText;
-    public TextMeshProUGUI heroCostText;
-    public TextMeshProUGUI heroEffectsText;
-    public Button heroEnforceButton;
-
-    [Header("Normal Enforce UI")]
-
+    [Header("Normal Enforce Detail")]
     public TextMeshProUGUI currentLevel;
     public TextMeshProUGUI nextLevel;
-    public TextMeshProUGUI stonecost;
     public TextMeshProUGUI goldCost;
     public TextMeshProUGUI unitName;
     public TextMeshProUGUI currentAttack;
     public TextMeshProUGUI nextAttack;
-    public Image enforceUnitImage;
 
-    // 데이터 로드
+    public TextMeshProUGUI playerGoldText;
+    public TextMeshProUGUI playerStoneText;
+
+    public Image enforceUnitImage;
 
     private DataTable_Unit unitTable;
     private DataTable_NormalEnforce normalEnforceTable;
-    private DataTable_HeroEnforce heroEnforceTable;
-    private DataTable_HeroEnforceEffect heroEffectTable;
 
-    private UnitManager unitManager;
     private NormalEnforceSystem normalEnforceSystem;
-    private HeroEnforceSystem heroEnforceSystem;
 
     private int currentUnitId = -1;
+    private Unit previewUnit;  // 전투 유닛 객체
 
     private async void Start()
     {
         unitTable = new DataTable_Unit();
         normalEnforceTable = new DataTable_NormalEnforce();
-        heroEnforceTable = new DataTable_HeroEnforce();
-        heroEffectTable = new DataTable_HeroEnforceEffect();
 
         await unitTable.LoadAsync("UnitTable");
         await normalEnforceTable.LoadAsync("NormalEnforceTable");
-        await heroEnforceTable.LoadAsync("HeroEnforceTable");
-        await heroEffectTable.LoadAsync("HeroEnforceEffectTable");
-
-        normalEnforceButton.onClick.AddListener(OnClick_NormalEnforce);
-        heroEnforceButton.onClick.AddListener(OnClick_HeroEnforce);
     }
 
-    public void SetUnitManager(UnitManager manager)
+    public void SetUnitManager( BattleUnitManager battleManager)
     {
-        this.unitManager = manager;
-        this.normalEnforceSystem = new NormalEnforceSystem(manager, normalEnforceTable);
-        this.heroEnforceSystem = new HeroEnforceSystem(manager, heroEnforceTable, heroEffectTable);
 
-        normalEnforceSystem.TempGold = 999999;
-        normalEnforceSystem.TempMaterial = 9999;
-        heroEnforceSystem.TempGold = 999999;
+        normalEnforceSystem = new NormalEnforceSystem(
+            battleManager,
+            normalEnforceTable,
+            unitTable
+        );
+
+        normalEnforceButton.onClick.AddListener(OnClick_NormalEnforce);
     }
 
     public void SetUnit(int unitId)
     {
         currentUnitId = unitId;
+        CreatePreviewUnit();
         UpdateUI();
     }
 
-    private void UpdateUI()
+    private async void CreatePreviewUnit()
     {
-        if (currentUnitId < 0 || unitManager == null)
+        var go = new GameObject("PreviewUnit");
+        previewUnit = go.AddComponent<Unit>();
+        previewUnit.SetUnitID(currentUnitId);
+
+        await UniTask.DelayFrame(1); 
+    }
+
+    private async void UpdateUI()
+    {
+        if (currentUnitId < 0 || previewUnit == null) return;
+
+        // 유닛 스탯 로드 기다리기
+        await UniTask.DelayFrame(2);
+
+        OwnedCharacter character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        UnitData data = unitTable.Get(currentUnitId);
+
+        if (data == null)
         {
+            Debug.LogError("UnitData 없음: " + currentUnitId);
             return;
         }
 
-        PlayerUnit unit = unitManager.GetPlayerUnit(currentUnitId);
+        // 보유 재화 표시
+        playerGoldText.text = $"보유 골드: {PlayData.Gold}";
+        playerStoneText.text = $"보유 강화석: {PlayData.EnhanceStone}";
 
-        if (unit == null)
-        {
-            return;
-        }
+        // 기본 정보
+        unitName.text = data.StringName;
+        classText.text = $"등급: {data.RANK}";
+
+        attackText.text = $"공격력: {previewUnit.GetAttackDamageStat().Value}";
+        currentAttack.text = previewUnit.GetAttackDamageStat().Value.ToString();
 
         LoadUnitImage(currentUnitId).Forget();
 
-        attackText.text = $"공격력: {unit.CurrentAttack}";
-        currentAttack.text = $"{unit.CurrentAttack}";
-        int nextA = unit.CurrentAttack + 1;
+        // 강화 레벨
+        int enforceLv = character.enforceLevel;
+        currentLevel.text = enforceLv.ToString();
+        normalLevelText.text = $"레벨: {enforceLv} / 20";
 
-        nextAttack.text = $"{nextA}";
-        //unitInfoText.text = $"유닛 ID: {unit.UnitID}\n랭크: {unit.UnitRank}";
-        classText.text = $"등급: {unit.UnitRank}";
-        unitName.text = $"{unit.UnitID}";
+        int nextLv = enforceLv + 1;
+        nextLevel.text = nextLv > 20 ? "MAX" : nextLv.ToString();
 
-        UpdateNormalEnforceUI(unit);
-        UpdateHeroEnforceUI(unit);
-    }
+        // 강화 비용
+        var (gold, stone) = normalEnforceSystem.GetNextEnforceCost(previewUnit);
 
-    private void UpdateNormalEnforceUI(PlayerUnit unit)
-    {
-        normalLevelText.text = $"레벨:\n {unit.NormalEnforceLevel} / 20";
-        currentLevel.text = $"{unit.NormalEnforceLevel}";
-
-        int nextLv = unit.NormalEnforceLevel + 1;
-        if (nextLv > 20)
-        {
-            nextLevel.text = "MAX";
-        }
-        else
-        {
-            nextLevel.text = $"{nextLv}";
-        }
-
-        var (gold, mat) = normalEnforceSystem.GetNextEnforceCost(currentUnitId);
-
-        if (gold > 0)
-        {
-            normalCostText.text = $"다음 강화 비용\n골드: {gold} / 재료: {mat}";
-            goldCost.text = $"{gold}/{normalEnforceSystem.TempGold}";
-            stonecost.text = $"{mat}/{normalEnforceSystem.TempMaterial}";
-        }
-        else
+        if (nextLv > 20 || gold == 0)
         {
             normalCostText.text = "최대 레벨 도달";
-        }
-
-        normalEnforceButton.interactable = normalEnforceSystem.CanEnforce(currentUnitId, out _);
-    }
-
-
-    private void UpdateHeroEnforceUI(PlayerUnit unit)
-    {
-        heroLevelText.text = $"영웅 강화 레벨: {unit.HeroEnforceLevel} / 4";
-
-        var (gold, frag) = heroEnforceSystem.GetNextEnforceCost(currentUnitId);
-
-        if (gold > 0)
-        {
-            heroCostText.text = $"다음 강화 비용\n골드: {gold} / 조각: {frag}";
+            goldCost.text = "-";
+            //stoneCost.text = "-";
         }
         else
         {
-            heroCostText.text = "최대 레벨 도달";
+            normalCostText.text = $"다음 강화 비용\n골드 {gold} / 강화석 {stone}";
+            goldCost.text = gold.ToString();
+            //stoneCost.text = stone.ToString();
         }
 
-        var effects = heroEnforceSystem.GetCurrentEffects(currentUnitId);
-        if (effects.Count > 0)
+        // nextAttack 계산
+        float nextAtk = previewUnit.GetAttackDamageStat().Value;
+        int rank = data.RANK;
+
+        if (NormalEnforceSystem.SharedTable != null)
         {
-            string txt = "적용된 효과:\n";
-            foreach (var e in effects)
+            foreach (var kv in NormalEnforceSystem.SharedTable.All)
             {
-                txt += $"• {e.Enforce_Effect_DESCRIPTION}\n";
+                var e = kv.Value;
+                if (e.Class == rank && e.Normal_Enforce_LV == nextLv)
+                {
+                    nextAtk += e.AttackUp;
+                    break;
+                }
             }
-            heroEffectsText.text = txt;
         }
-        else
+
+        nextAttack.text = nextAtk.ToString();
+
+        // ▼ 버튼 활성화 여부
+        normalEnforceButton.interactable = normalEnforceSystem.CanEnforce(previewUnit, out _);
+    }
+
+
+
+    public async void OnClick_NormalEnforce()
+    {
+        bool result = await normalEnforceSystem.TryEnforceAsync(previewUnit);
+
+        if (result)
         {
-            heroEffectsText.text = "적용된 효과 없음";
+            Debug.Log("강화 성공");
         }
-
-        heroEnforceButton.interactable = heroEnforceSystem.CanEnforce(currentUnitId, out _);
-    }
-
-    public void OnClick_NormalEnforce()
-    {
-        normalEnforceSystem.TryEnforce(currentUnitId);
-        UpdateUI();
-    }
-
-    public void OnClick_HeroEnforce()
-    {
-        heroEnforceSystem.TryEnforce(currentUnitId);
-        UpdateUI();
-    }
-
-    public void OnClick_AddMaterial()
-    {
-        normalEnforceSystem.TempMaterial += 50;
-        UpdateUI();
-    }
-
-    public void OnClick_AddGold()
-    {
-        normalEnforceSystem.TempGold += 10000;
-        heroEnforceSystem.TempGold += 10000;
         UpdateUI();
     }
 
     private async UniTaskVoid LoadUnitImage(int unitId)
     {
-        
         UnitData data = unitTable.Get(unitId);
+
         try
         {
             var sprite = await Addressables.LoadAssetAsync<Sprite>(data.UNIT_ICON).Task;
 
-            if (unitImage != null && enforceUnitImage != null)
-            {
-                unitImage.sprite = sprite;
-                enforceUnitImage.sprite = sprite;
-            }
+            unitImage.sprite = sprite;
+            enforceUnitImage.sprite = sprite;
         }
-        catch (System.Exception e)
+        catch
         {
-            Debug.LogError($" 유닛 이미지 로드 실패: {data.UNIT_ICON}, Error: {e.Message}");
+            Debug.LogError($"유닛 이미지 로드 실패: {data.UNIT_ICON}");
         }
-    }
-
-    public void OnClick_AddFragment()
-    {
-        if (!heroEnforceSystem.TempUnitFragments.ContainsKey(currentUnitId))
-        {
-            heroEnforceSystem.TempUnitFragments[currentUnitId] = 0;
-        }
-
-        heroEnforceSystem.TempUnitFragments[currentUnitId] += 10;
-        UpdateUI();
     }
 }

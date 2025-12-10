@@ -164,7 +164,41 @@ public class Unit : MonoBehaviour
             // Attack.SetUpgradeValue(upgradeData.AttackUpgrade);
             // Defense.SetUpgradeValue(upgradeData.DefenseUpgrade);
             // MaxHealth.SetUpgradeValue(upgradeData.HealthUpgrade);
+
+            ApplyEnforceBonus();
+            //강화 데이터 유닛에 저장(junseo)
         }
+    }
+
+    //강화 데이터 유닛에 저장
+    private void ApplyEnforceBonus()
+    {
+        string id = UnitID.ToString();
+        var character = DatabaseManager.Instance.GetCharacter(id);
+        if (character == null)
+        {
+            return;
+        }
+
+        int enforceLv = character.enforceLevel;
+        if (enforceLv <= 0)
+        {
+            return;
+        }
+
+        float totalAtkUp = 0f;
+        int rank = unitData.RANK;
+
+        foreach (var kv in NormalEnforceSystem.SharedTable.All)
+        {
+            var data = kv.Value;
+            if (data.Class == rank && data.Normal_Enforce_LV <= enforceLv)
+            {
+                totalAtkUp += data.AttackUp;
+            }
+        }
+
+        attackDamage.AddModifier(new StatModifier(totalAtkUp, ModifierType.Flat));
     }
 
     // 유닛 데이터에서 스킬 로드 및 추가
@@ -257,6 +291,7 @@ public class Unit : MonoBehaviour
             visualAnimator = null;
         }
     }
+
 
     // ObjectPoolManager 설정
     public void SetPool(ObjectPoolManager poolManager)

@@ -17,25 +17,25 @@ public class UnitManager
         this.heroEnforceEffectTable = heroEnforceEffectTable;
     }
 
-    public PlayerUnit AddUnit(int unitId)
-    {
-        if (ownedUnits.ContainsKey(unitId))
-        {
-            return ownedUnits[unitId];
-        }
+    //public PlayerUnit AddUnit(int unitId)
+    //{
+    //    if (ownedUnits.ContainsKey(unitId))
+    //    {
+    //        return ownedUnits[unitId];
+    //    }
 
-        var baseData = unitTable.Get(unitId);
-        if (baseData == null)
-        {
-            Debug.LogError($"ID 없는 유닛: {unitId}");
-            return null;
-        }
+    //    var baseData = unitTable.Get(unitId);
+    //    if (baseData == null)
+    //    {
+    //        Debug.LogError($"ID 없는 유닛: {unitId}");
+    //        return null;
+    //    }
 
-        // enforceTable 전달
-        PlayerUnit newUnit = new PlayerUnit(baseData, normalEnforceTable, heroEnforceTable, heroEnforceEffectTable);
-        ownedUnits.Add(unitId, newUnit);
-        return newUnit;
-    }
+    //    // enforceTable 전달
+    //    PlayerUnit newUnit = new PlayerUnit(baseData, normalEnforceTable, heroEnforceTable, heroEnforceEffectTable);
+    //    ownedUnits.Add(unitId, newUnit);
+    //    return newUnit;
+    //}
 
     public PlayerUnit GetPlayerUnit(int unitId)
     {
