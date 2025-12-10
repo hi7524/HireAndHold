@@ -38,10 +38,10 @@ public class PlayerUnit
     DataTable_HeroEnforceEffect heroEffectTable)
     {
         // null 체크
-        if (baseData == null) Debug.LogError("⚠ PlayerUnit 생성 실패: baseData == null");
-        if (normalEnforceTable == null) Debug.LogError("⚠ PlayerUnit 생성 실패: normalEnforceTable == null");
-        if (heroEnforceTable == null) Debug.LogError("⚠ PlayerUnit 생성 실패: heroEnforceTable == null");
-        if (heroEffectTable == null) Debug.LogError("⚠ PlayerUnit 생성 실패: heroEffectTable == null");
+        //if (baseData == null) Debug.LogError("PlayerUnit 생성 실패: baseData == null");
+        //if (normalEnforceTable == null) Debug.LogError("PlayerUnit 생성 실패: normalEnforceTable == null");
+        //if (heroEnforceTable == null) Debug.LogError("PlayerUnit 생성 실패: heroEnforceTable == null");
+        //if (heroEffectTable == null) Debug.LogError("PlayerUnit 생성 실패: heroEffectTable == null");
 
         this.baseData = baseData;
         this.normalEnforceTable = normalEnforceTable;

@@ -75,6 +75,7 @@ namespace GameData
         public int awakening;
         public bool isLocked;
         public long obtainedAt;
+        public int enforceLevel;
 
         public OwnedCharacter() { }
 
@@ -87,6 +88,7 @@ namespace GameData
             this.awakening = 0;
             this.isLocked = false;
             this.obtainedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            this.enforceLevel = 0;
         }
     }
 

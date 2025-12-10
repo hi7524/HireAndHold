@@ -72,7 +72,4 @@ public class DataTable_HeroEnforce : DataTable
         return null;
     }
 
-
-
-
 }

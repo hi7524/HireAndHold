@@ -9,7 +9,7 @@ public class DeckUnitModel
     public string iconAddress;
     public Sprite icon;
     public UnitData rawData;
-    public PlayerUnit playerUnit;
+    public int enhanceLevel;
 
     public void FixMissingAddress()
     {
@@ -18,7 +18,4 @@ public class DeckUnitModel
             iconAddress = rawData.UNIT_ICON;  
         }
     }
-
-
-
 }

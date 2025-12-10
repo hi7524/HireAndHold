@@ -92,6 +92,8 @@ public class DatabaseManager : MonoBehaviour
 
         SyncPresetsToPlayData();
 
+        PlayData.SyncFromDatabase();
+
         return CurrentUser;
     }
 
@@ -107,7 +109,7 @@ public class DatabaseManager : MonoBehaviour
 
         if (success)
         {
-            Debug.Log("[DB] 전체 저장 완료");
+            //Debug.Log("[DB] 전체 저장 완료");
         }
 
         return success;
@@ -323,6 +325,7 @@ public class DatabaseManager : MonoBehaviour
         if (success)
         {
             CurrentUser.currency.gold += amount;
+            PlayData.SetGoldImmediate(CurrentUser.currency.gold);
         }
 
         return success;
@@ -340,6 +343,20 @@ public class DatabaseManager : MonoBehaviour
         if (success)
         {
             CurrentUser.currency.diamond += amount;
+        }
+
+        return success;
+    }
+
+    public async UniTask<bool> AddEnhanceStoneAsync(int amount)
+    {
+        string path = $"users/{UserId}/currency/enhanceStone";
+        bool success = await database.IncrementValueAsync(path, amount);
+
+        if (success)
+        {
+            CurrentUser.currency.enhanceStone += amount;
+            PlayData.SetEnhanceStoneImmediate(CurrentUser.currency.enhanceStone);
         }
 
         return success;
