@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class UnitManager
 {
+    //임시 스크립트 (데이터 옮겨야함)
     private readonly DataTable_Unit unitTable;
     private readonly DataTable_NormalEnforce normalEnforceTable;
     private readonly DataTable_HeroEnforce heroEnforceTable;

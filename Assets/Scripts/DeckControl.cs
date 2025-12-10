@@ -82,19 +82,19 @@ public class DeckControl : MonoBehaviour
         await InitializeData();
 
         //임시 유닛 추가 (인게임 유닛 편성 데이터 전달 테스트용 )
-        if (!DatabaseManager.Instance.CurrentUser.characters.ContainsKey("11199"))
+        if (!DatabaseManager.Instance.CurrentUser.characters.ContainsKey("11119"))
         {
             var tempChar = new OwnedCharacter
             {
-                id = "11208",
+                id = "11119",
                 level = 1,
                 star = 1,
                 exp = 0,
                 awakening = 0
             };
 
-            DatabaseManager.Instance.CurrentUser.characters["11208"] = tempChar;
-            Debug.Log("테스트 유닛 11208 임시 추가됨");
+            DatabaseManager.Instance.CurrentUser.characters["11119"] = tempChar;
+            Debug.Log("테스트 유닛 11119 임시 추가됨");
         }
         
         await CreateUnitCards();
@@ -151,6 +151,7 @@ public class DeckControl : MonoBehaviour
                 unitName = data.StringName,
                 iconAddress = data.UNIT_ICON,
                 rawData = data
+                
             };
 
             var loadTask = Addressables.LoadAssetAsync<Sprite>(model.iconAddress).Task.AsUniTask()
