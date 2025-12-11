@@ -9,10 +9,9 @@ using Cysharp.Threading.Tasks;
 /// - 39198: 공격 속도 30% 증가 (EFFECT_TYPE=9, DamageUpPercent - 실제로는 공격속도)
 /// 지속시간: 10초
 /// </summary>
-public class FlagOfVictorySkill : PlayerSkillBase
+public class FlagOfVictorySkill : PlayerSkillBase, IUnitManagerInjectable
 {
     [Header("승리의 깃발 스킬 설정")]
-    [SerializeField] private GameObject flagEffectPrefab;
     [SerializeField] private float effectLifetime = 10f;
 
     [Header("버프 수치 (EffectTable 기준)")]
@@ -20,12 +19,18 @@ public class FlagOfVictorySkill : PlayerSkillBase
     [SerializeField] private float attackSpeedUpPercent = 30f; // 39198: 공격 속도 30% 증가
     [SerializeField] private float buffDuration = 10f;         // 버프 지속시간
 
+    private BattleUnitManager battleUnitManager;
     private List<BuffedUnitInfo> buffedUnits = new List<BuffedUnitInfo>();
+
+    public void SetBattleUnitManager(BattleUnitManager manager)
+    {
+        battleUnitManager = manager;
+    }
 
     public override void OnUse(Vector3 spawnPoint)
     {
         // 이펙트 생성
-        SpawnEffect(flagEffectPrefab, spawnPoint, effectLifetime);
+        SpawnEffect(spawnPoint, effectLifetime);
 
         // 모든 아군 유닛에게 버프 적용
         ApplyBuffToAllUnits();
@@ -38,8 +43,14 @@ public class FlagOfVictorySkill : PlayerSkillBase
         // 기존 버프 제거
         RemoveAllBuffs();
 
-        // 모든 유닛 찾기
-        Unit[] units = FindObjectsByType<Unit>(FindObjectsSortMode.None);
+        // BattleUnitManager에서 유닛 목록 가져오기
+        if (battleUnitManager == null)
+        {
+            Debug.LogWarning("[FlagOfVictory] BattleUnitManager가 설정되지 않았습니다!");
+            return;
+        }
+
+        List<Unit> units = battleUnitManager.GetAllUnits();
 
         foreach (Unit unit in units)
         {

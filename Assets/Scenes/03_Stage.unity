@@ -2694,8 +2694,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1444378027}
   - {fileID: 1540230933}
+  - {fileID: 1444378027}
   m_Father: {fileID: 2093164077}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -2754,7 +2754,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 526352943}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -2845,7 +2845,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 527338849}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -6642,18 +6642,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillManager
   skillUi: {fileID: 527338851}
-  skills:
-  - {fileID: 7617598636401832988, guid: ae94001ff54a12e4eb96f4c9ca0f0dd5, type: 3}
-  - {fileID: 5141301398633667816, guid: bf610106013340e4599ecaca22c6b59f, type: 3}
-  - {fileID: 3139969259823160928, guid: 263cbffdab45ed64d86064ef1b66e64c, type: 3}
-  - {fileID: 4062989978453534327, guid: ca1be92a824880447a515a4999d7ff8e, type: 3}
-  - {fileID: 2050177390261441880, guid: 400bda097dcbabe48bf3793483c63168, type: 3}
-  - {fileID: 9105091828330455481, guid: 5de3d339b0958a4439aef0bf11704545, type: 3}
-  - {fileID: 7512806785400264949, guid: 4a51e1a29235a9142b6ce9b7784c5ef3, type: 3}
-  - {fileID: 114000000000000003, guid: b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7, type: 3}
-  - {fileID: 114000000000000005, guid: c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8, type: 3}
-  - {fileID: 114000000000000001, guid: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6, type: 3}
   skillSelectUi: {fileID: 1007274367}
+  skillParent: {fileID: 0}
+  monsterAreaCenter: {fileID: 0}
+  gridAreaCenter: {fileID: 0}
+  battleUnitManager: {fileID: 0}
 --- !u!4 &1292166129
 Transform:
   m_ObjectHideFlags: 0
@@ -7516,13 +7509,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 20
-  m_fontSizeBase: 20
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -11484,9 +11477,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bc9da6251196ac4fab4c826816f3a4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillUI
-  icon: {fileID: 526352946}
+  icon: {fileID: 2093164079}
   cooldownMask: {fileID: 1540230934}
   button: {fileID: 526352945}
+  cooldownText: {fileID: 1444378028}
 --- !u!114 &2093164079
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11500,7 +11494,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.64705884}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -15159,6 +15153,71 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1001 &7446239532476428819
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6394109792214683572, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: skillID
+      value: 22067
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394109792214683572, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: applyStatusEffect
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6827921641714906775, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_Name
+      value: GreatSlow
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027058084200731345, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 681ad4d0d9e48614290a0d8868e310be, type: 3}
 --- !u!114 &7784064490342162694
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15664,3 +15723,4 @@ SceneRoots:
   - {fileID: 1100007650}
   - {fileID: 421385518}
   - {fileID: 6076515544921596674}
+  - {fileID: 7446239532476428819}
