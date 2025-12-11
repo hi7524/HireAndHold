@@ -16,6 +16,7 @@ public class LevelUpRewardController : MonoBehaviour
     [SerializeField] private PlayerStageGold playerStageGold;
     [SerializeField] private PlayerExperience playerExp;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
+    [SerializeField] private DragManager dragManager;
 
     private int rerollCost = 50;
 
@@ -182,6 +183,12 @@ public class LevelUpRewardController : MonoBehaviour
     public void OnClickConfirmBtn()
     {
         Debug.Log("[LevelUpRewardController] OnClickConfirmBtn 호출됨");
+
+        // 드래그 중인 유닛이 있으면 드래그 취소
+        if (dragManager != null)
+        {
+            dragManager.CancelDrag();
+        }
 
         // 보상을 선택하지 않은채로 확인 버튼을 누를 경우 25G 지급
         if (!isSelectedReward)
