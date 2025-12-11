@@ -24,6 +24,8 @@ public class LevelUpRewardController : MonoBehaviour
     private UnitCardUi[] unitCardUIs;
     private SkillCardUi[] skillCardUIs;
 
+    private HorizontalLayoutGroup layoutGroup;
+
     // 현재 레벨업 보상으로 생성된 유닛들을 추적
     private readonly List<GridUnit> currentLevelUpRewardUnits = new();
 
@@ -44,6 +46,9 @@ public class LevelUpRewardController : MonoBehaviour
         // 각 프리팹 카드 3장씩 생성
         CreateUnitCardPrf(3);
         CreateSkillCardPrf(3);
+
+        // Layout Group 캐싱
+        layoutGroup = GetComponent<HorizontalLayoutGroup>();
 
         playerExp.OnLevelUp += DrawLevelUpReward;
         playerStageGold.OnChangeGold += UpdateRerollBtn;
@@ -457,10 +462,18 @@ public class LevelUpRewardController : MonoBehaviour
     {
         if (value)
         {
+            // Layout Group 활성화 (위치 재계산)
+            if (layoutGroup != null)
+                layoutGroup.enabled = true;
+
             // 활성화할 때 순차적 스케일 애니메이션
             for (int i = 0; i < cardArray.Length; i++)
             {
                 var card = cardArray[i];
+
+                // 기존 애니메이션 정리
+                card.transform.DOKill();
+
                 card.gameObject.SetActive(true);
 
                 // 초기 스케일을 0으로 설정
@@ -474,10 +487,23 @@ public class LevelUpRewardController : MonoBehaviour
         }
         else
         {
-            // 비활성화할 때는 그냥 끄기
+            // Layout Group 비활성화 (위치 고정)
+            if (layoutGroup != null)
+                layoutGroup.enabled = false;
+
+            // 비활성화할 때 역순으로 작아지면서 비활성화
             for (int i = 0; i < cardArray.Length; i++)
             {
-                cardArray[i].gameObject.SetActive(false);
+                var card = cardArray[i];
+                int reverseIndex = cardArray.Length - 1 - i; // 역순 인덱스
+
+                // 기존 애니메이션 정리
+                card.transform.DOKill();
+
+                card.transform.DOScale(Vector3.zero, 0.3f)
+                    .SetDelay(reverseIndex * 0.1f)
+                    .SetEase(Ease.InBack)
+                    .OnComplete(() => card.gameObject.SetActive(false));
             }
         }
     }
@@ -485,11 +511,14 @@ public class LevelUpRewardController : MonoBehaviour
     // 유닛 카드의 드롭 성공 처리
     private void OnUnitCardDropSuccess()
     {
+        // 드래그 상태 비활성화
         for (int i = 0; i < unitCardUIs.Length; i++)
         {
             unitCardUIs[i].SetDragState(false);
-            unitCardUIs[i].SetColor(new Color(0.267f, 0.267f, 0.267f));
         }
+
+        // 역순 애니메이션으로 카드 비활성화
+        SetActiveCards(unitCardUIs, false);
 
         reRollBtn.interactable = false;
         isSelectedReward = true;
