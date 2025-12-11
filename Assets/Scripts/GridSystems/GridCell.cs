@@ -361,6 +361,9 @@ public class GridCell : MonoBehaviour, IDroppable
 
         existingUnit.SetUnitID(newUnitId, newStarLevel);
 
+        // Sorting Order 업데이트
+        UpdateUnitSortingOrder(existingUnit.gameObject);
+
         // 드래그 중이던 유닛 삭제 (2개가 1개로 합쳐지므로 카운트 감소)
         Destroy(draggingUnit.gameObject);
         gridManager.DecrementUnitCount();
@@ -402,6 +405,9 @@ public class GridCell : MonoBehaviour, IDroppable
         existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
 
         existingUnit.SetUnitID(newUnitId, newStarLevel);
+
+        // Sorting Order 업데이트
+        UpdateUnitSortingOrder(existingUnit.gameObject);
 
         return true;
     }

@@ -16,6 +16,7 @@ public class LevelUpRewardController : MonoBehaviour
     [SerializeField] private PlayerStageGold playerStageGold;
     [SerializeField] private PlayerExperience playerExp;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
+    [SerializeField] private DragManager dragManager;
 
     private int rerollCost = 50;
 
@@ -45,15 +46,60 @@ public class LevelUpRewardController : MonoBehaviour
 
         playerExp.OnLevelUp += DrawLevelUpReward;
         playerStageGold.OnChangeGold += UpdateRerollBtn;
+
+        // 드래그 이벤트 구독
+        if (dragManager != null)
+        {
+            dragManager.OnDragStarted += OnDragStarted;
+            dragManager.OnDragEnded += OnDragEnded;
+        }
+        else
+        {
+            Debug.LogError("DragManager를 할당해주세요.");
+        }
+
         CacheAllData();
 
         SelectUnitOnGameStart();
+    }
+
+    // 드래그 시작 시 호출
+    private void OnDragStarted()
+    {
+        if (confirmBtn != null)
+        {
+            confirmBtn.interactable = false;
+        }
+    }
+
+    // 드래그 종료 시 호출
+    private void OnDragEnded()
+    {
+        if (confirmBtn == null)
+            return;
+
+        // 게임이 시작되지 않았고 보상을 선택하지 않았으면 비활성화 유지
+        if (!gameManager.IsGameStarted && !isSelectedReward)
+        {
+            confirmBtn.interactable = false;
+        }
+        else
+        {
+            confirmBtn.interactable = true;
+        }
     }
 
     private void OnDestroy()
     {
         playerExp.OnLevelUp -= DrawLevelUpReward;
         playerStageGold.OnChangeGold -= UpdateRerollBtn;
+
+        // 드래그 이벤트 구독 해제
+        if (dragManager != null)
+        {
+            dragManager.OnDragStarted -= OnDragStarted;
+            dragManager.OnDragEnded -= OnDragEnded;
+        }
 
         // UnitCardUI 이벤트 구독 해제
         if (unitCardUIs != null)
@@ -181,8 +227,6 @@ public class LevelUpRewardController : MonoBehaviour
     // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
-        Debug.Log("[LevelUpRewardController] OnClickConfirmBtn 호출됨");
-
         // 보상을 선택하지 않은채로 확인 버튼을 누를 경우 25G 지급
         if (!isSelectedReward)
         {

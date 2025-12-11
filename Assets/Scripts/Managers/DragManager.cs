@@ -2,6 +2,7 @@
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
+using System;
 
 public class DragManager : MonoBehaviour
 {
@@ -12,6 +13,10 @@ public class DragManager : MonoBehaviour
     private Camera mainCamera;
     private DragState dragState;
     private IDroppable currentDropTarget;
+
+    // 드래그 상태 변경 이벤트
+    public event Action OnDragStarted;
+    public event Action OnDragEnded;
 
     private Camera MainCamera
     {
@@ -99,10 +104,45 @@ public class DragManager : MonoBehaviour
         }
     }
 
+    // 현재 드래그 중인지 확인
+    public bool IsDragging => dragState.IsDragging;
+
     // 드래그 활성화/비활성화 설정
     public void SetDragEnabled(bool value)
     {
         isDragEnabled = value;
+    }
+
+    // 드래그 상태를 강제로 종료 (외부에서 호출)
+    public void CancelDrag()
+    {
+        if (!dragState.IsDragging)
+            return;
+
+        // 드래그 중인 객체를 원래 위치로 복원
+        dragState.Target.GameObject.transform.position = dragState.OriginalPosition;
+
+        if (!dragState.IsUI)
+        {
+            Physics2D.SyncTransforms();
+        }
+
+        if (dragState.IsUI && dragState.OriginalParent != null)
+        {
+            dragState.Target.GameObject.transform.SetParent(dragState.OriginalParent, true);
+            dragState.Target.GameObject.transform.SetSiblingIndex(dragState.OriginalSiblingIndex);
+        }
+
+        currentDropTarget?.OnDragExit(dragState.Target);
+        currentDropTarget = null;
+
+        dragState.Target.OnDropFailed();
+        dragState.Target.OnDragEnd();
+
+        dragState.Reset();
+
+        // 드래그 종료 이벤트 발생
+        OnDragEnded?.Invoke();
     }
 
 
@@ -130,6 +170,9 @@ public class DragManager : MonoBehaviour
         }
 
         dragState.Target.OnDragStart();
+
+        // 드래그 시작 이벤트 발생
+        OnDragStarted?.Invoke();
     }
 
     // 드래그 중 처리: 오브젝트 이동 및 드롭 타겟 업데이트
@@ -190,6 +233,9 @@ public class DragManager : MonoBehaviour
         currentDropTarget = null;
 
         draggingTarget.OnDragEnd();
+
+        // 드래그 종료 이벤트 발생
+        OnDragEnded?.Invoke();
     }
 
     // 드롭 타겟 변경 감지 및 Enter/Exit 이벤트 처리

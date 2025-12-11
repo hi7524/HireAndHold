@@ -407,7 +407,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -70}
+  m_AnchoredPosition: {x: 0, y: 235}
   m_SizeDelta: {x: 0, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &126204095
@@ -457,8 +457,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 18
+  m_fontSizeBase: 18
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -3573,8 +3573,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 249.52606, y: -214.83412}
-  m_SizeDelta: {x: 499.05212, y: 60}
+  m_AnchoredPosition: {x: 249.52606, y: -229.83412}
+  m_SizeDelta: {x: 499.05212, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &736372718
 CanvasRenderer:
@@ -3778,6 +3778,7 @@ GameObject:
   - component: {fileID: 800242050}
   - component: {fileID: 800242052}
   - component: {fileID: 800242051}
+  - component: {fileID: 800242053}
   m_Layer: 5
   m_Name: LevelUpRewardPanel
   m_TagString: Untagged
@@ -3843,6 +3844,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 800242049}
   m_CullTransparentMesh: 1
+--- !u!114 &800242053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 800242049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 061640f49a5c4cd469b3ddcef5c76679, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dragManager: {fileID: 1367760510434314015}
 --- !u!1001 &802288942
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12342,6 +12356,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f22dbcfd4a054b84084d5370e37515f0, type: 3}
+--- !u!114 &1367760510434314015 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3316604477938433826, guid: f22dbcfd4a054b84084d5370e37515f0, type: 3}
+  m_PrefabInstance: {fileID: 1367760510434314014}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 945f2f1d56025a4409b28e4a71dd31bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &1448163463963517513
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13564,6 +13589,7 @@ MonoBehaviour:
   playerStageGold: {fileID: 569250257}
   playerExp: {fileID: 1133995189}
   passiveSkillManager: {fileID: 1100007649}
+  dragManager: {fileID: 1367760510434314015}
 --- !u!1001 &3743918663133107922
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15417,11 +15443,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1751058533179675157, guid: 15c94f0dc07e299428b91ad37f99b8dd, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 100
+      value: 125
       objectReference: {fileID: 0}
     - target: {fileID: 1751058533179675157, guid: 15c94f0dc07e299428b91ad37f99b8dd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -25
+      value: -45
       objectReference: {fileID: 0}
     - target: {fileID: 1751058533179675157, guid: 15c94f0dc07e299428b91ad37f99b8dd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
