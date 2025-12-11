@@ -3,18 +3,16 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class EffectData 
+public class EffectData
 {
     public int EFFECT_ID { get; set; }
     public string EFFECT_NAME { get; set; }
-    public string EFFECT_NAME_KR { get; set; }           
     public int EFFECT_TYPE { get; set; }
     public float EFFECT_VALUE { get; set; }
     public int EFFECT_STACK { get; set; }
     public int EFFECT_STACKNUM { get; set; }
     public int EFFECT_CLEAR { get; set; }
     public string EFFECT_DESCRIPTION { get; set; }
-    public string EFFECT_DESC { get; set; }             
 }
 public class DataTable_Effect : DataTable
 {

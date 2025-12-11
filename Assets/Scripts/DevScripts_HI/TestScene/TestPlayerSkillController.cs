@@ -61,9 +61,11 @@ public class TestPlayerSkillController : MonoBehaviour
                 var skill = availableSkills[i];
                 if (skill != null)
                 {
-                    // 스킬 데이터 테이블에서 이름 가져오기
+                    // 스킬 데이터 테이블에서 이름 가져오기 (StringTable 사용)
                     var skillData = DataTableManager.SkillTable.Get(skill.SkillID);
-                    string skillName = skillData != null ? skillData.SKILL_NAME : $"Skill {skill.SkillID}";
+                    string skillName = $"Skill {skill.SkillID}";
+                    if (skillData != null && int.TryParse(skillData.SKILL_NAME, out int nameId))
+                        skillName = DataTableManager.StringTable.Get(nameId);
                     options.Add(new TMP_Dropdown.OptionData($"{skill.SkillID}: {skillName}"));
                 }
             }
@@ -75,7 +77,9 @@ public class TestPlayerSkillController : MonoBehaviour
             foreach (var skill in availableSkills)
             {
                 var skillData = DataTableManager.SkillTable.Get(skill.SkillID);
-                string skillName = skillData != null ? skillData.SKILL_NAME : $"Skill {skill.SkillID}";
+                string skillName = $"Skill {skill.SkillID}";
+                if (skillData != null && int.TryParse(skillData.SKILL_NAME, out int nameId))
+                    skillName = DataTableManager.StringTable.Get(nameId);
                 options.Add(new TMP_Dropdown.OptionData($"{skill.SkillID}: {skillName}"));
             }
         }
