@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CsvHelper.Configuration.Attributes;
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -8,15 +9,29 @@ public class DataTable_HeroEnforceEffect : DataTable
     public class HeroEnforceEffectData
     {
         public int Hero_Enforce_EffectID { get; set; }
-        public int SkillID1 { get; set; }
-        public int SkillID2 { get; set; }
+
+        [Name("SkillID1")]
+        public int? SkillID1 { get; set; }
+
+        [Name("SkillID2")]
+        public int? SkillID2 { get; set; }
+
         public float Skill_Damage_Up { get; set; }
         public float Attack_Up { get; set; }
         public float Duration_Up { get; set; }
         public int Projectile { get; set; }
+
+        [Default(0f)]
         public float CoolTime_Down { get; set; }
+
+        [Default(0f)]
+        public float Attack_Speed { get; set; }
+
+        [Name("Enforce_Effect_DESCRIPTION")]
+        [Index(10)]
         public string Enforce_Effect_DESCRIPTION { get; set; }
     }
+
 
     private readonly Dictionary<int, HeroEnforceEffectData> table = new Dictionary<int, HeroEnforceEffectData>();
 
@@ -37,7 +52,7 @@ public class DataTable_HeroEnforceEffect : DataTable
             }
             else
             {
-                Debug.LogError($"NormalEnforce 중복 id {item.Hero_Enforce_EffectID}");
+                Debug.LogError($"HeroEnforceEffect 중복 id {item.Hero_Enforce_EffectID}");
             }
         }
     }
@@ -46,7 +61,7 @@ public class DataTable_HeroEnforceEffect : DataTable
     {
         if (!table.ContainsKey(enforceId))
         {
-            Debug.LogError($"HeroEnforce 존재하지 않는 id {enforceId}");
+            Debug.LogError($"HeroEnforceEffect 존재하지 않는 id {enforceId}");
             return null;
         }
 

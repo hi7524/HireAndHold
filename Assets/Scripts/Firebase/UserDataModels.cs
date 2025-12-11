@@ -76,6 +76,7 @@ namespace GameData
         public bool isLocked;
         public long obtainedAt;
         public int enforceLevel;
+        public int heroEnforceLevel;
 
         public OwnedCharacter() { }
 
@@ -89,6 +90,7 @@ namespace GameData
             this.isLocked = false;
             this.obtainedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             this.enforceLevel = 0;
+            this.heroEnforceLevel = 0;
         }
     }
 
@@ -160,7 +162,8 @@ namespace GameData
         public int index;
         public string name;
 
-        public List<string> characterId;
+        public string[] characterId = new string[5];
+        public string[] iconAddress = new string[5];
 
         public List<string> skillIds;
 
@@ -172,7 +175,9 @@ namespace GameData
 
         public PartyPreset()
         {
-            characterId = new List<string>() { null, null, null, null, null };
+            characterId = new string[5];  // [null, null, null, null, null]
+            iconAddress = new string[5];
+
             skillIds = new List<string>();
             weaponUid = null;
             armorUid = null;
@@ -186,7 +191,9 @@ namespace GameData
             this.index = index;
             this.name = $"파티 {index + 1}";
 
-            characterId = new List<string>() { null, null, null, null, null };
+            characterId = new string[5];
+            iconAddress = new string[5];
+
             skillIds = new List<string>();
             weaponUid = null;
             armorUid = null;
@@ -195,9 +202,8 @@ namespace GameData
             lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
     }
-
-
     #endregion
+
 
     #region 설정
 

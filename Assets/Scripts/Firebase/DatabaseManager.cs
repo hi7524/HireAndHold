@@ -90,6 +90,7 @@ public class DatabaseManager : MonoBehaviour
             Debug.Log($"[DB] 신규 유저 저장 결과: {saveResult}");
         }
 
+        AddTempUnitsForDebug();
         SyncPresetsToPlayData();
 
         PlayData.SyncFromDatabase();
@@ -184,33 +185,38 @@ public class DatabaseManager : MonoBehaviour
         for (int p = 0; p < MAX_PRESET_COUNT; p++)
         {
             string key = $"preset_{p}";
-            if (!CurrentUser.partyPresets.TryGetValue(key, out var preset) || preset.characterId == null)
+
+            if (!CurrentUser.partyPresets.TryGetValue(key, out var preset)
+                || preset.characterId == null
+                || preset.characterId.Length < 5)
             {
-                // 빈 프리셋
+                // 빈 프리셋으로 처리
                 for (int s = 0; s < 5; s++)
                 {
                     PlayData.selectedDeckUnitIds[p, s] = 0;
                     PlayData.selectedDeckUnitIconAddresses[p, s] = "";
                 }
+
                 continue;
             }
 
-            // characterId 리스트 길이 5 보장
-            while (preset.characterId.Count < 5)
-                preset.characterId.Add(null);
-
+            // 정상 프리셋 로드
             for (int s = 0; s < 5; s++)
             {
+                // 캐릭터 ID 읽기
                 int unitId = 0;
-
                 string value = preset.characterId[s];
+
                 if (!string.IsNullOrEmpty(value))
-                {
                     int.TryParse(value, out unitId);
-                }
 
                 PlayData.selectedDeckUnitIds[p, s] = unitId;
-                PlayData.selectedDeckUnitIconAddresses[p, s] = "";
+
+                // 아이콘 주소 읽기
+                if (preset.iconAddress != null && preset.iconAddress.Length > s)
+                    PlayData.selectedDeckUnitIconAddresses[p, s] = preset.iconAddress[s] ?? "";
+                else
+                    PlayData.selectedDeckUnitIconAddresses[p, s] = "";
             }
         }
     }
@@ -219,27 +225,27 @@ public class DatabaseManager : MonoBehaviour
     public async UniTask<bool> SavePresetFromPlayDataAsync(int index)
     {
         var preset = GetPreset(index);
-        if (preset == null) return false;
+        if (preset == null)
+            return false;
 
-        if (preset.characterId == null)
-        {
-            preset.characterId = new List<string>(new string[5]);
-        }
+        if (preset.characterId == null || preset.characterId.Length != 5)
+            preset.characterId = new string[5];
 
-        while (preset.characterId.Count < 5)
-        {
-            preset.characterId.Add(null);
-        }
+        if (preset.iconAddress == null || preset.iconAddress.Length != 5)
+            preset.iconAddress = new string[5];
 
         for (int s = 0; s < 5; s++)
         {
             int unitId = PlayData.selectedDeckUnitIds[index, s];
+
             preset.characterId[s] = unitId == 0 ? null : unitId.ToString();
+            preset.iconAddress[s] = PlayData.selectedDeckUnitIconAddresses[index, s];
         }
+
+        preset.lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         return await SavePresetAsync(index);
     }
-
 
 
 
@@ -517,6 +523,34 @@ public class DatabaseManager : MonoBehaviour
     {
         return new List<OwnedCharacter>(CurrentUser.characters.Values);
     }
+    private void AddTempUnitsForDebug()
+    {
+        AddTempUnit("11119");
+
+        PlayData.SyncCharactersFromDatabase();
+
+        Debug.Log("[Debug] 임시 유닛 PlayData 반영 완료");
+    }
+
+    private void AddTempUnit(string unitId)
+    {
+        if (!CurrentUser.characters.ContainsKey(unitId))
+        {
+            CurrentUser.characters[unitId] = new OwnedCharacter
+            {
+                id = unitId,
+                level = 1,
+                star = 1,
+                exp = 0,
+                awakening = 0,
+                enforceLevel = 0,
+                heroEnforceLevel = 0
+            };
+
+            Debug.Log($"[Debug] 임시 유닛 추가됨: {unitId}");
+        }
+    }
+
 
     #endregion
 
@@ -659,17 +693,18 @@ public class DatabaseManager : MonoBehaviour
             return false;
         }
 
-        if (preset.characterId == null)
-            preset.characterId = new List<string>(new string[5]);
+        // 배열 길이 보장
+        if (preset.characterId == null || preset.characterId.Length != 5)
+            preset.characterId = new string[5];
 
-        while (preset.characterId.Count < 5)
-            preset.characterId.Add(null);
 
-        // 일단 0번 슬롯에 세팅 (필요하면 나중에 슬롯 인덱스 추가 파라미터로 확장)
         preset.characterId[0] = characterId;
+
+        preset.lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         return await SavePresetAsync(presetIndex);
     }
+
 
 
     public async UniTask<bool> RemoveSkillFromPresetAsync(int presetIndex, string skillId)

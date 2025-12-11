@@ -11,6 +11,7 @@ public class CachedCharacter
     public int awakening;
 
     public int enforceLevel;
+    public int heroEnforceLevel;
 }
 
 public static class PlayData
@@ -92,7 +93,7 @@ public static class PlayData
     }
 
     // 캐릭터 데이터 동기화
-    private static void SyncCharactersFromDatabase()
+    public static void SyncCharactersFromDatabase()
     {
         cachedCharacters.Clear();
 
@@ -106,7 +107,8 @@ public static class PlayData
                 level = character.level,
                 exp = character.exp,
                 awakening = character.awakening,
-                enforceLevel = character.enforceLevel
+                enforceLevel = character.enforceLevel,
+                heroEnforceLevel = character.heroEnforceLevel
             };
         }
 
@@ -148,6 +150,17 @@ public static class PlayData
         await DatabaseManager.Instance.AddStaminaAsync(amount);
         Debug.Log($" 스태미나 변경: {amount:+#;-#;0} (현재: {cachedStamina})");
     }
+
+    public static void AddUnitFragments(int unitId, float amount)
+    {
+        if (!unitFragments.ContainsKey(unitId))
+            unitFragments[unitId] = 0;
+
+        unitFragments[unitId] += amount;
+
+        Debug.Log($"유닛 {unitId} 조각 +{amount} (현재: {unitFragments[unitId]})");
+    }
+
 
     //재화 즉시 설정 (동기화 없이) 
     public static void SetGoldImmediate(long value)
@@ -201,6 +214,30 @@ public static class PlayData
             await DatabaseManager.Instance.SaveCharacterAsync(characterId);
         }
     }
+
+    public static bool IsPresetCompletelyEmpty(int presetIndex)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            if (selectedDeckUnitIds[presetIndex, i] != 0)
+                return false;
+        }
+        return true;
+    }
+
+    public static bool IsAnyPresetSaved()
+    {
+        for (int p = 0; p < 5; p++)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                if (selectedDeckUnitIds[p, i] != 0)
+                    return true;
+            }
+        }
+        return false;
+    }
+
 
     // 데이터 초기화
     public static void Clear()
