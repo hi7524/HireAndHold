@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class LevelUpRewardController : MonoBehaviour
 {
@@ -454,9 +455,30 @@ public class LevelUpRewardController : MonoBehaviour
     // 일부 활성화
     private void SetActiveCards(BaseCardUi[] cardArray, bool value)
     {
-        for (int i = 0; i < cardArray.Length; i++)
+        if (value)
         {
-            cardArray[i].gameObject.SetActive(value);
+            // 활성화할 때 순차적 스케일 애니메이션
+            for (int i = 0; i < cardArray.Length; i++)
+            {
+                var card = cardArray[i];
+                card.gameObject.SetActive(true);
+
+                // 초기 스케일을 0으로 설정
+                card.transform.localScale = Vector3.zero;
+
+                // 순차적으로 스케일 애니메이션 (0.1초 간격)
+                card.transform.DOScale(Vector3.one, 0.3f)
+                    .SetDelay(i * 0.1f)
+                    .SetEase(Ease.OutBack);
+            }
+        }
+        else
+        {
+            // 비활성화할 때는 그냥 끄기
+            for (int i = 0; i < cardArray.Length; i++)
+            {
+                cardArray[i].gameObject.SetActive(false);
+            }
         }
     }
 
