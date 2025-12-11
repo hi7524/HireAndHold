@@ -253,7 +253,7 @@ public class Unit : MonoBehaviour
             return;
         }
 
-        string id = UnitID.ToString();
+        //string id = UnitID.ToString();
         string id = BaseCharacterID.ToString();
         var character = DatabaseManager.Instance.GetCharacter(id);
 
@@ -587,7 +587,7 @@ public class Unit : MonoBehaviour
         float finalDamage = Mathf.Round(damage * 10f) / 10f;
 
         projectile.SetDamage(finalDamage);
-        projectile.SetTarget(target.transform);
+        projectile.SetTarget(AttackTarget.transform);
         projectile.Launch();
     }
 
