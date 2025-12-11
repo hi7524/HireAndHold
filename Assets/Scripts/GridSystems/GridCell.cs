@@ -359,6 +359,13 @@ public class GridCell : MonoBehaviour, IDroppable
         // 머지 이펙트 재생 - DOTween 애니메이션
         existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
 
+        // 머지 이펙트 재생 - 별 이펙트
+        var starEffect = existingUnit.GetComponent<UnitStarEffect>();
+        if (starEffect != null)
+        {
+            starEffect.PlayStarEffect(newStarLevel);
+        }
+
         existingUnit.SetUnitID(newUnitId, newStarLevel);
 
         // Sorting Order 업데이트
@@ -403,6 +410,13 @@ public class GridCell : MonoBehaviour, IDroppable
 
         // 머지 이펙트 재생 - DOTween 애니메이션
         existingUnit.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 10, 1f);
+
+        // 머지 이펙트 재생 - 별 이펙트
+        var starEffect = existingUnit.GetComponent<UnitStarEffect>();
+        if (starEffect != null)
+        {
+            starEffect.PlayStarEffect(newStarLevel);
+        }
 
         existingUnit.SetUnitID(newUnitId, newStarLevel);
 

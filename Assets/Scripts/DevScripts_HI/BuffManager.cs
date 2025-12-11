@@ -7,6 +7,7 @@ public class BuffManager : MonoBehaviour
 {
     [SerializeField] private GridManager gridManager;
     [SerializeField] private StageUiManager uiManager;
+    [SerializeField] private ParticleSystem buffParticle;
 
     private const float CellBuffRate = 1;   // (%)
     private const float TotalBuffRate = 50; // (%)
@@ -120,6 +121,9 @@ public class BuffManager : MonoBehaviour
 
         // 활성화된 버프 목록 이벤트 발생
         OnActivatedBuffsChanged?.Invoke(ActivatedBuffs);
+
+        // 버프 개수에 따라 파티클 방출 속도 업데이트
+        UpdateBuffParticleEmission();
     }
 
     // 가로줄이 완전히 채워졌는지 체크
@@ -248,6 +252,39 @@ public class BuffManager : MonoBehaviour
         if (gridManager != null)
         {
             gridManager.UpdateBuffColors();
+        }
+    }
+
+    // 버프 개수에 따라 파티클 방출 속도 업데이트
+    private void UpdateBuffParticleEmission()
+    {
+        if (buffParticle == null)
+            return;
+
+        int buffCount = ActivatedBuffs.Count;
+        float rateOverTime;
+
+        // 버프 개수에 따라 방출 속도 결정
+        if (buffCount == 0)
+            rateOverTime = 0f;
+        else if (buffCount == 1)
+            rateOverTime = 2f;
+        else if (buffCount == 2)
+            rateOverTime = 5f;
+        else // buffCount >= 3
+            rateOverTime = 10f;
+
+        // Emission 모듈 가져오기 및 설정
+        var emission = buffParticle.emission;
+        emission.rateOverTime = rateOverTime;
+
+        // 버프가 있으면 파티클 재생
+        if (buffCount > 0)
+        {
+            if (!buffParticle.isPlaying)
+            {
+                buffParticle.Play();
+            }
         }
     }
 }

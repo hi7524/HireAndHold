@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class LevelUpRewardController : MonoBehaviour
 {
@@ -23,6 +24,8 @@ public class LevelUpRewardController : MonoBehaviour
     private UnitCardUi[] unitCardUIs;
     private SkillCardUi[] skillCardUIs;
 
+    private HorizontalLayoutGroup layoutGroup;
+
     // 현재 레벨업 보상으로 생성된 유닛들을 추적
     private readonly List<GridUnit> currentLevelUpRewardUnits = new();
 
@@ -35,6 +38,7 @@ public class LevelUpRewardController : MonoBehaviour
 
     private bool isSelectedReward = false;
     private int defaultGoldReward = 25;
+    private bool isSkillCardSelecting = false; // 스킬 카드 선택 중 플래그
 
 
     // 초기 세팅
@@ -43,6 +47,9 @@ public class LevelUpRewardController : MonoBehaviour
         // 각 프리팹 카드 3장씩 생성
         CreateUnitCardPrf(3);
         CreateSkillCardPrf(3);
+
+        // Layout Group 캐싱
+        layoutGroup = GetComponent<HorizontalLayoutGroup>();
 
         playerExp.OnLevelUp += DrawLevelUpReward;
         playerStageGold.OnChangeGold += UpdateRerollBtn;
@@ -87,6 +94,18 @@ public class LevelUpRewardController : MonoBehaviour
         {
             confirmBtn.interactable = true;
         }
+    }
+
+    private void OnEnable()
+    {
+        // 패널 활성화 시 모든 카드 상태 초기화
+        ResetAllCards();
+    }
+
+    private void OnDisable()
+    {
+        // 패널 비활성화 시 모든 애니메이션 정리 및 카드 강제 비활성화
+        CleanupAllAnimations();
     }
 
     private void OnDestroy()
@@ -185,6 +204,7 @@ public class LevelUpRewardController : MonoBehaviour
     {
         // 보상 획득 여부 초기화 (새로운 보상이므로 리셋)
         isSelectedReward = false;
+        isSkillCardSelecting = false; // 스킬 카드 선택 플래그 초기화
 
         // 기존 카드들을 모두 비활성화
         SetActiveCards(skillCardUIs, false);
@@ -205,7 +225,7 @@ public class LevelUpRewardController : MonoBehaviour
         }
     }
 
-    // 스킬 카드가 선택되었을 때 호출
+    // 스킬 카드가 선택되었을 때 호출 (구버전 - 사용 안 함)
     public void OnSkillCardSelected(SkillCardUi clickedCard)
     {
         // 이전에 선택된 카드가 있으면 포커스 해제
@@ -224,6 +244,72 @@ public class LevelUpRewardController : MonoBehaviour
             confirmBtn.interactable = true;
     }
 
+    // 스킬 카드가 즉시 획득되었을 때 호출
+    public void OnSkillCardAcquired(SkillCardUi selectedCard)
+    {
+        // 이미 선택 중이면 무시
+        if (isSkillCardSelecting)
+            return;
+
+        // 선택 중 플래그 설정
+        isSkillCardSelecting = true;
+
+        // Layout Group 비활성화 (위치 고정)
+        if (layoutGroup != null)
+            layoutGroup.enabled = false;
+
+        // 선택된 카드를 제외하고 나머지만 역순으로 작아지면서 비활성화
+        for (int i = 0; i < skillCardUIs.Length; i++)
+        {
+            var card = skillCardUIs[i];
+
+            // 선택된 카드는 특별한 애니메이션 적용
+            if (card == selectedCard)
+            {
+                // 기존 애니메이션 정리
+                card.transform.DOKill();
+
+                Vector3 originalPos = card.transform.localPosition;
+
+                // 시퀀스로 애니메이션 체이닝
+                Sequence selectedSequence = DOTween.Sequence();
+
+                selectedSequence.Append(card.transform.DOLocalMoveY(originalPos.y + 60f, 0.5f).SetEase(Ease.OutQuad));
+                selectedSequence.Join(card.transform.DOScale(1.1f, 0.3f).SetEase(Ease.OutQuad));
+
+                selectedSequence.AppendInterval(0.2f);
+
+                selectedSequence.Append(card.transform.DOScale(0f, 0.3f).SetEase(Ease.InBack));
+
+                selectedSequence.OnComplete(() => card.gameObject.SetActive(false));
+
+                continue;
+            }
+
+            int reverseIndex = skillCardUIs.Length - 1 - i; // 역순 인덱스
+
+            // 기존 애니메이션 정리
+            card.transform.DOKill();
+
+            card.transform.DOScale(Vector3.zero, 0.3f)
+                .SetDelay(reverseIndex * 0.1f)
+                .SetEase(Ease.InBack)
+                .OnComplete(() => card.gameObject.SetActive(false));
+        }
+
+        isSelectedReward = true;
+
+        // 스킬 획득 시 확인 버튼 활성화
+        if (confirmBtn != null)
+            confirmBtn.interactable = true;
+    }
+
+    // 스킬 카드 선택 가능 여부 확인
+    public bool CanSelectSkillCard()
+    {
+        return !isSkillCardSelecting;
+    }
+
     // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
@@ -234,20 +320,7 @@ public class LevelUpRewardController : MonoBehaviour
             uiManager.UpdateInfoText($"보상 선택을 패스하고 {defaultGoldReward}G 지급");
         }
 
-        // 스킬 카드가 선택된 경우 스킬 적용
-        if (selectedSkillCard != null && selectedSkillCard.IsSelected)
-        {
-            bool success = selectedSkillCard.ApplySkill();
-            if (!success)
-            {
-                Debug.LogWarning("스킬 적용 실패. 다시 선택해주세요.");
-                return;
-            }
-
-            // 선택 상태 초기화
-            selectedSkillCard.SetFocus(false);
-            selectedSkillCard = null;
-        }
+        // 스킬은 이미 카드 클릭 시 적용되었으므로 여기서는 처리 안 함
 
         // 현재 레벨업 보상 유닛들의 인벤토리 배치 허용
         EnableInventoryPlacementForPreviousRewards();
@@ -454,20 +527,65 @@ public class LevelUpRewardController : MonoBehaviour
     // 일부 활성화
     private void SetActiveCards(BaseCardUi[] cardArray, bool value)
     {
-        for (int i = 0; i < cardArray.Length; i++)
+        if (value)
         {
-            cardArray[i].gameObject.SetActive(value);
+            // Layout Group 활성화 (위치 재계산)
+            if (layoutGroup != null)
+                layoutGroup.enabled = true;
+
+            // 활성화할 때 순차적 스케일 애니메이션
+            for (int i = 0; i < cardArray.Length; i++)
+            {
+                var card = cardArray[i];
+
+                // 기존 애니메이션 정리
+                card.transform.DOKill();
+
+                card.gameObject.SetActive(true);
+
+                // 초기 스케일을 0으로 설정
+                card.transform.localScale = Vector3.zero;
+
+                // 순차적으로 스케일 애니메이션 (0.1초 간격)
+                card.transform.DOScale(Vector3.one, 0.3f)
+                    .SetDelay(i * 0.1f)
+                    .SetEase(Ease.OutBack);
+            }
+        }
+        else
+        {
+            // Layout Group 비활성화 (위치 고정)
+            if (layoutGroup != null)
+                layoutGroup.enabled = false;
+
+            // 비활성화할 때 역순으로 작아지면서 비활성화
+            for (int i = 0; i < cardArray.Length; i++)
+            {
+                var card = cardArray[i];
+                int reverseIndex = cardArray.Length - 1 - i; // 역순 인덱스
+
+                // 기존 애니메이션 정리
+                card.transform.DOKill();
+
+                card.transform.DOScale(Vector3.zero, 0.3f)
+                    .SetDelay(reverseIndex * 0.1f)
+                    .SetEase(Ease.InBack)
+                    .OnComplete(() => card.gameObject.SetActive(false));
+            }
         }
     }
 
     // 유닛 카드의 드롭 성공 처리
     private void OnUnitCardDropSuccess()
     {
+        // 드래그 상태 비활성화
         for (int i = 0; i < unitCardUIs.Length; i++)
         {
             unitCardUIs[i].SetDragState(false);
-            unitCardUIs[i].SetColor(new Color(0.267f, 0.267f, 0.267f));
         }
+
+        // 역순 애니메이션으로 카드 비활성화
+        SetActiveCards(unitCardUIs, false);
 
         reRollBtn.interactable = false;
         isSelectedReward = true;
@@ -475,5 +593,65 @@ public class LevelUpRewardController : MonoBehaviour
         // 유닛 드롭 시 확인 버튼 활성화
         if (confirmBtn != null)
             confirmBtn.interactable = true;
+    }
+
+    // 모든 카드 애니메이션 정리 및 강제 비활성화
+    private void CleanupAllAnimations()
+    {
+        if (unitCardUIs != null)
+        {
+            foreach (var card in unitCardUIs)
+            {
+                if (card != null)
+                {
+                    card.transform.DOKill();
+                    card.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        if (skillCardUIs != null)
+        {
+            foreach (var card in skillCardUIs)
+            {
+                if (card != null)
+                {
+                    card.transform.DOKill();
+                    card.SetFocus(false);
+                    card.gameObject.SetActive(false);
+                }
+            }
+        }
+    }
+
+    // 모든 카드 상태 초기화
+    private void ResetAllCards()
+    {
+        if (unitCardUIs != null)
+        {
+            foreach (var card in unitCardUIs)
+            {
+                if (card != null)
+                {
+                    card.transform.localScale = Vector3.one;
+                    card.transform.localPosition = Vector3.zero;
+                    card.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        if (skillCardUIs != null)
+        {
+            foreach (var card in skillCardUIs)
+            {
+                if (card != null)
+                {
+                    card.transform.localScale = Vector3.one;
+                    card.transform.localPosition = Vector3.zero;
+                    card.SetFocus(false);
+                    card.gameObject.SetActive(false);
+                }
+            }
+        }
     }
 }
