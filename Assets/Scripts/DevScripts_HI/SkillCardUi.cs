@@ -89,10 +89,20 @@ public class SkillCardUi : BaseCardUi
     // 카드 클릭 시 선택
     public void OnCardClicked()
     {
-        // LevelUpRewardController가 있으면 그쪽으로
+        // LevelUpRewardController가 있으면 바로 스킬 적용
         if (levelUpRewardController != null)
         {
-            levelUpRewardController.OnSkillCardSelected(this);
+            // 테두리 활성화
+            SetFocus(true);
+            isSelected = true;
+
+            // 스킬 적용
+            bool success = ApplySkill();
+            if (success)
+            {
+                // 즉시 획득 처리 (이 카드 제외하고 나머지 카드 비활성화)
+                levelUpRewardController.OnSkillCardAcquired(this);
+            }
         }
         // SkillSelectUi 콜백이 있으면 그쪽으로
         else if (OnCardClickedCallback != null)
