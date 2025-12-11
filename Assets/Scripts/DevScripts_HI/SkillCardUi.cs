@@ -47,7 +47,7 @@ public class SkillCardUi : BaseCardUi
         SetFocus(false);
     }
 
-    private async void UpdatePlayerSkillUI()
+    private void UpdatePlayerSkillUI()
     {
         if (currentSkillId == -1) return;
 
@@ -64,8 +64,8 @@ public class SkillCardUi : BaseCardUi
         // PlayerSkill은 별 레벨이 없으므로 별 UI 숨김 (0개)
         UpdateStarUI(0);
 
-        // 스킬 아이콘 로드
-        await LoadSkillIconAsync(skillData.SKILL_ICON);
+        // 스킬 아이콘 로드 (캐시 우선)
+        LoadSkillIcon(skillData.SKILL_ICON);
     }
 
     public void UpdateStarUI(int starCount)
@@ -121,7 +121,7 @@ public class SkillCardUi : BaseCardUi
         return currentSkillId;
     }
 
-    private async void UpdateSkillUI()
+    private void UpdateSkillUI()
     {
         if (currentSkillId == -1) return;
 
@@ -143,8 +143,33 @@ public class SkillCardUi : BaseCardUi
         int starLevel = GetStarLevelFromSkillId(currentSkillId);
         UpdateStarUI(starLevel - 1);
 
-        // 스킬 아이콘 로드
-        await LoadSkillIconAsync(skillData.SKILL_ICON);
+        // 스킬 아이콘 로드 (캐시 우선)
+        LoadSkillIcon(skillData.SKILL_ICON);
+    }
+
+    private void LoadSkillIcon(string iconAddress)
+    {
+        if (string.IsNullOrEmpty(iconAddress))
+        {
+            return;
+        }
+
+        // 공백 및 특수문자 제거
+        iconAddress = iconAddress.Trim();
+
+        // 캐시된 스프라이트가 있으면 즉시 사용
+        var cachedSprite = AddressablePreloader.Instance.GetCachedSprite(iconAddress);
+        if (cachedSprite != null)
+        {
+            if (skillIcon != null)
+            {
+                skillIcon.sprite = cachedSprite;
+            }
+            return;
+        }
+
+        // 캐시에 없으면 비동기 로드 (폴백)
+        LoadSkillIconAsync(iconAddress).Forget();
     }
 
     private async UniTask LoadSkillIconAsync(string iconAddress)
@@ -160,9 +185,6 @@ public class SkillCardUi : BaseCardUi
             return;
         }
 
-        // 공백 및 특수문자 제거
-        iconAddress = iconAddress.Trim();
-
         // Addressable로 Sprite 로드
         iconHandle = Addressables.LoadAssetAsync<Sprite>(iconAddress);
         var sprite = await iconHandle.ToUniTask();
@@ -171,7 +193,6 @@ public class SkillCardUi : BaseCardUi
         {
             skillIcon.sprite = sprite;
         }
-       
     }
 
     private int GetStarLevelFromSkillId(int skillId)

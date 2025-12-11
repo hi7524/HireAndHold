@@ -177,12 +177,19 @@ public class Unit : MonoBehaviour
     //강화 데이터 유닛에 저장
     private void ApplyEnforceBonus()
     {
+        // DatabaseManager가 없으면 스킵 (TestScene 등)
+        if (DatabaseManager.Instance == null)
+        {
+            Debug.Log($"[Enforce] DatabaseManager가 없어 강화 적용 스킵 (ID:{UnitID})");
+            return;
+        }
+
         string id = UnitID.ToString();
         var character = DatabaseManager.Instance.GetCharacter(id);
 
         if (character == null)
         {
-            Debug.LogError($"[Enforce] 캐릭터 데이터 없음: {id}");
+            Debug.LogWarning($"[Enforce] 캐릭터 데이터 없음: {id}");
             return;
         }
 

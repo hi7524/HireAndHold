@@ -227,8 +227,8 @@ public class TestSceneUIBuilder : MonoBehaviour
             new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1));
         CreatePlayerSkillSection(skillPanel.transform);
 
-        // 유닛 스탯 패널 (하단 왼쪽 앵커)
-        unitStatPanel = CreatePanel("UnitStatPanel", new Vector2(20, 20), new Vector2(400, 320),
+        // 유닛 스탯 패널 (하단 왼쪽 앵커) - 높이 증가 (카드 배치 섹션 추가)
+        unitStatPanel = CreatePanel("UnitStatPanel", new Vector2(20, 20), new Vector2(400, 700),
             new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0));
         CreateUnitStatSection(unitStatPanel.transform);
 
@@ -425,45 +425,136 @@ public class TestSceneUIBuilder : MonoBehaviour
     private void CreateUnitStatSection(Transform parent)
     {
         CreateLabel(parent, "=== 유닛 스탯 ===");
-        
+
         GameObject controllerObj = new GameObject("UnitStatEditor");
         controllerObj.transform.SetParent(parent, false);
         unitStatEditor = controllerObj.AddComponent<TestUnitStatEditor>();
-        
+
         // 유닛 드롭다운
         GameObject dropdownObj = CreateDropdown(parent, "UnitDropdown");
         var dropdown = dropdownObj.GetComponent<TMP_Dropdown>();
-        
+
         // 리프레시 버튼
         GameObject refreshBtnObj = CreateButton(parent, "유닛 갱신", new Color(0.5f, 0.5f, 0.5f, 1f));
         var refreshBtn = refreshBtnObj.GetComponent<Button>();
-        
-        // 유닛 정보 텍스트
-        GameObject infoObj = CreateLabel(parent, "유닛 정보");
+
+        // 유닛 정보 텍스트 (어두운 배경)
+        GameObject infoPanelObj = new GameObject("InfoPanel");
+        infoPanelObj.transform.SetParent(parent, false);
+        infoPanelObj.layer = LayerMask.NameToLayer("UI");
+
+        RectTransform infoPanelRect = infoPanelObj.AddComponent<RectTransform>();
+        infoPanelRect.sizeDelta = new Vector2(380, 130);
+
+        Image infoPanelImg = infoPanelObj.AddComponent<Image>();
+        infoPanelImg.color = new Color(0.15f, 0.15f, 0.15f, 0.95f);
+
+        GameObject infoObj = CreateLabel(infoPanelObj.transform, "유닛 정보");
         var infoText = infoObj.GetComponent<TMP_Text>();
-        
+        infoText.color = Color.white;
+        infoText.alignment = TextAlignmentOptions.TopLeft;
+        infoText.fontSize = fontSize - 4;
+
+        RectTransform infoRect = infoObj.GetComponent<RectTransform>();
+        infoRect.anchorMin = Vector2.zero;
+        infoRect.anchorMax = Vector2.one;
+        infoRect.offsetMin = new Vector2(10, 5);
+        infoRect.offsetMax = new Vector2(-10, -5);
+
         // 스탯 입력 필드들
         GameObject atkObj = CreateInputField(parent, "공격력", "100");
         var atkInput = atkObj.GetComponentInChildren<TMP_InputField>();
-        
+
+        GameObject cooltimeObj = CreateInputField(parent, "쿨타임", "1.0");
+        var cooltimeInput = cooltimeObj.GetComponentInChildren<TMP_InputField>();
+
         GameObject critRateObj = CreateInputField(parent, "치명타율", "10");
         var critRateInput = critRateObj.GetComponentInChildren<TMP_InputField>();
-        
+
         GameObject critDmgObj = CreateInputField(parent, "치명타뎀", "1.5");
         var critDmgInput = critDmgObj.GetComponentInChildren<TMP_InputField>();
-        
-        // 적용 버튼
-        GameObject applyBtnObj = CreateButton(parent, "스탯 적용", buttonColor);
+
+        // 버튼 컨테이너 (선택 적용)
+        GameObject btnContainer = new GameObject("ButtonContainer");
+        btnContainer.transform.SetParent(parent, false);
+        btnContainer.layer = LayerMask.NameToLayer("UI");
+
+        RectTransform btnContainerRect = btnContainer.AddComponent<RectTransform>();
+        btnContainerRect.sizeDelta = new Vector2(380, 50);
+
+        HorizontalLayoutGroup btnLayout = btnContainer.AddComponent<HorizontalLayoutGroup>();
+        btnLayout.spacing = 10;
+        btnLayout.childControlWidth = true;
+        btnLayout.childForceExpandWidth = true;
+
+        // 씬 유닛 적용 버튼
+        GameObject applyBtnObj = CreateButton(btnContainer.transform, "씬 적용", buttonColor);
         var applyBtn = applyBtnObj.GetComponent<Button>();
-        
+
+        // DataTable/CSV 버튼 컨테이너
+        GameObject dataTableBtnContainer = new GameObject("DataTableButtonContainer");
+        dataTableBtnContainer.transform.SetParent(parent, false);
+        dataTableBtnContainer.layer = LayerMask.NameToLayer("UI");
+
+        RectTransform dataTableBtnContainerRect = dataTableBtnContainer.AddComponent<RectTransform>();
+        dataTableBtnContainerRect.sizeDelta = new Vector2(380, 50);
+
+        HorizontalLayoutGroup dataTableBtnLayout = dataTableBtnContainer.AddComponent<HorizontalLayoutGroup>();
+        dataTableBtnLayout.spacing = 10;
+        dataTableBtnLayout.childControlWidth = true;
+        dataTableBtnLayout.childForceExpandWidth = true;
+
+        // DataTable 적용 버튼
+        GameObject applyToDataTableBtnObj = CreateButton(dataTableBtnContainer.transform, "테이블 적용", new Color(0.5f, 0.3f, 0.7f, 1f));
+        var applyToDataTableBtn = applyToDataTableBtnObj.GetComponent<Button>();
+
+        // DataTable 리셋 버튼
+        GameObject resetDataTableBtnObj = CreateButton(dataTableBtnContainer.transform, "테이블 리셋", new Color(0.6f, 0.3f, 0.3f, 1f));
+        var resetDataTableBtn = resetDataTableBtnObj.GetComponent<Button>();
+
+        // CSV 저장 버튼
+        GameObject saveToCsvBtnObj = CreateButton(parent, "CSV 파일 저장", new Color(0.3f, 0.6f, 0.3f, 1f));
+        var saveToCsvBtn = saveToCsvBtnObj.GetComponent<Button>();
+
+        // === 유닛 슬롯 배치 섹션 ===
+        // 유닛 슬롯 생성 버튼
+        GameObject spawnSlotBtnObj = CreateButton(parent, "유닛 슬롯 생성", new Color(0.4f, 0.6f, 0.8f, 1f));
+        var spawnSlotBtn = spawnSlotBtnObj.GetComponent<Button>();
+
+        // 유닛 슬롯 컨테이너 (생성된 슬롯이 여기에 표시됨)
+        GameObject slotContainerObj = new GameObject("UnitSlotContainer");
+        slotContainerObj.transform.SetParent(parent, false);
+        slotContainerObj.layer = LayerMask.NameToLayer("UI");
+
+        RectTransform slotContainerRect = slotContainerObj.AddComponent<RectTransform>();
+        slotContainerRect.sizeDelta = new Vector2(380, 120);
+
+        Image slotContainerBg = slotContainerObj.AddComponent<Image>();
+        slotContainerBg.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+
+        HorizontalLayoutGroup slotLayout = slotContainerObj.AddComponent<HorizontalLayoutGroup>();
+        slotLayout.padding = new RectOffset(10, 10, 10, 10);
+        slotLayout.spacing = 10;
+        slotLayout.childAlignment = TextAnchor.MiddleCenter;
+        slotLayout.childControlWidth = false;
+        slotLayout.childControlHeight = false;
+
         SetPrivateField(unitStatEditor, "unitDropdown", dropdown);
         SetPrivateField(unitStatEditor, "refreshButton", refreshBtn);
         SetPrivateField(unitStatEditor, "selectedUnitInfoText", infoText);
         SetPrivateField(unitStatEditor, "attackDamageInput", atkInput);
+        SetPrivateField(unitStatEditor, "attackCooltimeInput", cooltimeInput);
         SetPrivateField(unitStatEditor, "critRateInput", critRateInput);
         SetPrivateField(unitStatEditor, "critDamageInput", critDmgInput);
         SetPrivateField(unitStatEditor, "applyButton", applyBtn);
-        
+        SetPrivateField(unitStatEditor, "applyToDataTableButton", applyToDataTableBtn);
+        SetPrivateField(unitStatEditor, "resetDataTableButton", resetDataTableBtn);
+        SetPrivateField(unitStatEditor, "saveToCsvButton", saveToCsvBtn);
+        SetPrivateField(unitStatEditor, "spawnUnitSlotButton", spawnSlotBtn);
+        SetPrivateField(unitStatEditor, "unitSlotContainer", slotContainerObj.transform);
+
+        // TestSlot 프리팹은 TestUnitCreator.Instance를 통해 사용하므로 별도 로드 불필요
+
         unitStatEditor.Initialize();
     }
     

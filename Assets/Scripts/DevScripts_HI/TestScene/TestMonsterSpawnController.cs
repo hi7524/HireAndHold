@@ -35,7 +35,10 @@ public class TestMonsterSpawnController : MonoBehaviour
 
     // MonsterStatEditor 연동
     private TestMonsterStatEditor monsterStatEditor;
-    
+
+    // FloatingText 연동
+    private FloatingTextSpawner floatingTextSpawner;
+
     public void Initialize(ObjectPoolManager pool)
     {
         poolManager = pool;
@@ -49,6 +52,9 @@ public class TestMonsterSpawnController : MonoBehaviour
         {
             monsterStatEditor.OnMonsterStatChanged += OnMonsterStatOverrideChanged;
         }
+
+        // FloatingTextSpawner 연결
+        floatingTextSpawner = FindFirstObjectByType<FloatingTextSpawner>();
     }
 
     private void OnDestroy()
@@ -268,6 +274,12 @@ public class TestMonsterSpawnController : MonoBehaviour
         {
             // poolKey는 테스트용이므로 null 또는 빈 문자열
             enemy.InitializeWithData(poolManager, "", data, isBoss, hpMultiplier, expMultiplier);
+
+            // FloatingTextSpawner 설정
+            if (floatingTextSpawner != null)
+            {
+                enemy.SetFloatingTextSpawner(floatingTextSpawner);
+            }
 
             // 비주얼 로드
             if (!string.IsNullOrEmpty(data.MON_MODEL))
