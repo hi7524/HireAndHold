@@ -36,6 +36,7 @@ public static class AnimParams
 {
     public static readonly int IsActive = Animator.StringToHash("IsActive");
     public static readonly int Slash = Animator.StringToHash("Slash");
+    public static readonly int SimpleBowShot = Animator.StringToHash("SimpleBowShot");
     public static readonly int Cast = Animator.StringToHash("Cast");
 }
 
@@ -48,4 +49,10 @@ public static class GameConstants
 public static class PoolKey
 {
     public static readonly string UnitSkill = "UnitSkill";
+}
+
+public enum ProjectileType
+{
+    Default = 0,
+    Bow = 1,
 }

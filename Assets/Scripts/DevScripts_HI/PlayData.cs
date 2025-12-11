@@ -17,7 +17,7 @@ public static class PlayData
 {
     public static Dictionary<int, float> unitFragments = new();
 
-    public static HashSet<int> selectedUnitIds = new HashSet<int>{ 11101, 11104, 11107, 11110, 11113 };
+    public static HashSet<int> selectedUnitIds = new HashSet<int>{ 11119, 11104, 11122, 11128, 11113 };
 
     //편성된 덱 배열
 
