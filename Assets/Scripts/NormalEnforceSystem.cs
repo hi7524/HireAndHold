@@ -181,4 +181,22 @@ public class NormalEnforceSystem
     {
         return (PlayData.Gold, PlayData.EnhanceStone);
     }
+
+    public float GetNextAttack(Unit unit)
+    {
+        var data = unit.GetUnitData();
+        if (data == null) return unit.GetAttackDamageStat().Value;
+
+        int currentLv = DatabaseManager.Instance
+            .GetCharacter(unit.UnitID.ToString()).enforceLevel;
+
+        int nextLv = currentLv + 1;
+        if (!SharedTable.All.TryGetValue(nextLv, out var enforceData))
+            return unit.GetAttackDamageStat().Value;
+
+        return unit.GetAttackDamageStat().Value + enforceData.AttackUp;
+    }
+
+
+
 }

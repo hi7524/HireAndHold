@@ -51,6 +51,8 @@ public static class DataTableManager
             LoadTableAsync<DataTable_Item>(DataTableIds.Item),
             LoadTableAsync<DataTable_Selling>(DataTableIds.Selling),
             LoadTableAsync<DataTable_StageLevel>(DataTableIds.StageLevel),
+            LoadTableAsync<DataTable_HeroEnforce>(DataTableIds.HeroEnforce),
+            LoadTableAsync<DataTable_HeroEnforceEffect>(DataTableIds.HeroEnforceEffect),
            
             // LoadTableAsync<DataTable_Character>(DataTableIds.Character),
         };
@@ -84,6 +86,10 @@ public static class DataTableManager
     public static DataTable_Item ItemTable => Get<DataTable_Item>(DataTableIds.Item);
     public static DataTable_Selling SellingTable => Get<DataTable_Selling>(DataTableIds.Selling);
     public static DataTable_StageLevel StageLevelTable => Get<DataTable_StageLevel>(DataTableIds.StageLevel);
+    public static DataTable_HeroEnforce heroEnforceTable => Get<DataTable_HeroEnforce>(DataTableIds.HeroEnforce);
+
+    public static DataTable_HeroEnforceEffect heroEnforceEffectTable => Get<DataTable_HeroEnforceEffect>(DataTableIds.HeroEnforceEffect);
+
 
 
     public static T Get<T>(string id) where T : DataTable

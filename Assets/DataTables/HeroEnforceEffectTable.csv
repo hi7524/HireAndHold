@@ -1,5 +1,117 @@
-Hero_Enforce_EffectID,SkillID1,SkillID2,Skill_Damage_Up,Attack_Up,Duration_Up,Projectile,CoolTime_Down,Enforce_Effect_DESCRIPTION,Enforce_Effect_DESCRIPTION_UI
-13301,0,0,0,50,0,0,0,Enforce_Effect_DESCRIPTION_1301,공격력 50%증가
-13302,21101,0,0,0,0,2,0,Enforce_Effect_DESCRIPTION_1302,얼음 조각 투사체 2개 증가
-13303,21101,21101,50,0,0,0,0,Enforce_Effect_DESCRIPTION_1303,스킬 데미지 50% 증가
-13304,21101,0,30,30,5,1,20,Enforce_Effect_DESCRIPTION_1304,모든 능력 강화
+Hero_Enforce_EffectID,SkillID1,SkillID2,Skill_Damage_Up,Attack_Up,Duration_Up,Projectile,CoolTime_Down,Attack_Speed,Enforce_Effect_DESCRIPTION,Enforce_Effect_DESCRIPTION
+13301,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13301,공격력 30% 증가
+13302,21001,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13302,화염 포화 투사체 1개 증가
+13303,0,21002,0,0,0,0,0.9,0,Enforce_Effect_DESCRIPTION_13303,메테오 스트라이크 쿨타임 10% 감소
+13304,21001,21002,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13304,스킬 데미지 20% 증가
+13305,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13305,공격력 30% 증가
+13306,21003,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13306,로워 슬래시 투사체 1개 증가
+13307,0,21004,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13307,그레이트 로워 슬래시 투사체 1개 증가
+13308,21003,21004,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13308,스킬 쿨타임 20% 감소
+13309,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13309,공격력 30% 증가
+13310,21005,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13310,서리의 창 투사체 1개 증가
+13311,0,21006,0,0,0,0,0.9,0,Enforce_Effect_DESCRIPTION_13311,영구동토 쿨타임 10% 감소
+13312,21005,21006,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13312,스킬 데미지 20% 증가
+13313,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13313,공격력 30% 증가
+13314,21007,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13314,골드 스트라이크 투사체 1개 증가
+13315,0,21008,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13315,골드 슬래시 투사체 1개 증가
+13316,21007,21008,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13316,스킬 쿨타임 20% 감소
+13317,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13317,공격력 30% 증가
+13318,21009,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13318,블로우 투사체 1개 증가
+13319,0,21010,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13319,파워 블로우 투사체 1개 증가
+13320,21009,21010,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13320,스킬 데미지 20% 증가
+13321,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13321,공격력 30% 증가
+13322,21011,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13322,블루 스트라이크 투사체 1개 증가
+13323,0,21012,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13323,블루 슬래시 투사체 1개 증가
+13324,21011,21012,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13324,스킬 쿨타임 20% 감소
+13325,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13325,공격력 30% 증가
+13326,21013,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13326,블루 애로우 투사체 1개 증가
+13327,0,21014,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13327,멀티 블루 애로우 투사체 1개 증가
+13328,21013,21014,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13328,스킬 쿨타임 20% 감소
+13329,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13329,공격력 30% 증가
+13330,21015,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13330,강타 투사체 1개 증가
+13331,0,21016,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13331,초강타 투사체 1개 증가
+13332,21015,21016,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13332,스킬 데미지 20% 증가
+13333,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13333,공격력 30% 증가
+13334,21017,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13334,그린 애로우 투사체 1개 증가
+13335,0,21018,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13335,멀티 그린 애로우 투사체 1개 증가
+13336,21017,21018,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13336,스킬 쿨타임 20% 감소
+13337,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13337,공격력 30% 증가
+13338,21019,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13338,아크 임팩트 투사체 1개 증가
+13339,0,21020,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13339,웨이브 블래스트 데미지 20% 증가
+13340,21019,21020,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13340,스킬 쿨타임 20% 감소
+13341,0,0,0,1.3,0,0,,0,Enforce_Effect_DESCRIPTION_13341,공격력 30% 증가
+13342,21021,0,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13342,쉐도우 스파이크 쿨타임 20% 감소
+13343,,21022,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13343,나이트 스파인 쿨타임 20% 감소
+13344,21021,21022,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13344,스킬 데미지 20% 증가
+13345,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13345,공격력 30% 증가
+13346,21023,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13346,스트라이크 투사체 1개 증가
+13347,0,21024,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13347,파워 스트라이크 투사체 1개 증가
+13348,21023,21024,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13348,스킬 데미지 20% 증가
+13349,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13349,공격력 30% 증가
+13350,21025,0,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13350,그림자 일격 쿨타임 20% 감소
+13351,0,21026,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13351,그림자 난무 쿨타임 20% 감소
+13352,21025,21026,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13352,스킬 데미지 20% 증가
+13353,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13353,공격력 30% 증가
+13354,21027,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13354,단공참 투사체 1개 증가
+13355,0,21028,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13355,진단공참 투사체 1개 증가
+13356,21027,21028,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13356,스킬 데미지 20% 증가
+13357,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13357,공격력 30% 증가
+13358,21029,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13358,분쇄 투사체 1개 증가
+13359,0,21030,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13359,분쇄격 쿨타임 20% 감소
+13360,21029,21030,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13360,스킬 데미지 20% 증가
+13361,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13361,공격력 30% 증가
+13362,21031,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13362,홀리 슬래시 투사체 1개 증가
+13363,0,21032,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13363,홀리 프레이어 슬래시 투사체 1개 증가
+13364,21031,21032,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13364,스킬 쿨타임 20% 감소
+13365,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13365,공격력 30% 증가
+13366,21033,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13366,쓰러스트 투사체 1개 증가
+13367,0,21034,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13367,피어싱 쓰러스트 투사체 1개 증가
+13368,21033,21034,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13368,스킬 쿨타임 20% 감소
+13369,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13369,공격력 30% 증가
+13370,21035,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13370,스위프트 엣지 투사체 1개 증가
+13371,0,21036,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13371,템페스트 랜드 투사체 1개 증가
+13372,21035,21036,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13372,스킬 데미지 20% 증가
+13373,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13373,공격력 30% 증가
+13374,21037,0,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13374,죽음의 연격 쿨타임 20% 감소
+13375,0,21038,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13375,환영난무 쿨타임 20% 감소
+13376,21037,21038,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13376,스킬 데미지 20% 증가
+13377,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13377,공격력 30% 증가
+13378,21039,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13378,홀리 엣지 투사체 1개 증가
+13379,0,21040,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13379,디바인 블레이드 투사체 1개 증가
+13380,21039,21040,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13380,스킬 쿨타임 20% 감소
+13381,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13381,공격력 30% 증가
+13382,21041,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13382,데스 엣지 투사체 1개 증가
+13383,,21042,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13383,다크니스 램페이지 투사체 1개 증가
+13384,21041,21042,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13384,스킬 데미지 20% 증가
+13385,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13385,공격력 30% 증가
+13386,21043,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13386,아이스 팽 슬래시 투사체 1개 증가
+13387,0,21044,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13387,앱솔루트 제로 엣지 쿨타임 20% 감소
+13388,21043,21044,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13388,스킬 데미지 20% 증가
+13389,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13389,공격력 30% 증가
+13390,21045,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13390,라인 드라이브 투사체 1개 증가
+13391,0,21046,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13391,랜스 다이브 쿨타임 20% 감소
+13392,21045,21046,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13392,스킬 데미지 20% 증가
+13393,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13393,공격력 30% 증가
+13394,21047,0,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13394,헤비 스플릿 쿨타임 20% 감소
+13395,0,21048,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13395,클리버 크래시 쿨타임 20% 감소
+13396,21047,21048,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13396,스킬 데미지 20% 증가
+13397,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13397,공격력 30% 증가
+13398,21049,0,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13398,레조 스매시 쿨타임 20% 감소
+13399,,21050,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13399,스플릿 엣지 쿨타임 20% 감소
+133100,21049,21050,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13400,스킬 데미지 20% 증가
+133101,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13401,공격력 30% 증가
+133102,21051,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13402,크로스 이클립스 투사체 1개 증가
+133103,0,21052,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13403,드래곤 포스 투사체 1개 증가
+133104,21051,21052,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13404,스킬 데미지 20% 증가
+133105,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13405,공격력 30% 증가
+133106,21053,0,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13406,리프 스플래시 투사체 1개 증가
+133107,0,21054,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13407,숲의 분노 쿨타임 20% 감소
+133108,21053,21054,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13408,스킬 데미지 20% 증가
+133109,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13409,공격력 30% 증가
+133110,21055,0,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13410,카르마 스파인 쿨타임 20% 감소
+133111,0,21056,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13411,홀리 브레이크 쿨타임 20% 감소
+133112,21055,21056,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13412,스킬 데미지 20% 증가
+133113,0,0,0,1.3,0,0,0,0,Enforce_Effect_DESCRIPTION_13413,공격력 30% 증가
+133114,21057,0,0,0,0,0,0.8,0,Enforce_Effect_DESCRIPTION_13414,대지 분쇄 쿨타임 20% 감소
+133115,0,21058,0,0,0,1,0,0,Enforce_Effect_DESCRIPTION_13415,심검 소환 투사체 1개 증가
+133116,21057,21058,1.2,0,0,0,0,0,Enforce_Effect_DESCRIPTION_13416,스킬 데미지 20% 증가

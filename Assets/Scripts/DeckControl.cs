@@ -80,29 +80,23 @@ public class DeckControl : MonoBehaviour
     async void Start()
     {
         await InitializeData();
-
-        //임시 유닛 추가 (인게임 유닛 편성 데이터 전달 테스트용 )
-        if (!DatabaseManager.Instance.CurrentUser.characters.ContainsKey("11119"))
-        {
-            var tempChar = new OwnedCharacter
-            {
-                id = "11119",
-                level = 1,
-                star = 1,
-                exp = 0,
-                awakening = 0
-            };
-
-            DatabaseManager.Instance.CurrentUser.characters["11119"] = tempChar;
-            Debug.Log("테스트 유닛 11119 임시 추가됨");
-        }
-        
         await CreateUnitCards();
-        LoadPresets();
+        //LoadPresets();
         await LoadAndSetupPresets();
         UpdateAllUI();
         unitInfoUI.SetUnitManager(battleUnitManager);
         PlayData.AddEnhanceStone(999999); //임시 강화석
+        PlayData.AddUnitFragments(11119, 9999999);//임시 유닛 조각
+        PlayData.AddUnitFragments(11101, 9999999);//임시 유닛 조각
+        PlayData.AddUnitFragments(11104, 9999999);//임시 유닛 조각
+        PlayData.AddUnitFragments(11107, 9999999);//임시 유닛 조각
+        PlayData.AddUnitFragments(11110, 9999999);//임시 유닛 조각
+        PlayData.AddUnitFragments(11113, 9999999);//임시 유닛 조각
+        //11101, 11104, 11107, 11110, 11113
+
+
+        ApplyPresetToSelectedUnitIds();
+
 
     }
 
@@ -127,15 +121,24 @@ public class DeckControl : MonoBehaviour
     async UniTask LoadAndSetupPresets()
     {
         DatabaseManager.Instance.SyncPresetsToPlayData();
+        LoadPresets();
 
-        for (int i = 0; i < 5; i++)
+        if (!PlayData.IsAnyPresetSaved())
         {
-            await AutoFillPresetIfEmpty(i);
+            Debug.Log("처음 실행 → 자동 편성 실행");
+            for (int i = 0; i < 5; i++)
+            {
+                await AutoFillPresetIfEmpty(i);
+            }
+        }
+        else
+        {
+            Debug.Log("이미 프리셋 있음 → 자동 편성 스킵");
         }
 
         LoadPreset(activePresetIndex);
-
     }
+
 
     async UniTask CreateUnitCards()
     {
@@ -239,11 +242,14 @@ public class DeckControl : MonoBehaviour
         LoadPreset(index);
         UpdatePresetButtonsStates();
 
+        ApplyPresetToSelectedUnitIds();
+
         if (stageDeck != null && stageDeck.isActiveAndEnabled)
         {
             stageDeck.Refresh();
         }
     }
+
 
     void LoadPreset(int index)
     {
@@ -271,7 +277,7 @@ public class DeckControl : MonoBehaviour
         UpdateCompleteButton();
     }
 
-    void LoadPresets()
+    public void LoadPresets()
     {
         for (int p = 0; p < 5; p++)
         {
@@ -663,9 +669,9 @@ public class DeckControl : MonoBehaviour
             ExitEditMode();
         }
     }
-    private void ApplyPresetToSelectedUnitIds()
+    public void ApplyPresetToSelectedUnitIds()
     {
-        PlayData.selectedUnitIds.Clear(); //초기화
+        PlayData.selectedUnitIds.Clear();
 
         for (int i = 0; i < 5; i++)
         {
@@ -677,6 +683,8 @@ public class DeckControl : MonoBehaviour
             }
         }
 
-        Debug.Log("PlayData.selectedUnitIds updated " + string.Join(", ", PlayData.selectedUnitIds));
+        Debug.Log($"[DeckControl] PlayData.selectedUnitIds = {string.Join(", ", PlayData.selectedUnitIds)}");
     }
+
 }
+

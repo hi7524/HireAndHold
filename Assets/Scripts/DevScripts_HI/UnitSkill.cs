@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class UnitSkill
 {
@@ -29,7 +29,8 @@ public class UnitSkill
     // 쿨타임이 돌았는지 확인
     public bool CanUse()
     {
-        return Time.time >= lastUsedTime + skillData.SKILL_COOLTIME;
+        float finalCooltime = skillData.SKILL_COOLTIME * owner.GetHeroSkillCooltimeMultiplier();
+        return Time.time >= lastUsedTime + finalCooltime;
     }
 
     // 쿨타임 확인 및 스킬 사용 시도
@@ -91,14 +92,20 @@ public class UnitSkill
         if (poolManager == null)
             return;
 
-        int projectileCount = Mathf.Max(1, skillData.SKILL_BOLT);
+        int baseProjectile = Mathf.Max(1, skillData.SKILL_BOLT);
+        int bonusProjectile = owner.GetHeroProjectileBonus();
+
+        int projectileCount = baseProjectile + bonusProjectile;
+
+        Debug.Log($"[SkillProjectile] {SkillName} → Base:{baseProjectile}, Bonus:{bonusProjectile}, Total:{projectileCount}");
+
 
         for (int i = 0; i < projectileCount; i++)
         {
             // 투사체 풀에서 가져오기
             GameObject projectileObj = poolManager.Get(skillData.SKILL_EFFECT);
 
-            if (projectileObj == null) // TODO: 임시, 테스트용 기본 프리팹 사용 **
+            if (projectileObj == null) // TODO: 임시, 테스트용 기본 프리팹 사용
                 projectileObj = poolManager.Get("UnitProjectile_Fire"); 
 
             if (projectileObj == null)
@@ -114,6 +121,8 @@ public class UnitSkill
             float baseDamage = owner.GetAttackDamageStat().Value;
             float damage = owner.CalculateDamage(target, baseDamage, skillData.SKILL_CRT, skillData.SKILL_CRT_DMG);
 
+            damage *= owner.GetHeroSkillDamageMultiplier();
+
             projectile.SetDamage(damage);
             projectile.SetTarget(target.transform);
             projectile.Launch();
@@ -121,19 +130,33 @@ public class UnitSkill
     }
 
     // 남은 쿨타임 (초)
+    //public float GetRemainingCooldown()
+    //{
+    //    float remaining = (lastUsedTime + skillData.SKILL_COOLTIME) - Time.time;
+    //    return Mathf.Max(0, remaining);
+    //}
+
+    //// 쿨타임 진행률 (0~1)
+    //public float GetCooldownProgress()
+    //{
+    //    if (skillData.SKILL_COOLTIME <= 0) 
+    //        return 1f;
+
+    //    float elapsed = Time.time - lastUsedTime;
+    //    return Mathf.Clamp01(elapsed / skillData.SKILL_COOLTIME);
+    //}
+
+    float finalCooltime => skillData.SKILL_COOLTIME * owner.GetHeroSkillCooltimeMultiplier();
+
     public float GetRemainingCooldown()
     {
-        float remaining = (lastUsedTime + skillData.SKILL_COOLTIME) - Time.time;
+        float remaining = (lastUsedTime + finalCooltime) - Time.time;
         return Mathf.Max(0, remaining);
     }
 
-    // 쿨타임 진행률 (0~1)
     public float GetCooldownProgress()
     {
-        if (skillData.SKILL_COOLTIME <= 0) 
-            return 1f;
-
-        float elapsed = Time.time - lastUsedTime;
-        return Mathf.Clamp01(elapsed / skillData.SKILL_COOLTIME);
+        return Mathf.Clamp01((Time.time - lastUsedTime) / finalCooltime);
     }
+
 }

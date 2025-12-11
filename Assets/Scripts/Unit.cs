@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
+using UnityEditor.Overlays;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Rendering;
@@ -45,8 +46,47 @@ public class Unit : MonoBehaviour
     private SortingGroup sortingGroup;
     private AnimationEvents animationEvents;
 
-    private readonly List<UnitSkill> skills = new(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
+    // 영웅 강화 공격력 배율 (기본 1.0)
+    private float heroAttackMultiplier = 1f;
 
+    // 영웅 강화 스킬 강화 효과 저장용
+    private float heroSkillDamageMultiplier = 1f;
+    private int heroProjectileBonus = 0;
+    private float heroSkillDurationBonus = 0f;
+    private float heroSkillCooltimeBonus = 1f;
+
+    //영구 캐릭터 아이디 (합성 기본 구분)
+    public int BaseCharacterID { get; private set; }
+
+
+    public void AddHeroAttackMultiplier(float mul)
+    {
+        heroAttackMultiplier *= mul;
+    }
+
+    public void AddHeroSkillDamageMultiplier(float mul)
+    {
+        heroSkillDamageMultiplier *= mul;
+    }
+
+    public void AddHeroSkillDuration(float value)
+    {
+        heroSkillDurationBonus += value;
+    }
+
+    public void AddHeroSkillCooltimeMultiplier(float mul)
+    {
+        heroSkillCooltimeBonus *= mul;
+    }
+
+    public void AddHeroProjectileBonus(int value)
+    {
+        heroProjectileBonus += value;
+    }
+
+
+    private readonly List<UnitSkill> skills = new(); // 성급 업그레이드에 따라 추가될 자동 시전 스킬
+    public UnitData GetUnitData() => unitData;
 
     private void Awake()
     {
@@ -107,11 +147,15 @@ public class Unit : MonoBehaviour
     public void SetUnitID(int ID)
     {
         UnitID = ID;
+
+        BaseCharacterID = ID;
+
         unitData = DataTableManager.UnitTable.Get(ID);
 
         Debug.Log($"Unit ID changed to: {ID}");
         SetStats();
         SetSkills();
+        ApplyEnforceBonus();
         SetVisualPrefab();
     }
 
@@ -121,36 +165,61 @@ public class Unit : MonoBehaviour
         UnitID = ID;
         unitData = DataTableManager.UnitTable.Get(ID);
 
-        Debug.Log($"Unit ID updated (preserving modifiers) to: {ID}");
         UpdateStatBaseValues();
+
         SetSkills();
+
+        ApplyEnforceBonus();
+
         SetVisualPrefab();
+
+        Debug.Log($"<color=magenta>[HeroEnforce After Merge]</color> atkMul:{heroAttackMultiplier}, dmgMul:{heroSkillDamageMultiplier}, proj:{heroProjectileBonus}, cool:{heroSkillCooltimeBonus}, dur:{heroSkillDurationBonus}");
     }
+
 
     // Stat 기본값만 업데이트 (모디파이어 보존)
     private void UpdateStatBaseValues()
     {
-        if (unitData == null) return;
+        if (unitData == null)
+        {
+            return;
+        }
 
         if (attackDamage != null)
+        {
             attackDamage.SetBaseValue(unitData.ATTACK);
+        }
         else
+        {
             attackDamage = new Stat(unitData.ATTACK);
+        }
 
         if (attackCooltime != null)
+        {
             attackCooltime.SetBaseValue(unitData.ATTACK_COOLTIME);
+        }
         else
+        {
             attackCooltime = new Stat(unitData.ATTACK_COOLTIME);
+        }
 
         if (criticalRate != null)
+        {
             criticalRate.SetBaseValue(unitData.ATTACK_CRITICAL);
+        }
         else
+        {
             criticalRate = new Stat(unitData.ATTACK_CRITICAL);
+        }
 
         if (criticalDamage != null)
+        {
             criticalDamage.SetBaseValue(unitData.CRITICAL_DAMAGE);
+        }
         else
+        {
             criticalDamage = new Stat(unitData.CRITICAL_DAMAGE);
+        }
     }
 
     // 데이터 테이블에서 로드한 값으로 유닛 스탯 초기화
@@ -169,12 +238,12 @@ public class Unit : MonoBehaviour
             // Defense.SetUpgradeValue(upgradeData.DefenseUpgrade);
             // MaxHealth.SetUpgradeValue(upgradeData.HealthUpgrade);
 
-            ApplyEnforceBonus();
+            //ApplyEnforceBonus();
             //강화 데이터 유닛에 저장(junseo)
         }
     }
 
-    //강화 데이터 유닛에 저장
+    // 강화 데이터 유닛에 저장 (모든 레벨 효과 누적)
     private void ApplyEnforceBonus()
     {
         // DatabaseManager가 없으면 스킵 (TestScene 등)
@@ -184,7 +253,8 @@ public class Unit : MonoBehaviour
             return;
         }
 
-        string id = UnitID.ToString();
+        //string id = UnitID.ToString();
+        string id = BaseCharacterID.ToString();
         var character = DatabaseManager.Instance.GetCharacter(id);
 
         if (character == null)
@@ -193,29 +263,125 @@ public class Unit : MonoBehaviour
             return;
         }
 
+        // NORMAL 강화 효과 적용
         int enforceLv = character.enforceLevel;
-        if (enforceLv <= 0)
+        if (enforceLv > 0)
         {
-            Debug.Log($"[Enforce] 강화레벨 0 → 적용 없음 (ID:{id})");
+            float totalAtkUp = 0f;
+            int rank = unitData.RANK;
+
+            foreach (var kv in NormalEnforceSystem.SharedTable.All)
+            {
+                var data = kv.Value;
+                if (data.Class == rank && data.Normal_Enforce_LV <= enforceLv)
+                {
+                    totalAtkUp += data.AttackUp;
+                }
+            }
+
+            attackDamage.AddModifier(new StatModifier(totalAtkUp, ModifierType.Flat));
+            Debug.Log($"[Normal Enforce 적용] Unit:{UnitID}, Lv:{enforceLv}, +Atk:{totalAtkUp}");
+        }
+
+        // HERO 강화 효과 적용 (⭐ 모든 레벨 누적)
+        int heroLv = character.heroEnforceLevel;
+        if (heroLv <= 0)
+        {
+            Debug.Log("[HeroEnforce] Lv 0 → Skip");
             return;
         }
 
-        float totalAtkUp = 0f;
-        int rank = unitData.RANK;
+        // 현재 유닛의 스킬
+        int skill1 = unitData.UNIT_SKILL1;
+        int skill2 = unitData.UNIT_SKILL2;
 
-        foreach (var kv in NormalEnforceSystem.SharedTable.All)
+        // ⭐ 1레벨부터 현재 레벨까지 모든 효과 누적 적용
+        for (int lv = 1; lv <= heroLv; lv++)
         {
-            var data = kv.Value;
-            if (data.Class == rank && data.Normal_Enforce_LV <= enforceLv)
+            var heroData = DataTableManager.heroEnforceTable.Get(BaseCharacterID, lv);
+            if (heroData == null)
             {
-                totalAtkUp += data.AttackUp;
+                Debug.LogWarning($"[HeroEnforce] heroData NULL (BaseID:{BaseCharacterID}, Lv:{lv})");
+                continue;
+            }
+
+            var effect = DataTableManager.heroEnforceEffectTable.Get(heroData.Hero_Enforce_EffectID);
+            if (effect == null)
+            {
+                Debug.LogWarning($"[HeroEnforce] effectData NULL (EffectID:{heroData.Hero_Enforce_EffectID})");
+                continue;
+            }
+
+            // 스킬 매칭 검사
+            bool skillMatched = false;
+
+            // Attack_Up만 있는 경우 (스킬 무관 강화)
+            if (effect.Attack_Up > 1f &&
+                effect.SkillID1.GetValueOrDefault(0) == 0 &&
+                effect.SkillID2.GetValueOrDefault(0) == 0)
+            {
+                skillMatched = true;
+            }
+            // 스킬 조건 없음
+            else if (effect.SkillID1.GetValueOrDefault(0) == 0 &&
+                     effect.SkillID2.GetValueOrDefault(0) == 0)
+            {
+                skillMatched = true;
+            }
+            // 스킬 매칭
+            else
+            {
+                int effectSkill1 = effect.SkillID1.GetValueOrDefault(0);
+                int effectSkill2 = effect.SkillID2.GetValueOrDefault(0);
+
+                if ((effectSkill1 > 0 && (effectSkill1 == skill1 || effectSkill1 == skill2)) ||
+                    (effectSkill2 > 0 && (effectSkill2 == skill1 || effectSkill2 == skill2)))
+                {
+                    skillMatched = true;
+                }
+            }
+
+            if (!skillMatched)
+            {
+                Debug.Log($"[HeroEnforce Lv{lv}] 스킬 불일치 → Skip (Unit:{UnitID}, SK1:{skill1}, SK2:{skill2})");
+                continue;
+            }
+
+            // 효과 누적 적용
+            if (effect.Attack_Up > 1f)
+            {
+                heroAttackMultiplier *= effect.Attack_Up;
+                Debug.Log($"[HeroEnforce Lv{lv}] AttackUp ×{effect.Attack_Up}");
+            }
+
+            if (effect.Skill_Damage_Up > 1f)
+            {
+                heroSkillDamageMultiplier *= effect.Skill_Damage_Up;
+                Debug.Log($"[HeroEnforce Lv{lv}] SkillDamageUp ×{effect.Skill_Damage_Up}");
+            }
+
+            if (effect.Duration_Up > 0f)
+            {
+                heroSkillDurationBonus += effect.Duration_Up;
+                Debug.Log($"[HeroEnforce Lv{lv}] Duration +{effect.Duration_Up}");
+            }
+
+            if (effect.Projectile > 0)
+            {
+                heroProjectileBonus += effect.Projectile;
+                Debug.Log($"[HeroEnforce Lv{lv}] Projectile +{effect.Projectile}");
+            }
+
+            if (effect.CoolTime_Down > 0f && effect.CoolTime_Down < 1f)
+            {
+                heroSkillCooltimeBonus *= effect.CoolTime_Down;
+                Debug.Log($"[HeroEnforce Lv{lv}] CoolTime ×{effect.CoolTime_Down}");
             }
         }
 
-        attackDamage.AddModifier(new StatModifier(totalAtkUp, ModifierType.Flat));
-
-        Debug.Log($"[Enforce 적용됨] Unit:{UnitID}, 강화Lv:{enforceLv}, " + $"추가Atk:{totalAtkUp}, 최종Atk:{attackDamage.Value}");
+        Debug.Log($"[HeroEnforce Final] atkMul={heroAttackMultiplier}, dmgMul={heroSkillDamageMultiplier}, proj={heroProjectileBonus}, cool={heroSkillCooltimeBonus}");
     }
+
 
     // 유닛 데이터에서 스킬 로드 및 추가
     private void SetSkills()
@@ -418,6 +584,10 @@ public class Unit : MonoBehaviour
 
         projectile.SetDamage(damage);
         projectile.SetTarget(AttackTarget.transform);
+        float finalDamage = Mathf.Round(damage * 10f) / 10f;
+
+        projectile.SetDamage(finalDamage);
+        projectile.SetTarget(AttackTarget.transform);
         projectile.Launch();
     }
 
@@ -439,6 +609,8 @@ public class Unit : MonoBehaviour
         {
             damage *= criticalDamage.Value; // 패시브 보너스 포함
         }
+
+        damage *= heroAttackMultiplier;
 
         return damage;
     }
@@ -545,4 +717,12 @@ public class Unit : MonoBehaviour
     {
         return attackCooltime;
     }
+
+    public float GetHeroSkillDamageMultiplier() => heroSkillDamageMultiplier;
+    public int GetHeroProjectileBonus() => heroProjectileBonus;
+    public float GetHeroSkillCooltimeMultiplier() => heroSkillCooltimeBonus;
+    public float GetHeroSkillDurationBonus() => heroSkillDurationBonus;
+
+
+
 }
