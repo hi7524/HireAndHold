@@ -92,6 +92,10 @@ public class SkillCardUi : BaseCardUi
         // LevelUpRewardController가 있으면 바로 스킬 적용
         if (levelUpRewardController != null)
         {
+            // 이미 선택 중이면 무시
+            if (!levelUpRewardController.CanSelectSkillCard())
+                return;
+
             // 테두리 활성화
             SetFocus(true);
             isSelected = true;

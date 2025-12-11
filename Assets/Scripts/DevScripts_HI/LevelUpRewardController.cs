@@ -38,6 +38,7 @@ public class LevelUpRewardController : MonoBehaviour
 
     private bool isSelectedReward = false;
     private int defaultGoldReward = 25;
+    private bool isSkillCardSelecting = false; // 스킬 카드 선택 중 플래그
 
 
     // 초기 세팅
@@ -203,6 +204,7 @@ public class LevelUpRewardController : MonoBehaviour
     {
         // 보상 획득 여부 초기화 (새로운 보상이므로 리셋)
         isSelectedReward = false;
+        isSkillCardSelecting = false; // 스킬 카드 선택 플래그 초기화
 
         // 기존 카드들을 모두 비활성화
         SetActiveCards(skillCardUIs, false);
@@ -245,6 +247,13 @@ public class LevelUpRewardController : MonoBehaviour
     // 스킬 카드가 즉시 획득되었을 때 호출
     public void OnSkillCardAcquired(SkillCardUi selectedCard)
     {
+        // 이미 선택 중이면 무시
+        if (isSkillCardSelecting)
+            return;
+
+        // 선택 중 플래그 설정
+        isSkillCardSelecting = true;
+
         // Layout Group 비활성화 (위치 고정)
         if (layoutGroup != null)
             layoutGroup.enabled = false;
@@ -293,6 +302,12 @@ public class LevelUpRewardController : MonoBehaviour
         // 스킬 획득 시 확인 버튼 활성화
         if (confirmBtn != null)
             confirmBtn.interactable = true;
+    }
+
+    // 스킬 카드 선택 가능 여부 확인
+    public bool CanSelectSkillCard()
+    {
+        return !isSkillCardSelecting;
     }
 
     // 완료 버튼 클릭
