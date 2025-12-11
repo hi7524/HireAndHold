@@ -2,6 +2,7 @@
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
+using System;
 
 public class DragManager : MonoBehaviour
 {
@@ -12,6 +13,10 @@ public class DragManager : MonoBehaviour
     private Camera mainCamera;
     private DragState dragState;
     private IDroppable currentDropTarget;
+
+    // 드래그 상태 변경 이벤트
+    public event Action OnDragStarted;
+    public event Action OnDragEnded;
 
     private Camera MainCamera
     {
@@ -99,6 +104,9 @@ public class DragManager : MonoBehaviour
         }
     }
 
+    // 현재 드래그 중인지 확인
+    public bool IsDragging => dragState.IsDragging;
+
     // 드래그 활성화/비활성화 설정
     public void SetDragEnabled(bool value)
     {
@@ -132,6 +140,9 @@ public class DragManager : MonoBehaviour
         dragState.Target.OnDragEnd();
 
         dragState.Reset();
+
+        // 드래그 종료 이벤트 발생
+        OnDragEnded?.Invoke();
     }
 
 
@@ -159,6 +170,9 @@ public class DragManager : MonoBehaviour
         }
 
         dragState.Target.OnDragStart();
+
+        // 드래그 시작 이벤트 발생
+        OnDragStarted?.Invoke();
     }
 
     // 드래그 중 처리: 오브젝트 이동 및 드롭 타겟 업데이트
@@ -219,6 +233,9 @@ public class DragManager : MonoBehaviour
         currentDropTarget = null;
 
         draggingTarget.OnDragEnd();
+
+        // 드래그 종료 이벤트 발생
+        OnDragEnded?.Invoke();
     }
 
     // 드롭 타겟 변경 감지 및 Enter/Exit 이벤트 처리
