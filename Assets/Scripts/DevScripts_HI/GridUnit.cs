@@ -11,6 +11,7 @@ public class GridUnit : MonoBehaviour, IDraggable
 
     private Unit unit;
     private BattleUnitManager battleUnitManager;
+    private GridManager gridManager;
 
     public int UnitId => unit.UnitID;
     public int StarLevel { get; private set; } = 1; // 성급 (1~3성)
@@ -27,6 +28,10 @@ public class GridUnit : MonoBehaviour, IDraggable
 
     private List<Transform> childrenObj = new List<Transform>();
     private AsyncOperationHandle<UnitGridData> gridDataHandle;
+
+    // 드래그 프록시 관리
+    private List<GridUnitDragProxy> dragProxies = new List<GridUnitDragProxy>();
+    private Vector2Int touchOffset = Vector2Int.zero; // 터치한 셀의 오프셋
 
 
     private void Awake()
@@ -59,6 +64,14 @@ public class GridUnit : MonoBehaviour, IDraggable
 
     public void OnDragStart()
     {
+        OnDragStartFromProxy(Vector2Int.zero);
+    }
+
+    // 프록시로부터 드래그 시작 (터치한 셀의 오프셋 정보 포함)
+    public void OnDragStartFromProxy(Vector2Int offset)
+    {
+        touchOffset = offset;
+
         // GridCell 설정 관련
         previousGridCell = curGridCell;
         curGridCell?.ClearObject();
@@ -70,7 +83,15 @@ public class GridUnit : MonoBehaviour, IDraggable
 
     public void OnDrag()
     {
+        // GridManager가 없으면 리턴
+        if (gridManager == null || GridData == null)
+            return;
 
+        // 유닛의 현재 월드 위치를 그리드 위치로 변환
+        Vector2Int currentGridPos = gridManager.WorldToGridPosition(transform.position);
+
+        // 현재 그리드 위치 기준으로 배치 가능 여부 체크 및 색상 업데이트
+        gridManager.CanPlaceUnit(currentGridPos, GridData.GetOccupiedCells());
     }
 
     public void OnDragEnd()
@@ -110,6 +131,18 @@ public class GridUnit : MonoBehaviour, IDraggable
     public void SetCurrentGridCell(GridCell cell)
     {
         curGridCell = cell;
+
+        // GridManager 참조 설정
+        if (cell != null && gridManager == null)
+        {
+            gridManager = cell.GetGridManager();
+
+            // GridManager를 얻은 후 DragProxy 재생성 (크기와 위치가 올바르게 설정됨)
+            if (GridData != null && dragProxies.Count == 0)
+            {
+                CreateDragProxies();
+            }
+        }
     }
 
     public GridCell GetPreviousCell()
@@ -127,6 +160,14 @@ public class GridUnit : MonoBehaviour, IDraggable
         // 새 프리뷰 생성
         CreatePreviewSprites();
         SetActiveChildrenObj(false);
+
+        // 드래그 프록시 생성
+        CreateDragProxies();
+    }
+
+    public Vector2Int GetTouchOffset()
+    {
+        return touchOffset;
     }
 
     // 미리보기 스프라이트 제거
@@ -182,6 +223,68 @@ public class GridUnit : MonoBehaviour, IDraggable
         }
     }
 
+    // 드래그 프록시 생성 - 유닛이 차지하는 모든 셀 위치에 터치 가능한 콜라이더 배치
+    private void CreateDragProxies()
+    {
+        // 기존 프록시 제거
+        ClearDragProxies();
+
+        if (GridData == null)
+            return;
+
+        var occupiedCells = GridData.GetOccupiedCells();
+
+        // 중심 셀 프록시 (offset = 0, 0)
+        CreateDragProxyAt(Vector2Int.zero);
+
+        // 나머지 셀 프록시들
+        foreach (var cellPos in occupiedCells)
+        {
+            CreateDragProxyAt(cellPos);
+        }
+    }
+
+    private void CreateDragProxyAt(Vector2Int cellOffset)
+    {
+        if (gridManager == null)
+            return;
+
+        GameObject proxyObj = new GameObject($"DragProxy_{cellOffset.x}_{cellOffset.y}");
+        proxyObj.transform.SetParent(transform);
+
+        // 콜라이더 크기와 간격 설정
+        const float proxySize = 0.5f;
+        const float proxySpacing = 0.05f;
+        float proxyInterval = proxySize + proxySpacing; // 0.6
+
+        proxyObj.transform.localPosition = new Vector3(
+            cellOffset.x * proxyInterval,
+            cellOffset.y * proxyInterval,
+            0
+        );
+        proxyObj.layer = gameObject.layer;
+
+        // 콜라이더 추가 (0.5 x 0.5 고정 크기)
+        BoxCollider2D collider = proxyObj.AddComponent<BoxCollider2D>();
+        collider.size = new Vector2(proxySize, proxySize);
+
+        // 프록시 컴포넌트 추가
+        GridUnitDragProxy proxy = proxyObj.AddComponent<GridUnitDragProxy>();
+        proxy.Initialize(this, cellOffset);
+
+        dragProxies.Add(proxy);
+    }
+
+    private void ClearDragProxies()
+    {
+        foreach (var proxy in dragProxies)
+        {
+            if (proxy != null)
+                Destroy(proxy.gameObject);
+        }
+        dragProxies.Clear();
+    }
+
     public void OnDropSuccess()
     {
         //
@@ -198,5 +301,8 @@ public class GridUnit : MonoBehaviour, IDraggable
         {
             battleUnitManager.UnregisterUnit(unit);
         }
+
+        // 드래그 프록시 정리
+        ClearDragProxies();
     }
 }

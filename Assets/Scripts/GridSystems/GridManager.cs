@@ -15,6 +15,8 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GridVisualizer gridVisualizer;
     [SerializeField] private BuffManager buffManager;
     [SerializeField] private BattleUnitManager unitManager;
+    [SerializeField] private float cellSize = 1f;
+    [SerializeField] private float cellSpace = 0.1f;
     [Space]
     [SerializeField] private Color validColor;
     [SerializeField] private Color invalidColor;
@@ -34,6 +36,8 @@ public class GridManager : MonoBehaviour
     public int[,] gridArray { get; private set; }
     public GridLayoutData LayoutData => layoutData;
     public bool IsInitialized { get; private set; } = false;
+    public float CellSize => cellSize;
+    public float CellSpace => cellSpace;
 
     private GridCell[,] gridCells;
     private int gridUnitCount = 0; // 그리드에 배치된 유닛 개수
@@ -184,6 +188,42 @@ public class GridManager : MonoBehaviour
     {
         return pos.x >= 0 && pos.x < layoutData.width &&
                pos.y >= 0 && pos.y < layoutData.height;
+    }
+
+    // 특정 그리드 위치의 GridCell 반환
+    public GridCell GetGridCellAt(Vector2Int pos)
+    {
+        if (!IsWithinBounds(pos))
+            return null;
+
+        return gridCells[pos.x, pos.y];
+    }
+
+    // 월드 좌표를 가장 가까운 그리드 위치로 변환
+    public Vector2Int WorldToGridPosition(Vector3 worldPos)
+    {
+        // GridCell들의 위치를 기준으로 가장 가까운 셀 찾기
+        float minDistance = float.MaxValue;
+        Vector2Int closestGridPos = Vector2Int.zero;
+
+        for (int x = 0; x < layoutData.width; x++)
+        {
+            for (int y = 0; y < layoutData.height; y++)
+            {
+                Vector2Int gridPos = new Vector2Int(x, y);
+                if (gridCells[x, y] != null)
+                {
+                    float distance = Vector3.Distance(worldPos, gridCells[x, y].transform.position);
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        closestGridPos = gridPos;
+                    }
+                }
+            }
+        }
+
+        return closestGridPos;
     }
 
     // 배치 가능 여부에 따라 셀 하이라이트 색상 적용
