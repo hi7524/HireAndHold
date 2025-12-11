@@ -3,12 +3,14 @@ using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using TMPro;
 
 public class SkillUI : MonoBehaviour
 {
     [SerializeField] private Image icon;
     [SerializeField] private Image cooldownMask;
     [SerializeField] private Button button;
+    [SerializeField] private TextMeshProUGUI cooldownText;
 
     private PlayerSkillBase skill;
     private Vector3 spawnPosition;
@@ -39,6 +41,12 @@ public class SkillUI : MonoBehaviour
         if (cooldownMask == null) return;
 
         cooldownMask.fillAmount = 0f;  // 초기에는 쿨타임 없음 (스킬 사용 가능)
+
+        // 쿨타임 텍스트 초기화
+        if (cooldownText != null)
+        {
+            cooldownText.text = "";
+        }
     }
 
     private async UniTaskVoid LoadSkillIconAsync()
@@ -49,15 +57,23 @@ public class SkillUI : MonoBehaviour
             return;
         }
 
+        // DataTableManager 초기화 대기
+        while (!DataTableManager.IsInitialized)
+        {
+            await UniTask.Yield();
+        }
+
         SkillData skillData = DataTableManager.SkillTable?.Get(skill.SkillID);
         if (skillData == null)
         {
+            Debug.LogWarning($"[SkillUI] SkillData를 찾을 수 없습니다. SkillID: {skill.SkillID}");
             return;
         }
 
         string iconAddress = skillData.SKILL_ICON;
         if (string.IsNullOrEmpty(iconAddress))
         {
+            Debug.LogWarning($"[SkillUI] SKILL_ICON이 비어있습니다. SkillID: {skill.SkillID}");
             return;
         }
 
@@ -69,13 +85,21 @@ public class SkillUI : MonoBehaviour
             Addressables.Release(iconHandle);
         }
 
-        // Addressables로 Sprite 로드
-        iconHandle = Addressables.LoadAssetAsync<Sprite>(iconAddress);
-        var sprite = await iconHandle.ToUniTask();
-
-        if (iconHandle.Status == AsyncOperationStatus.Succeeded && icon != null)
+        try
         {
-            icon.sprite = sprite;
+            // Addressables로 Sprite 로드
+            iconHandle = Addressables.LoadAssetAsync<Sprite>(iconAddress);
+            var sprite = await iconHandle.ToUniTask();
+
+            if (iconHandle.Status == AsyncOperationStatus.Succeeded && icon != null)
+            {
+                icon.sprite = sprite;
+                Debug.Log($"[SkillUI] 아이콘 로드 성공: {iconAddress}");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[SkillUI] 아이콘 로드 실패: {iconAddress}, {e.Message}");
         }
     }
 
@@ -86,17 +110,35 @@ public class SkillUI : MonoBehaviour
 
     private void UpdateCooldown(float progress)
     {
-        if (cooldownMask == null) return;
+        if (cooldownMask != null)
+        {
+            cooldownMask.fillAmount = 1f - progress;
+        }
 
-        cooldownMask.fillAmount = 1f - progress;
+        // 쿨타임 텍스트 업데이트 (남은 시간 표시)
+        if (cooldownText != null && skill != null)
+        {
+            float remainingTime = skill.CoolDown * (1f - progress);
+            if (remainingTime > 0f)
+            {
+                cooldownText.text = Mathf.CeilToInt(remainingTime).ToString();
+            }
+        }
     }
 
     private void ResetCooldown()
     {
-        if (cooldownMask == null) return;
-
         // 쿨타임 완료: 마스크 없음 (스킬 사용 가능)
-        cooldownMask.fillAmount = 0f;
+        if (cooldownMask != null)
+        {
+            cooldownMask.fillAmount = 0f;
+        }
+
+        // 쿨타임 텍스트 숨김
+        if (cooldownText != null)
+        {
+            cooldownText.text = "";
+        }
     }
 
     private void OnDestroy()

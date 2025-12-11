@@ -3,6 +3,7 @@ using UnityEngine;
 /// <summary>
 /// 끌어당기기 상태이상 (부드럽게 끌어당김)
 /// amount = 끌어당길 거리
+/// centerPosition = 끌어당길 중심점 (스킬 발동 위치)
 /// </summary>
 public class StatusEffectPull : StatusEffect
 {
@@ -11,11 +12,13 @@ public class StatusEffectPull : StatusEffect
     private float pullDistance;
     private Vector3 startPosition;
     private Vector3 targetPosition;
+    private Vector3 centerPosition;
 
-    public StatusEffectPull(float amount, float duration = 0.4f, float tickInterval = 0.02f)
+    public StatusEffectPull(float amount, Vector3 center, float duration = 0.4f, float tickInterval = 0.02f)
         : base(amount, duration, tickInterval)
     {
         pullDistance = amount;
+        centerPosition = center;
     }
 
     public override void OnStartEffect(GameObject target)
@@ -25,13 +28,10 @@ public class StatusEffectPull : StatusEffect
 
         startPosition = target.transform.position;
 
-        Vector3 centerPosition = new Vector3(0f, 3f, 0f);// 하드코딩 박아놨지만 수정해야함
-
-
         Vector3 pullOffset = (centerPosition - startPosition).normalized * pullDistance;
-        targetPosition = startPosition + pullOffset ;
+        targetPosition = startPosition + pullOffset;
 
-        Debug.Log($"[Pull] {target.name} 끌어당김 시작! {pullDistance}m만큼 이동!");
+        Debug.Log($"[Pull] {target.name} 끌어당김 시작! {pullDistance}m만큼 {centerPosition} 방향으로 이동!");
         // Todo 벽 공격하고 있으면 해제 하는 코드 추가
     }
 

@@ -125,6 +125,23 @@ public class AddressablePreloader : MonoBehaviour
             }
         }
 
+        // 5. 플레이어 스킬 이펙트 키 수집 (SKILL_OBJECT=2인 플레이어 스킬)
+        var allSkills = DataTableManager.SkillTable.GetAll();
+        foreach (var skill in allSkills)
+        {
+            // SKILL_OBJECT=2는 플레이어 스킬
+            if (skill.SKILL_OBJECT == 2 &&
+                !string.IsNullOrEmpty(skill.SKILL_EFFECT) &&
+                !prefabKeys.Contains(skill.SKILL_EFFECT) &&
+                IsValidAddressableKey(skill.SKILL_EFFECT))
+            {
+                prefabKeys.Add(skill.SKILL_EFFECT);
+            }
+        }
+
+        // 6. 플레이어 스킬 프리팹 Label로 일괄 로드
+        await LoadPlayerSkillPrefabsByLabel(ct);
+
         int total = prefabKeys.Count + gridDataKeys.Count + spriteKeys.Count + mapKeys.Count;
         int completed = 0;
 
@@ -228,6 +245,44 @@ public class AddressablePreloader : MonoBehaviour
         finally
         {
             onComplete?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// PlayerSkillPrefab Label이 붙은 모든 프리팹을 일괄 로드
+    /// </summary>
+    private async UniTask LoadPlayerSkillPrefabsByLabel(CancellationToken ct)
+    {
+        const string label = "PlayerSkillPrefab";
+
+        try
+        {
+            // Label로 로드 시 AssetLabelReference 사용
+            var labelRef = new AssetLabelReference { labelString = label };
+            var handle = Addressables.LoadAssetsAsync<GameObject>(labelRef, prefab =>
+            {
+                if (prefab != null && !cachedPrefabs.ContainsKey(prefab.name))
+                {
+                    cachedPrefabs[prefab.name] = prefab;
+                }
+            });
+            handles.Add(handle);
+            await handle.ToUniTask(cancellationToken: ct);
+
+            Debug.Log($"[AddressablePreloader] PlayerSkillPrefab Label 로드 완료: {handle.Result?.Count ?? 0}개");
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 정상적인 상황
+        }
+        catch (InvalidKeyException)
+        {
+            // Label이 없는 경우 - 무시 (스킬 프리팹이 등록되지 않은 상태)
+            Debug.LogWarning($"[AddressablePreloader] '{label}' Label을 가진 에셋이 없습니다. Tools > Addressable > Register Player Skill Prefabs 메뉴를 실행해주세요.");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[AddressablePreloader] PlayerSkillPrefab Label 로드 실패: {e.Message}");
         }
     }
 
@@ -441,6 +496,10 @@ public class AddressablePreloader : MonoBehaviour
 
         // 파일 시스템 경로 형식 필터링 (Assets/로 시작하는 경우)
         if (key.StartsWith("Assets/") || key.StartsWith("Assets\\"))
+            return false;
+
+        // 숫자만 있는 키 필터링 (예: "0" - CSV에서 빈 값 표현)
+        if (int.TryParse(key, out _))
             return false;
 
         return true;

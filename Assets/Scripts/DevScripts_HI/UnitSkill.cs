@@ -7,7 +7,15 @@ public class UnitSkill
     protected float lastUsedTime;
 
     public int SkillID => skillData.SKILL_ID;
-    public string SkillName => skillData.SKILL_NAME;
+    public string SkillName
+    {
+        get
+        {
+            if (int.TryParse(skillData.SKILL_NAME, out int nameId))
+                return DataTableManager.StringTable.Get(nameId);
+            return skillData.SKILL_NAME;
+        }
+    }
 
     public UnitSkill(Unit owner, SkillData skillData)
     {

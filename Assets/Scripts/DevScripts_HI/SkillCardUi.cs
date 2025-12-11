@@ -57,9 +57,14 @@ public class SkillCardUi : BaseCardUi
             return;
         }
 
-        // 스킬 이름 설정
+        // 스킬 이름 설정 (StringTable에서 가져오기)
         if (text != null)
-            text.text = skillData.SKILL_NAME;
+        {
+            if (int.TryParse(skillData.SKILL_NAME, out int nameId))
+                text.text = DataTableManager.StringTable.Get(nameId);
+            else
+                text.text = skillData.SKILL_NAME;
+        }
 
         // PlayerSkill은 별 레벨이 없으므로 별 UI 숨김 (0개)
         UpdateStarUI(0);
@@ -151,8 +156,14 @@ public class SkillCardUi : BaseCardUi
             return;
         }
 
+        // 이펙트 이름 설정 (StringTable에서 가져오기)
         if (text != null)
-            text.text = effectData.EFFECT_NAME_KR;
+        {
+            if (int.TryParse(effectData.EFFECT_NAME, out int nameId))
+                text.text = DataTableManager.StringTable.Get(nameId);
+            else
+                text.text = effectData.EFFECT_NAME;
+        }
 
         int starLevel = GetStarLevelFromSkillId(currentSkillId);
         UpdateStarUI(starLevel - 1);

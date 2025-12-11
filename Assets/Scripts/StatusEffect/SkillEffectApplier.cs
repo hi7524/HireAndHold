@@ -4,6 +4,11 @@ public class SkillEffectApplier : MonoBehaviour
 {
     public void ApplyStatusEffectToTarget(GameObject target, StatusEffectType type, float duration, float value)
     {
+        ApplyStatusEffectToTarget(target, type, duration, value, Vector3.zero);
+    }
+
+    public void ApplyStatusEffectToTarget(GameObject target, StatusEffectType type, float duration, float value, Vector3 center)
+    {
         var targetEffectManager = target.GetComponent<StatusEffectManager>();
 
         if (targetEffectManager == null)
@@ -11,7 +16,7 @@ public class SkillEffectApplier : MonoBehaviour
             Debug.LogWarning($"{target.name}에 StatusEffectManager가 없습니다!");
             return;
         }
-        StatusEffect effect = CreateStatusEffect(type, duration, value);
+        StatusEffect effect = CreateStatusEffect(type, duration, value, center);
 
         if (effect != null)
         {
@@ -36,7 +41,7 @@ public class SkillEffectApplier : MonoBehaviour
             if (isGlobalEffect)
             {
                 // 전역 효과: 거리 체크 없이 모든 몬스터에게 적용
-                ApplyStatusEffectToTarget(monster.gameObject, type, duration, value);
+                ApplyStatusEffectToTarget(monster.gameObject, type, duration, value, center);
                 affectedCount++;
             }
             else
@@ -46,7 +51,7 @@ public class SkillEffectApplier : MonoBehaviour
 
                 if (distance <= range)
                 {
-                    ApplyStatusEffectToTarget(monster.gameObject, type, duration, value);
+                    ApplyStatusEffectToTarget(monster.gameObject, type, duration, value, center);
                     affectedCount++;
                 }
             }
@@ -71,7 +76,7 @@ public class SkillEffectApplier : MonoBehaviour
     }
 
 
-    private StatusEffect CreateStatusEffect(StatusEffectType type, float duration, float value)
+    private StatusEffect CreateStatusEffect(StatusEffectType type, float duration, float value, Vector3 center)
     {
         switch (type)
         {
@@ -80,7 +85,7 @@ public class SkillEffectApplier : MonoBehaviour
             case StatusEffectType.Slow:
                 return new StatusEffectSlow(value, duration);
             case StatusEffectType.Pull:
-                return new StatusEffectPull(value, duration);
+                return new StatusEffectPull(value, center, duration);
             case StatusEffectType.DamageOverTime:
                 return new StatusEffectDamageOverTime(value, duration);
             case StatusEffectType.DefenseDown:
