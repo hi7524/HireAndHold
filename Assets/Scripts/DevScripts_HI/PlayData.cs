@@ -256,5 +256,14 @@ public static class PlayData
         Debug.Log("캐시 초기화");
     }
 
+    public static int GetUnitFragments(int unitId)
+    {
+        if (unitFragments.TryGetValue(unitId, out float value))
+            return (int)value;
+
+        return 0;
+    }
+
+
 }
 
