@@ -184,18 +184,46 @@ public class NormalEnforceSystem
 
     public float GetNextAttack(Unit unit)
     {
-        var data = unit.GetUnitData();
-        if (data == null) return unit.GetAttackDamageStat().Value;
+        var unitData = unit.GetUnitData();
+        if (unitData == null) return 0;
 
-        int currentLv = DatabaseManager.Instance
-            .GetCharacter(unit.UnitID.ToString()).enforceLevel;
+        // 기본 공격력
+        float baseAtk = unitData.ATTACK;
 
-        int nextLv = currentLv + 1;
-        if (!SharedTable.All.TryGetValue(nextLv, out var enforceData))
-            return unit.GetAttackDamageStat().Value;
+        // 현재 강화 레벨
+        var character = DatabaseManager.Instance.GetCharacter(unit.UnitID.ToString());
+        int currLv = character.enforceLevel;
 
-        return unit.GetAttackDamageStat().Value + enforceData.AttackUp;
+        int rank = unitData.RANK;
+
+        float totalAtkUp = 0f;
+
+        // 1 ~ 현재 강화 레벨까지 누적 공격력
+        foreach (var kv in SharedTable.All)
+        {
+            var d = kv.Value;
+            if (d.Class == rank && d.Normal_Enforce_LV <= currLv)
+                totalAtkUp += d.AttackUp;
+        }
+
+        float currAtk = baseAtk + totalAtkUp;
+
+        // 다음 레벨 강화 데이터 찾기
+        float nextAtkUp = 0f;
+        foreach (var kv in SharedTable.All)
+        {
+            var d = kv.Value;
+            if (d.Class == rank && d.Normal_Enforce_LV == currLv + 1)
+            {
+                nextAtkUp = d.AttackUp;
+                break;
+            }
+        }
+
+        // 현재 공격력 + 다음 강화 효과
+        return currAtk + nextAtkUp;
     }
+
 
 
 

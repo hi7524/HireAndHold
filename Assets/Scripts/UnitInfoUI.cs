@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System;
+using Cysharp.Threading.Tasks;
 using GameData;
 using TMPro;
 using UnityEngine;
@@ -7,243 +8,537 @@ using UnityEngine.UI;
 
 public class UnitInfoUI : MonoBehaviour
 {
-    [Header("Unit Info Text")]
-    public Image unitImage;
-    public TextMeshProUGUI attackText;
+    #region ===== Main Info UI =====
 
-    public TextMeshProUGUI normalLevelText;
-    public TextMeshProUGUI normalCostText;
-    public TextMeshProUGUI classText;
+    [Header("Main Root")]
+    [SerializeField] private GameObject mainRoot;
 
-    public Button normalEnforceButton;
+    [Header("Unit Basic Info")]
+    [SerializeField] private Image unitImage;
+    [SerializeField] private TextMeshProUGUI unitNameText;
+    [SerializeField] private TextMeshProUGUI classText;
+    [SerializeField] private TextMeshProUGUI powerText;
+    [SerializeField] private TextMeshProUGUI levelText;
+    [SerializeField] private TextMeshProUGUI heroStarText;
+    [SerializeField] private TextMeshProUGUI heroProgressText;
 
-    [Header("Normal Enforce Detail")]
-    public TextMeshProUGUI currentLevel;
-    public TextMeshProUGUI nextLevel;
-    public TextMeshProUGUI goldCost;
-    public TextMeshProUGUI unitName;
-    public TextMeshProUGUI currentAttack;
-    public TextMeshProUGUI nextAttack;
+    [Header("Owned Resource UI")]
+    [SerializeField] private TextMeshProUGUI playerGoldText;
+    [SerializeField] private TextMeshProUGUI playerStoneText;
+    [SerializeField] private TextMeshProUGUI playerPieceText;
 
-    public TextMeshProUGUI playerGoldText;
-    public TextMeshProUGUI playerStoneText;
+    [Header("Hero Effect List (Main)")]
+    [SerializeField] private Transform heroEffectListParent;
+    [SerializeField] private GameObject heroEffectItemPrefab;
+    [SerializeField] private Color heroEffectUnlockedColor = Color.white;
+    [SerializeField] private Color heroEffectLockedColor = Color.gray;
 
-    public Image enforceUnitImage;
+    [Header("Main Buttons")]
+    [SerializeField] private Button equipButton;
+    [SerializeField] private Button normalEnforceButton;
+    [SerializeField] private Button heroEnforceButton;
 
-    // 영웅 강화 UI
+    #endregion
 
-    [Header("Hero Enforce UI")]
-    public TextMeshProUGUI heroLevelText;
-    public TextMeshProUGUI heroNextLevelText;
-    public TextMeshProUGUI heroCostText;
-    public TextMeshProUGUI heroEffectText;
-    public Button heroEnforceButton;
+
+    #region ===== Normal Enforce Popup =====
+
+    [Header("Normal Enforce Popup")]
+    [SerializeField] private GameObject normalPopupRoot;
+    [SerializeField] private Image normalPopupUnitImage;
+
+    [SerializeField] private TextMeshProUGUI normalLevelCurrent;
+    [SerializeField] private TextMeshProUGUI normalLevelNext;
+    [SerializeField] private TextMeshProUGUI normalPowerCurrent;
+    [SerializeField] private TextMeshProUGUI normalPowerNext;
+
+    [SerializeField] private TextMeshProUGUI normalStoneHave;
+    [SerializeField] private TextMeshProUGUI normalStoneNeed;
+    [SerializeField] private TextMeshProUGUI normalGoldHave;
+    [SerializeField] private TextMeshProUGUI normalGoldNeed;
+
+    [SerializeField] private Button normalConfirmButton;
+    [SerializeField] private Button normalCloseButton;
+
+    #endregion
+
+
+    #region ===== Hero Enforce Popup =====
+
+    [Header("Hero Enforce Popup")]
+    [SerializeField] private GameObject heroPopupRoot;
+    [SerializeField] private Image heroPopupUnitImage;
+
+    [SerializeField] private TextMeshProUGUI heroPopupLevelCurrent;
+    [SerializeField] private TextMeshProUGUI heroPopupLevelNext;
+
+    [SerializeField] private TextMeshProUGUI heroPopupPieceHave;
+    [SerializeField] private TextMeshProUGUI heroPopupPieceNeed;
+    [SerializeField] private TextMeshProUGUI heroPopupGoldHave;
+    [SerializeField] private TextMeshProUGUI heroPopupGoldNeed;
+
+    [SerializeField] private Transform heroPopupEffectListParent;
+    [SerializeField] private GameObject heroPopupEffectItemPrefab;
+
+    [SerializeField] private Button heroConfirmButton;
+    [SerializeField] private Button heroCloseButton;
+
+    #endregion
+
+
+    #region ===== Alert / Success Popup =====
+
+    [Header("Alert Popup")]
+    [SerializeField] private GameObject alertRoot;
+    [SerializeField] private TextMeshProUGUI alertMessage;
+    [SerializeField] private Button alertOk;
+
+    [Header("Success Popup")]
+    [SerializeField] private GameObject successRoot;
+    [SerializeField] private TextMeshProUGUI successTitle;
+    [SerializeField] private TextMeshProUGUI successDetail;
+    [SerializeField] private Button successOk;
+
+    #endregion
+
+
+    #region ===== Data =====
 
     private DataTable_Unit unitTable;
-    private DataTable_NormalEnforce normalEnforceTable;
-    private DataTable_HeroEnforce heroEnforceTable;
-    private DataTable_HeroEnforceEffect heroEffectTable;
+    private DataTable_NormalEnforce normalTable;
+    private DataTable_HeroEnforce heroTable;
+    private DataTable_HeroEnforceEffect effectTable;
 
-    private NormalEnforceSystem normalEnforceSystem;
-    private HeroEnforceSystem heroEnforceSystem;
-
-    [Header("Hero Enforce Stage List")]
-    public Transform heroEffectListParent;
-    public GameObject heroEffectItemPrefab;
+    private NormalEnforceSystem normalSystem;
+    private HeroEnforceSystem heroSystem;
 
     private BattleUnitManager battleUnitManager;
-
-    [Header("Hero Progress Text")]
-    public TextMeshProUGUI heroProgressText;
-
-    public DeckControl deckControl;
-
     private int currentUnitId = -1;
     private Unit previewUnit;
+
+    private const int NORMAL_MAX = 20;
+    private const int HERO_MAX = 4;
+
+    #endregion
+
+
+
+    #region ===== Unity Life Cycle =====
 
     private async void Start()
     {
         unitTable = new DataTable_Unit();
-        normalEnforceTable = new DataTable_NormalEnforce();
-        heroEnforceTable = new DataTable_HeroEnforce();
-        heroEffectTable = new DataTable_HeroEnforceEffect();
+        normalTable = new DataTable_NormalEnforce();
+        heroTable = new DataTable_HeroEnforce();
+        effectTable = new DataTable_HeroEnforceEffect();
 
         await unitTable.LoadAsync("UnitTable");
-        await normalEnforceTable.LoadAsync("NormalEnforceTable");
-        await heroEnforceTable.LoadAsync("HeroEnforceTable");
-        await heroEffectTable.LoadAsync("HeroEnforceEffectTable");
+        await normalTable.LoadAsync("NormalEnforceTable");
+        await heroTable.LoadAsync("HeroEnforceTable");
+        await effectTable.LoadAsync("HeroEnforceEffectTable");
+
+        mainRoot.SetActive(false);
+        normalPopupRoot.SetActive(false);
+        heroPopupRoot.SetActive(false);
+        alertRoot.SetActive(false);
+        successRoot.SetActive(false);
+
+        normalCloseButton.onClick.AddListener(() => normalPopupRoot.SetActive(false));
+        heroCloseButton.onClick.AddListener(() => heroPopupRoot.SetActive(false));
+        alertOk.onClick.AddListener(() => alertRoot.SetActive(false));
+        successOk.onClick.AddListener(() => successRoot.SetActive(false));
+
+        normalConfirmButton.onClick.AddListener(() => ConfirmNormal().Forget());
+        heroConfirmButton.onClick.AddListener(() => ConfirmHero().Forget());
     }
 
-    // BattleUnitManager 등록 (전투 중 강화 적용 가능)
- 
-    public void SetUnitManager(BattleUnitManager battleManager)
+    public void SetUnitManager(BattleUnitManager manager)
     {
-        battleUnitManager = battleManager;
+        battleUnitManager = manager;
 
-        normalEnforceSystem = new NormalEnforceSystem(
-            battleManager,
-            normalEnforceTable,
-            unitTable
-        );
+        normalSystem = new NormalEnforceSystem(manager, normalTable, unitTable);
+        heroSystem = new HeroEnforceSystem(manager, heroTable, effectTable);
 
-        heroEnforceSystem = new HeroEnforceSystem(
-            battleManager,
-            heroEnforceTable,
-            heroEffectTable
-        );
-
-        normalEnforceButton.onClick.AddListener(OnClick_NormalEnforce);
-        heroEnforceButton.onClick.AddListener(() => OnClick_HeroEnforce().Forget());
+        normalEnforceButton.onClick.AddListener(OpenNormal);
+        heroEnforceButton.onClick.AddListener(OpenHero);
     }
 
+    #endregion
 
-    // 유닛 변경
 
-    public void SetUnit(int unitId)
+
+    #region ===== Public API =====
+
+    public void SetUnit(int id)
     {
-        currentUnitId = unitId;
-        CreatePreviewUnit();
-        UpdateUI();
+        currentUnitId = id;
+        Refresh().Forget();
     }
 
-    private async void CreatePreviewUnit()
-    {
-        if (previewUnit != null)
-            Destroy(previewUnit.gameObject);
+    #endregion
 
-        var go = new GameObject("PreviewUnit");
-        previewUnit = go.AddComponent<Unit>();
-        previewUnit.SetUnitID(currentUnitId);
+
+
+    #region ===== Main UI Refresh =====
+
+    private async UniTask Refresh()
+    {
+        if (currentUnitId < 0)
+            return;
+
+        await CreatePreview();
 
         await UniTask.DelayFrame(1);
-    }
 
-    // UI 업데이트
-
-    private async void UpdateUI()
-    {
-        if (currentUnitId < 0 || previewUnit == null) return;
-
-        await UniTask.DelayFrame(1);
-
-        OwnedCharacter character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
-        UnitData data = unitTable.Get(currentUnitId);
-
+        var data = unitTable.Get(currentUnitId);
         if (data == null)
         {
             Debug.LogError("UnitData 없음: " + currentUnitId);
             return;
         }
 
-        // 공통 UI
-        playerGoldText.text = $"골드: {PlayData.Gold}";
-        playerStoneText.text = $"강화석: {PlayData.EnhanceStone}";
+        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        bool owned = character != null;
 
-        unitName.text = data.StringName;
+        unitNameText.text = data.StringName;
         classText.text = $"등급: {data.RANK}";
 
-        attackText.text = $"공격력: {previewUnit.GetAttackDamageStat().Value}";
-        currentAttack.text = previewUnit.GetAttackDamageStat().Value.ToString();
+        float attack = previewUnit.GetAttackDamageStat().Value;
+        powerText.text = attack.ToString();
 
-        LoadUnitImage(currentUnitId).Forget();
+        levelText.text = owned ?
+            $"{character.enforceLevel}/{NORMAL_MAX}" :
+            $"0/{NORMAL_MAX}";
 
+        LoadSprite(data.UNIT_ICON).Forget();
 
-        // NORMAL 강화 UI
+        playerGoldText.text = PlayData.Gold.ToString();
+        playerStoneText.text = PlayData.EnhanceStone.ToString();
+        int ownedPieces = PlayData.unitFragments.ContainsKey(currentUnitId)
+     ? (int)PlayData.unitFragments[currentUnitId]
+     : 0;
 
-        int enforceLv = character.enforceLevel;
-        currentLevel.text = enforceLv.ToString();
-        normalLevelText.text = $"레벨: {enforceLv} / 20";
+        int heroLv = owned ? character.heroEnforceLevel : 0;
+        heroStarText.text = $"영웅강화 등급: ★{heroLv}";
+        heroProgressText.text = $"{heroLv}/{HERO_MAX}";
 
-        int nextLv = enforceLv + 1;
-        nextLevel.text = nextLv > 20 ? "MAX" : nextLv.ToString();
+        RefreshHeroEffectList(heroLv);
 
-        var (gold, stone) = normalEnforceSystem.GetNextEnforceCost(previewUnit);
+        normalEnforceButton.interactable = owned && normalSystem.CanEnforce(previewUnit, out _);
+        heroEnforceButton.interactable = owned && heroLv < HERO_MAX;
 
-        if (nextLv > 20)
-        {
-            normalCostText.text = "최대 레벨 도달";
-            goldCost.text = "-";
-        }
-        else
-        {
-            normalCostText.text = $"다음 강화 비용\n골드 {gold} / 강화석 {stone}";
-            goldCost.text = gold.ToString();
-        }
-
-        nextAttack.text = normalEnforceSystem.GetNextAttack(previewUnit).ToString();
-
-        normalEnforceButton.interactable =
-            normalEnforceSystem.CanEnforce(previewUnit, out _);
-
-
-        // HERO 강화 UI
-
-        int heroLv = character.heroEnforceLevel;
-        int maxLv = 4;
-
-        heroLevelText.text = $"★{heroLv}";
-        heroNextLevelText.text = heroLv < maxLv ? $"★{heroLv + 1}" : "MAX";
-
-        heroProgressText.text = $"{heroLv}/{maxLv}";
-
-        foreach (Transform c in heroEffectListParent)
-            Destroy(c.gameObject);
-
-        for (int lv = 1; lv <= maxLv; lv++)
-        {
-            var enforceData = heroEnforceTable.Get(currentUnitId, lv);
-            if (enforceData == null) continue;
-
-            var effect = heroEffectTable.Get(enforceData.Hero_Enforce_EffectID);
-            if (effect == null) continue;
-
-            //var item = Instantiate(heroEffectItemPrefab, heroEffectListParent);
-            //item.GetComponent<TextMeshProUGUI>().text =
-            //    $"LV {lv}: {effect.Enforce_Effect_DESCRIPTION}";
-        }
+        mainRoot.SetActive(true);
     }
 
-
-    // 버튼 이벤트
-
-    public async void OnClick_NormalEnforce()
+    private async UniTaskVoid LoadSprite(string key)
     {
-        bool result = await normalEnforceSystem.TryEnforceAsync(previewUnit);
-
-        if (result)
-            Debug.Log("일반 강화 성공");
-
-        UpdateUI();
-    }
-
-    private async UniTaskVoid OnClick_HeroEnforce()
-    {
-        bool result = await heroEnforceSystem.TryEnforceAsync(previewUnit);
-
-        if (result)
-        {
-            Debug.Log("영웅 강화 성공");
-            await DatabaseManager.Instance.LoadUserDataAsync();
-            PlayData.SyncFromDatabase();
-            
-        }
-
-        UpdateUI();
-    }
-
-    private async UniTaskVoid LoadUnitImage(int unitId)
-    {
-        UnitData data = unitTable.Get(unitId);
-
         try
         {
-            var sprite = await Addressables.LoadAssetAsync<Sprite>(data.UNIT_ICON).Task;
+            var sprite = await Addressables.LoadAssetAsync<Sprite>(key).Task;
             unitImage.sprite = sprite;
-            enforceUnitImage.sprite = sprite;
+            normalPopupUnitImage.sprite = sprite;
+            heroPopupUnitImage.sprite = sprite;
         }
-        catch
+        catch { }
+    }
+
+    private async UniTask CreatePreview()
+    {
+        if (previewUnit != null)
+            Destroy(previewUnit.gameObject);
+
+        var go = new GameObject("PreviewUnit_" + currentUnitId);
+        previewUnit = go.AddComponent<Unit>();
+        previewUnit.SetUnitID(currentUnitId);
+
+        await UniTask.DelayFrame(1);
+    }
+
+    private void RefreshHeroEffectList(int heroLv)
+    {
+        foreach (Transform t in heroEffectListParent)
+            Destroy(t.gameObject);
+
+        for (int lv = 1; lv <= HERO_MAX; lv++)
         {
-            Debug.LogError("유닛 아이콘 로드 실패: " + data.UNIT_ICON);
+            var enforce = heroTable.Get(currentUnitId, lv);
+            if (enforce == null) continue;
+
+            var eff = effectTable.Get(enforce.Hero_Enforce_EffectID);
+            string desc = effectTable.FormatEffect(eff);
+
+            var go = Instantiate(heroEffectItemPrefab, heroEffectListParent);
+            var txt = go.GetComponentInChildren<TextMeshProUGUI>();
+
+
+            if (txt == null)
+            {
+                Debug.LogError("heroEffectItemPrefab 안에 TMP Text 없음!");
+                continue;
+            }
+
+            txt.text = $"LV {lv}: {desc}";
+            txt.color = lv <= heroLv ? heroEffectUnlockedColor : heroEffectLockedColor;
         }
     }
+
+    #endregion
+
+
+
+    #region ===== Normal Enforce Popup =====
+
+    private void OpenNormal()
+    {
+        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        if (character == null)
+        {
+            ShowAlert("미보유 유닛은 강화할 수 없습니다.");
+            return;
+        }
+
+        int lv = character.enforceLevel;
+        int nextLv = Mathf.Min(lv + 1, NORMAL_MAX);
+
+        float currAtk = previewUnit.GetAttackDamageStat().Value;
+        float nextAtk = normalSystem.GetNextAttack(previewUnit);
+
+        var (goldCost, stoneCost) = normalSystem.GetNextEnforceCost(previewUnit);
+
+        normalLevelCurrent.text = lv.ToString();
+        normalLevelNext.text = nextLv > NORMAL_MAX ? "MAX" : nextLv.ToString();
+
+        normalPowerCurrent.text = currAtk.ToString();
+        normalPowerNext.text = nextLv > NORMAL_MAX ? "-" : nextAtk.ToString();
+
+        normalStoneHave.text = PlayData.EnhanceStone.ToString();
+        normalStoneNeed.text = stoneCost.ToString();
+
+        normalGoldHave.text = PlayData.Gold.ToString();
+        normalGoldNeed.text = goldCost.ToString();
+
+        normalPopupRoot.SetActive(true);
+    }
+
+    private async UniTaskVoid ConfirmNormal()
+    {
+        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        if (character == null)
+        {
+            ShowAlert("미보유 유닛입니다.");
+            return;
+        }
+
+        int beforeLv = character.enforceLevel;
+        float beforeAtk = previewUnit.GetAttackDamageStat().Value;
+
+        bool ok = await normalSystem.TryEnforceAsync(previewUnit);
+
+        if (!ok)
+        {
+            ShowAlert("재료가 부족합니다.");
+            return;
+        }
+
+        await DatabaseManager.Instance.LoadUserDataAsync();
+        PlayData.SyncFromDatabase();
+
+        int afterLv = character.enforceLevel;
+        float afterAtk = previewUnit.GetAttackDamageStat().Value;
+
+        ShowSuccess("강화 성공",
+            $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}");
+
+        await Refresh();
+        RefreshNormalPopup();
+
+    }
+
+    private void RefreshNormalPopup()
+    {
+        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        if (character == null) return;
+
+        int lv = character.enforceLevel;
+        int nextLv = Mathf.Min(lv + 1, NORMAL_MAX);
+
+        float currAtk = previewUnit.GetAttackDamageStat().Value;
+        float nextAtk = normalSystem.GetNextAttack(previewUnit);
+
+        var (goldCost, stoneCost) = normalSystem.GetNextEnforceCost(previewUnit);
+
+        normalLevelCurrent.text = lv.ToString();
+        normalLevelNext.text = nextLv > NORMAL_MAX ? "MAX" : nextLv.ToString();
+
+        normalPowerCurrent.text = currAtk.ToString();
+        normalPowerNext.text = nextLv > NORMAL_MAX ? "-" : nextAtk.ToString();
+
+        normalStoneHave.text = PlayData.EnhanceStone.ToString();
+        normalStoneNeed.text = stoneCost.ToString();
+
+        normalGoldHave.text = PlayData.Gold.ToString();
+        normalGoldNeed.text = goldCost.ToString();
+    }
+
+
+    #endregion
+
+
+
+    #region ===== Hero Enforce Popup =====
+
+    private void OpenHero()
+    {
+        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        if (character == null)
+        {
+            ShowAlert("미보유 유닛은 영웅강화가 불가합니다.");
+            return;
+        }
+
+        int heroLv = character.heroEnforceLevel;
+        if (heroLv >= HERO_MAX)
+        {
+            ShowAlert("최대 영웅강화입니다.");
+            return;
+        }
+        var nextData = heroTable.Get(currentUnitId, heroLv + 1);
+
+        var next = heroTable.Get(currentUnitId, heroLv + 1);
+
+        heroPopupLevelCurrent.text = $"★{heroLv}";
+        heroPopupLevelNext.text = heroLv + 1 <= HERO_MAX ? $"★{heroLv + 1}" : "MAX";
+
+        heroPopupPieceNeed.text = next?.IngredientNum.ToString();
+        heroPopupGoldNeed.text = next?.Gold_Cost.ToString();
+
+        int havePieces = PlayData.GetUnitFragments(currentUnitId);
+        int needPieces = (int)nextData.IngredientNum;
+
+        if (havePieces < needPieces)
+        {
+            ShowAlert("조각이 부족합니다");
+            return;
+        }
+
+
+        heroPopupPieceHave.text = havePieces.ToString();
+        heroPopupPieceNeed.text = needPieces.ToString();
+
+
+        foreach (Transform t in heroPopupEffectListParent)
+            Destroy(t.gameObject);
+
+        for (int lv = 1; lv <= HERO_MAX; lv++)
+        {
+            var e = heroTable.Get(currentUnitId, lv);
+            if (e == null) continue;
+
+            var eff = effectTable.Get(e.Hero_Enforce_EffectID);
+            if (eff == null) continue;
+
+            var go = Instantiate(heroPopupEffectItemPrefab, heroPopupEffectListParent);
+            var txt = go.GetComponentInChildren<TextMeshProUGUI>();
+            txt.text = $"{(lv <= heroLv ? "[활성]" : "[잠김]")} LV {lv}: {eff.DescriptionText}";
+
+        }
+
+        heroPopupRoot.SetActive(true);
+    }
+
+    private async UniTaskVoid ConfirmHero()
+    {
+        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        if (character == null)
+        {
+            ShowAlert("미보유 유닛입니다.");
+            return;
+        }
+
+        int beforeLv = character.heroEnforceLevel;
+
+        bool ok = await heroSystem.TryEnforceAsync(previewUnit);
+        if (!ok)
+        {
+            ShowAlert("재료 부족!");
+            return;
+        }
+
+        await DatabaseManager.Instance.LoadUserDataAsync();
+        PlayData.SyncFromDatabase();
+
+        int afterLv = character.heroEnforceLevel;
+        var ef = heroTable.Get(currentUnitId, afterLv);
+        var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
+        var desc = effectTable.FormatEffect(effData);
+
+        ShowSuccess("영웅 강화 성공!",
+            $"★{beforeLv} → ★{afterLv}\n효과: {desc}");
+
+
+        await Refresh();
+        RefreshHeroPopup();
+
+    }
+
+    private void RefreshHeroPopup()
+    {
+        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        if (character == null) return;
+
+        int heroLv = character.heroEnforceLevel;
+        var next = heroTable.Get(currentUnitId, heroLv + 1);
+
+        int havePieces = PlayData.GetUnitFragments(currentUnitId);
+        int needPieces = (int)(next?.IngredientNum ?? 0);
+
+        heroPopupLevelCurrent.text = $"★{heroLv}";
+        heroPopupLevelNext.text = heroLv < HERO_MAX ? $"★{heroLv + 1}" : "MAX";
+
+        heroPopupPieceHave.text = havePieces.ToString();
+        heroPopupPieceNeed.text = needPieces.ToString();
+
+        heroPopupGoldHave.text = PlayData.Gold.ToString();
+        heroPopupGoldNeed.text = (next?.Gold_Cost ?? 0).ToString();
+
+        foreach (Transform t in heroPopupEffectListParent)
+            Destroy(t.gameObject);
+
+        for (int lv = 1; lv <= HERO_MAX; lv++)
+        {
+            var e = heroTable.Get(currentUnitId, lv);
+            if (e == null) continue;
+
+            var eff = effectTable.Get(e.Hero_Enforce_EffectID);
+            if (eff == null) continue;
+
+            var go = Instantiate(heroPopupEffectItemPrefab, heroPopupEffectListParent);
+            var txt = go.GetComponentInChildren<TextMeshProUGUI>();
+            string desc = effectTable.FormatEffect(eff);
+            txt.text = $"{(lv <= heroLv ? "[활성]" : "[잠김]")} LV {lv}: {desc}";
+
+        }
+    }
+
+
+    #endregion
+
+
+
+    #region ===== Alert / Success =====
+
+    private void ShowAlert(string msg)
+    {
+        alertMessage.text = msg;
+        alertRoot.SetActive(true);
+    }
+
+    private void ShowSuccess(string title, string detail)
+    {
+        successTitle.text = title;
+        successDetail.text = detail;
+        successRoot.SetActive(true);
+    }
+
+    #endregion
 }

@@ -27,10 +27,15 @@ public class DataTable_HeroEnforceEffect : DataTable
         [Default(0f)]
         public float Attack_Speed { get; set; }
 
-        [Name("Enforce_Effect_DESCRIPTION")]
+        // 칼럼 10 (0부터 시작 → 9)
+        [Index(9)]
+        public string DescriptionKey { get; set; }
+
+        // 칼럼 11 (0부터 시작 → 10)
         [Index(10)]
-        public string Enforce_Effect_DESCRIPTION { get; set; }
+        public string DescriptionText { get; set; }
     }
+
 
 
     private readonly Dictionary<int, HeroEnforceEffectData> table = new Dictionary<int, HeroEnforceEffectData>();
@@ -72,4 +77,13 @@ public class DataTable_HeroEnforceEffect : DataTable
     {
         return table.TryGetValue(enforceId, out data);
     }
+
+    public string FormatEffect(HeroEnforceEffectData d)
+    {
+        return d.DescriptionText;
+    }
+
+
+
+
 }
