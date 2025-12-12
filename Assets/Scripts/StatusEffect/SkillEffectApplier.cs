@@ -26,9 +26,9 @@ public class SkillEffectApplier : MonoBehaviour
 
     public void ApplyStatusEffectInRange(Vector3 center, float range, StatusEffectType type, float duration, float value)
     {
-        if (MonsterSpawner.Instance == null) return;
+        if (!MonsterProviderRegistry.HasProvider) return;
 
-        var monsters = MonsterSpawner.Instance.GetActiveMonsters();
+        var monsters = MonsterProviderRegistry.GetActiveMonsters();
         int affectedCount = 0;
 
         // range가 Infinity 또는 음수면 전체 공격
@@ -103,9 +103,9 @@ public class SkillEffectApplier : MonoBehaviour
 
     private GameObject FindNearestMonster(Vector3 position)
     {
-        if (MonsterSpawner.Instance == null) return null;
+        if (!MonsterProviderRegistry.HasProvider) return null;
 
-        var monsters = MonsterSpawner.Instance.GetActiveMonsters();
+        var monsters = MonsterProviderRegistry.GetActiveMonsters();
         GameObject nearest = null;
         float minDistance = Mathf.Infinity;
 

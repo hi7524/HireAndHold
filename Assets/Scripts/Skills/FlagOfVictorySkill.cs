@@ -29,8 +29,8 @@ public class FlagOfVictorySkill : PlayerSkillBase, IUnitManagerInjectable
 
     public override void OnUse(Vector3 spawnPoint)
     {
-        // 이펙트 생성
-        SpawnEffect(spawnPoint, effectLifetime);
+        // 아군 버프 스킬은 원점(0,0,0)에서 이펙트 생성
+        SpawnEffect(Vector3.zero, effectLifetime);
 
         // 모든 아군 유닛에게 버프 적용
         ApplyBuffToAllUnits();

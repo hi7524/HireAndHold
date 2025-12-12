@@ -133,14 +133,14 @@ public class SkillManager : MonoBehaviour
     /// </summary>
     private Vector3 GetSkillSpawnPosition(int skillId)
     {
-        // 버프 스킬은 그리드 중앙에서 발동
+        // 버프 스킬은 아군 영역 (0, 1, 0)
         if (BuffSkillIds.Contains(skillId))
         {
-            return gridAreaCenter != null ? gridAreaCenter.position : Vector3.zero;
+            return new Vector3(0f, 1f, 0f);
         }
 
-        // 공격 스킬은 몬스터 구역 중앙에서 발동
-        return monsterAreaCenter != null ? monsterAreaCenter.position : new Vector3(0, 3, 0);
+        // 공격 스킬은 몬스터 영역 (0, 3, 0)
+        return new Vector3(0f, 3f, 0f);
     }
 
     /// <summary>

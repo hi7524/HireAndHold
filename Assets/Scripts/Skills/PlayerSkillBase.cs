@@ -263,9 +263,9 @@ public abstract class PlayerSkillBase : MonoBehaviour
     /// <returns>피격된 적 수</returns>
     protected int DamageEnemiesInRange(Vector3 center, float range)
     {
-        if (MonsterSpawner.Instance == null) return 0;
+        if (!MonsterProviderRegistry.HasProvider) return 0;
 
-        var monsters = MonsterSpawner.Instance.GetActiveMonsters();
+        var monsters = MonsterProviderRegistry.GetActiveMonsters();
         int hitCount = 0;
 
         foreach (Enemy monster in monsters.ToArray())

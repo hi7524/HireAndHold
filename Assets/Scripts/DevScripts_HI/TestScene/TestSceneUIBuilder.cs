@@ -31,6 +31,7 @@ public class TestSceneUIBuilder : MonoBehaviour
     private TestPlayerSkillController playerSkillController;
     private TestUnitStatEditor unitStatEditor;
     private TestMonsterStatEditor monsterStatEditor;
+    private TestStatusEffectController statusEffectController;
 
     // UI 패널들
     private GameObject settingsPanel;
@@ -40,6 +41,7 @@ public class TestSceneUIBuilder : MonoBehaviour
     private GameObject skillPanel;
     private GameObject unitStatPanel;
     private GameObject monsterStatPanel;
+    private GameObject statusEffectPanel;
     
     private async void Start()
     {
@@ -222,8 +224,8 @@ public class TestSceneUIBuilder : MonoBehaviour
         // 패시브 스킬 섹션
         CreatePassiveSkillSection(settingsPanel.transform);
 
-        // 스킬 패널 (오른쪽 상단 앵커)
-        skillPanel = CreatePanel("SkillPanel", new Vector2(-20, -20), new Vector2(350, 400),
+        // 스킬 패널 (오른쪽 상단 앵커) - 높이 증가 (스킬 정보 표시 추가)
+        skillPanel = CreatePanel("SkillPanel", new Vector2(-20, -20), new Vector2(350, 550),
             new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1));
         CreatePlayerSkillSection(skillPanel.transform);
 
@@ -237,6 +239,11 @@ public class TestSceneUIBuilder : MonoBehaviour
             new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0));
         CreateMonsterStatSection(monsterStatPanel.transform);
 
+        // 상태 효과 테스트 패널 (중앙 오른쪽)
+        statusEffectPanel = CreatePanel("StatusEffectPanel", new Vector2(-20, -450), new Vector2(350, 380),
+            new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1));
+        CreateStatusEffectSection(statusEffectPanel.transform);
+
         // 토글 버튼 생성
         CreateToggleButtons();
 
@@ -245,6 +252,7 @@ public class TestSceneUIBuilder : MonoBehaviour
         skillPanel.SetActive(false);
         unitStatPanel.SetActive(false);
         monsterStatPanel.SetActive(false);
+        statusEffectPanel.SetActive(false);
     }
     
     private GameObject CreatePanel(string name, Vector2 anchoredPos, Vector2 size,
@@ -397,28 +405,58 @@ public class TestSceneUIBuilder : MonoBehaviour
     private void CreatePlayerSkillSection(Transform parent)
     {
         CreateLabel(parent, "=== 플레이어 스킬 ===");
-        
+
         GameObject controllerObj = new GameObject("PlayerSkillController");
         controllerObj.transform.SetParent(parent, false);
         playerSkillController = controllerObj.AddComponent<TestPlayerSkillController>();
-        
+
         // 스킬 드롭다운
         GameObject dropdownObj = CreateDropdown(parent, "SkillDropdown");
         var dropdown = dropdownObj.GetComponent<TMP_Dropdown>();
-        
+
+        // 스킬 정보 표시 패널 (어두운 배경)
+        GameObject infoPanelObj = new GameObject("SkillInfoPanel");
+        infoPanelObj.transform.SetParent(parent, false);
+        infoPanelObj.layer = LayerMask.NameToLayer("UI");
+
+        RectTransform infoPanelRect = infoPanelObj.AddComponent<RectTransform>();
+        infoPanelRect.sizeDelta = new Vector2(330, 180);
+
+        Image infoPanelImg = infoPanelObj.AddComponent<Image>();
+        infoPanelImg.color = new Color(0.15f, 0.15f, 0.15f, 0.95f);
+
+        GameObject infoObj = CreateLabel(infoPanelObj.transform, "스킬 정보");
+        var infoText = infoObj.GetComponent<TMP_Text>();
+        infoText.color = Color.white;
+        infoText.alignment = TextAlignmentOptions.TopLeft;
+        infoText.fontSize = fontSize - 4;
+        infoText.richText = true;
+
+        RectTransform infoRect = infoObj.GetComponent<RectTransform>();
+        infoRect.anchorMin = Vector2.zero;
+        infoRect.anchorMax = Vector2.one;
+        infoRect.offsetMin = new Vector2(10, 10);
+        infoRect.offsetMax = new Vector2(-10, -10);
+
         // 쿨다운 무시 토글
         GameObject noCdToggle = CreateToggle(parent, "쿨다운 무시");
         var toggle = noCdToggle.GetComponent<Toggle>();
-        
+
         // 스킬 사용 버튼
         GameObject useBtnObj = CreateButton(parent, "스킬 사용", new Color(0.3f, 0.7f, 0.3f, 1f));
         var useBtn = useBtnObj.GetComponent<Button>();
-        
+
+        // 쿨다운 리셋 버튼
+        GameObject resetCdBtnObj = CreateButton(parent, "쿨다운 리셋", new Color(0.5f, 0.5f, 0.5f, 1f));
+        var resetCdBtn = resetCdBtnObj.GetComponent<Button>();
+        resetCdBtn.onClick.AddListener(() => playerSkillController.ResetAllCooldowns());
+
         SetPrivateField(playerSkillController, "skillDropdown", dropdown);
+        SetPrivateField(playerSkillController, "skillInfoText", infoText);
         SetPrivateField(playerSkillController, "noCooldownToggle", toggle);
         SetPrivateField(playerSkillController, "useSkillButton", useBtn);
         SetPrivateField(playerSkillController, "skillSpawnPoint", skillSpawnPoint);
-        
+
         playerSkillController.Initialize();
     }
     
@@ -668,6 +706,64 @@ public class TestSceneUIBuilder : MonoBehaviour
         monsterStatEditor.Initialize();
     }
 
+    private void CreateStatusEffectSection(Transform parent)
+    {
+        CreateLabel(parent, "=== 상태 효과 테스트 ===");
+
+        GameObject controllerObj = new GameObject("StatusEffectController");
+        controllerObj.transform.SetParent(parent, false);
+        statusEffectController = controllerObj.AddComponent<TestStatusEffectController>();
+
+        // 효과 타입 드롭다운
+        GameObject dropdownObj = CreateDropdown(parent, "EffectDropdown");
+        var dropdown = dropdownObj.GetComponent<TMP_Dropdown>();
+
+        // 지속 시간 입력
+        GameObject durationObj = CreateInputField(parent, "지속 시간", "5.0");
+        var durationInput = durationObj.GetComponentInChildren<TMP_InputField>();
+
+        // 효과 값 입력
+        GameObject valueObj = CreateInputField(parent, "효과 값", "50");
+        var valueInput = valueObj.GetComponentInChildren<TMP_InputField>();
+
+        // 전체 적용 토글
+        GameObject applyAllToggle = CreateToggle(parent, "모든 몬스터에 적용");
+        var toggle = applyAllToggle.GetComponent<Toggle>();
+
+        // 버튼 컨테이너
+        GameObject btnContainer = new GameObject("ButtonContainer");
+        btnContainer.transform.SetParent(parent, false);
+        btnContainer.layer = LayerMask.NameToLayer("UI");
+
+        RectTransform btnContainerRect = btnContainer.AddComponent<RectTransform>();
+        btnContainerRect.sizeDelta = new Vector2(330, 50);
+
+        HorizontalLayoutGroup btnLayout = btnContainer.AddComponent<HorizontalLayoutGroup>();
+        btnLayout.spacing = 10;
+        btnLayout.childControlWidth = true;
+        btnLayout.childForceExpandWidth = true;
+
+        // 효과 적용 버튼
+        GameObject applyBtnObj = CreateButton(btnContainer.transform, "효과 적용", new Color(0.3f, 0.6f, 0.3f, 1f));
+        var applyBtn = applyBtnObj.GetComponent<Button>();
+
+        // 효과 제거 버튼
+        GameObject clearBtnObj = CreateButton(btnContainer.transform, "효과 제거", new Color(0.6f, 0.3f, 0.3f, 1f));
+        var clearBtn = clearBtnObj.GetComponent<Button>();
+
+        // 단축키 안내
+        CreateLabel(parent, "단축키: 1~6 효과적용, C 제거");
+
+        SetPrivateField(statusEffectController, "effectDropdown", dropdown);
+        SetPrivateField(statusEffectController, "durationInput", durationInput);
+        SetPrivateField(statusEffectController, "valueInput", valueInput);
+        SetPrivateField(statusEffectController, "applyToAllToggle", toggle);
+        SetPrivateField(statusEffectController, "applyEffectButton", applyBtn);
+        SetPrivateField(statusEffectController, "clearEffectsButton", clearBtn);
+
+        statusEffectController.Initialize();
+    }
+
     private void CreateToggleButtons()
     {
         // 설정 패널 토글
@@ -691,6 +787,7 @@ public class TestSceneUIBuilder : MonoBehaviour
         CreateToggleButton(toggleBtnsPanel.transform, "스킬", skillPanel);
         CreateToggleButton(toggleBtnsPanel.transform, "유닛", unitStatPanel);
         CreateToggleButton(toggleBtnsPanel.transform, "몬스터", monsterStatPanel);
+        CreateToggleButton(toggleBtnsPanel.transform, "상태효과", statusEffectPanel);
     }
     
     private void CreateToggleButton(Transform parent, string label, GameObject targetPanel)

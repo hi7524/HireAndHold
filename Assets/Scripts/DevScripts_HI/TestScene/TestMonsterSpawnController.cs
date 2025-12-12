@@ -7,9 +7,12 @@ using Cysharp.Threading.Tasks;
 
 /// <summary>
 /// 몬스터/보스 스폰을 위한 드롭다운 UI 및 스폰 로직
+/// 테스트 씬에서 MonsterSpawner.Instance를 대체하여 스킬 시스템과 연동
 /// </summary>
-public class TestMonsterSpawnController : MonoBehaviour
+public class TestMonsterSpawnController : MonoBehaviour, IMonsterProvider
 {
+    public static TestMonsterSpawnController Instance { get; private set; }
+
     [Header("UI References")]
     [SerializeField] private TMP_Dropdown monsterDropdown;
     [SerializeField] private Toggle bossToggle;
@@ -32,6 +35,7 @@ public class TestMonsterSpawnController : MonoBehaviour
     // 캐시된 프리팹
     private GameObject cachedMonsterPrefab;
     private List<GameObject> spawnedMonsters = new List<GameObject>();
+    private List<Enemy> activeEnemies = new List<Enemy>();
 
     // MonsterStatEditor 연동
     private TestMonsterStatEditor monsterStatEditor;
@@ -39,9 +43,18 @@ public class TestMonsterSpawnController : MonoBehaviour
     // FloatingText 연동
     private FloatingTextSpawner floatingTextSpawner;
 
+    private void Awake()
+    {
+        Instance = this;
+    }
+
     public void Initialize(ObjectPoolManager pool)
     {
         poolManager = pool;
+
+        // MonsterSpawner.Instance가 없을 때 이 컨트롤러를 몬스터 제공자로 등록
+        MonsterProviderRegistry.Register(this);
+
         LoadMonsterPrefab();
         SetupDropdown();
         SetupButtons();
@@ -59,11 +72,26 @@ public class TestMonsterSpawnController : MonoBehaviour
 
     private void OnDestroy()
     {
+        // 몬스터 제공자 등록 해제
+        MonsterProviderRegistry.Unregister(this);
+
         // 이벤트 구독 해제
         if (monsterStatEditor != null)
         {
             monsterStatEditor.OnMonsterStatChanged -= OnMonsterStatOverrideChanged;
         }
+
+        Instance = null;
+    }
+
+    /// <summary>
+    /// IMonsterProvider 구현: 활성 몬스터 리스트 반환
+    /// </summary>
+    public IReadOnlyList<Enemy> GetActiveMonsters()
+    {
+        // null이거나 비활성화된 몬스터 제거
+        activeEnemies.RemoveAll(e => e == null || !e.gameObject.activeSelf || e.IsDead);
+        return activeEnemies;
     }
 
     /// <summary>
@@ -275,10 +303,30 @@ public class TestMonsterSpawnController : MonoBehaviour
             // poolKey는 테스트용이므로 null 또는 빈 문자열
             enemy.InitializeWithData(poolManager, "", data, isBoss, hpMultiplier, expMultiplier);
 
+            // 활성 몬스터 리스트에 추가 (스킬 시스템 연동용)
+            activeEnemies.Add(enemy);
+
+            // 몬스터 사망 시 리스트에서 제거
+            enemy.OnDeath += OnEnemyDeath;
+
             // FloatingTextSpawner 설정
             if (floatingTextSpawner != null)
             {
                 enemy.SetFloatingTextSpawner(floatingTextSpawner);
+            }
+
+            // 상태이상 이펙트 높이 조정 (테스트 씬용)
+            var statusEffectManager = monsterObj.GetComponent<StatusEffectManager>();
+            if (statusEffectManager == null)
+            {
+                statusEffectManager = monsterObj.AddComponent<StatusEffectManager>();
+            }
+            // effectOffset 조정 (리플렉션 사용)
+            var effectOffsetField = typeof(StatusEffectManager).GetField("effectOffset",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (effectOffsetField != null)
+            {
+                effectOffsetField.SetValue(statusEffectManager, new Vector3(0f, 0.2f, 0f));
             }
 
             // 비주얼 로드
@@ -301,6 +349,15 @@ public class TestMonsterSpawnController : MonoBehaviour
             }
         }
     }
+
+    private void OnEnemyDeath(Enemy enemy)
+    {
+        if (enemy != null)
+        {
+            enemy.OnDeath -= OnEnemyDeath;
+            activeEnemies.Remove(enemy);
+        }
+    }
     
     private void OnKillAllButtonClicked()
     {
@@ -319,6 +376,7 @@ public class TestMonsterSpawnController : MonoBehaviour
             }
         }
         spawnedMonsters.Clear();
+        activeEnemies.Clear();
 
         // 씬에 있는 다른 몬스터들도 제거
         var monsters = GameObject.FindGameObjectsWithTag("Monster");

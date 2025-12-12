@@ -13,6 +13,7 @@ public class EffectData
     public int EFFECT_STACKNUM { get; set; }
     public int EFFECT_CLEAR { get; set; }
     public string EFFECT_DESCRIPTION { get; set; }
+    public string E_EFFECT { get; set; } // 상태 효과 이펙트 프리팹 키
 }
 public class DataTable_Effect : DataTable
 {
