@@ -22,6 +22,9 @@ public class TestPlayerSkillController : MonoBehaviour
     [Header("Skill Spawn Point")]
     [SerializeField] private Transform skillSpawnPoint;
 
+    [Header("Buff System")]
+    [SerializeField] private BattleUnitManager battleUnitManager;
+
     // SkillTable 기반 플레이어 스킬 목록 (SKILL_OBJECT == 2)
     private List<PlayerSkillInfo> playerSkillInfos = new List<PlayerSkillInfo>();
     private int selectedSkillIndex = -1;
@@ -90,6 +93,12 @@ public class TestPlayerSkillController : MonoBehaviour
 
     public void Initialize()
     {
+        // BattleUnitManager 자동 탐색
+        if (battleUnitManager == null)
+        {
+            battleUnitManager = FindFirstObjectByType<BattleUnitManager>();
+        }
+
         SetupDropdownAsync().Forget();
         SetupButtons();
     }
@@ -359,6 +368,13 @@ public class TestPlayerSkillController : MonoBehaviour
                 if (skill != null)
                 {
                     skill.Init();
+
+                    // 버프 스킬에 BattleUnitManager 주입
+                    if (skill is IUnitManagerInjectable injectable && battleUnitManager != null)
+                    {
+                        injectable.SetBattleUnitManager(battleUnitManager);
+                    }
+
                     loadedSkills[skillId] = skill;
                     return skill;
                 }
@@ -383,7 +399,7 @@ public class TestPlayerSkillController : MonoBehaviour
             // 버프 스킬은 아래쪽 (아군 영역)
             if (BuffSkillIds.Contains(skillId))
             {
-                return new Vector3(skillSpawnPoint.position.x, 0f, skillSpawnPoint.position.z);
+                return new Vector3(skillSpawnPoint.position.x, -3f, skillSpawnPoint.position.z);
             }
             return skillSpawnPoint.position;
         }
@@ -391,7 +407,7 @@ public class TestPlayerSkillController : MonoBehaviour
         // 기본값
         if (BuffSkillIds.Contains(skillId))
         {
-            return new Vector3(0f, 0f, 0f);
+            return new Vector3(0f, -3f, 0f);
         }
         return new Vector3(0f, 3f, 0f);
     }

@@ -236,7 +236,8 @@ public abstract class PlayerSkillBase : MonoBehaviour
     {
         if (cachedEffectPrefab != null)
         {
-            GameObject effect = Instantiate(cachedEffectPrefab, position, Quaternion.identity);
+            GameObject effect = Instantiate(cachedEffectPrefab);
+            effect.transform.position = position;
             Destroy(effect, lifetime);
         }
         else

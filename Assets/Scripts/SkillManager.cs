@@ -12,14 +12,10 @@ public class SkillManager : MonoBehaviour
     [SerializeField] private Transform skillParent;
 
     [Header("스킬 발동 위치 참조")]
-    [SerializeField] private Transform monsterAreaCenter;  // 몬스터 구역 중앙 (공격 스킬용)
-    [SerializeField] private Transform gridAreaCenter;     // 그리드 중앙 (버프 스킬용)
     [SerializeField] private BattleUnitManager battleUnitManager; // 유닛 매니저 참조
 
-    // SKILL_OBJECT=2인 플레이어 스킬 ID들
     private static readonly int[] PlayerSkillIds = { 22059, 22060, 22061, 22062, 22063, 22064, 22065, 22066, 22067, 22068, 22069 };
 
-    // SkillID → Addressable Key 매핑. CSV에 키 컬럼 없어서 코드에서 관리
     private static readonly Dictionary<int, string> SkillAddressableKeys = new Dictionary<int, string>
     {
         { 22059, "EarthQuake" },
@@ -63,26 +59,6 @@ public class SkillManager : MonoBehaviour
     /// </summary>
     private void AutoFindReferences()
     {
-        // monsterAreaCenter: SkillSpawnpoint 오브젝트 사용
-        if (monsterAreaCenter == null)
-        {
-            var skillSpawnpoint = GameObject.Find("SkillSpawnpoint");
-            if (skillSpawnpoint != null)
-            {
-                monsterAreaCenter = skillSpawnpoint.transform;
-            }
-        }
-
-        // gridAreaCenter: GridManager 오브젝트 사용
-        if (gridAreaCenter == null)
-        {
-            var gridManager = GameObject.Find("GridManager");
-            if (gridManager != null)
-            {
-                gridAreaCenter = gridManager.transform;
-            }
-        }
-
         // battleUnitManager: UnitManager 오브젝트에서 찾기
         if (battleUnitManager == null)
         {
@@ -133,10 +109,10 @@ public class SkillManager : MonoBehaviour
     /// </summary>
     private Vector3 GetSkillSpawnPosition(int skillId)
     {
-        // 버프 스킬은 아군 영역 (0, 1, 0)
+        // 버프 스킬은 아군 영역 (0, -3, 0)
         if (BuffSkillIds.Contains(skillId))
         {
-            return new Vector3(0f, 1f, 0f);
+            return new Vector3(0f, -3f, 0f);
         }
 
         // 공격 스킬은 몬스터 영역 (0, 3, 0)

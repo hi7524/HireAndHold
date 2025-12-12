@@ -79,6 +79,18 @@ public class SkillUI : MonoBehaviour
 
         iconAddress = iconAddress.Trim();
 
+        // 캐시에서 먼저 확인
+        var cachedSprite = AddressablePreloader.Instance?.GetCachedSprite(iconAddress);
+        if (cachedSprite != null)
+        {
+            if (icon != null)
+            {
+                icon.sprite = cachedSprite;
+                Debug.Log($"[SkillUI] 아이콘 캐시 로드 성공: {iconAddress}");
+            }
+            return;
+        }
+
         // 기존 핸들 해제
         if (iconHandle.IsValid())
         {

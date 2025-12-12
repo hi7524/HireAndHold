@@ -118,9 +118,9 @@ public class AddressablePreloader : MonoBehaviour
             }
         }
 
-        // 3. 패시브 스킬 아이콘 키 수집 (ID: 22070~22087)
+        // 3. 플레이어 스킬 아이콘 키 수집 (ID: 22059~22069) + 패시브 스킬 (22070~22087)
         var skillTable = DataTableManager.SkillTable;
-        for (int skillId = 22070; skillId <= 22087; skillId++)
+        for (int skillId = 22059; skillId <= 22087; skillId++)
         {
             var skill = skillTable.Get(skillId);
             if (skill != null && !string.IsNullOrEmpty(skill.SKILL_ICON) &&
