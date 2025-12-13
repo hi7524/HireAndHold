@@ -226,7 +226,8 @@ public class DragManager : MonoBehaviour
         }
         else
         {
-            // 임시 저장된 원본 위치로 복원
+            // OnDropFailed()가 호출되기 전에 위치 복원 (IDraggable이 자체 복원 로직이 없는 경우를 위해)
+            // GridUnit 같은 경우는 OnDropFailed()에서 자체적으로 올바른 위치로 복원함
             draggingTarget.GameObject.transform.position = originalPosition;
 
             if (!wasUI)

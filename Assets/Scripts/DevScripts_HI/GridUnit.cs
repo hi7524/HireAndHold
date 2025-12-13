@@ -97,6 +97,13 @@ public class GridUnit : MonoBehaviour, IDraggable
     public void OnDragEnd()
     {
         SetActiveChildrenObj(false);
+
+        // 드래그 종료 시 그리드 색상 초기화
+        if (gridManager != null)
+        {
+            gridManager.ClearAllGridsColor();
+            gridManager.ChangeOccupiedCellColor();
+        }
     }
 
     public void OnDropFailed()
@@ -122,6 +129,10 @@ public class GridUnit : MonoBehaviour, IDraggable
                 // 색상 복원
                 gridManager.OnFailed();
             }
+
+            // 유닛 위치를 원래 GridCell의 월드 좌표로 복원
+            transform.position = curGridCell.transform.position;
+            Physics2D.SyncTransforms();
 
             // GridCell의 PlacedObject 참조도 복원
             curGridCell.RestorePlacedObject(gameObject);
