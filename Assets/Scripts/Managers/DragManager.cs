@@ -126,6 +126,7 @@ public class DragManager : MonoBehaviour
 
         if (!dragState.IsUI)
         {
+            // 드래그 중에는 Physics2D.OverlapPoint가 실패하므로 SyncTransforms 필수
             Physics2D.SyncTransforms();
         }
 
@@ -232,6 +233,7 @@ public class DragManager : MonoBehaviour
 
             if (!wasUI)
             {
+                // 드래그 중에는 Physics2D.OverlapPoint가 실패하므로 SyncTransforms 필수
                 Physics2D.SyncTransforms();
             }
 
