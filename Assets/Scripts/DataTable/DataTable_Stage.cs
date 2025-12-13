@@ -23,6 +23,7 @@ public class StageData
     public int STAGE_C_3S_ID { get; set; }
     public float STAGE_C_3S_CO { get; set; }
     public string STAGE_MAP { get; set; }
+    public string STAGE_GRID { get; set; }
 
     // StringTable 연동
     public string StringName => DataTableManager.StringTable?.Get(STAGE_NAME);
@@ -30,8 +31,6 @@ public class StageData
 
 public class DataTable_Stage : DataTable
 {
-
-
     private readonly Dictionary<int, StageData> dictionary = new Dictionary<int, StageData>();
 
     public override async UniTask LoadAsync(string filename)

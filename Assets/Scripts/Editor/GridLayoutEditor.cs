@@ -32,17 +32,23 @@ public class GridLayoutEditor : Editor
         // 버프 설정
         EditorGUILayout.LabelField("Buff Settings", EditorStyles.boldLabel);
         bool newEnableCrossBuffs = EditorGUILayout.Toggle("Enable Cross Buffs", data.enableCrossBuffs);
-        if (newEnableCrossBuffs && !data.enableCrossBuffs)
+        if (newEnableCrossBuffs != data.enableCrossBuffs)
         {
-            data.enableCrossBuffs = true;
-            data.enableRegionBuffs = false;
+            data.enableCrossBuffs = newEnableCrossBuffs;
+            if (newEnableCrossBuffs)
+            {
+                data.enableRegionBuffs = false;
+            }
         }
 
         bool newEnableRegionBuffs = EditorGUILayout.Toggle("Enable Region Buffs", data.enableRegionBuffs);
-        if (newEnableRegionBuffs && !data.enableRegionBuffs)
+        if (newEnableRegionBuffs != data.enableRegionBuffs)
         {
-            data.enableRegionBuffs = true;
-            data.enableCrossBuffs = false;
+            data.enableRegionBuffs = newEnableRegionBuffs;
+            if (newEnableRegionBuffs)
+            {
+                data.enableCrossBuffs = false;
+            }
         }
 
         EditorGUILayout.Space(10);
