@@ -33,6 +33,16 @@ public class GridVisualizer : MonoBehaviour
 
         gridCells = new GridCell[data.width, data.height];
 
+        // 전체 그리드 크기 계산 (중앙 정렬을 위한 오프셋 계산용)
+        float totalWidth = data.width * (cellSize + space) - space;
+        float totalHeight = data.height * (cellSize + space) - space;
+
+        // 중심을 (0, 0)으로 맞추기 위한 오프셋
+        Vector3 centerOffset = new Vector3(-totalWidth / 2f, -totalHeight / 2f, 0f);
+
+        // 각 셀의 pivot을 중심으로 하기 위한 offset
+        Vector3 cellPivotOffset = new Vector3(cellSize / 2f, cellSize / 2f, 0f);
+
         for (int i = 0; i < data.width; i++)
         {
             for (int j = 0; j < data.height; j++)
@@ -49,7 +59,7 @@ public class GridVisualizer : MonoBehaviour
                     i * (cellSize + space),
                     j * (cellSize + space),
                     0f
-                );
+                ) + cellPivotOffset + centerOffset;
 
                 cell.transform.localScale = new Vector3(cellSize, cellSize, 1f);
 
