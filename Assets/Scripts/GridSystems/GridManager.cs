@@ -290,9 +290,13 @@ public class GridManager : MonoBehaviour
         // 크로스 버프 체크
         if (LayoutData.enableCrossBuffs)
         {
+            // 해당 buffName과 정확히 일치하는 crossBuff만 찾아서 처리
             foreach (var crossBuff in LayoutData.crossBuffs)
             {
-                if (crossBuff.horizontalBuffName == buffName)
+                bool isHorizontalMatch = crossBuff.horizontalBuffName == buffName;
+                bool isVerticalMatch = crossBuff.verticalBuffName == buffName;
+
+                if (isHorizontalMatch)
                 {
                     // 가로줄 셀 추가
                     for (int x = 0; x < LayoutData.width; x++)
@@ -303,8 +307,10 @@ public class GridManager : MonoBehaviour
                             cells.Add(pos);
                         }
                     }
+                    return cells; // 찾았으므로 바로 반환
                 }
-                else if (crossBuff.verticalBuffName == buffName)
+
+                if (isVerticalMatch)
                 {
                     // 세로줄 셀 추가
                     for (int y = 0; y < LayoutData.height; y++)
@@ -315,6 +321,7 @@ public class GridManager : MonoBehaviour
                             cells.Add(pos);
                         }
                     }
+                    return cells; // 찾았으므로 바로 반환
                 }
             }
         }
