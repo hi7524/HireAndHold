@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 public class PlayerUnitProjectile : MonoBehaviour
 {
@@ -18,6 +20,7 @@ public class PlayerUnitProjectile : MonoBehaviour
     private Vector2 direction;
     private Transform target;
     private Rigidbody2D rb;
+    private string hitAudioClipName;
 
     public void Initialize(ObjectPoolManager manager, string key)
     {
@@ -54,6 +57,11 @@ public class PlayerUnitProjectile : MonoBehaviour
         {
             direction = transform.up;
         }
+    }
+
+    public void SetHitAudioClip(string clipName)
+    {
+        hitAudioClipName = clipName;
     }
 
     public void Launch()
@@ -104,9 +112,30 @@ public class PlayerUnitProjectile : MonoBehaviour
             if (hitEffect != null)
                 hitEffect.Play();
 
+            // Hit 사운드 재생
+            PlayHitSound();
+
             // 정지
             rb.linearVelocity = Vector2.zero;
             launchSpeed = 0f;
+        }
+    }
+
+    private async void PlayHitSound()
+    {
+        if (string.IsNullOrEmpty(hitAudioClipName) || SoundManager.Instance == null)
+            return;
+
+        AudioClip clip = null;
+        
+        if (AddressablePreloader.Instance != null && AddressablePreloader.Instance.HasCachedAudioClip(hitAudioClipName))
+        {
+            clip = AddressablePreloader.Instance.GetCachedAudioClip(hitAudioClipName);
+
+            if (clip != null)
+            {
+                SoundManager.Instance.PlaySFX(clip);
+            }
         }
     }
 
