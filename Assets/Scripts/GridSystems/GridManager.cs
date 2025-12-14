@@ -12,10 +12,10 @@ public enum GridState
 public class GridManager : MonoBehaviour
 {
     [Header("Core Components")]
-    [SerializeField] private GridLayoutData layoutData;
+    [SerializeField] private StageManager stageManager;
+    [SerializeField] private BattleUnitManager unitManager;
     [SerializeField] private GridVisualizer gridVisualizer;
     [SerializeField] private BuffManager buffManager;
-    [SerializeField] private BattleUnitManager unitManager;
     [SerializeField] private AttackTriggerZone attackTriggerZone;
     [SerializeField] private LevelUpRewardController levelUpRewardController;
 
@@ -28,13 +28,14 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject[] mergeEffectPrefabs; // 0: 2성, 1: 3성
 
     public int[,] GridArray { get; private set; }
-    public GridLayoutData LayoutData => layoutData;
+    public GridLayoutData LayoutData { get; private set; }
     public bool IsInitialized { get; private set; } = false;
     public float CellSize => cellSize;
     public float CellSpace => cellSpace;
     public int GridUnitCount => gridUnitCount;
     public bool IsLastUnitOnGrid => gridUnitCount <= 1;
 
+    private const string DEFAULT_GRID_LAYOUT_KEY = "StageGridLayout_00";
     private int gridUnitCount = 0;
     private Dictionary<int, Queue<GameObject>> mergeEffectPools = new Dictionary<int, Queue<GameObject>>();
     private Transform effectParent;
@@ -42,18 +43,22 @@ public class GridManager : MonoBehaviour
 
     private void Awake()
     {
-        InitializeGridArrays();
         InitializeMergeEffectPools();
-
-        // GridVisualizer에게 그리드 생성 요청
-        if (gridVisualizer != null && layoutData != null)
-        {
-            gridVisualizer.VisualizeGridData(layoutData);
-        }
     }
 
     private void Start()
     {
+        // 스테이지에 맞는 GridLayoutData 설정 (StageManager의 Start 이후에 실행되도록)
+        SetGridData();
+
+        InitializeGridArrays();
+
+        // GridVisualizer에게 그리드 생성 요청
+        if (gridVisualizer != null && LayoutData != null)
+        {
+            gridVisualizer.VisualizeGridData(LayoutData);
+        }
+
         // Start에서 초기화하여 모든 Awake가 완료된 후 실행되도록 보장
         EnsureInitialized();
     }
@@ -73,10 +78,58 @@ public class GridManager : MonoBehaviour
         IsInitialized = true;
     }
 
+    public void SetGridData()
+    {
+        string gridLayoutKey;
+
+        if (stageManager == null)
+        {
+            gridLayoutKey = DEFAULT_GRID_LAYOUT_KEY;
+            Debug.LogWarning($"StageManager가 할당되지 않아 기본 레이아웃을 사용합니다: {gridLayoutKey}");
+        }
+        else
+        {
+            int currentStageId = stageManager.CurrentStageId;
+            StageData stageData = DataTableManager.StageTable.Get(currentStageId);
+
+            if (stageData == null)
+            {
+                gridLayoutKey = DEFAULT_GRID_LAYOUT_KEY;
+                Debug.LogWarning($"Stage ID {currentStageId}에 해당하는 데이터를 찾을 수 없어 기본 레이아웃을 사용합니다: {gridLayoutKey}");
+            }
+            else
+            {
+                gridLayoutKey = stageData.STAGE_GRID;
+                if (string.IsNullOrEmpty(gridLayoutKey))
+                {
+                    gridLayoutKey = DEFAULT_GRID_LAYOUT_KEY;
+                    Debug.LogWarning($"Stage ID {currentStageId}의 STAGE_GRID 값이 비어있어 기본 레이아웃을 사용합니다: {gridLayoutKey}");
+                }
+            }
+        }
+
+        if (AddressablePreloader.Instance == null)
+        {
+            Debug.LogWarning("AddressablePreloader.Instance가 null입니다.");
+            return;
+        }
+
+        GridLayoutData newLayoutData = AddressablePreloader.Instance.GetCachedGridLayout(gridLayoutKey);
+        if (newLayoutData != null)
+        {
+            LayoutData = newLayoutData;
+            Debug.Log($"GridLayoutData 설정 완료: {gridLayoutKey}");
+        }
+        else
+        {
+            Debug.LogWarning($"GridLayoutData를 찾을 수 없습니다: {gridLayoutKey}");
+        }
+    }
+
     // 그리드 배열 초기화 (셀 등록 전)
     private void InitializeGridArrays()
     {
-        GridArray = new int[layoutData.width, layoutData.height];
+        GridArray = new int[LayoutData.width, LayoutData.height];
     }
 
     // 그리드 셀 상태 설정 (Empty, Occupied, Unavailable)
@@ -168,7 +221,7 @@ public class GridManager : MonoBehaviour
         if (!IsWithinBounds(pos))
             return false;
 
-        if (!layoutData.IsValidCell(pos))
+        if (!LayoutData.IsValidCell(pos))
             return false;
 
         int cellState = GridArray[pos.x, pos.y];
@@ -178,8 +231,8 @@ public class GridManager : MonoBehaviour
     // 위치가 그리드 범위 내에 있는지 확인
     private bool IsWithinBounds(Vector2Int pos)
     {
-        return pos.x >= 0 && pos.x < layoutData.width &&
-               pos.y >= 0 && pos.y < layoutData.height;
+        return pos.x >= 0 && pos.x < LayoutData.width &&
+               pos.y >= 0 && pos.y < LayoutData.height;
     }
 
     // 특정 그리드 위치의 GridCell 반환
@@ -195,9 +248,9 @@ public class GridManager : MonoBehaviour
         float minDistance = float.MaxValue;
         Vector2Int closestGridPos = Vector2Int.zero;
 
-        for (int x = 0; x < layoutData.width; x++)
+        for (int x = 0; x < LayoutData.width; x++)
         {
-            for (int y = 0; y < layoutData.height; y++)
+            for (int y = 0; y < LayoutData.height; y++)
             {
                 Vector2Int gridPos = new Vector2Int(x, y);
                 GridCell cell = gridVisualizer.GetGridCellAt(gridPos);
@@ -235,17 +288,17 @@ public class GridManager : MonoBehaviour
         List<Vector2Int> cells = new List<Vector2Int>();
 
         // 크로스 버프 체크
-        if (layoutData.enableCrossBuffs)
+        if (LayoutData.enableCrossBuffs)
         {
-            foreach (var crossBuff in layoutData.crossBuffs)
+            foreach (var crossBuff in LayoutData.crossBuffs)
             {
                 if (crossBuff.horizontalBuffName == buffName)
                 {
                     // 가로줄 셀 추가
-                    for (int x = 0; x < layoutData.width; x++)
+                    for (int x = 0; x < LayoutData.width; x++)
                     {
                         Vector2Int pos = new Vector2Int(x, crossBuff.centerPos.y);
-                        if (layoutData.IsValidCell(pos))
+                        if (LayoutData.IsValidCell(pos))
                         {
                             cells.Add(pos);
                         }
@@ -254,10 +307,10 @@ public class GridManager : MonoBehaviour
                 else if (crossBuff.verticalBuffName == buffName)
                 {
                     // 세로줄 셀 추가
-                    for (int y = 0; y < layoutData.height; y++)
+                    for (int y = 0; y < LayoutData.height; y++)
                     {
                         Vector2Int pos = new Vector2Int(crossBuff.centerPos.x, y);
-                        if (layoutData.IsValidCell(pos))
+                        if (LayoutData.IsValidCell(pos))
                         {
                             cells.Add(pos);
                         }
@@ -267,9 +320,9 @@ public class GridManager : MonoBehaviour
         }
 
         // 리전 버프 체크
-        if (layoutData.enableRegionBuffs)
+        if (LayoutData.enableRegionBuffs)
         {
-            foreach (var regionBuff in layoutData.regionBuffs)
+            foreach (var regionBuff in LayoutData.regionBuffs)
             {
                 if (regionBuff.buffName == buffName)
                 {
@@ -281,12 +334,12 @@ public class GridManager : MonoBehaviour
         // 전체 그리드 버프 체크
         if (buffName == "FullGrid")
         {
-            for (int x = 0; x < layoutData.width; x++)
+            for (int x = 0; x < LayoutData.width; x++)
             {
-                for (int y = 0; y < layoutData.height; y++)
+                for (int y = 0; y < LayoutData.height; y++)
                 {
                     Vector2Int pos = new Vector2Int(x, y);
-                    if (layoutData.IsValidCell(pos))
+                    if (LayoutData.IsValidCell(pos))
                     {
                         cells.Add(pos);
                     }

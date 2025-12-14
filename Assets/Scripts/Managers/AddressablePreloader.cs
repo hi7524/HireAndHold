@@ -31,6 +31,7 @@ public class AddressablePreloader : MonoBehaviour
     private Dictionary<string, UnitGridData> cachedGridData = new Dictionary<string, UnitGridData>();
     private Dictionary<string, Sprite> cachedSprites = new Dictionary<string, Sprite>();
     private Dictionary<string, Sprite> cachedMaps = new Dictionary<string, Sprite>();
+    private Dictionary<string, GridLayoutData> cachedGridLayouts = new Dictionary<string, GridLayoutData>();
     private List<AsyncOperationHandle> handles = new List<AsyncOperationHandle>();
 
     public bool IsLoaded { get; private set; } = false;
@@ -61,6 +62,7 @@ public class AddressablePreloader : MonoBehaviour
         var gridDataKeys = new List<string>();
         var spriteKeys = new List<string>();
         var mapKeys = new List<string>();
+        var gridLayoutKeys = new List<string>();
 
         // 1. 몬스터 비주얼 키 수집
         var monsterTable = DataTableManager.MonsterTable.GetAll();
@@ -123,6 +125,14 @@ public class AddressablePreloader : MonoBehaviour
             {
                 mapKeys.Add(stage.STAGE_MAP);
             }
+
+            // 스테이지 그리드 레이아웃 키 수집
+            if (!string.IsNullOrEmpty(stage.STAGE_GRID) &&
+                !gridLayoutKeys.Contains(stage.STAGE_GRID) &&
+                IsValidAddressableKey(stage.STAGE_GRID))
+            {
+                gridLayoutKeys.Add(stage.STAGE_GRID);
+            }
         }
 
         // 5. 플레이어 스킬 이펙트 키 수집 (SKILL_OBJECT=2인 플레이어 스킬)
@@ -142,7 +152,7 @@ public class AddressablePreloader : MonoBehaviour
         // 6. 플레이어 스킬 프리팹 Label로 일괄 로드
         await LoadPlayerSkillPrefabsByLabel(ct);
 
-        int total = prefabKeys.Count + gridDataKeys.Count + spriteKeys.Count + mapKeys.Count;
+        int total = prefabKeys.Count + gridDataKeys.Count + spriteKeys.Count + mapKeys.Count + gridLayoutKeys.Count;
         int completed = 0;
 
         if (total == 0)
@@ -194,10 +204,20 @@ public class AddressablePreloader : MonoBehaviour
             }));
         }
 
+        // GridLayout 로드 태스크 추가
+        foreach (var key in gridLayoutKeys)
+        {
+            loadTasks.Add(LoadGridLayoutWithProgress(key, ct, () =>
+            {
+                completed++;
+                progress?.Report((float)completed / total);
+            }));
+        }
+
         await UniTask.WhenAll(loadTasks);
 
         IsLoaded = true;
-        Debug.Log($"[AddressablePreloader] 프리로드 완료: {cachedPrefabs.Count} 프리팹, {cachedGridData.Count} GridData, {cachedSprites.Count} Sprite, {cachedMaps.Count} 맵");
+        Debug.Log($"[AddressablePreloader] 프리로드 완료: {cachedPrefabs.Count} 프리팹, {cachedGridData.Count} GridData, {cachedSprites.Count} Sprite, {cachedMaps.Count} 맵, {cachedGridLayouts.Count} GridLayout");
     }
 
     private async UniTask LoadPrefabWithProgress(string key, CancellationToken ct, Action onComplete)
@@ -241,6 +261,18 @@ public class AddressablePreloader : MonoBehaviour
         try
         {
             await LoadAndCacheMap(key, ct);
+        }
+        finally
+        {
+            onComplete?.Invoke();
+        }
+    }
+
+    private async UniTask LoadGridLayoutWithProgress(string key, CancellationToken ct, Action onComplete)
+    {
+        try
+        {
+            await LoadAndCacheGridLayout(key, ct);
         }
         finally
         {
@@ -390,6 +422,32 @@ public class AddressablePreloader : MonoBehaviour
         }
     }
 
+    private async UniTask LoadAndCacheGridLayout(string key, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(key) || cachedGridLayouts.ContainsKey(key))
+            return;
+
+        try
+        {
+            var handle = Addressables.LoadAssetAsync<GridLayoutData>(key);
+            handles.Add(handle);
+            var gridLayout = await handle.ToUniTask(cancellationToken: ct);
+
+            if (handle.Status == AsyncOperationStatus.Succeeded && gridLayout != null)
+            {
+                cachedGridLayouts[key] = gridLayout;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 정상적인 상황
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[AddressablePreloader] GridLayout 로드 실패: {key}, {e.Message}");
+        }
+    }
+
     /// <summary>
     /// 캐싱된 프리팹 가져오기
     /// </summary>
@@ -479,6 +537,28 @@ public class AddressablePreloader : MonoBehaviour
     }
 
     /// <summary>
+    /// 캐싱된 GridLayout 가져오기
+    /// </summary>
+    public GridLayoutData GetCachedGridLayout(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return null;
+
+        return cachedGridLayouts.TryGetValue(key, out var gridLayout) ? gridLayout : null;
+    }
+
+    /// <summary>
+    /// GridLayout이 캐싱되어 있는지 확인
+    /// </summary>
+    public bool HasCachedGridLayout(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return false;
+
+        return cachedGridLayouts.ContainsKey(key);
+    }
+
+    /// <summary>
     /// 유효한 Addressable 키인지 확인 (폴더 경로나 플레이스홀더 텍스트 필터링)
     /// </summary>
     private bool IsValidAddressableKey(string key)
@@ -519,6 +599,7 @@ public class AddressablePreloader : MonoBehaviour
         cachedGridData.Clear();
         cachedSprites.Clear();
         cachedMaps.Clear();
+        cachedGridLayouts.Clear();
 
         if (instance == this)
         {
