@@ -18,6 +18,7 @@ public class UnitData
     public int UNIT_SKILL2 { get; set; }         // 스킬 ID 2
     public int NORMAL_ENFORCEID { get; set; }    // 일반 강화 ID
     public string UNIT_ICON { get; set; }        // 유닛 아이콘
+    public string UNIT_ICON_FULL { get; set; }        // 유닛 아이콘
     public int UNIT_DESCRIPTION { get; set; }    // 유닛 설명 키 (StringTable)
     public string PREFAB_NAME { get; set; }
     public string GRID_DATA { get; set; }        // 그리드 데이터 ScriptableObject 이름

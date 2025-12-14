@@ -349,7 +349,7 @@ public class LevelUpRewardController : MonoBehaviour
             if (!string.IsNullOrEmpty(unitData.UNIT_ICON))
             {
                 // 1성 스프라이트
-                var sprite = AddressablePreloader.Instance.GetCachedSprite(unitData.UNIT_ICON);
+                var sprite = AddressablePreloader.Instance.GetCachedSprite(unitData.UNIT_ICON_FULL);
                 if (sprite != null)
                     spriteCache[unitId] = sprite;
 
@@ -358,7 +358,7 @@ public class LevelUpRewardController : MonoBehaviour
                 var unitData2 = DataTableManager.UnitTable?.Get(star2UnitId);
                 if (unitData2 != null && !string.IsNullOrEmpty(unitData2.UNIT_ICON))
                 {
-                    var sprite2 = AddressablePreloader.Instance.GetCachedSprite(unitData2.UNIT_ICON);
+                    var sprite2 = AddressablePreloader.Instance.GetCachedSprite(unitData2.UNIT_ICON_FULL);
                     if (sprite2 != null)
                         spriteCache[star2UnitId] = sprite2;
                 }
@@ -368,7 +368,7 @@ public class LevelUpRewardController : MonoBehaviour
                 var unitData3 = DataTableManager.UnitTable?.Get(star3UnitId);
                 if (unitData3 != null && !string.IsNullOrEmpty(unitData3.UNIT_ICON))
                 {
-                    var sprite3 = AddressablePreloader.Instance.GetCachedSprite(unitData3.UNIT_ICON);
+                    var sprite3 = AddressablePreloader.Instance.GetCachedSprite(unitData3.UNIT_ICON_FULL);
                     if (sprite3 != null)
                         spriteCache[star3UnitId] = sprite3;
                 }
