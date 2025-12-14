@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d95553d5b5007c44e8cbf051e5bead44, type: 3}
+  m_Name: StageGridLayout_06
+  m_EditorClassIdentifier: 
+  width: 6
+  height: 4
+  validCells: 010101010101010101010101010101010101010101010101
+  enableCrossBuffs: 1
+  enableRegionBuffs: 0
+  crossBuffs:
+  - horizontalBuffName: Horizontal Buff 1
+    verticalBuffName: Vertical Buff 1
+    centerPos: {x: 5, y: 2}
+  - horizontalBuffName: Horizontal Buff 2
+    verticalBuffName: Vertical Buff 2
+    centerPos: {x: 0, y: 1}
+  regionBuffs: []

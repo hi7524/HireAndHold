@@ -37,6 +37,7 @@ public class DragManager : MonoBehaviour
         public bool IsUI;
         public Transform OriginalParent;
         public int OriginalSiblingIndex;
+        public Vector3 DragOffset; // 드래그 시작 시 마우스와 오브젝트 간의 오프셋
 
         public readonly bool IsDragging => Target != null;
 
@@ -47,6 +48,7 @@ public class DragManager : MonoBehaviour
             IsUI = false;
             OriginalParent = null;
             OriginalSiblingIndex = 0;
+            DragOffset = Vector3.zero;
         }
     }
 
@@ -124,6 +126,7 @@ public class DragManager : MonoBehaviour
 
         if (!dragState.IsUI)
         {
+            // 드래그 중에는 Physics2D.OverlapPoint가 실패하므로 SyncTransforms 필수
             Physics2D.SyncTransforms();
         }
 
@@ -163,6 +166,18 @@ public class DragManager : MonoBehaviour
         dragState.Target = newTarget;
         dragState.IsUI = isUI;
         dragState.OriginalPosition = dragState.Target.GameObject.transform.position;
+
+        // 드래그 오프셋 계산 (마우스 위치 - 오브젝트 위치)
+        if (isUI)
+        {
+            dragState.DragOffset = dragState.Target.GameObject.transform.position - (Vector3)pointerPosition;
+        }
+        else
+        {
+            Vector3 worldPos = MainCamera.ScreenToWorldPoint(pointerPosition);
+            worldPos.z = 0;
+            dragState.DragOffset = dragState.Target.GameObject.transform.position - worldPos;
+        }
 
         if (dragState.IsUI && rootCanvas != null)
         {
@@ -212,11 +227,13 @@ public class DragManager : MonoBehaviour
         }
         else
         {
-            // 임시 저장된 원본 위치로 복원
+            // OnDropFailed()가 호출되기 전에 위치 복원 (IDraggable이 자체 복원 로직이 없는 경우를 위해)
+            // GridUnit 같은 경우는 OnDropFailed()에서 자체적으로 올바른 위치로 복원함
             draggingTarget.GameObject.transform.position = originalPosition;
 
             if (!wasUI)
             {
+                // 드래그 중에는 Physics2D.OverlapPoint가 실패하므로 SyncTransforms 필수
                 Physics2D.SyncTransforms();
             }
 
@@ -422,7 +439,8 @@ public class DragManager : MonoBehaviour
         RectTransform rectTransform = targetObj.GetComponent<RectTransform>();
         if (rectTransform != null)
         {
-            rectTransform.position = screenPos;
+            // 오프셋을 적용하여 클릭한 위치가 유지되도록 함
+            rectTransform.position = (Vector3)screenPos + dragState.DragOffset;
         }
     }
 
@@ -431,7 +449,8 @@ public class DragManager : MonoBehaviour
     {
         Vector3 worldPos = MainCamera.ScreenToWorldPoint(screenPos);
         worldPos.z = 0;
-        targetObj.transform.position = worldPos;
+        // 오프셋을 적용하여 클릭한 위치가 유지되도록 함
+        targetObj.transform.position = worldPos + dragState.DragOffset;
     }
 
     // Collider에서 SpriteRenderer의 SortingOrder 가져오기

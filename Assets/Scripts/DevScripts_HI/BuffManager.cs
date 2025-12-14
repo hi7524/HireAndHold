@@ -18,7 +18,7 @@ public class BuffManager : MonoBehaviour
     public event Action<float> OnBuffPercentageChanged;
     public event Action<HashSet<string>> OnActivatedBuffsChanged;
 
-    private int[,] gridArray => gridManager.gridArray;
+    private int[,] gridArray => gridManager.GridArray;
     private GridLayoutData layoutData => gridManager.LayoutData;
 
     private bool isFilledAllGrids;

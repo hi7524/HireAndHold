@@ -56,7 +56,7 @@ public class UnitSellZone : MonoBehaviour, IDroppable
         }
 
         // 마지막 남은 유닛은 판매할 수 없음
-        if (gridManager != null && gridManager.IsLastUnitOnGrid())
+        if (gridManager != null && gridManager.IsLastUnitOnGrid)
         {
             uiManager.UpdateInfoText(MinUnitRequiredMsg, Color.red);
             PlayFailSound();

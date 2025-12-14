@@ -5159,6 +5159,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1026080700}
   m_CullTransparentMesh: 1
+--- !u!1 &1054146659
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1054146661}
+  - component: {fileID: 1054146660}
+  m_Layer: 0
+  m_Name: SoundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1054146660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1054146659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5d84b20b9b269648bb3243b1eb7e8f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bgmSource: {fileID: 0}
+  sfxSource: {fileID: 0}
+  bgmVolume: 1
+  sfxVolume: 1
+--- !u!4 &1054146661
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1054146659}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1069731199
 GameObject:
   m_ObjectHideFlags: 0
@@ -12313,11 +12361,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3016047980065441388, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3016047980065441388, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.02
+      value: -2.3
       objectReference: {fileID: 0}
     - target: {fileID: 3016047980065441388, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: m_LocalPosition.z
@@ -12355,6 +12403,62 @@ PrefabInstance:
       propertyPath: poolManager
       value: 
       objectReference: {fileID: 455573300}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: validColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: validColor.b
+      value: 0.3537736
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: validColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: validColor.r
+      value: 0.36770082
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: invalidColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: invalidColor.b
+      value: 0.4669811
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: invalidColor.g
+      value: 0.4669811
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: invalidColor.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: crossBuffColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: crossBuffColor.g
+      value: 0.91415095
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: crossBuffColor.r
+      value: 0.8349056
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: regionBuffColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: regionBuffColor.g
+      value: 0.8254717
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394874904344267427, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: regionBuffColor.r
+      value: 0.97543234
+      objectReference: {fileID: 0}
     - target: {fileID: 6959901440674583972, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: uiManager
       value: 
@@ -12367,6 +12471,10 @@ PrefabInstance:
       propertyPath: unitManager
       value: 
       objectReference: {fileID: 1412748152}
+    - target: {fileID: 6959901440674583972, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: stageManager
+      value: 
+      objectReference: {fileID: 1847491321}
     - target: {fileID: 6959901440674583972, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: crossBuffColor.b
       value: 1
@@ -12415,6 +12523,10 @@ PrefabInstance:
       propertyPath: 'mergeEffectPrefabs.Array.data[2]'
       value: 
       objectReference: {fileID: 4453540500599135066, guid: 0afb0fde55652624e8e2db1457f8a735, type: 3}
+    - target: {fileID: 8375057794222710434, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
+      propertyPath: m_Icon
+      value: 
+      objectReference: {fileID: 8418204508859773708, guid: 0000000000000000d000000000000000, type: 0}
     - target: {fileID: 8375057794222710434, guid: d5765bd2217fa704f92cf383ed5ff4b8, type: 3}
       propertyPath: m_Name
       value: GridManager
@@ -15725,6 +15837,7 @@ SceneRoots:
   - {fileID: 1412748151}
   - {fileID: 1133995188}
   - {fileID: 569250258}
+  - {fileID: 1054146661}
   - {fileID: 181593918}
   - {fileID: 969150685}
   - {fileID: 1445209041}

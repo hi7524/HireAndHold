@@ -25,11 +25,9 @@ public class StageManager : MonoBehaviour
     [SerializeField] private SpriteRenderer mapSpriteRenderer1;
     [SerializeField] private SpriteRenderer mapSpriteRenderer2;
 
-    private void Start()
+    private void Awake()
     {
-        // 로딩 씬에서 DataTableManager가 이미 초기화됨
-        waveManager.Initialize(gameManager, this);
-
+        // CurrentStageId 먼저 설정 (다른 컴포넌트가 Start에서 참조할 수 있도록)
         CurrentStageId = PageSnap.SelectedStageId;
         Debug.Log($"[StageManager] 초기 스테이지 ID 설정: {CurrentStageId}");
         CurrentStageData = DataTableManager.StageTable.Get(CurrentStageId);
@@ -37,6 +35,12 @@ public class StageManager : MonoBehaviour
         {
             LoadStageMap(CurrentStageData.STAGE_MAP);
         }
+    }
+
+    private void Start()
+    {
+        // 로딩 씬에서 DataTableManager가 이미 초기화됨
+        waveManager.Initialize(gameManager, this);
         gameManager.OnGameStart += () => StartStage(CurrentStageId);
 
         // MonsterSpawner 이벤트 구독

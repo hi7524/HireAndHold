@@ -11,50 +11,54 @@ public enum GridState
 
 public class GridManager : MonoBehaviour
 {
-    [SerializeField] private GridLayoutData layoutData;
+    [Header("Core Components")]
+    [SerializeField] private StageManager stageManager;
+    [SerializeField] private BattleUnitManager unitManager;
     [SerializeField] private GridVisualizer gridVisualizer;
     [SerializeField] private BuffManager buffManager;
-    [SerializeField] private BattleUnitManager unitManager;
-    [Space]
-    [SerializeField] private Color validColor;
-    [SerializeField] private Color invalidColor;
-    [Space]
-    [SerializeField] private Color crossBuffColor = new Color(0.9f, 0.95f, 1f, 1f);
-    [SerializeField] private Color regionBuffColor = new Color(0.95f, 1f, 0.9f, 1f);
-    [SerializeField] private GameObject gridUnitPrefab;
-    [Space]
-    [SerializeField] private LevelUpRewardController levelUpRewardController;
-    [Space]
     [SerializeField] private AttackTriggerZone attackTriggerZone;
-    [Space]
+    [SerializeField] private LevelUpRewardController levelUpRewardController;
+
+    [Header("Grid Settings")]
+    [SerializeField] private float cellSize = 1f;
+    [SerializeField] private float cellSpace = 0.1f;
+    [SerializeField] private GameObject gridUnitPrefab;
+
     [Header("Merge Effect")]
     [SerializeField] private GameObject[] mergeEffectPrefabs; // 0: 2성, 1: 3성
 
-
-    public int[,] gridArray { get; private set; }
-    public GridLayoutData LayoutData => layoutData;
+    public int[,] GridArray { get; private set; }
+    public GridLayoutData LayoutData { get; private set; }
     public bool IsInitialized { get; private set; } = false;
+    public float CellSize => cellSize;
+    public float CellSpace => cellSpace;
+    public int GridUnitCount => gridUnitCount;
+    public bool IsLastUnitOnGrid => gridUnitCount <= 1;
 
-    private GridCell[,] gridCells;
-    private int gridUnitCount = 0; // 그리드에 배치된 유닛 개수
-    private HashSet<GridCell> highlightedCells = new HashSet<GridCell>();
-    private Dictionary<Vector2Int, Color> coloredCell = new Dictionary<Vector2Int, Color>();
-    private Dictionary<Vector2Int, Color> tempColoredCell;
-    private Dictionary<Vector2Int, Color> buffColoredCells = new Dictionary<Vector2Int, Color>(); // 버프 활성화된 셀의 색상
-
-    // 머지 이펙트 풀
+    private const string DEFAULT_GRID_LAYOUT_KEY = "StageGridLayout_00";
+    private int gridUnitCount = 0;
     private Dictionary<int, Queue<GameObject>> mergeEffectPools = new Dictionary<int, Queue<GameObject>>();
     private Transform effectParent;
 
 
     private void Awake()
     {
-        InitializeGridArrays();
         InitializeMergeEffectPools();
     }
 
     private void Start()
     {
+        // 스테이지에 맞는 GridLayoutData 설정 (StageManager의 Start 이후에 실행되도록)
+        SetGridData();
+
+        InitializeGridArrays();
+
+        // GridVisualizer에게 그리드 생성 요청
+        if (gridVisualizer != null && LayoutData != null)
+        {
+            gridVisualizer.VisualizeGridData(LayoutData);
+        }
+
         // Start에서 초기화하여 모든 Awake가 완료된 후 실행되도록 보장
         EnsureInitialized();
     }
@@ -74,18 +78,70 @@ public class GridManager : MonoBehaviour
         IsInitialized = true;
     }
 
+    public void SetGridData()
+    {
+        string gridLayoutKey;
+
+        if (stageManager == null)
+        {
+            gridLayoutKey = DEFAULT_GRID_LAYOUT_KEY;
+            Debug.LogWarning($"StageManager가 할당되지 않아 기본 레이아웃을 사용합니다: {gridLayoutKey}");
+        }
+        else
+        {
+            int currentStageId = stageManager.CurrentStageId;
+            StageData stageData = DataTableManager.StageTable.Get(currentStageId);
+
+            if (stageData == null)
+            {
+                gridLayoutKey = DEFAULT_GRID_LAYOUT_KEY;
+                Debug.LogWarning($"Stage ID {currentStageId}에 해당하는 데이터를 찾을 수 없어 기본 레이아웃을 사용합니다: {gridLayoutKey}");
+            }
+            else
+            {
+                gridLayoutKey = stageData.STAGE_GRID;
+                if (string.IsNullOrEmpty(gridLayoutKey))
+                {
+                    gridLayoutKey = DEFAULT_GRID_LAYOUT_KEY;
+                    Debug.LogWarning($"Stage ID {currentStageId}의 STAGE_GRID 값이 비어있어 기본 레이아웃을 사용합니다: {gridLayoutKey}");
+                }
+            }
+        }
+
+        if (AddressablePreloader.Instance == null)
+        {
+            Debug.LogWarning("AddressablePreloader.Instance가 null입니다.");
+            return;
+        }
+
+        GridLayoutData newLayoutData = AddressablePreloader.Instance.GetCachedGridLayout(gridLayoutKey);
+        if (newLayoutData != null)
+        {
+            LayoutData = newLayoutData;
+            Debug.Log($"GridLayoutData 설정 완료: {gridLayoutKey}");
+        }
+        else
+        {
+            Debug.LogWarning($"GridLayoutData를 찾을 수 없습니다: {gridLayoutKey}");
+        }
+    }
+
     // 그리드 배열 초기화 (셀 등록 전)
     private void InitializeGridArrays()
     {
-        gridArray = new int[layoutData.width, layoutData.height];
-        gridCells = new GridCell[layoutData.width, layoutData.height];
+        GridArray = new int[LayoutData.width, LayoutData.height];
     }
 
     // 그리드 셀 상태 설정 (Empty, Occupied, Unavailable)
     public void SetGridState(Vector2Int pos, GridState state)
     {
-        gridArray[pos.x, pos.y] = (int)state;
-        gridCells[pos.x, pos.y].SetAcceptable(state == GridState.Empty);
+        GridArray[pos.x, pos.y] = (int)state;
+
+        GridCell cell = gridVisualizer.GetGridCellAt(pos);
+        if (cell != null)
+        {
+            cell.SetAcceptable(state == GridState.Empty);
+        }
 
         if (buffManager != null)
             buffManager.CheckAllBuffConditions();
@@ -113,26 +169,19 @@ public class GridManager : MonoBehaviour
     // 개별 셀을 그리드 배열에 등록
     private void RegisterCell(GridCell cell)
     {
-        Vector2Int pos = cell.GridPosition;
-
-        if (IsWithinBounds(pos))
-        {
-            gridCells[pos.x, pos.y] = cell;
-        }
-
         cell.SetGridManager(this);
     }
 
     // 유닛 배치 가능 여부 확인 및 시각적 피드백 제공
     public bool CanPlaceUnit(Vector2Int curPos, List<Vector2Int> grid)
     {
-        ClearAllGridsColor();
-        ChangeOccupiedCellColor();
+        gridVisualizer.ClearAllGridsColor();
+        gridVisualizer.ChangeOccupiedCellColor();
 
         HashSet<Vector2Int> allPositions = GetAbsolutePositions(curPos, grid);
         bool canPlace = ValidateAllPositions(allPositions);
 
-        HighlightCells(allPositions, canPlace);
+        gridVisualizer.HighlightCells(allPositions, canPlace);
 
         return canPlace;
     }
@@ -172,158 +221,65 @@ public class GridManager : MonoBehaviour
         if (!IsWithinBounds(pos))
             return false;
 
-        if (!layoutData.IsValidCell(pos))
+        if (!LayoutData.IsValidCell(pos))
             return false;
 
-        int cellState = gridArray[pos.x, pos.y];
+        int cellState = GridArray[pos.x, pos.y];
         return cellState == (int)GridState.Empty;
     }
 
     // 위치가 그리드 범위 내에 있는지 확인
     private bool IsWithinBounds(Vector2Int pos)
     {
-        return pos.x >= 0 && pos.x < layoutData.width &&
-               pos.y >= 0 && pos.y < layoutData.height;
+        return pos.x >= 0 && pos.x < LayoutData.width &&
+               pos.y >= 0 && pos.y < LayoutData.height;
     }
 
-    // 배치 가능 여부에 따라 셀 하이라이트 색상 적용
-    private void HighlightCells(HashSet<Vector2Int> positions, bool canPlace)
+    // 특정 그리드 위치의 GridCell 반환
+    public GridCell GetGridCellAt(Vector2Int pos)
     {
-        Color highlightColor = canPlace ? validColor : invalidColor;
+        return gridVisualizer.GetGridCellAt(pos);
+    }
 
-        foreach (var pos in positions)
+    // 월드 좌표를 가장 가까운 그리드 위치로 변환
+    public Vector2Int WorldToGridPosition(Vector3 worldPos)
+    {
+        // GridCell들의 위치를 기준으로 가장 가까운 셀 찾기
+        float minDistance = float.MaxValue;
+        Vector2Int closestGridPos = Vector2Int.zero;
+
+        for (int x = 0; x < LayoutData.width; x++)
         {
-            if (IsWithinBounds(pos))
+            for (int y = 0; y < LayoutData.height; y++)
             {
-                GridCell cell = gridCells[pos.x, pos.y];
+                Vector2Int gridPos = new Vector2Int(x, y);
+                GridCell cell = gridVisualizer.GetGridCellAt(gridPos);
                 if (cell != null)
                 {
-                    cell.SetColor(highlightColor);
-                    highlightedCells.Add(cell);
+                    float distance = Vector3.Distance(worldPos, cell.transform.position);
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        closestGridPos = gridPos;
+                    }
                 }
             }
         }
+
+        return closestGridPos;
     }
 
     // 버프 영역의 색상 업데이트
     public void UpdateBuffColors()
     {
-        // 이전 버프 색상 초기화
-        buffColoredCells.Clear();
-
-        if (layoutData == null)
-        {
-            Debug.LogError("layoutData가 null입니다!");
-            return;
-        }
-
-        // 크로스 버프 색상 적용
-        if (layoutData.enableCrossBuffs)
-        {
-            foreach (var crossBuff in layoutData.crossBuffs)
-            {
-                ApplyColorToHorizontalLine(crossBuff.centerPos, crossBuffColor);
-                ApplyColorToVerticalLine(crossBuff.centerPos, crossBuffColor);
-
-                // 중심점
-                Color.RGBToHSV(crossBuffColor, out float h, out float s, out float v);
-                Color centerColor = Color.HSVToRGB(h, Mathf.Min(s * 2f, 1f), Mathf.Min(v * 2f, 1f));
-                centerColor.a = 1f;
-                buffColoredCells[crossBuff.centerPos] = centerColor;
-            }
-        }
-
-        // 리전 버프 색상 적용
-        if (layoutData.enableRegionBuffs)
-        {
-            foreach (var regionBuff in layoutData.regionBuffs)
-            {
-                ApplyColorToRegion(regionBuff.regionCells, regionBuffColor);
-            }
-        }
-
-        // 실제 셀에 색상 반영
-        ApplyBuffColorsToGrid();
-    }
-
-    // 가로줄에 색상 적용
-    private void ApplyColorToHorizontalLine(Vector2Int centerPos, Color color)
-    {
-        for (int x = 0; x < layoutData.width; x++)
-        {
-            Vector2Int pos = new Vector2Int(x, centerPos.y);
-            if (layoutData.IsValidCell(pos))
-            {
-                buffColoredCells[pos] = color;
-            }
-        }
-    }
-
-    // 세로줄에 색상 적용
-    private void ApplyColorToVerticalLine(Vector2Int centerPos, Color color)
-    {
-        for (int y = 0; y < layoutData.height; y++)
-        {
-            Vector2Int pos = new Vector2Int(centerPos.x, y);
-            if (layoutData.IsValidCell(pos))
-            {
-                buffColoredCells[pos] = color;
-            }
-        }
-    }
-
-    // 리전에 색상 적용
-    private void ApplyColorToRegion(List<Vector2Int> region, Color color)
-    {
-        foreach (var pos in region)
-        {
-            if (layoutData.IsValidCell(pos))
-            {
-                buffColoredCells[pos] = color;
-            }
-        }
-    }
-
-    // 버프 색상을 실제 그리드에 반영
-    private void ApplyBuffColorsToGrid()
-    {
-        int appliedCount = 0;
-        foreach (var buffCell in buffColoredCells)
-        {
-            Vector2Int pos = buffCell.Key;
-            Color color = buffCell.Value;
-
-            // 유닛이 이미 배치된 셀은 유닛 색상 유지
-            if (!coloredCell.ContainsKey(pos))
-            {
-                if (IsWithinBounds(pos))
-                {
-                    gridCells[pos.x, pos.y].SetColor(color);
-                    appliedCount++;
-                }
-            }
-        }
+        gridVisualizer.UpdateBuffColors();
     }
 
     // 버프 활성화 이펙트 재생
     public void PlayBuffActivationEffect(string buffName)
     {
         List<Vector2Int> affectedCells = GetBuffAffectedCells(buffName);
-
-        if (affectedCells.Count == 0)
-            return;
-
-        float delayIncrement = 0.05f;
-
-        for (int i = 0; i < affectedCells.Count; i++)
-        {
-            Vector2Int pos = affectedCells[i];
-            if (IsWithinBounds(pos) && gridCells[pos.x, pos.y] != null)
-            {
-                float delay = i * delayIncrement;
-                gridCells[pos.x, pos.y].PlayBuffActivationAnimation(delay);
-            }
-        }
+        gridVisualizer.PlayBuffActivationEffect(affectedCells);
     }
 
     // 버프가 영향을 주는 셀 목록 가져오기
@@ -332,41 +288,48 @@ public class GridManager : MonoBehaviour
         List<Vector2Int> cells = new List<Vector2Int>();
 
         // 크로스 버프 체크
-        if (layoutData.enableCrossBuffs)
+        if (LayoutData.enableCrossBuffs)
         {
-            foreach (var crossBuff in layoutData.crossBuffs)
+            // 해당 buffName과 정확히 일치하는 crossBuff만 찾아서 처리
+            foreach (var crossBuff in LayoutData.crossBuffs)
             {
-                if (crossBuff.horizontalBuffName == buffName)
+                bool isHorizontalMatch = crossBuff.horizontalBuffName == buffName;
+                bool isVerticalMatch = crossBuff.verticalBuffName == buffName;
+
+                if (isHorizontalMatch)
                 {
                     // 가로줄 셀 추가
-                    for (int x = 0; x < layoutData.width; x++)
+                    for (int x = 0; x < LayoutData.width; x++)
                     {
                         Vector2Int pos = new Vector2Int(x, crossBuff.centerPos.y);
-                        if (layoutData.IsValidCell(pos))
+                        if (LayoutData.IsValidCell(pos))
                         {
                             cells.Add(pos);
                         }
                     }
+                    return cells; // 찾았으므로 바로 반환
                 }
-                else if (crossBuff.verticalBuffName == buffName)
+
+                if (isVerticalMatch)
                 {
                     // 세로줄 셀 추가
-                    for (int y = 0; y < layoutData.height; y++)
+                    for (int y = 0; y < LayoutData.height; y++)
                     {
                         Vector2Int pos = new Vector2Int(crossBuff.centerPos.x, y);
-                        if (layoutData.IsValidCell(pos))
+                        if (LayoutData.IsValidCell(pos))
                         {
                             cells.Add(pos);
                         }
                     }
+                    return cells; // 찾았으므로 바로 반환
                 }
             }
         }
 
         // 리전 버프 체크
-        if (layoutData.enableRegionBuffs)
+        if (LayoutData.enableRegionBuffs)
         {
-            foreach (var regionBuff in layoutData.regionBuffs)
+            foreach (var regionBuff in LayoutData.regionBuffs)
             {
                 if (regionBuff.buffName == buffName)
                 {
@@ -378,12 +341,12 @@ public class GridManager : MonoBehaviour
         // 전체 그리드 버프 체크
         if (buffName == "FullGrid")
         {
-            for (int x = 0; x < layoutData.width; x++)
+            for (int x = 0; x < LayoutData.width; x++)
             {
-                for (int y = 0; y < layoutData.height; y++)
+                for (int y = 0; y < LayoutData.height; y++)
                 {
                     Vector2Int pos = new Vector2Int(x, y);
-                    if (layoutData.IsValidCell(pos))
+                    if (LayoutData.IsValidCell(pos))
                     {
                         cells.Add(pos);
                     }
@@ -474,122 +437,50 @@ public class GridManager : MonoBehaviour
     // 모든 하이라이트된 셀의 색상 초기화
     public void ClearAllGridsColor()
     {
-        foreach (var cell in highlightedCells)
-        {
-            if (cell != null && !coloredCell.ContainsKey(cell.GridPosition))
-            {
-                // 버프가 활성화된 셀이면 버프 색상으로, 아니면 흰색으로
-                if (buffColoredCells.ContainsKey(cell.GridPosition))
-                {
-                    cell.SetColor(buffColoredCells[cell.GridPosition]);
-                }
-                else
-                {
-                    cell.SetColor(Color.white);
-                }
-            }
-        }
-        highlightedCells.Clear();
+        gridVisualizer.ClearAllGridsColor();
     }
 
     // 유닛이 차지하는 모든 셀에 지정된 색상 적용
     public void SetUnitCellsColor(Vector2Int curPos, List<Vector2Int> grid, Color color)
     {
-        ClearAllGridsColor();
-
         HashSet<Vector2Int> allPositions = GetAbsolutePositions(curPos, grid);
-
-        foreach (var pos in allPositions)
-        {
-            if (IsWithinBounds(pos))
-            {
-                GridCell cell = gridCells[pos.x, pos.y];
-                if (cell != null)
-                {
-                    cell.SetColor(color);
-                }
-            }
-        }
+        gridVisualizer.SetUnitCellsColor(allPositions, color);
     }
 
     // 점유된 셀과 색상 정보 등록
     public void SetOccupiedCellAndColor(Vector2Int pos, Color color)
     {
-        coloredCell[pos] = color;
+        gridVisualizer.SetOccupiedCellAndColor(pos, color);
     }
 
     // 유닛이 차지하던 셀의 색상 정보 제거 및 색상 초기화
     public void RemoveColoredCells(Vector2Int curPos, List<Vector2Int> grid)
     {
-        RemoveCellColor(curPos);
+        gridVisualizer.RemoveCellColor(curPos);
 
         foreach (var relativePos in grid)
         {
             Vector2Int absolutePos = curPos + relativePos;
-            RemoveCellColor(absolutePos);
-        }
-    }
-
-    // 특정 셀의 색상 정보 제거 및 기본 색상으로 리셋
-    private void RemoveCellColor(Vector2Int pos)
-    {
-        if (coloredCell.Remove(pos))
-        {
-            // 버프가 활성화된 셀이면 버프 색상으로, 아니면 흰색으로
-            if (buffColoredCells.ContainsKey(pos))
-            {
-                gridCells[pos.x, pos.y].SetColor(buffColoredCells[pos]);
-            }
-            else
-            {
-                gridCells[pos.x, pos.y].SetColor(Color.white);
-            }
+            gridVisualizer.RemoveCellColor(absolutePos);
         }
     }
 
     // 점유된 모든 셀에 등록된 색상 다시 적용
     public void ChangeOccupiedCellColor()
     {
-        foreach (var cell in coloredCell)
-        {
-            var pos = cell.Key;
-            gridCells[pos.x, pos.y].SetColor(cell.Value);
-        }
+        gridVisualizer.ChangeOccupiedCellColor();
     }
 
     // 현재 색상 상태를 임시 저장 (실패 시 복원용)
     public void CopyColoredCellToTemp()
     {
-        tempColoredCell = new Dictionary<Vector2Int, Color>(coloredCell);
+        gridVisualizer.CopyColoredCellToTemp();
     }
 
     // 배치 실패 시 임시 저장된 색상 상태로 복원
     public void OnFailed()
     {
-        if (tempColoredCell == null)
-            return;
-
-        RestoreColoredCells();
-        RestoreCellColors();
-    }
-
-    // coloredCell 딕셔너리를 임시 저장 값으로 복원
-    private void RestoreColoredCells()
-    {
-        foreach (var cell in tempColoredCell)
-        {
-            coloredCell[cell.Key] = cell.Value;
-        }
-    }
-
-    // 그리드 셀의 시각적 색상을 임시 저장 값으로 복원
-    private void RestoreCellColors()
-    {
-        foreach (var cell in tempColoredCell)
-        {
-            var pos = cell.Key;
-            gridCells[pos.x, pos.y].SetColor(cell.Value);
-        }
+        gridVisualizer.OnFailed();
     }
 
     // 그리드 유닛 생성 및 초기화
@@ -650,17 +541,5 @@ public class GridManager : MonoBehaviour
         gridUnitCount--;
         if (gridUnitCount < 0)
             gridUnitCount = 0;
-    }
-
-    // 현재 그리드에 있는 유닛 개수 반환
-    public int GetGridUnitCount()
-    {
-        return gridUnitCount;
-    }
-
-    // 그리드에 마지막 남은 유닛인지 확인
-    public bool IsLastUnitOnGrid()
-    {
-        return gridUnitCount <= 1;
     }
 }

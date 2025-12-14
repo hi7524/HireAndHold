@@ -80,30 +80,13 @@ public class GridCell : MonoBehaviour, IDroppable
             return;
         }
 
-        // GridUnit 배치 가능 여부 판정 및 판정에 따라 색상 변경
+        // GridUnit은 OnDrag()에서 직접 처리하므로 여기서는 스킵
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
         {
-            // 합성 가능 여부 체크
-            if (placedObject != null)
-            {
-                var existingUnit = placedObject.GetComponent<GridUnit>();
-                if (existingUnit != null && CanMerge(existingUnit, gridUnit))
-                {
-                    canDrop = true;
-                    return;
-                }
-            }
-
-            if (gridUnit.GridData != null)
-            {
-                canDrop = gridManager.CanPlaceUnit(GridPosition, gridUnit.GridData.GetOccupiedCells());
-            }
-            else
-            {
-                // GridData가 아직 로드되지 않았으면 배치 불가
-                canDrop = false;
-            }
+            // GridUnit의 경우 항상 canDrop = true로 설정
+            // 실제 배치 가능 여부는 GridUnit.OnDrag()와 OnDrop()에서 처리
+            canDrop = true;
             return;
         }
 
@@ -156,10 +139,43 @@ public class GridCell : MonoBehaviour, IDroppable
         // GridUnit 처리
         if (gridUnit != null)
         {
-            // 합성 체크: 이미 유닛이 배치되어 있는 경우
-            if (placedObject != null)
+            // 유닛의 실제 월드 위치를 그리드 위치로 변환
+            Vector2Int anchorPosition = gridManager.WorldToGridPosition(gridUnit.transform.position);
+            GridCell anchorCell = gridManager.GetGridCellAt(anchorPosition);
+
+            if (anchorCell == null)
             {
-                var existingUnit = placedObject.GetComponent<GridUnit>();
+                draggable.OnDropFailed();
+                return;
+            }
+
+            // 배치 가능 여부 최종 확인
+            if (!gridManager.CanPlaceUnit(anchorPosition, gridUnit.GridData.GetOccupiedCells()))
+            {
+                // 합성 가능 여부 체크
+                if (anchorCell.placedObject != null)
+                {
+                    var existingUnit = anchorCell.placedObject.GetComponent<GridUnit>();
+                    if (existingUnit != null && CanMerge(existingUnit, gridUnit))
+                    {
+                        if (TryMergeUnits(existingUnit, gridUnit))
+                        {
+                            gridManager.ClearAllGridsColor();
+                            gridManager.ChangeOccupiedCellColor();
+                            return;
+                        }
+                    }
+                }
+
+                // 배치 불가능하면 드롭 실패
+                draggable.OnDropFailed();
+                return;
+            }
+
+            // 합성 체크: 앵커 위치에 이미 유닛이 배치되어 있는 경우
+            if (anchorCell.placedObject != null)
+            {
+                var existingUnit = anchorCell.placedObject.GetComponent<GridUnit>();
                 if (existingUnit != null)
                 {
                     if (TryMergeUnits(existingUnit, gridUnit))
@@ -184,25 +200,25 @@ public class GridCell : MonoBehaviour, IDroppable
                 gridManager.RemoveColoredCells(previousCell.GridPosition, gridUnit.GridData.GetOccupiedCells());
             }
 
-            // 배치 대상 위치 스냅
-            draggable.GameObject.transform.position = transform.position;
+            // 배치 대상 위치 스냅 (앵커 셀의 위치로)
+            draggable.GameObject.transform.position = anchorCell.transform.position;
             Physics2D.SyncTransforms(); // Collider2D 위치 동기화
-            placedObject = draggable.GameObject;
+            anchorCell.placedObject = draggable.GameObject;
 
             // Sorting Order 업데이트
-            UpdateUnitSortingOrder(placedObject);
+            UpdateUnitSortingOrder(anchorCell.placedObject);
 
-            gridUnit.SetCurrentGridCell(this);
+            gridUnit.SetCurrentGridCell(anchorCell);
 
-            // GridManager에 그리드 정보 전달
+            // GridManager에 그리드 정보 전달 (앵커 위치 기준)
             var occupiedCells = gridUnit.GridData.GetOccupiedCells();
 
-            gridManager.SetGridState(GridPosition, GridState.Occupied);
-            gridManager.SetOccupiedCellAndColor(GridPosition, gridUnit.GridData.gridColor);
+            gridManager.SetGridState(anchorPosition, GridState.Occupied);
+            gridManager.SetOccupiedCellAndColor(anchorPosition, gridUnit.GridData.gridColor);
 
             foreach (var relativePos in occupiedCells)
             {
-                Vector2Int absolutePos = GridPosition + relativePos;
+                Vector2Int absolutePos = anchorPosition + relativePos;
                 gridManager.SetGridState(absolutePos, GridState.Occupied);
                 gridManager.SetOccupiedCellAndColor(absolutePos, gridUnit.GridData.gridColor);
             }

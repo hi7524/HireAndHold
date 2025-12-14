@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3016047980065441388}
-  - component: {fileID: 6394874904344267427}
   - component: {fileID: 6959901440674583972}
+  - component: {fileID: 6394874904344267427}
   m_Layer: 0
   m_Name: GridManager
   m_TagString: Untagged
@@ -33,6 +33,32 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6959901440674583972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8375057794222710434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93d6f41b427c3b6478d5710b801ce8b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GridManager
+  layoutData: {fileID: 11400000, guid: 7be587958ff25574ea7bc70f080375f1, type: 2}
+  gridVisualizer: {fileID: 6394874904344267427}
+  buffManager: {fileID: 0}
+  unitManager: {fileID: 0}
+  cellSize: 1
+  cellSpace: 0.1
+  validColor: {r: 0.5882353, g: 0.9254902, b: 0.69411767, a: 1}
+  invalidColor: {r: 0.9137255, g: 0.5137255, b: 0.5176471, a: 1}
+  crossBuffColor: {r: 0.75786155, g: 0.87408805, b: 1, a: 1}
+  regionBuffColor: {r: 0.92190784, g: 0.75686276, b: 1, a: 1}
+  gridUnitPrefab: {fileID: 1490772236210125429, guid: 3a8925845870d71458e2d9af1ca3248c, type: 3}
+  levelUpRewardController: {fileID: 0}
+  attackTriggerZone: {fileID: 0}
+  mergeEffectPrefabs: []
 --- !u!114 &6394874904344267427
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50,24 +76,3 @@ MonoBehaviour:
   cellSize: 0.52
   space: 0.02
   poolManager: {fileID: 0}
---- !u!114 &6959901440674583972
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8375057794222710434}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 93d6f41b427c3b6478d5710b801ce8b3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GridManager
-  layoutData: {fileID: 11400000, guid: 7be587958ff25574ea7bc70f080375f1, type: 2}
-  gridVisualizer: {fileID: 6394874904344267427}
-  validColor: {r: 0.5882353, g: 0.9254902, b: 0.69411767, a: 1}
-  invalidColor: {r: 0.9137255, g: 0.5137255, b: 0.5176471, a: 1}
-  crossBuffColor: {r: 0.75786155, g: 0.87408805, b: 1, a: 1}
-  regionBuffColor: {r: 0.92190784, g: 0.75686276, b: 1, a: 1}
-  gridUnitPrefab: {fileID: 1490772236210125429, guid: 3a8925845870d71458e2d9af1ca3248c, type: 3}
-  levelUpRewardController: {fileID: 0}
-  uiManager: {fileID: 0}
