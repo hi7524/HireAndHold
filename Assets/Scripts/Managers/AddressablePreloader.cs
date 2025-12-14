@@ -103,6 +103,13 @@ public class AddressablePreloader : MonoBehaviour
                 spriteKeys.Add(unit.UNIT_ICON);
             }
 
+            if (!string.IsNullOrEmpty(unit.UNIT_ICON_FULL) &&
+                !spriteKeys.Contains(unit.UNIT_ICON_FULL) &&
+                IsValidAddressableKey(unit.UNIT_ICON_FULL))
+            {
+                spriteKeys.Add(unit.UNIT_ICON_FULL);
+            }
+
             if (!string.IsNullOrEmpty(unit.HIT_AUDIO_CLIP) &&
                 !audioClipKeys.Contains(unit.HIT_AUDIO_CLIP) &&
                 IsValidAddressableKey(unit.HIT_AUDIO_CLIP))
