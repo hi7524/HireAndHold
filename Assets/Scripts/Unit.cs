@@ -579,13 +579,26 @@ public class Unit : MonoBehaviour
 
         projectile.Initialize(poolManager, projectileKey);
 
-        float damage = CalculateDamage(AttackTarget);
+        // 치명타 판정
+        float damage = attackDamage.Value;
+        bool isCritical = Random.value < (criticalRate.Value / PercentToDivider);
 
-        projectile.SetDamage(damage);
-        projectile.SetTarget(AttackTarget.transform);
+        if (isCritical)
+        {
+            damage *= criticalDamage.Value;
+        }
+
+        // 보스 추가 데미지
+        if (AttackTarget.IsBoss && cachedPassiveSkillManager != null)
+        {
+            PassiveSkillEffects effects = cachedPassiveSkillManager.GetCurrentEffects();
+            damage *= 1f + effects.bossDamageBonus / PercentToDivider;
+        }
+
+        damage *= heroAttackMultiplier;
         float finalDamage = Mathf.Round(damage * 10f) / 10f;
 
-        projectile.SetDamage(finalDamage);
+        projectile.SetDamage(finalDamage, isCritical);
         projectile.SetTarget(AttackTarget.transform);
         projectile.Launch();
     }

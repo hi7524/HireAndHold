@@ -12,6 +12,7 @@ public class PlayerUnitProjectile : MonoBehaviour
     private string poolKey;
 
     private float damage;
+    private bool isCritical;
     private float spawnTime;
     private bool hasHit = false;
     private Vector2 direction;
@@ -32,6 +33,13 @@ public class PlayerUnitProjectile : MonoBehaviour
     public void SetDamage(float dmg)
     {
         damage = dmg;
+        isCritical = false;
+    }
+
+    public void SetDamage(float dmg, bool critical)
+    {
+        damage = dmg;
+        isCritical = critical;
     }
 
     public void SetTarget(Transform target)
@@ -88,7 +96,7 @@ public class PlayerUnitProjectile : MonoBehaviour
         {
             hasHit = true;
 
-            m.TakeDamage(damage);
+            m.TakeDamage(damage, isCritical);
 
             if (mainProjectile != null)
                 mainProjectile.gameObject.SetActive(false);
