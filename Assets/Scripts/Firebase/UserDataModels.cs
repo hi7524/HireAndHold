@@ -14,6 +14,7 @@ namespace GameData
         public Dictionary<string, OwnedEquipment> inventory;
         public Dictionary<string, StageProgress> stageProgress;
         public Dictionary<string, PartyPreset> partyPresets;
+        public Dictionary<string, int> items;
         public int activePresetIndex;
         public UserSettings settings;
 
@@ -23,6 +24,7 @@ namespace GameData
             inventory = new Dictionary<string, OwnedEquipment>();
             stageProgress = new Dictionary<string, StageProgress>();
             partyPresets = new Dictionary<string, PartyPreset>();
+            items = new Dictionary<string, int>();
         }
     }
 

@@ -40,8 +40,11 @@ public static class PlayData
     private static int cachedExp = 0;
     private static string cachedNickname = "";
 
-    //캐릭터 데이터 캐싱 
+    //캐릭터 데이터 캐싱
     private static Dictionary<string, CachedCharacter> cachedCharacters = new Dictionary<string, CachedCharacter>();
+
+    // 아이템 캐시
+    private static Dictionary<int, int> cachedItems = new Dictionary<int, int>();
 
     //초기화 플래그
     private static bool isInitialized = false;
@@ -87,6 +90,9 @@ public static class PlayData
         // 캐릭터 동기화
         SyncCharactersFromDatabase();
 
+        // 아이템 동기화
+        SyncItemsFromDatabase();
+
         isInitialized = true;
         Debug.Log("데이터 동기화 완료");
         Debug.Log($"골드: {cachedGold}, 다이아: {cachedDiamond}, 강화석: {cachedEnhanceStone}");
@@ -113,6 +119,25 @@ public static class PlayData
         }
 
         Debug.Log($"캐릭터 {cachedCharacters.Count}개 동기화 완료");
+    }
+
+    // 아이템 데이터 동기화
+    public static void SyncItemsFromDatabase()
+    {
+        cachedItems.Clear();
+
+        var user = DatabaseManager.Instance.CurrentUser;
+        if (user?.items == null) return;
+
+        foreach (var kvp in user.items)
+        {
+            if (int.TryParse(kvp.Key, out int itemId))
+            {
+                cachedItems[itemId] = kvp.Value;
+            }
+        }
+
+        Debug.Log($"아이템 {cachedItems.Count}종 동기화 완료");
     }
 
     //재화 변경 로컬 캐시 + DB 동기화
@@ -189,6 +214,29 @@ public static class PlayData
         return cachedEnhanceStone >= amount;
     }
 
+    // 아이템 관련
+    public static int GetItemCount(int itemId)
+    {
+        return cachedItems.TryGetValue(itemId, out int count) ? count : 0;
+    }
+
+    public static bool HasEnoughItem(int itemId, int amount)
+    {
+        return GetItemCount(itemId) >= amount;
+    }
+
+    public static void SetItemCountImmediate(int itemId, int count)
+    {
+        if (count <= 0)
+        {
+            cachedItems.Remove(itemId);
+        }
+        else
+        {
+            cachedItems[itemId] = count;
+        }
+    }
+
     //캐릭터 정보 가져오기
     public static CachedCharacter GetCharacter(string characterId)
     {
@@ -251,6 +299,7 @@ public static class PlayData
         cachedExp = 0;
         cachedNickname = "";
         cachedCharacters.Clear();
+        cachedItems.Clear();
         isInitialized = false;
 
         Debug.Log("캐시 초기화");

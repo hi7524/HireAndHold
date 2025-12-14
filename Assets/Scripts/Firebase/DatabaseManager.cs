@@ -466,9 +466,16 @@ public class DatabaseManager : MonoBehaviour
     {
         if (CurrentUser.characters.ContainsKey(characterId))
         {
-            // 이미 보유 - 각성 재료로 전환
-            CurrentUser.characters[characterId].awakening++;
-            return await SaveCharacterAsync(characterId);
+            // 이미 보유 - 조각 1개로 변환
+            if (int.TryParse(characterId, out int unitId))
+            {
+                var unitData = DataTableManager.UnitTable?.Get(unitId);
+                if (unitData != null && unitData.FRAGMENT_ITEM_ID > 0)
+                {
+                    return await AddItemAsync(unitData.FRAGMENT_ITEM_ID, 1);
+                }
+            }
+            return false;
         }
 
         CurrentUser.characters[characterId] = new OwnedCharacter(characterId, star);
@@ -613,6 +620,65 @@ public class DatabaseManager : MonoBehaviour
             }
         }
         return result;
+    }
+
+    #endregion
+
+    #region 아이템 관리
+
+    /// <summary>
+    /// 아이템 수량 증감 (트랜잭션)
+    /// </summary>
+    public async UniTask<bool> AddItemAsync(int itemId, int amount)
+    {
+        string key = itemId.ToString();
+        string path = $"users/{UserId}/items/{key}";
+
+        // items가 null이면 초기화
+        if (CurrentUser.items == null)
+        {
+            CurrentUser.items = new Dictionary<string, int>();
+        }
+
+        bool success = await database.IncrementValueAsync(path, amount);
+
+        if (success)
+        {
+            if (!CurrentUser.items.ContainsKey(key))
+            {
+                CurrentUser.items[key] = 0;
+            }
+            CurrentUser.items[key] += amount;
+
+            // 0 이하면 제거
+            if (CurrentUser.items[key] <= 0)
+            {
+                CurrentUser.items.Remove(key);
+            }
+
+            Debug.Log($"[DB] 아이템 변경: {itemId} ({amount:+#;-#;0}), 현재: {GetItemCount(itemId)}");
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 아이템 수량 조회
+    /// </summary>
+    public int GetItemCount(int itemId)
+    {
+        if (CurrentUser?.items == null) return 0;
+
+        string key = itemId.ToString();
+        return CurrentUser.items.TryGetValue(key, out int count) ? count : 0;
+    }
+
+    /// <summary>
+    /// 아이템 보유 여부 확인
+    /// </summary>
+    public bool HasEnoughItem(int itemId, int amount)
+    {
+        return GetItemCount(itemId) >= amount;
     }
 
     #endregion

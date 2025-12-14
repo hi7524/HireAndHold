@@ -25,6 +25,7 @@ public class UnitData
     public string PROJECTILE { get; set; }
     public ProjectileType PROJECTILE_TYPE { get; set; }
     public string HIT_AUDIO_CLIP { get; set; }
+    public int FRAGMENT_ITEM_ID { get; set; }   // 유닛 조각 아이템 ID
 
     // StringTable 연동
     public string StringName => DataTableManager.StringTable?.Get(NAME);

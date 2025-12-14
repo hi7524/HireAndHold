@@ -14,40 +14,68 @@ public class GachaManager : MonoBehaviour
     // 이벤트 (UI에서 구독)
     public event Action<GachaResult> OnGachaComplete;
     public event Action<string> OnGachaError;
-    
-    
-     private async void Start()
+
+    // 동시 실행 방지 락
+    private bool isExecuting = false;
+    public bool IsExecuting => isExecuting;
+
+    private async void Start()
     {
-       //Datatalble이 초기화 되어있지 않다면 await DataTableManager.InitAsync(); 호출 후 InitializeTables 호출
-       if(DataTableManager.IsInitialized == false)
+        if (DataTableManager.IsInitialized == false)
         {
             await DataTableManager.InitAsync();
-         
         }
-            InitializeTables();
-        
+        InitializeTables();
     }
 
     private void InitializeTables()
     {
-        Init(GachaType.Normal, 1001, basicGachaItems);
-        Init(GachaType.Premium, 1002, premiumGachaItems);
+        
+        var normalGacha = GetGachaData(GachaType.Normal);
+        var premiumGacha = GetGachaData(GachaType.Premium);
+        if (normalGacha != null)
+        {
+            Init(GachaType.Normal, normalGacha.Catalog_ID, basicGachaItems);
+        }
+        else
+        {
+            Debug.LogError("[GachaManager] normalGacha가 null입니다!");
+        }
+
+        if (premiumGacha != null)
+        {
+            Init(GachaType.Premium, premiumGacha.Catalog_ID, premiumGachaItems);
+        }
+        else
+        {
+            Debug.LogError("[GachaManager] premiumGacha가 null입니다!");
+        }
+
+        Debug.Log("[GachaManager] InitializeTables 완료");
     }
 
     private void Init(GachaType gachaType, int catalogId, List<GachaItem> gachaItems)
     {
         var catalog = DataTableManager.Get<DataTable_UnitCatalog>(DataTableIds.UnitCatalog).Get(catalogId);
+        if (catalog == null)
+        {
+            Debug.LogError($"[GachaManager] 카탈로그를 찾을 수 없음: {catalogId}");
+            return;
+        }
+
         foreach (var item in catalog)
         {
             GachaItem gachaItem = new GachaItem();
-            gachaItem.unitId = item.Unit_ID;
+            gachaItem.unitId = item.TARGET_ID;
             gachaItem.probability = item.Probability;
-            gachaItem.weight = (int)item.Weight * 100;
+            // Weight가 없으므로 Probability를 10000배하여 정수 weight로 사용
+            gachaItem.weight = (int)(item.Probability * 10000);
             gachaItems.Add(gachaItem);
         }
         BuildCumulativeTable(gachaType, gachaItems);
-
+        Debug.Log($"[GachaManager] {gachaType} 카탈로그 초기화 완료: {gachaItems.Count}개 아이템, 총 Weight: {totalWeightByType[gachaType]}");
     }
+
     private void BuildCumulativeTable(GachaType gachaType, List<GachaItem> gachaItems)
     {
         int currentTotalWeight = 0;
@@ -59,36 +87,198 @@ public class GachaManager : MonoBehaviour
         totalWeightByType[gachaType] = currentTotalWeight;
     }
 
-
-    // 실행
-    public GachaResult ExecuteGacha(GachaType type, int count)
+    /// <summary>
+    /// 가챠 데이터 가져오기
+    /// </summary>
+    private UnitGachaData GetGachaData(GachaType type)
     {
-        // // 조건 검사
-        // if (!CanExecuteGacha(type, count))
-        // {
-        //     OnGachaError?.Invoke("재화가 부족합니다!");
-        //     return null;
-        // }
+        int gachaTypeId = type == GachaType.Normal ? 1 : 2;
+        return DataTableManager.UnitGachaTable.GetByType(gachaTypeId);
+    }
 
-        // 뽑기 실행
-        List<GachaItem> results = new List<GachaItem>();
-        for (int i = 0; i < count; i++)
+    /// <summary>
+    /// 가챠 비용 계산
+    /// </summary>
+    private int GetGachaCost(GachaType type, int count)
+    {
+        var data = GetGachaData(type);
+        if (data == null) return 0;
+
+        if (count == 10)
         {
-            results.Add(GachaSingle(type));
+            return data.Draw10_ItemNum;
+        }
+        return data.ItemNum * count;
+    }
+
+    /// <summary>
+    /// 비용 아이템 ID 가져오기
+    /// </summary>
+    private int GetCostItemId(GachaType type, int count)
+    {
+        var data = GetGachaData(type);
+        if (data == null) return 0;
+
+        return count == 10 ? data.Draw10_ItemID : data.ItemID;
+    }
+
+    /// <summary>
+    /// 안전한 가챠 실행 (비동기, DB 연동)
+    /// </summary>
+    public async UniTask<GachaResult> ExecuteGachaAsync(GachaType type, int count)
+    {
+        // 동시 실행 방지
+        if (isExecuting)
+        {
+            Debug.LogWarning("[GachaManager] 이미 가챠 진행 중");
+            OnGachaError?.Invoke("가챠가 진행 중입니다.");
+            return null;
         }
 
-        // // 재화 차감
-        // ConsumeGachaCost(type, count);
+        isExecuting = true;
 
-        // 결과 생성
-        GachaResult result = new GachaResult(results, type);
+        try
+        {
+            // 가챠 데이터 확인
+            var gachaData = GetGachaData(type);
+            if (gachaData == null)
+            {
+                Debug.LogError("[GachaManager] 가챠 데이터를 찾을 수 없습니다.");
+                OnGachaError?.Invoke("가챠 정보를 찾을 수 없습니다.");
+                return null;
+            }
 
-        // 이벤트 발생 (UI가 알아서 처리)
-        OnGachaComplete?.Invoke(result);
+            // 비용 계산
+            int costItemId = GetCostItemId(type, count);
+            int costAmount = GetGachaCost(type, count);
 
-        Debug.Log($"[GachaManager] {type} {count}회 뽑기 완료");
-        return result;
+            // 비용 아이템에 따라 차감
+            bool deductSuccess = await DeductCostAsync(costItemId, costAmount);
+            if (!deductSuccess)
+            {
+                return null;
+            }
+
+            Debug.Log($"[GachaManager] 비용 {costAmount} 차감 성공 (ItemID: {costItemId})");
+
+            // 뽑기 실행
+            List<GachaItem> results = new List<GachaItem>();
+            var gachaItems = GetGachaItemsByType(type);
+            var totalWeight = GetTotalWeightByType(type);
+            Debug.Log($"[GachaManager] 뽑기 시작 - Type: {type}, 아이템 수: {gachaItems.Count}, 총 Weight: {totalWeight}");
+
+            for (int i = 0; i < count; i++)
+            {
+                var gachaResult = GachaSingle(type);
+                if (gachaResult == null)
+                {
+                    Debug.LogError($"[GachaManager] GachaSingle 반환값이 null! (i={i})");
+                    continue;
+                }
+                results.Add(gachaResult);
+            }
+
+            if (results.Count == 0)
+            {
+                Debug.LogError("[GachaManager] 뽑기 결과가 0개입니다!");
+                OnGachaError?.Invoke("뽑기 결과가 없습니다.");
+                return null;
+            }
+
+            // 획득한 캐릭터 DB 저장
+            List<string> failedCharacters = new List<string>();
+            foreach (var item in results)
+            {
+                string characterId = item.unitId.ToString();
+                bool addSuccess = await DatabaseManager.Instance.AddCharacterAsync(characterId, 1);
+
+                if (addSuccess)
+                {
+                    Debug.Log($"[GachaManager] 캐릭터 저장 완료: {characterId}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[GachaManager] 캐릭터 저장 실패: {characterId}");
+                    failedCharacters.Add(characterId);
+                }
+            }
+
+            // 저장 실패한 캐릭터가 있으면 로그 기록
+            if (failedCharacters.Count > 0)
+            {
+                Debug.LogError($"[GachaManager] {failedCharacters.Count}개 캐릭터 저장 실패");
+            }
+
+            // PlayData 캐릭터 캐시 동기화
+            PlayData.SyncCharactersFromDatabase();
+
+            // 결과 생성 및 이벤트 발생
+            GachaResult result = new GachaResult(results, type);
+            OnGachaComplete?.Invoke(result);
+
+            Debug.Log($"[GachaManager] {type} {count}회 뽑기 완료");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[GachaManager] 가챠 실행 중 오류: {ex.Message}");
+            OnGachaError?.Invoke("가챠 실행 중 오류가 발생했습니다.");
+            return null;
+        }
+        finally
+        {
+            isExecuting = false;
+        }
     }
+
+    /// <summary>
+    /// 비용 차감 (인벤토리 아이템 사용)
+    /// </summary>
+    private async UniTask<bool> DeductCostAsync(int itemId, int amount)
+    {
+        var itemData = DataTableManager.ItemTable.Get(itemId);
+        if (itemData == null)
+        {
+            Debug.LogError($"[GachaManager] 아이템 정보를 찾을 수 없음: {itemId}");
+            OnGachaError?.Invoke("아이템 정보를 찾을 수 없습니다.");
+            return false;
+        }
+
+        // 캐시에서 보유량 확인
+        int currentCount = PlayData.GetItemCount(itemId);
+        if (currentCount < amount)
+        {
+            Debug.LogWarning($"[GachaManager] 아이템 부족: {itemData.ITEM_NAME} 보유 {currentCount}, 필요 {amount}");
+            OnGachaError?.Invoke($"{itemData.ITEM_NAME}이(가) 부족합니다!");
+            return false;
+        }
+
+        // DB에서 아이템 차감
+        bool success = await DatabaseManager.Instance.AddItemAsync(itemId, -amount);
+
+        if (success)
+        {
+            // 캐시 업데이트
+            PlayData.SetItemCountImmediate(itemId, currentCount - amount);
+            Debug.Log($"[GachaManager] {itemData.ITEM_NAME} {amount}개 차감 완료");
+        }
+        else
+        {
+            Debug.LogError($"[GachaManager] {itemData.ITEM_NAME} 차감 실패");
+            OnGachaError?.Invoke("아이템 차감에 실패했습니다.");
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 가챠 실행 (하위 호환성 유지)
+    /// </summary>
+    public void ExecuteGacha(GachaType type, int count)
+    {
+        ExecuteGachaAsync(type, count).Forget();
+    }
+
     private GachaItem GachaSingle(GachaType gachaType = GachaType.Normal)
     {
         List<GachaItem> targetGachaItems = GetGachaItemsByType(gachaType);
@@ -97,6 +287,7 @@ public class GachaManager : MonoBehaviour
         int randomWeight = UnityEngine.Random.Range(1, targetTotalWeight + 1);
         return GetItemByWeight(randomWeight, targetGachaItems);
     }
+
     private GachaItem GetItemByWeight(int randomWeight, List<GachaItem> gachaItems)
     {
         foreach (var item in gachaItems)
@@ -106,8 +297,9 @@ public class GachaManager : MonoBehaviour
                 return item;
             }
         }
-        return null; 
+        return null;
     }
+
     private List<GachaItem> GetGachaItemsByType(GachaType gachaType)
     {
         return gachaType switch
@@ -122,43 +314,4 @@ public class GachaManager : MonoBehaviour
     {
         return totalWeightByType.TryGetValue(gachaType, out int weight) ? weight : 0;
     }
-    
-
-    // /// <summary>
-    // /// 가챠 실행 가능 여부
-    // /// </summary>
-    // private bool CanExecuteGacha(GachaType type, int count)
-    // {
-    //     int cost = GetGachaCost(type, count);
-    //     int currentGem = PlayerDataManager.Instance.GetGem(); // 예시
-        
-    //     return currentGem >= cost;
-    // }
-
-    // /// <summary>
-    // /// 가챠 비용 계산
-    // /// </summary>
-    // private int GetGachaCost(GachaType type, int count)
-    // {
-    //     int singleCost = type == GachaType.Normal ? 100 : 300;
-    //     return singleCost * count;
-    // }
-
-    // /// <summary>
-    // /// 재화 차감
-    // /// </summary>
-    // private void ConsumeGachaCost(GachaType type, int count)
-    // {
-    //     int cost = GetGachaCost(type, count);
-    //     // PlayerDataManager.Instance.ConsumeGem(cost);
-    //     Debug.Log($"[GachaManager] 보석 {cost}개 소모");
-    // }
-
-    // /// <summary>
-    // /// 가챠 아이템 풀 가져오기 (테스트용)
-    // /// </summary>
-    // public List<GachaItem> GetGachaTable(GachaType type)
-    // {
-    //     return type == GachaType.Normal ? normalGachaTable : premiumGachaTable;
-    // }
 }

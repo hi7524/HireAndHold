@@ -16,6 +16,7 @@ public static class DataTableIds
     public static readonly string Item = "ItemTable";
     public static readonly string Selling = "SellingTable";
     public static readonly string StageLevel = "StageLevelTable";
+    public static readonly string UnitGacha = "UnitGachaTable";
 }
 
 public static class Tags
