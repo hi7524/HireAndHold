@@ -543,6 +543,11 @@ public class Enemy : MonoBehaviour, IDamagable
 
     public void TakeDamage(float damage)
     {
+        TakeDamage(damage, false);
+    }
+
+    public void TakeDamage(float damage, bool isCritical)
+    {
         if (isDead)
         {
             return;
@@ -551,7 +556,7 @@ public class Enemy : MonoBehaviour, IDamagable
         if (floatingTextSpawner != null && damage < 999999f)
         {
             Vector3 pos = transform.position + Vector3.up * 0.3f;
-            floatingTextSpawner.SpawnText(pos, damage.ToString());
+            floatingTextSpawner.SpawnText(pos, damage.ToString(), isCritical);
         }
 
         currentHp -= damage;

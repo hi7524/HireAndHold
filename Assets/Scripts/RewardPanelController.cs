@@ -2,14 +2,17 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 
 public class RewardPanelController : MonoBehaviour
 {
-    
     [SerializeField] private GameObject boxRoot; // 전체 배경
     [SerializeField] private Button boxButton; // 클릭 가능한 상자 버튼
     [SerializeField] private Image boxImage; // 상자 이미지
+    [SerializeField] private Sprite boxSprite; // 기본 상자 스프라이트
+    [SerializeField] private Sprite opendBoxSprite; // 열린 후 상자 스프라이트
+    [SerializeField] private GameObject canvasEffect; // 상자 열릴 때 나타나는 이펙트
     
     [Header("보상 표시 UI")]
     [SerializeField] private GameObject rewardDisplayPanel;
@@ -43,9 +46,24 @@ public class RewardPanelController : MonoBehaviour
     {
         boxButton?.onClick.AddListener(OnBoxClick);
         confirmButton?.onClick.AddListener(OnConfirmClick);
-        
+
         boxRoot.SetActive(false);
         rewardDisplayPanel.SetActive(false);
+    }
+
+    private void OnEnable()
+    {
+        // 상자 이미지를 기본 스프라이트로 초기화
+        if (boxImage != null && boxSprite != null)
+        {
+            boxImage.sprite = boxSprite;
+        }
+
+        // Canvas Effect 비활성화
+        if (canvasEffect != null)
+        {
+            canvasEffect.SetActive(false);
+        }
     }
 
     // 워닝 타임 보상 표시
@@ -128,13 +146,46 @@ public class RewardPanelController : MonoBehaviour
         isBoxOpened = true;
         boxButton.interactable = false;
 
-        // 상자 열리고 보상 표시
-        rewardDisplayPanel.SetActive(true);
-        confirmButton.gameObject.SetActive(true);
+        // 상자 축소 후 원래 크기로 복귀 애니메이션
+        boxImage.transform.DOScale(0.8f, 0.2f)
+            .SetEase(Ease.InQuad)
+            .SetUpdate(true)
+            .OnComplete(() =>
+            {
+                // 작아진 상태에서 열린 상자 스프라이트로 변경
+                if (opendBoxSprite != null)
+                {
+                    boxImage.sprite = opendBoxSprite;
+                }
+
+                // Canvas Effect 활성화
+                if (canvasEffect != null)
+                {
+                    canvasEffect.SetActive(true);
+                }
+
+                boxImage.transform.DOScale(1f, 0.3f)
+                    .SetEase(Ease.OutBack)
+                    .SetUpdate(true)
+                    .OnComplete(() =>
+                    {
+                        // 0.1초 대기 후 보상 표시
+                        DOVirtual.DelayedCall(0.1f, () =>
+                        {
+                            // 상자 열리고 보상 표시
+                            rewardDisplayPanel.SetActive(true);
+                            confirmButton.gameObject.SetActive(true);
+
+                            // 보상 패널 확대 애니메이션
+                            rewardDisplayPanel.transform.localScale = Vector3.zero;
+                            rewardDisplayPanel.transform.DOScale(1f, 0.4f)
+                                .SetEase(Ease.OutBack)
+                                .SetUpdate(true);
+                        }).SetUpdate(true);
+                    });
+            });
     }
     
-
-
     // 확인 버튼 클릭
     private void OnConfirmClick()
     {
@@ -165,6 +216,4 @@ public class RewardPanelController : MonoBehaviour
             gameObject.SetActive(false);
         }
     }
-
-   
 }

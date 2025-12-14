@@ -40,6 +40,12 @@ public class LevelUpRewardController : MonoBehaviour
     private int defaultGoldReward = 25;
     private bool isSkillCardSelecting = false; // 스킬 카드 선택 중 플래그
 
+    // 애니메이션 상수
+    private const float CardAnimDuration = 0.25f; // 카드 스케일 애니메이션 시간
+    private const float CardAnimDelayInterval = 0.08f; // 카드 애니메이션 간격
+    private const float SelectedCardMoveY = 60f; // 선택된 카드 Y축 이동 거리
+    private const float SelectedCardScale = 1.1f; // 선택된 카드 최대 스케일
+    private const float SelectedCardWaitTime = 0.2f; // 선택된 카드 대기 시간
 
     // 초기 세팅
     private void Start()
@@ -225,25 +231,6 @@ public class LevelUpRewardController : MonoBehaviour
         }
     }
 
-    // 스킬 카드가 선택되었을 때 호출 (구버전 - 사용 안 함)
-    public void OnSkillCardSelected(SkillCardUi clickedCard)
-    {
-        // 이전에 선택된 카드가 있으면 포커스 해제
-        if (selectedSkillCard != null)
-        {
-            selectedSkillCard.SetFocus(false);
-        }
-
-        // 새로운 카드 선택
-        selectedSkillCard = clickedCard;
-        selectedSkillCard.SetFocus(true);
-        isSelectedReward = true;
-
-        // 스킬 선택 시 확인 버튼 활성화
-        if (confirmBtn != null)
-            confirmBtn.interactable = true;
-    }
-
     // 스킬 카드가 즉시 획득되었을 때 호출
     public void OnSkillCardAcquired(SkillCardUi selectedCard)
     {
@@ -273,13 +260,14 @@ public class LevelUpRewardController : MonoBehaviour
 
                 // 시퀀스로 애니메이션 체이닝
                 Sequence selectedSequence = DOTween.Sequence();
+                selectedSequence.SetUpdate(true); // TimeScale 무시
 
-                selectedSequence.Append(card.transform.DOLocalMoveY(originalPos.y + 60f, 0.5f).SetEase(Ease.OutQuad));
-                selectedSequence.Join(card.transform.DOScale(1.1f, 0.3f).SetEase(Ease.OutQuad));
+                selectedSequence.Append(card.transform.DOLocalMoveY(originalPos.y + SelectedCardMoveY, CardAnimDuration).SetEase(Ease.OutQuad));
+                selectedSequence.Join(card.transform.DOScale(SelectedCardScale, CardAnimDuration).SetEase(Ease.OutQuad));
 
-                selectedSequence.AppendInterval(0.2f);
+                selectedSequence.AppendInterval(SelectedCardWaitTime);
 
-                selectedSequence.Append(card.transform.DOScale(0f, 0.3f).SetEase(Ease.InBack));
+                selectedSequence.Append(card.transform.DOScale(0f, CardAnimDuration).SetEase(Ease.InBack));
 
                 selectedSequence.OnComplete(() => card.gameObject.SetActive(false));
 
@@ -291,9 +279,10 @@ public class LevelUpRewardController : MonoBehaviour
             // 기존 애니메이션 정리
             card.transform.DOKill();
 
-            card.transform.DOScale(Vector3.zero, 0.3f)
-                .SetDelay(reverseIndex * 0.1f)
+            card.transform.DOScale(Vector3.zero, CardAnimDuration)
+                .SetDelay(reverseIndex * CardAnimDelayInterval)
                 .SetEase(Ease.InBack)
+                .SetUpdate(true) // TimeScale 무시
                 .OnComplete(() => card.gameObject.SetActive(false));
         }
 
@@ -546,10 +535,11 @@ public class LevelUpRewardController : MonoBehaviour
                 // 초기 스케일을 0으로 설정
                 card.transform.localScale = Vector3.zero;
 
-                // 순차적으로 스케일 애니메이션 (0.1초 간격)
-                card.transform.DOScale(Vector3.one, 0.3f)
-                    .SetDelay(i * 0.1f)
-                    .SetEase(Ease.OutBack);
+                // 순차적으로 스케일 애니메이션
+                card.transform.DOScale(Vector3.one, CardAnimDuration)
+                    .SetDelay(i * CardAnimDelayInterval)
+                    .SetEase(Ease.OutBack)
+                    .SetUpdate(true); // TimeScale 무시
             }
         }
         else
@@ -567,9 +557,10 @@ public class LevelUpRewardController : MonoBehaviour
                 // 기존 애니메이션 정리
                 card.transform.DOKill();
 
-                card.transform.DOScale(Vector3.zero, 0.3f)
-                    .SetDelay(reverseIndex * 0.1f)
+                card.transform.DOScale(Vector3.zero, CardAnimDuration)
+                    .SetDelay(reverseIndex * CardAnimDelayInterval)
                     .SetEase(Ease.InBack)
+                    .SetUpdate(true) // TimeScale 무시
                     .OnComplete(() => card.gameObject.SetActive(false));
             }
         }
