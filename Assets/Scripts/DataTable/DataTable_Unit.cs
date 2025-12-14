@@ -23,6 +23,7 @@ public class UnitData
     public string GRID_DATA { get; set; }        // 그리드 데이터 ScriptableObject 이름
     public string PROJECTILE { get; set; }
     public ProjectileType PROJECTILE_TYPE { get; set; }
+    public string HIT_AUDIO_CLIP { get; set; }
 
     // StringTable 연동
     public string StringName => DataTableManager.StringTable?.Get(NAME);

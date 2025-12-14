@@ -600,6 +600,7 @@ public class Unit : MonoBehaviour
 
         projectile.SetDamage(finalDamage, isCritical);
         projectile.SetTarget(AttackTarget.transform);
+        projectile.SetHitAudioClip(unitData.HIT_AUDIO_CLIP);
         projectile.Launch();
     }
 
