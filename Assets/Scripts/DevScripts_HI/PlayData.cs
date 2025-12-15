@@ -137,6 +137,12 @@ public static class PlayData
         Debug.Log($"캐릭터 {cachedCharacters.Count}개 동기화 완료");
     }
 
+    public static void SetNicknameImmediate(string nickname)
+    {
+        cachedNickname = nickname;
+    }
+
+
     //재화 변경 로컬 캐시 + DB 동기화
     public static async void AddGold(long amount)
     {
