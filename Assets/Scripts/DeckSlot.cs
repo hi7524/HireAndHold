@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class DeckSlot : MonoBehaviour
@@ -12,6 +13,8 @@ public class DeckSlot : MonoBehaviour
 
     public bool HasCommitted => committed != null;
     public bool HasPending => pending != null;
+
+    public Action<DeckSlot> onSlotClickedExternal;
 
     public void SetDeckControl(DeckControl control)
     {
@@ -27,6 +30,18 @@ public class DeckSlot : MonoBehaviour
         pending = null;
         ApplyCommittedToUI();
     }
+
+    public void OnClick()
+    {
+        if (onSlotClickedExternal != null)
+        {
+            onSlotClickedExternal(this);
+            return;
+        }
+
+        deck.OnSlotClicked(this);
+    }
+
 
     public void SetPending(DeckUnitModel model)
     {
@@ -93,11 +108,6 @@ public class DeckSlot : MonoBehaviour
     void ApplyPendingToUI()
     {
         icon.sprite = pending != null ? pending.icon : emptySprite;
-    }
-
-    public void OnClick()
-    {
-        deck.OnSlotClicked(this);
     }
     public void SetInteractable(bool interactable)
     {

@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 [Serializable]
 public class DeckUnitModel
@@ -18,4 +20,5 @@ public class DeckUnitModel
             iconAddress = rawData.UNIT_ICON;  
         }
     }
+
 }

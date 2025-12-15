@@ -38,6 +38,14 @@ public class UnitInfoUI : MonoBehaviour
     [SerializeField] private Button normalEnforceButton;
     [SerializeField] private Button heroEnforceButton;
 
+    [Header("Replace Popup")]
+    [SerializeField] private GameObject replacePopupRoot;
+    [SerializeField] private Transform replaceSlotParent;
+    [SerializeField] private DeckSlot replaceSlotPrefab;
+    [SerializeField] private Button replaceCancelButton;
+    [SerializeField] private Image replaceSelectedUnitImage;
+
+
     #endregion
 
 
@@ -116,6 +124,8 @@ public class UnitInfoUI : MonoBehaviour
     private int currentUnitId = -1;
     private Unit previewUnit;
 
+    private DeckControl deckControl;
+
     private const int NORMAL_MAX = 20;
     private const int HERO_MAX = 4;
 
@@ -142,6 +152,7 @@ public class UnitInfoUI : MonoBehaviour
         heroPopupRoot.SetActive(false);
         alertRoot.SetActive(false);
         successRoot.SetActive(false);
+        replacePopupRoot.SetActive(false);
 
         normalCloseButton.onClick.AddListener(() => normalPopupRoot.SetActive(false));
         heroCloseButton.onClick.AddListener(() => heroPopupRoot.SetActive(false));
@@ -161,6 +172,13 @@ public class UnitInfoUI : MonoBehaviour
 
         normalEnforceButton.onClick.AddListener(OpenNormal);
         heroEnforceButton.onClick.AddListener(OpenHero);
+
+        equipButton.onClick.AddListener(OnEquipButtonClicked);
+    }
+
+    public void SetDeckControl(DeckControl control)
+    {
+        deckControl = control;
     }
 
     #endregion
@@ -238,6 +256,9 @@ public class UnitInfoUI : MonoBehaviour
             unitImage.sprite = sprite;
             normalPopupUnitImage.sprite = sprite;
             heroPopupUnitImage.sprite = sprite;
+
+            if (replaceSelectedUnitImage != null)
+                replaceSelectedUnitImage.sprite = sprite;
         }
         catch { }
     }
@@ -518,6 +539,154 @@ public class UnitInfoUI : MonoBehaviour
         }
     }
 
+        #endregion
+
+    #region ===== Equip (장착) =====
+
+    private void OnEquipButtonClicked()
+    {
+        if (deckControl == null)
+        {
+            ShowAlert("덱 컨트롤러를 찾을 수 없습니다.");
+            return;
+        }
+
+        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        if (character == null)
+        {
+            ShowAlert("미보유 유닛은 장착할 수 없습니다.");
+            return;
+        }
+
+        int activePreset = PlayData.currentSelectedPreset;
+        bool alreadyEquipped = false;
+        int equippedSlotIndex = -1;
+
+        for (int i = 0; i < 5; i++)
+        {
+            if (PlayData.selectedDeckUnitIds[activePreset, i] == currentUnitId)
+            {
+                alreadyEquipped = true;
+                equippedSlotIndex = i;
+                break;
+            }
+        }
+
+        if (alreadyEquipped)
+        {
+            ShowAlert($"이미 슬롯 {equippedSlotIndex + 1}번에 편성되어 있습니다.");
+            return;
+        }
+
+        int emptySlotIndex = -1;
+        for (int i = 0; i < 5; i++)
+        {
+            if (PlayData.selectedDeckUnitIds[activePreset, i] == 0)
+            {
+                emptySlotIndex = i;
+                break;
+            }
+        }
+
+        if (emptySlotIndex != -1)
+        {
+            // 빈 슬롯에 추가
+            EquipToSlot(emptySlotIndex);
+        }
+        else
+        {
+            // 모든 슬롯이 차있으면 교체 팝업 표시
+            ShowReplacePopup();
+        }
+    }
+
+    private async void EquipToSlot(int slotIndex)
+    {
+        int activePreset = PlayData.currentSelectedPreset;
+
+        var data = unitTable.Get(currentUnitId);
+        if (data == null) return;
+
+        PlayData.selectedDeckUnitIds[activePreset, slotIndex] = currentUnitId;
+        PlayData.selectedDeckUnitIconAddresses[activePreset, slotIndex] = data.UNIT_ICON;
+
+        await DatabaseManager.Instance.SavePresetFromPlayDataAsync(activePreset);
+
+        deckControl.ApplyPresetToSelectedUnitIds();
+        deckControl.LoadPresets();
+        deckControl.OnClickPresetButton(activePreset);
+
+        ShowSuccess("장착 완료", $"{data.StringName}이(가) 슬롯 {slotIndex + 1}번에 장착되었습니다.");
+
+        mainRoot.SetActive(false);
+    }
+
+    private void ShowReplacePopup()
+    {
+        replacePopupRoot.SetActive(true);
+        RefreshReplaceSlots();
+    }
+
+    #endregion
+
+    #region ===== Replace Popup Implementation =====
+
+    private void RefreshReplaceSlots()
+    {
+        foreach (Transform child in replaceSlotParent)
+            Destroy(child.gameObject);
+
+        int preset = PlayData.currentSelectedPreset;
+
+        for (int i = 0; i < 5; i++)
+        {
+            int slotIndex = i;
+            int unitId = PlayData.selectedDeckUnitIds[preset, i];
+            if (unitId == 0) continue;
+
+            var model = deckControl.GetDeckUnitModelFromPreset(preset, slotIndex);
+
+            if (model == null) continue;
+
+            var slot = Instantiate(replaceSlotPrefab, replaceSlotParent);
+
+            slot.SetCommittedExternal(model);
+            slot.SetInteractable(true);
+
+            // 교체 전용 클릭
+            slot.onSlotClickedExternal = _ =>
+            {
+                ReplaceSlot(slotIndex);
+            };
+        }
+    }
+
+
+
+    private async void ReplaceSlot(int slotIndex)
+    {
+        int activePreset = PlayData.currentSelectedPreset;
+
+        // 기존 유닛 정보 가져오기
+        int oldUnitId = PlayData.selectedDeckUnitIds[activePreset, slotIndex];
+        var oldData = unitTable.Get(oldUnitId);
+        var newData = unitTable.Get(currentUnitId);
+
+        // 교체 수행
+        PlayData.selectedDeckUnitIds[activePreset, slotIndex] = currentUnitId;
+        PlayData.selectedDeckUnitIconAddresses[activePreset, slotIndex] = newData.UNIT_ICON;
+
+        await DatabaseManager.Instance.SavePresetFromPlayDataAsync(activePreset);
+
+        deckControl.ApplyPresetToSelectedUnitIds();
+        deckControl.LoadPresets();
+        deckControl.OnClickPresetButton(activePreset);
+
+        replacePopupRoot.SetActive(false);
+        mainRoot.SetActive(false);
+
+        ShowSuccess("교체 완료",$"슬롯 {slotIndex + 1}번\n{oldData?.StringName ?? "빈 슬롯"} → {newData.StringName}");
+    }
 
     #endregion
 

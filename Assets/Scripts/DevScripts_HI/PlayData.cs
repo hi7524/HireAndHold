@@ -66,30 +66,52 @@ public static class PlayData
     {
         if (DatabaseManager.Instance?.CurrentUser == null)
         {
-            Debug.LogWarning(" DatabaseManager 또는 CurrentUser가 null입니다.");
+            Debug.LogWarning("DatabaseManager 또는 CurrentUser가 null입니다.");
             return;
         }
 
         var user = DatabaseManager.Instance.CurrentUser;
 
-        // 재화 동기화
+
         cachedGold = user.currency.gold;
         cachedDiamond = user.currency.diamond;
         cachedStamina = user.currency.stamina;
         cachedEnhanceStone = user.currency.enhanceStone;
         cachedSummonTicket = user.currency.summonTicket;
 
-        // 프로필 동기화
+
         cachedLevel = user.profile.level;
         cachedExp = user.profile.exp;
         cachedNickname = user.profile.nickname;
 
-        // 캐릭터 동기화
+
         SyncCharactersFromDatabase();
+
+        SyncSelectedUnitIdsFromActivePreset();
 
         isInitialized = true;
         Debug.Log("데이터 동기화 완료");
         Debug.Log($"골드: {cachedGold}, 다이아: {cachedDiamond}, 강화석: {cachedEnhanceStone}");
+        Debug.Log($"선택된 유닛: {string.Join(", ", selectedUnitIds)}");
+    }
+
+    private static void SyncSelectedUnitIdsFromActivePreset()
+    {
+        selectedUnitIds.Clear();
+
+        int activePreset = currentSelectedPreset;
+
+        for (int i = 0; i < 5; i++)
+        {
+            int unitId = selectedDeckUnitIds[activePreset, i];
+
+            if (unitId != 0)
+            {
+                selectedUnitIds.Add(unitId);
+            }
+        }
+
+        Debug.Log($"[PlayData] selectedUnitIds 동기화: {string.Join(", ", selectedUnitIds)}");
     }
 
     // 캐릭터 데이터 동기화

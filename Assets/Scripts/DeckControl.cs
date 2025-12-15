@@ -85,6 +85,7 @@ public class DeckControl : MonoBehaviour
         await LoadAndSetupPresets();
         UpdateAllUI();
         unitInfoUI.SetUnitManager(battleUnitManager);
+        unitInfoUI.SetDeckControl(this);
         PlayData.AddEnhanceStone(999999); //임시 강화석
         PlayData.AddUnitFragments(11119, 9999999);//임시 유닛 조각
         PlayData.AddUnitFragments(11101, 9999999);//임시 유닛 조각
@@ -94,8 +95,8 @@ public class DeckControl : MonoBehaviour
         PlayData.AddUnitFragments(11113, 9999999);//임시 유닛 조각
         //11101, 11104, 11107, 11110, 11113
 
-
         ApplyPresetToSelectedUnitIds();
+        Debug.Log($"[DeckControl Start] PlayData.selectedUnitIds = {string.Join(", ", PlayData.selectedUnitIds)}");
 
 
     }
@@ -685,6 +686,15 @@ public class DeckControl : MonoBehaviour
 
         Debug.Log($"[DeckControl] PlayData.selectedUnitIds = {string.Join(", ", PlayData.selectedUnitIds)}");
     }
+
+    public DeckUnitModel GetDeckUnitModelFromPreset(int preset, int slot)
+    {
+        if (preset < 0 || preset >= presets.Length)
+            return null;
+
+        return presets[preset].units[slot];
+    }
+
 
 }
 
