@@ -19,12 +19,9 @@ public class GachaManager : MonoBehaviour
     private bool isExecuting = false;
     public bool IsExecuting => isExecuting;
 
-    private async void Start()
+    private  void Start()
     {
-        if (DataTableManager.IsInitialized == false)
-        {
-            await DataTableManager.InitAsync();
-        }
+       
         InitializeTables();
     }
 

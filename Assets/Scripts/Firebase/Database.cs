@@ -148,21 +148,34 @@ public class Database
 
     public async UniTask<bool> IncrementValueAsync(string path, long amount)
     {
-        var transactionResult = await root.Child(path).RunTransaction(mutableData =>
+        try
         {
-            long currentValue = mutableData.Value != null ? Convert.ToInt64(mutableData.Value) : 0;
-            long newValue = currentValue + amount;
-
-            if (newValue < 0)
+            var transactionResult = await root.Child(path).RunTransaction(mutableData =>
             {
-                return TransactionResult.Abort();
+                long currentValue = mutableData.Value != null ? Convert.ToInt64(mutableData.Value) : 0;
+                long newValue = currentValue + amount;
+
+                if (newValue < 0)
+                {
+                    Debug.LogWarning($"[Database] IncrementValue 중단 - 음수 결과 ({path}): {currentValue} + {amount} = {newValue}");
+                    return TransactionResult.Abort();
+                }
+
+                mutableData.Value = newValue;
+                return TransactionResult.Success(mutableData);
+            }).AsUniTask();
+
+            return transactionResult != null;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[Database] IncrementValue 오류 ({path}): {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Debug.LogError($"[Database] InnerException: {ex.InnerException.Message}");
             }
-
-            mutableData.Value = newValue;
-            return TransactionResult.Success(mutableData);
-        }).AsUniTask();
-
-        return transactionResult != null;
+            return false;
+        }
     }
 
     #endregion
