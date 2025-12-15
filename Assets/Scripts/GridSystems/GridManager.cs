@@ -108,22 +108,46 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        if (AddressablePreloader.Instance == null)
+        // AddressablePreloader에서 GridLayoutData 가져오기 시도
+        if (AddressablePreloader.Instance != null)
         {
-            Debug.LogWarning("AddressablePreloader.Instance가 null입니다.");
-            return;
+            GridLayoutData newLayoutData = AddressablePreloader.Instance.GetCachedGridLayout(gridLayoutKey);
+            if (newLayoutData != null)
+            {
+                LayoutData = newLayoutData;
+                Debug.Log($"GridLayoutData 설정 완료: {gridLayoutKey}");
+                return;
+            }
         }
 
-        GridLayoutData newLayoutData = AddressablePreloader.Instance.GetCachedGridLayout(gridLayoutKey);
-        if (newLayoutData != null)
+        // Preloader가 없거나 데이터를 찾을 수 없을 경우 기본 레이아웃 생성
+        Debug.LogWarning($"AddressablePreloader를 통해 GridLayoutData를 가져올 수 없어 기본 레이아웃을 생성합니다.");
+        LayoutData = CreateDefaultGridLayout();
+    }
+
+    // 기본 그리드 레이아웃 생성 (7x4 그리드)
+    private GridLayoutData CreateDefaultGridLayout()
+    {
+        GridLayoutData defaultLayout = ScriptableObject.CreateInstance<GridLayoutData>();
+        defaultLayout.width = 7;
+        defaultLayout.height = 4;
+
+        // 모든 셀을 유효한 셀로 설정 (bool 배열)
+        int totalCells = defaultLayout.width * defaultLayout.height;
+        defaultLayout.validCells = new bool[totalCells];
+        for (int i = 0; i < totalCells; i++)
         {
-            LayoutData = newLayoutData;
-            Debug.Log($"GridLayoutData 설정 완료: {gridLayoutKey}");
+            defaultLayout.validCells[i] = true;
         }
-        else
-        {
-            Debug.LogWarning($"GridLayoutData를 찾을 수 없습니다: {gridLayoutKey}");
-        }
+
+        // 버프 비활성화
+        defaultLayout.enableCrossBuffs = false;
+        defaultLayout.enableRegionBuffs = false;
+        defaultLayout.crossBuffs = new List<CrossBuffData>();
+        defaultLayout.regionBuffs = new List<RegionBuffData>();
+
+        Debug.Log("기본 3x3 그리드 레이아웃 생성 완료");
+        return defaultLayout;
     }
 
     // 그리드 배열 초기화 (셀 등록 전)
@@ -487,7 +511,10 @@ public class GridManager : MonoBehaviour
     public GridUnit SpawnGridUnit(Vector3 position, int unitId, UnitGridData gridData)
     {
         if (gridUnitPrefab == null)
+        {
+            Debug.LogWarning("GridUnitPrefab이 할당되지 않았습니다.");
             return null;
+        }
 
         GameObject unitObj = Instantiate(gridUnitPrefab, position, Quaternion.identity);
 
@@ -496,17 +523,24 @@ public class GridManager : MonoBehaviour
 
         if (gridUnit == null)
         {
+            Debug.LogWarning("GridUnit 컴포넌트를 찾을 수 없습니다.");
             Destroy(unitObj);
             return null;
         }
 
         gridUnit.SetGridData(gridData);
-        gridUnit.SetBattleUnitManager(unitManager);
+
+        // BattleUnitManager가 있을 경우에만 설정
+        if (unitManager != null)
+        {
+            gridUnit.SetBattleUnitManager(unitManager);
+        }
 
         if (unit != null)
         {
             unit.SetUnitID(unitId);
 
+            // BattleUnitManager가 있을 경우에만 등록
             if (unitManager != null)
             {
                 unitManager.RegisterUnit(unit);
