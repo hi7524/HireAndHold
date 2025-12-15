@@ -77,6 +77,8 @@ public class DeckControl : MonoBehaviour
         }
     }
 
+    private bool isInitialized = false;
+
     async void Start()
     {
         await InitializeData();
@@ -98,7 +100,84 @@ public class DeckControl : MonoBehaviour
         ApplyPresetToSelectedUnitIds();
         Debug.Log($"[DeckControl Start] PlayData.selectedUnitIds = {string.Join(", ", PlayData.selectedUnitIds)}");
 
+        isInitialized = true;
+    }
 
+    async void OnEnable()
+    {
+        if (!isInitialized)
+            return;
+
+        await RefreshFromFirebase();
+    }
+
+    async UniTask RefreshFromFirebase()
+    {
+        await DatabaseManager.Instance.WaitForInitializationAsync();
+        await DatabaseManager.Instance.LoadUserDataAsync();
+
+        // 새로 획득한 캐릭터 카드 생성
+        await CreateNewUnitCards();
+
+        DatabaseManager.Instance.SyncPresetsToPlayData();
+        LoadPresets();
+        LoadPreset(activePresetIndex);
+        UpdateAllUI();
+
+        Debug.Log("[DeckControl] Firebase 데이터 새로고침 완료");
+    }
+
+    async UniTask CreateNewUnitCards()
+    {
+        var ownedCharacters = DatabaseManager.Instance.GetAllCharacters();
+        List<UniTask> loadTasks = new();
+
+        foreach (var character in ownedCharacters)
+        {
+            int unitId = int.Parse(character.id);
+
+            // 이미 카드가 있으면 스킵
+            if (unitModelMap.ContainsKey(unitId))
+                continue;
+
+            UnitData data = unitTable.Get(unitId);
+            if (data == null)
+                continue;
+
+            int enforceLevel = character.enforceLevel;
+
+            var model = new DeckUnitModel
+            {
+                unitId = unitId,
+                unitName = data.StringName,
+                iconAddress = data.UNIT_ICON,
+                rawData = data,
+                enforceLevel = enforceLevel
+            };
+
+            var loadTask = Addressables.LoadAssetAsync<Sprite>(model.iconAddress).Task.AsUniTask()
+                .ContinueWith(result =>
+                {
+                    model.icon = result;
+
+                    var card = Instantiate(cardPrefab, unitListParent);
+                    card.Init(model);
+                    card.Setup(OnUnitCardClicked);
+                    card.SetVisible(true);
+
+                    unitCards.Add(card);
+                    unitModelMap[unitId] = model;
+
+                    Debug.Log($"[DeckControl] 새 캐릭터 카드 생성: {model.unitName}");
+                });
+
+            loadTasks.Add(loadTask);
+        }
+
+        if (loadTasks.Count > 0)
+        {
+            await UniTask.WhenAll(loadTasks);
+        }
     }
 
     async UniTask InitializeData()

@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class PlayerUnitProjectile : MonoBehaviour
+public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
 {
     [SerializeField] private float lifeTime = 3f;
     [SerializeField] private float launchSpeed = 5f;
@@ -21,9 +21,29 @@ public class PlayerUnitProjectile : MonoBehaviour
     private Transform target;
     private Rigidbody2D rb;
     private string hitAudioClipName;
+    private bool useLegacyMode = true;
 
+    // ISkillProjectile 구현
+    public void Initialize(ref SkillProjectileData data)
+    {
+        useLegacyMode = false;
+        poolManager = data.poolManager;
+        poolKey = data.poolKey;
+        damage = data.damage;
+        isCritical = data.isCritical;
+        target = data.target;
+        transform.position = data.spawnPosition;
+
+        if (target != null)
+            direction = (target.position - transform.position).normalized;
+        else
+            direction = transform.up;
+    }
+
+    // 레거시 호환용
     public void Initialize(ObjectPoolManager manager, string key)
     {
+        useLegacyMode = true;
         poolManager = manager;
         poolKey = key;
     }

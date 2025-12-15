@@ -650,6 +650,28 @@ public class Unit : MonoBehaviour
         return damage;
     }
 
+    // 스킬용 데미지 계산 (치명타 여부 반환)
+    public (float damage, bool isCritical) CalculateDamageWithCrit(Enemy target, float baseDamage, float critRate, float critDamage)
+    {
+        float damage = baseDamage;
+
+        // 보스 추가 데미지 적용
+        if (target.IsBoss && cachedPassiveSkillManager != null)
+        {
+            PassiveSkillEffects effects = cachedPassiveSkillManager.GetCurrentEffects();
+            damage *= 1f + effects.bossDamageBonus / PercentToDivider;
+        }
+
+        // 치명타 판정 및 적용
+        bool isCritical = Random.value < (critRate / PercentToDivider);
+        if (isCritical)
+        {
+            damage *= critDamage;
+        }
+
+        return (damage, isCritical);
+    }
+
     // AttackTriggerZone 시각화 (필요시)
     // private void OnDrawGizmosSelected()
     // {
