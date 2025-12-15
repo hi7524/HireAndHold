@@ -94,37 +94,46 @@ public class UnitSkill
 
         int baseProjectile = Mathf.Max(1, skillData.SKILL_BOLT);
         int bonusProjectile = owner.GetHeroProjectileBonus();
-
         int projectileCount = baseProjectile + bonusProjectile;
 
-        Debug.Log($"[SkillProjectile] {SkillName} → Base:{baseProjectile}, Bonus:{bonusProjectile}, Total:{projectileCount}");
-
+        // 데미지 계산 (스킬 치명타 스탯 사용)
+        float baseDamage = owner.GetAttackDamageStat().Value;
+        var (damage, isCritical) = owner.CalculateDamageWithCrit(target, baseDamage, skillData.SKILL_CRT, skillData.SKILL_CRT_DMG);
+        damage *= owner.GetHeroSkillDamageMultiplier();
 
         for (int i = 0; i < projectileCount; i++)
         {
             // 투사체 풀에서 가져오기
             GameObject projectileObj = poolManager.Get(skillData.SKILL_EFFECT);
 
-            if (projectileObj == null) // TODO: 임시, 테스트용 기본 프리팹 사용
-                projectileObj = poolManager.Get("UnitProjectile_Fire"); 
+            if (projectileObj == null)
+                projectileObj = poolManager.Get("UnitProjectile_Fire");
 
             if (projectileObj == null)
                 return;
 
-            projectileObj.transform.position = owner.transform.position;
-            PlayerUnitProjectile projectile = projectileObj.GetComponent<PlayerUnitProjectile>();
+            // 인터페이스로 투사체 초기화
+            ISkillProjectile projectile = projectileObj.GetComponent<ISkillProjectile>();
 
-            // 투사체 초기화
-            projectile.Initialize(poolManager, skillData.SKILL_EFFECT);
+            if (projectile == null)
+            {
+                Debug.LogError($"[UnitSkill] ISkillProjectile 없음: {skillData.SKILL_EFFECT}");
+                return;
+            }
 
-            // 데미지 계산 (스킬 치명타 스탯 사용)
-            float baseDamage = owner.GetAttackDamageStat().Value;
-            float damage = owner.CalculateDamage(target, baseDamage, skillData.SKILL_CRT, skillData.SKILL_CRT_DMG);
+            var data = new SkillProjectileData
+            {
+                poolManager = poolManager,
+                poolKey = skillData.SKILL_EFFECT,
+                damage = damage,
+                isCritical = isCritical,
+                target = target.transform,
+                spawnPosition = owner.transform.position,
+                targetPosition = target.transform.position,
+                range = skillData.SKILL_RANGE
+            };
 
-            damage *= owner.GetHeroSkillDamageMultiplier();
-
-            projectile.SetDamage(damage);
-            projectile.SetTarget(target.transform);
+            projectile.Initialize(ref data);
             projectile.Launch();
         }
     }

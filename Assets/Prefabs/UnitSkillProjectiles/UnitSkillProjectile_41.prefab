@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6266743259424503086}
   - component: {fileID: 8564051668780969774}
   - component: {fileID: 6908712333835450721}
-  - component: {fileID: 8619368926878524676}
+  - component: {fileID: 1264005391991503944}
   m_Layer: 0
   m_Name: UnitSkillProjectile_41
   m_TagString: Untagged
@@ -98,7 +98,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
---- !u!114 &8619368926878524676
+--- !u!114 &1264005391991503944
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -107,14 +107,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 7012860003763290146}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9306028b82f153a4e8e808f2ef2a6972, type: 3}
+  m_Script: {fileID: 11500000, guid: 2002eca1e4e44864790e186134ed4ff8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lifeTime: 3
-  launchSpeed: 7
-  mainProjectile: {fileID: 0}
-  hitEffect: {fileID: 0}
-  rotationOffset: 0
+  lifeTime: 1
+  effect: {fileID: 7585410922498374824}
 --- !u!1001 &7747349462876950944
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -221,6 +218,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e60d36cff17a1ce4db49ef54f9e72f61, type: 3}
+--- !u!198 &7585410922498374824 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 198393960337124616, guid: e60d36cff17a1ce4db49ef54f9e72f61, type: 3}
+  m_PrefabInstance: {fileID: 7747349462876950944}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7749396363346658986 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4362472259802890, guid: e60d36cff17a1ce4db49ef54f9e72f61, type: 3}
