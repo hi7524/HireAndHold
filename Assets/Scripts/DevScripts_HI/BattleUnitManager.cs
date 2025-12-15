@@ -173,4 +173,23 @@ public class BattleUnitManager : MonoBehaviour
             activePassiveModifiers.Remove(unit);
         }
     }
+
+    // 모든 유닛이 2성 이상인지 확인
+    public bool AreAllUnitsAtLeastTwoStar()
+    {
+        if (activeUnits.Count == 0)
+            return false;
+
+        foreach (var unit in activeUnits)
+        {
+            if (unit == null)
+                continue;
+
+            GridUnit gridUnit = unit.GetComponent<GridUnit>();
+            if (gridUnit == null || gridUnit.StarLevel < 2)
+                return false;
+        }
+
+        return true;
+    }
 }

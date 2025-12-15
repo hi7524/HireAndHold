@@ -576,4 +576,27 @@ public class GridManager : MonoBehaviour
         if (gridUnitCount < 0)
             gridUnitCount = 0;
     }
+
+    // 그리드가 꽉 찼는지 확인 (모든 유효한 셀이 점유되었는지)
+    public bool IsGridFull()
+    {
+        if (LayoutData == null || GridArray == null)
+            return false;
+
+        for (int x = 0; x < LayoutData.width; x++)
+        {
+            for (int y = 0; y < LayoutData.height; y++)
+            {
+                // 유효한 셀인지 확인
+                if (!LayoutData.IsValidCell(x, y))
+                    continue;
+
+                // 빈 셀이 하나라도 있으면 false
+                if (GridArray[x, y] == (int)GridState.Empty)
+                    return false;
+            }
+        }
+
+        return true;
+    }
 }
