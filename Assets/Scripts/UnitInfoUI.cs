@@ -346,8 +346,7 @@ public class UnitInfoUI : MonoBehaviour
         int afterLv = character.enforceLevel;
         float afterAtk = previewUnit.GetAttackDamageStat().Value;
 
-        ShowSuccess("강화 성공",
-            $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}");
+        ShowSuccess("강화 성공",$"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}");
 
         await Refresh();
         RefreshNormalPopup();
@@ -472,8 +471,7 @@ public class UnitInfoUI : MonoBehaviour
         var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
         var desc = effectTable.FormatEffect(effData);
 
-        ShowSuccess("영웅 강화 성공!",
-            $"★{beforeLv} → ★{afterLv}\n효과: {desc}");
+        ShowSuccess("영웅 강화 성공!", $"★{beforeLv} → ★{afterLv}\n효과: {desc}");
 
 
         await Refresh();
