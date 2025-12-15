@@ -22448,8 +22448,6 @@ GameObject:
   - component: {fileID: 511035442}
   - component: {fileID: 511035446}
   - component: {fileID: 511035445}
-  - component: {fileID: 511035444}
-  - component: {fileID: 511035443}
   m_Layer: 5
   m_Name: PriceArea
   m_TagString: Untagged
@@ -22478,30 +22476,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &511035443
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 511035441}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dcd4f9810bcad5b4991612415bdcbc2f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &511035444
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 511035441}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75d4c22cc2e56cd42a863fb2354ded6a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &511035445
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -44095,8 +44069,6 @@ GameObject:
   - component: {fileID: 1021947189}
   - component: {fileID: 1021947193}
   - component: {fileID: 1021947192}
-  - component: {fileID: 1021947191}
-  - component: {fileID: 1021947190}
   m_Layer: 5
   m_Name: Quest
   m_TagString: Untagged
@@ -44125,30 +44097,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1021947190
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1021947188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dcd4f9810bcad5b4991612415bdcbc2f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1021947191
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1021947188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75d4c22cc2e56cd42a863fb2354ded6a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1021947192
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49723,7 +49671,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchorMin.x
@@ -49731,7 +49679,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_SizeDelta.x
@@ -49771,11 +49719,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 107
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -117.15
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
