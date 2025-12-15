@@ -142,6 +142,12 @@ public static class PlayData
         Debug.Log($"캐릭터 {cachedCharacters.Count}개 동기화 완료");
     }
 
+    public static void SetNicknameImmediate(string nickname)
+    {
+        cachedNickname = nickname;
+    }
+
+
     // 아이템 데이터 동기화
     public static void SyncItemsFromDatabase()
     {
