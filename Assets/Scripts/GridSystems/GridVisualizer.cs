@@ -20,6 +20,7 @@ public class GridVisualizer : MonoBehaviour
     private HashSet<GridCell> highlightedCells = new HashSet<GridCell>(); // 현재 하이라이트 중인 셀 추적 (배치 미리보기용)
     private Dictionary<Vector2Int, Color> coloredCell = new Dictionary<Vector2Int, Color>(); // 유닛이 점유 중인 셀과 색상 매핑 (배치된 유닛 표시용)
     private Dictionary<Vector2Int, Color> tempColoredCell; // 배치 실패 시 복원용 색상 백업
+    private Dictionary<Vector2Int, Sprite> tempIconCells; // 배치 실패 시 복원용 아이콘 백업 (위치 -> 스프라이트)
     private Dictionary<Vector2Int, Color> buffColoredCells = new Dictionary<Vector2Int, Color>(); // 버프 영역 셀과 색상 매핑 (크로스/리전 버프 표시용)
 
 
@@ -151,6 +152,19 @@ public class GridVisualizer : MonoBehaviour
         coloredCell[pos] = color;
     }
 
+    // 점유된 셀에 아이콘 설정
+    public void SetCellIcon(Vector2Int pos, Sprite icon)
+    {
+        if (!IsWithinBounds(pos))
+            return;
+
+        GridCell cell = gridCells[pos.x, pos.y];
+        if (cell != null)
+        {
+            cell.SetIcon(icon);
+        }
+    }
+
     // 특정 좌표 셀의 색상 정보 제거 및 기본 색상으로 리셋
     public void RemoveCellColor(Vector2Int pos)
     {
@@ -165,6 +179,9 @@ public class GridVisualizer : MonoBehaviour
             {
                 gridCells[pos.x, pos.y].SetColor(Color.white);
             }
+
+            // 아이콘도 제거
+            gridCells[pos.x, pos.y].ClearIcon();
         }
     }
 
@@ -178,10 +195,24 @@ public class GridVisualizer : MonoBehaviour
         }
     }
 
-    // 현재 색상 상태를 임시 저장 (실패 시 복원용)
+    // 현재 색상과 아이콘 상태를 임시 저장 (실패 시 복원용)
     public void CopyColoredCellToTemp()
     {
         tempColoredCell = new Dictionary<Vector2Int, Color>(coloredCell);
+
+        // 현재 아이콘이 있는 셀들과 스프라이트를 백업
+        tempIconCells = new Dictionary<Vector2Int, Sprite>();
+        for (int x = 0; x < layoutData.width; x++)
+        {
+            for (int y = 0; y < layoutData.height; y++)
+            {
+                Vector2Int pos = new Vector2Int(x, y);
+                if (gridCells[x, y] != null && gridCells[x, y].HasIcon())
+                {
+                    tempIconCells[pos] = gridCells[x, y].GetIcon();
+                }
+            }
+        }
     }
 
     // 배치 실패 시 임시 저장된 색상 상태로 복원
@@ -191,7 +222,7 @@ public class GridVisualizer : MonoBehaviour
             return;
 
         RestoreColoredCells();
-        RestoreCellColors();
+        RestoreCellColorsAndIcons();
     }
 
     // coloredCell 딕셔너리를 임시 저장 값으로 복원
@@ -203,13 +234,40 @@ public class GridVisualizer : MonoBehaviour
         }
     }
 
-    // 그리드 셀의 시각적 색상을 임시 저장 값으로 복원
-    private void RestoreCellColors()
+    // 그리드 셀의 시각적 색상과 아이콘을 임시 저장 값으로 복원
+    private void RestoreCellColorsAndIcons()
     {
+        // 실패 전 상태로 색상 복원
         foreach (var cell in tempColoredCell)
         {
             var pos = cell.Key;
             gridCells[pos.x, pos.y].SetColor(cell.Value);
+        }
+
+        // 모든 셀의 아이콘을 먼저 제거
+        for (int x = 0; x < layoutData.width; x++)
+        {
+            for (int y = 0; y < layoutData.height; y++)
+            {
+                if (gridCells[x, y] != null)
+                {
+                    gridCells[x, y].ClearIcon();
+                }
+            }
+        }
+
+        // 실패 전에 있던 아이콘 복원
+        if (tempIconCells != null)
+        {
+            foreach (var iconCell in tempIconCells)
+            {
+                Vector2Int pos = iconCell.Key;
+                Sprite icon = iconCell.Value;
+                if (IsWithinBounds(pos) && gridCells[pos.x, pos.y] != null)
+                {
+                    gridCells[pos.x, pos.y].SetIcon(icon);
+                }
+            }
         }
     }
 

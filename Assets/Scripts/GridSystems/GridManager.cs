@@ -489,6 +489,48 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    // 유닛 배치 시 성급에 따라 그리드 아이콘 설정
+    public void SetGridIcons(Vector2Int centerPos, List<Vector2Int> occupiedCells, int unitId, int starLevel)
+    {
+        // UnitData에서 아이콘 정보 가져오기
+        var unitData = DataTableManager.UnitTable?.Get(unitId);
+        if (unitData == null)
+            return;
+
+        // AddressablePreloader에서 아이콘 스프라이트 가져오기
+        Sprite icon01 = null;
+        Sprite icon02 = null;
+
+        if (!string.IsNullOrEmpty(unitData.GRID_ICON_01) && unitData.GRID_ICON_01 != "0")
+        {
+            icon01 = AddressablePreloader.Instance?.GetCachedGridIcon(unitData.GRID_ICON_01);
+        }
+
+        if (!string.IsNullOrEmpty(unitData.GRID_ICON_02) && unitData.GRID_ICON_02 != "0")
+        {
+            icon02 = AddressablePreloader.Instance?.GetCachedGridIcon(unitData.GRID_ICON_02);
+        }
+
+        // 성급에 따라 아이콘 적용 (중앙 셀 제외, occupiedCells만)
+        // 누적 방식: 2성은 첫 칸만 icon01, 3성은 첫 칸 icon01 + 나머지 칸 icon02
+        if (starLevel >= 2 && icon01 != null && occupiedCells.Count > 0)
+        {
+            // 2성 이상: 첫 번째 occupied 셀에 icon01 적용
+            Vector2Int firstCellPos = centerPos + occupiedCells[0];
+            gridVisualizer.SetCellIcon(firstCellPos, icon01);
+        }
+
+        if (starLevel == 3 && icon02 != null && occupiedCells.Count > 1)
+        {
+            // 3성: 두 번째 셀부터 icon02 적용 (첫 번째는 이미 icon01 적용됨)
+            for (int i = 1; i < occupiedCells.Count; i++)
+            {
+                Vector2Int absolutePos = centerPos + occupiedCells[i];
+                gridVisualizer.SetCellIcon(absolutePos, icon02);
+            }
+        }
+    }
+
     // 점유된 모든 셀에 등록된 색상 다시 적용
     public void ChangeOccupiedCellColor()
     {

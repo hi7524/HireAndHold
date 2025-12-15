@@ -26,6 +26,8 @@ public class UnitData
     public ProjectileType PROJECTILE_TYPE { get; set; }
     public string HIT_AUDIO_CLIP { get; set; }
     public int FRAGMENT_ITEM_ID { get; set; }   // 유닛 조각 아이템 ID
+    public string GRID_ICON_01 { get; set; }
+    public string GRID_ICON_02 { get; set; }
 
     // StringTable 연동
     public string StringName => DataTableManager.StringTable?.Get(NAME);
@@ -73,4 +75,4 @@ public class DataTable_Unit : DataTable
     {
         return table.Values;
     }
-} 
+}
