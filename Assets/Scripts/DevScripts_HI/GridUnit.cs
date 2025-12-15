@@ -126,8 +126,11 @@ public class GridUnit : MonoBehaviour, IDraggable
                     gridManager.SetGridState(absolutePos, GridState.Occupied);
                 }
 
-                // 색상 복원
+                // 색상과 아이콘 복원
                 gridManager.OnFailed();
+
+                // 이 유닛의 아이콘도 다시 설정
+                gridManager.SetGridIcons(curGridCell.GridPosition, occupiedCells, UnitId, StarLevel);
             }
 
             // 유닛 위치를 원래 GridCell의 월드 좌표로 복원

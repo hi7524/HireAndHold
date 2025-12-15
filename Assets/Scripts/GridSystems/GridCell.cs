@@ -3,6 +3,7 @@ using DG.Tweening;
 
 public class GridCell : MonoBehaviour, IDroppable
 {
+    [SerializeField] private SpriteRenderer iconSpriteRenderer; // 유닛 그리드 아이콘용
     public Vector2Int GridPosition { get; private set; }
 
     private GridManager gridManager;
@@ -47,6 +48,45 @@ public class GridCell : MonoBehaviour, IDroppable
     public void SetColor(Color color)
     {
         spriteRenderer.color = color;
+    }
+
+    // 그리드 아이콘 설정
+    public void SetIcon(Sprite icon)
+    {
+        if (iconSpriteRenderer == null)
+            return;
+
+        if (icon != null)
+        {
+            iconSpriteRenderer.sprite = icon;
+            iconSpriteRenderer.enabled = true;
+        }
+        else
+        {
+            ClearIcon();
+        }
+    }
+
+    // 그리드 아이콘 제거
+    public void ClearIcon()
+    {
+        if (iconSpriteRenderer != null)
+        {
+            iconSpriteRenderer.sprite = null;
+            iconSpriteRenderer.enabled = false;
+        }
+    }
+
+    // 아이콘이 있는지 확인
+    public bool HasIcon()
+    {
+        return iconSpriteRenderer != null && iconSpriteRenderer.sprite != null;
+    }
+
+    // 현재 아이콘 스프라이트 가져오기
+    public Sprite GetIcon()
+    {
+        return iconSpriteRenderer?.sprite;
     }
 
     // 버프 활성화 애니메이션 (스케일)
@@ -222,6 +262,9 @@ public class GridCell : MonoBehaviour, IDroppable
                 gridManager.SetGridState(absolutePos, GridState.Occupied);
                 gridManager.SetOccupiedCellAndColor(absolutePos, gridUnit.GridData.gridColor);
             }
+
+            // 성급에 따라 그리드 아이콘 설정
+            gridManager.SetGridIcons(anchorPosition, occupiedCells, gridUnit.UnitId, gridUnit.StarLevel);
         }
 
         // DraggableGridUnitUi 처리 - GridUnit 생성 (Inventory와 LevelUp 모두 통합)
@@ -294,6 +337,9 @@ public class GridCell : MonoBehaviour, IDroppable
                 gridManager.SetGridState(absolutePos, GridState.Occupied);
                 gridManager.SetOccupiedCellAndColor(absolutePos, newGridUnit.GridData.gridColor);
             }
+
+            // 성급에 따라 그리드 아이콘 설정
+            gridManager.SetGridIcons(GridPosition, occupiedCells, newGridUnit.UnitId, newGridUnit.StarLevel);
 
             // 유닛이 그리드에 배치되었음을 알림
             gridManager.IncrementUnitCount();
@@ -387,6 +433,10 @@ public class GridCell : MonoBehaviour, IDroppable
         // Sorting Order 업데이트
         UpdateUnitSortingOrder(existingUnit.gameObject);
 
+        // 그리드 아이콘 업데이트 (성급이 올라갔으므로)
+        var occupiedCells = existingUnit.GridData.GetOccupiedCells();
+        gridManager.SetGridIcons(GridPosition, occupiedCells, newUnitId, newStarLevel);
+
         // 드래그 중이던 유닛 삭제 (2개가 1개로 합쳐지므로 카운트 감소)
         Destroy(draggingUnit.gameObject);
         gridManager.DecrementUnitCount();
@@ -438,6 +488,10 @@ public class GridCell : MonoBehaviour, IDroppable
 
         // Sorting Order 업데이트
         UpdateUnitSortingOrder(existingUnit.gameObject);
+
+        // 그리드 아이콘 업데이트 (성급이 올라갔으므로)
+        var occupiedCells = existingUnit.GridData.GetOccupiedCells();
+        gridManager.SetGridIcons(GridPosition, occupiedCells, newUnitId, newStarLevel);
 
         return true;
     }

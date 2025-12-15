@@ -33,6 +33,7 @@ public class AddressablePreloader : MonoBehaviour
     private Dictionary<string, Sprite> cachedMaps = new Dictionary<string, Sprite>();
     private Dictionary<string, GridLayoutData> cachedGridLayouts = new Dictionary<string, GridLayoutData>();
     private Dictionary<string, AudioClip> cachedAudioClips = new Dictionary<string, AudioClip>();
+    private Dictionary<string, Sprite> cachedGridIcons = new Dictionary<string, Sprite>(); // 유닛 그리드 아이콘
     private List<AsyncOperationHandle> handles = new List<AsyncOperationHandle>();
 
     public bool IsLoaded { get; private set; } = false;
@@ -168,6 +169,9 @@ public class AddressablePreloader : MonoBehaviour
         // 6. 플레이어 스킬 프리팹 Label로 일괄 로드
         await LoadPlayerSkillPrefabsByLabel(ct);
 
+        // 7. 유닛 그리드 아이콘 Label로 일괄 로드
+        await LoadUnitGridIconsByLabel(ct);
+
         int total = prefabKeys.Count + gridDataKeys.Count + spriteKeys.Count + mapKeys.Count + gridLayoutKeys.Count + audioClipKeys.Count;
         int completed = 0;
 
@@ -243,7 +247,7 @@ public class AddressablePreloader : MonoBehaviour
         await UniTask.WhenAll(loadTasks);
 
         IsLoaded = true;
-        Debug.Log($"[AddressablePreloader] 프리로드 완료: {cachedPrefabs.Count} 프리팹, {cachedGridData.Count} GridData, {cachedSprites.Count} Sprite, {cachedMaps.Count} 맵, {cachedGridLayouts.Count} GridLayout, {cachedAudioClips.Count} AudioClip");
+        Debug.Log($"[AddressablePreloader] 프리로드 완료: {cachedPrefabs.Count} 프리팹, {cachedGridData.Count} GridData, {cachedSprites.Count} Sprite, {cachedMaps.Count} 맵, {cachedGridLayouts.Count} GridLayout, {cachedAudioClips.Count} AudioClip, {cachedGridIcons.Count} GridIcon");
     }
 
     private async UniTask LoadPrefabWithProgress(string key, CancellationToken ct, Action onComplete)
@@ -353,6 +357,47 @@ public class AddressablePreloader : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogWarning($"[AddressablePreloader] PlayerSkillPrefab Label 로드 실패: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// UnitGridIcons Label이 붙은 모든 스프라이트를 일괄 로드
+    /// </summary>
+    private async UniTask LoadUnitGridIconsByLabel(CancellationToken ct)
+    {
+        const string label = "UnitGridIcons";
+
+        try
+        {
+            // Label로 로드 시 AssetLabelReference 사용
+            var labelRef = new AssetLabelReference { labelString = label };
+            var handle = Addressables.LoadAssetsAsync<Sprite>(labelRef, sprite =>
+            {
+                if (sprite != null && !cachedGridIcons.ContainsKey(sprite.name))
+                {
+                    cachedGridIcons[sprite.name] = sprite;
+                }
+            });
+            handles.Add(handle);
+            await handle.ToUniTask(cancellationToken: ct);
+
+            Debug.Log($"[AddressablePreloader] UnitGridIcons Label 로드 완료: {handle.Result?.Count ?? 0}개");
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 정상적인 상황
+        }
+        catch (Exception e)
+        {
+            // Label이 없거나 로드 실패한 경우 - 경고만 출력하고 계속 진행
+            if (e is InvalidKeyException || e.GetType().Name == "InvalidKeyException")
+            {
+                Debug.LogWarning($"[AddressablePreloader] '{label}' Label을 가진 에셋이 없습니다. UnitGridIcons 그룹을 생성하고 아이콘들을 추가해주세요.");
+            }
+            else
+            {
+                Debug.LogWarning($"[AddressablePreloader] UnitGridIcons Label 로드 실패: {e.GetType().Name} - {e.Message}");
+            }
         }
     }
 
@@ -645,6 +690,28 @@ public class AddressablePreloader : MonoBehaviour
     }
 
     /// <summary>
+    /// 캐싱된 그리드 아이콘 가져오기
+    /// </summary>
+    public Sprite GetCachedGridIcon(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return null;
+
+        return cachedGridIcons.TryGetValue(key, out var icon) ? icon : null;
+    }
+
+    /// <summary>
+    /// 그리드 아이콘이 캐싱되어 있는지 확인
+    /// </summary>
+    public bool HasCachedGridIcon(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return false;
+
+        return cachedGridIcons.ContainsKey(key);
+    }
+
+    /// <summary>
     /// 유효한 Addressable 키인지 확인 (폴더 경로나 플레이스홀더 텍스트 필터링)
     /// </summary>
     private bool IsValidAddressableKey(string key)
@@ -687,6 +754,7 @@ public class AddressablePreloader : MonoBehaviour
         cachedMaps.Clear();
         cachedGridLayouts.Clear();
         cachedAudioClips.Clear();
+        cachedGridIcons.Clear();
 
         if (instance == this)
         {
