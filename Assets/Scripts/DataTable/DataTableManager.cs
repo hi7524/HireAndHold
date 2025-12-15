@@ -53,7 +53,8 @@ public static class DataTableManager
             LoadTableAsync<DataTable_StageLevel>(DataTableIds.StageLevel),
             LoadTableAsync<DataTable_HeroEnforce>(DataTableIds.HeroEnforce),
             LoadTableAsync<DataTable_HeroEnforceEffect>(DataTableIds.HeroEnforceEffect),
-           
+            LoadTableAsync<DataTable_UnitGacha>(DataTableIds.UnitGacha),
+
             // LoadTableAsync<DataTable_Character>(DataTableIds.Character),
         };
 
@@ -89,8 +90,7 @@ public static class DataTableManager
     public static DataTable_HeroEnforce heroEnforceTable => Get<DataTable_HeroEnforce>(DataTableIds.HeroEnforce);
 
     public static DataTable_HeroEnforceEffect heroEnforceEffectTable => Get<DataTable_HeroEnforceEffect>(DataTableIds.HeroEnforceEffect);
-
-
+    public static DataTable_UnitGacha UnitGachaTable => Get<DataTable_UnitGacha>(DataTableIds.UnitGacha);
 
     public static T Get<T>(string id) where T : DataTable
     {

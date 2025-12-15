@@ -26,6 +26,10 @@ public class StoreWindow : GenericWindow
     [SerializeField] private float cardAppearDelay = 0.5f;
     [SerializeField] private float cardAnimationDuration = 0.3f;
 
+    [Header("Cheat (Debug)")]
+    [SerializeField] private UnityEngine.UI.Button cheatButton;
+    [SerializeField] private int cheatDiceAmount = 100;
+
     private bool isPlaying = false;
     private CancellationTokenSource cts;
 
@@ -53,7 +57,12 @@ public class StoreWindow : GenericWindow
         {
             closeButton.onClick.AddListener(OnClickClose);
         }
-        
+
+        if (cheatButton != null)
+        {
+            cheatButton.onClick.AddListener(OnClickCheat);
+        }
+
         Time.timeScale = 1f;
         Debug.Log("[StoreWindow] 초기화 완료");
     }
@@ -332,23 +341,46 @@ public class StoreWindow : GenericWindow
     private void OnClickClose()
     {
         Debug.Log("[StoreWindow] Close 버튼 클릭");
-        
+
         // 애니메이션 취소
         cts?.Cancel();
-        
+
         // 상태 리셋
         isPlaying = false;
-        
+
         // 결과 패널 닫기
         if (gachaResultPanel != null)
         {
             gachaResultPanel.SetActive(false);
         }
-        
+
         // 카드들 정리
         ClearResultCards();
-        
+
         Debug.Log("[StoreWindow] Close 처리 완료, 다시 가챠 가능");
+    }
+
+    /// <summary>
+    /// 치트 버튼: 뽑기권 지급
+    /// </summary>
+    private async void OnClickCheat()
+    {
+        Debug.Log("[StoreWindow] 치트 버튼 클릭");
+
+        // 일반 뽑기권 (5102), 프리미엄 뽑기권 (5103) 지급
+        bool normalSuccess = await DatabaseManager.Instance.AddItemAsync(5102, cheatDiceAmount);
+        bool premiumSuccess = await DatabaseManager.Instance.AddItemAsync(5103, cheatDiceAmount);
+
+        if (normalSuccess && premiumSuccess)
+        {
+            // 캐시 동기화
+            PlayData.SyncItemsFromDatabase();
+            Debug.Log($"[StoreWindow] 치트: 일반 뽑기권 {cheatDiceAmount}개, 프리미엄 뽑기권 {cheatDiceAmount}개 지급 완료!");
+        }
+        else
+        {
+            Debug.LogError("[StoreWindow] 치트 아이템 지급 실패");
+        }
     }
 
     private void OnDestroy()

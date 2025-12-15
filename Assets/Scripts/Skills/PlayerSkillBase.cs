@@ -236,7 +236,8 @@ public abstract class PlayerSkillBase : MonoBehaviour
     {
         if (cachedEffectPrefab != null)
         {
-            GameObject effect = Instantiate(cachedEffectPrefab, position, Quaternion.identity);
+            GameObject effect = Instantiate(cachedEffectPrefab);
+            effect.transform.position = position;
             Destroy(effect, lifetime);
         }
         else
@@ -263,9 +264,9 @@ public abstract class PlayerSkillBase : MonoBehaviour
     /// <returns>피격된 적 수</returns>
     protected int DamageEnemiesInRange(Vector3 center, float range)
     {
-        if (MonsterSpawner.Instance == null) return 0;
+        if (!MonsterProviderRegistry.HasProvider) return 0;
 
-        var monsters = MonsterSpawner.Instance.GetActiveMonsters();
+        var monsters = MonsterProviderRegistry.GetActiveMonsters();
         int hitCount = 0;
 
         foreach (Enemy monster in monsters.ToArray())

@@ -148,21 +148,53 @@ public class Database
 
     public async UniTask<bool> IncrementValueAsync(string path, long amount)
     {
-        var transactionResult = await root.Child(path).RunTransaction(mutableData =>
+        try
         {
-            long currentValue = mutableData.Value != null ? Convert.ToInt64(mutableData.Value) : 0;
-            long newValue = currentValue + amount;
+            bool transactionAborted = false;
 
-            if (newValue < 0)
+            var transactionResult = await root.Child(path).RunTransaction(mutableData =>
             {
-                return TransactionResult.Abort();
+                long currentValue = mutableData.Value != null ? Convert.ToInt64(mutableData.Value) : 0;
+                long newValue = currentValue + amount;
+
+                // 차감인데 현재값이 null(0)이면 → 서버에서 실제 값을 가져오도록 Success 반환
+                // Firebase가 서버 값과 비교 후 불일치하면 자동으로 재시도함
+                if (mutableData.Value == null && amount < 0)
+                {
+                    // 값을 변경하지 않고 Success 반환 → Firebase가 서버 값으로 재시도
+                    return TransactionResult.Success(mutableData);
+                }
+
+                // 음수 결과 방지 (실제 값이 있는 상태에서 부족한 경우)
+                if (newValue < 0)
+                {
+                    Debug.LogWarning($"[Database] IncrementValue 실패 - 잔액 부족 ({path}): {currentValue} + {amount} = {newValue}");
+                    transactionAborted = true;
+                    // 값을 변경하지 않고 Success 반환 (Abort는 예외를 발생시킴)
+                    return TransactionResult.Success(mutableData);
+                }
+
+                mutableData.Value = newValue;
+                return TransactionResult.Success(mutableData);
+            }).AsUniTask();
+
+            // Transaction은 성공했지만 잔액 부족으로 중단된 경우
+            if (transactionAborted)
+            {
+                return false;
             }
 
-            mutableData.Value = newValue;
-            return TransactionResult.Success(mutableData);
-        }).AsUniTask();
-
-        return transactionResult != null;
+            return transactionResult != null;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[Database] IncrementValue 오류 ({path}): {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Debug.LogError($"[Database] InnerException: {ex.InnerException.Message}");
+            }
+            return false;
+        }
     }
 
     #endregion

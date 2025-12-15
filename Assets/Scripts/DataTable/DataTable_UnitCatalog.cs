@@ -9,10 +9,9 @@ public class DataTable_UnitCatalog : DataTable
     public class Data
     {
         public int Catalog_ID { get; set; }
-        public int Unit_ID { get; set; }
+        public int Type { get; set; }
+        public int TARGET_ID { get; set; }
         public float Probability { get; set; }
-        public float Weight { get; set; }
-        
     }
 
     private readonly Dictionary<int, List<Data>> dictionary = new Dictionary<int, List<Data>>();

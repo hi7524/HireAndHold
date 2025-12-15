@@ -122,7 +122,7 @@ public class Unit : MonoBehaviour
     {
         AttackTarget = FindNearestTarget();
 
-        if (AttackTarget != null && Time.time >= lastAttackTime + unitData.ATTACK_COOLTIME)
+        if (AttackTarget != null && Time.time >= lastAttackTime + attackCooltime.Value)
         {
             lastAttackTime = Time.time;
             Attack(AttackTarget);

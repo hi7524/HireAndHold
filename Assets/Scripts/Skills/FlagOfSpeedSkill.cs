@@ -27,7 +27,7 @@ public class FlagOfSpeedSkill : PlayerSkillBase, IUnitManagerInjectable
 
     public override void OnUse(Vector3 spawnPoint)
     {
-        // 이펙트 생성
+        // 아군 버프 스킬은 전달받은 spawnPoint에서 이펙트 생성
         SpawnEffect(spawnPoint, effectLifetime);
 
         // 모든 아군 유닛에게 버프 적용

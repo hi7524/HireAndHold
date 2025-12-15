@@ -608,8 +608,7 @@ public class Enemy : MonoBehaviour, IDamagable
         }
 
         ExpItemSpawned();
-
-        
+        TryDropItems();
 
         ClearVisualChildren();
         ReleaseVisualHandle();
@@ -649,6 +648,59 @@ public class Enemy : MonoBehaviour, IDamagable
         }
     }
 
+    /// <summary>
+    /// MonsterTable의 드롭 정보를 기반으로 아이템 드롭 시도
+    /// </summary>
+    private void TryDropItems()
+    {
+        if (poolManager == null)
+            return;
+
+        // MonsterTable에서 현재 몬스터 데이터 조회
+        MonsterData data = DataTableManager.MonsterTable.Get(MonsterId);
+        if (data == null)
+            return;
+
+        // 드롭 아이템 1 처리
+        if (data.DROP_ITEM1_ID > 0 && data.DROP_ITEM1_RATE > 0)
+        {
+            if (UnityEngine.Random.Range(0, 10000) < data.DROP_ITEM1_RATE)
+            {
+                SpawnDropItem(data.DROP_ITEM1_ID, data.DROP_ITEM1_COUNT);
+            }
+        }
+
+        // 드롭 아이템 2 처리
+        if (data.DROP_ITEM2_ID > 0 && data.DROP_ITEM2_RATE > 0)
+        {
+            if (UnityEngine.Random.Range(0, 10000) < data.DROP_ITEM2_RATE)
+            {
+                SpawnDropItem(data.DROP_ITEM2_ID, data.DROP_ITEM2_COUNT);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 드롭 아이템 스폰
+    /// </summary>
+    private void SpawnDropItem(int itemId, int count)
+    {
+        GameObject dropObj = poolManager.Get("DropItem");
+        if (dropObj == null)
+            return;
+
+        // 약간의 랜덤 오프셋 추가
+        Vector3 spawnPos = transform.position;
+        spawnPos.x += UnityEngine.Random.Range(-0.3f, 0.3f);
+        spawnPos.y += UnityEngine.Random.Range(-0.1f, 0.1f);
+        dropObj.transform.position = spawnPos;
+
+        DropItem dropItem = dropObj.GetComponent<DropItem>();
+        if (dropItem != null)
+        {
+            dropItem.Initialize(itemId, count, poolManager);
+        }
+    }
 
     public void SetStunned(bool stunned)
     {

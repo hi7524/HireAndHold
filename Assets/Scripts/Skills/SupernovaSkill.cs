@@ -9,18 +9,8 @@ public class SupernovaSkill : PlayerSkillBase
     {
         SpawnEffect(spawnPoint, effectLifetime);
 
-        if (MonsterSpawner.Instance == null) return;
-
-        var monsters = MonsterSpawner.Instance.GetActiveMonsters();
-        int hitCount = 0;
-
-        foreach (Enemy monster in monsters)
-        {
-            if (monster == null || !monster.gameObject.activeSelf) continue;
-
-            monster.TakeDamage(damage);
-            hitCount++;
-        }
+        // 전체 범위 공격 (Mathf.Infinity = 무한 범위)
+        int hitCount = DamageAndApplyEffectInRange(spawnPoint, Mathf.Infinity);
 
         Debug.Log($"[Supernova] 슈퍼노바 발동! 전체 {hitCount}마리 타격, 데미지: {damage}");
     }
