@@ -18,6 +18,8 @@ public class LevelUpRewardController : MonoBehaviour
     [SerializeField] private PlayerExperience playerExp;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
     [SerializeField] private DragManager dragManager;
+    [SerializeField] private GridManager gridManager;
+    [SerializeField] private BattleUnitManager battleUnitManager;
 
     private int rerollCost = 50;
 
@@ -217,11 +219,19 @@ public class LevelUpRewardController : MonoBehaviour
         SetActiveCards(unitCardUIs, false);
         uiManager.SetGameControllBtnsActive(false);
 
-        // 플레이어 레벨이 3의 배수일 때 스킬 뽑기
-        if (playerExp.Level % 3 == 0)
+        // 그리드가 꽉 차있고 모든 유닛이 2성 이상이면 무조건 스킬 뽑기
+        bool forceSkillDraw = ShouldForceSkillDraw();
+
+        // 플레이어 레벨이 3의 배수일 때 또는 강제 스킬 뽑기 조건일 때 스킬 뽑기
+        if (playerExp.Level % 3 == 0 || forceSkillDraw)
         {
             DrawPassiveSkills();
             SetActiveCards(skillCardUIs, true);
+
+            if (forceSkillDraw)
+            {
+                Debug.Log("[LevelUpRewardController] 그리드가 꽉 차고 모든 유닛이 2성 이상이므로 패시브 스킬을 강제로 뽑습니다.");
+            }
         }
         // 그 외에는 유닛 뽑기
         else
@@ -229,6 +239,17 @@ public class LevelUpRewardController : MonoBehaviour
             DrawUnitID();
             SetActiveCards(unitCardUIs, true);
         }
+    }
+
+    // 강제로 스킬 뽑기를 해야 하는지 확인
+    private bool ShouldForceSkillDraw()
+    {
+        // GridManager와 BattleUnitManager가 할당되지 않았으면 false
+        if (gridManager == null || battleUnitManager == null)
+            return false;
+
+        // 그리드가 꽉 차있고 모든 유닛이 2성 이상이면 true
+        return gridManager.IsGridFull() && battleUnitManager.AreAllUnitsAtLeastTwoStar();
     }
 
     // 스킬 카드가 즉시 획득되었을 때 호출
