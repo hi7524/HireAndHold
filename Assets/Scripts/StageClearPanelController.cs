@@ -24,6 +24,7 @@ public class StageClearPanelController : MonoBehaviour
     private int currentGold;
     private int currentExp;
     private float currentClearTime;
+    private System.Collections.Generic.Dictionary<int, int> currentItems;
     
     private void Awake()
     {
@@ -37,18 +38,19 @@ public class StageClearPanelController : MonoBehaviour
         }
     }
 
-    public void Show(string stageName, int expReward, int goldReward, int stars = 3)
+    public void Show(string stageName, int expReward, int goldReward, int stars = 3, System.Collections.Generic.Dictionary<int, int> items = null)
     {
          if (stageManager != null)
         {
             currentStageId = stageManager.CurrentStageId;
             currentClearTime = gameManager?.ElapsedTime ?? 0f;
         }
-        
+
         currentStars = stars;
         currentGold = goldReward;
         currentExp = expReward;
-        
+        currentItems = items != null ? new System.Collections.Generic.Dictionary<int, int>(items) : null;
+
         SetData(stageName, expReward, goldReward, stars);
         panelRoot.SetActive(true);
         gameManager?.PauseGame();
@@ -123,6 +125,9 @@ public class StageClearPanelController : MonoBehaviour
                     Debug.Log($"[StageClearPanel] 최고 스테이지 갱신: {currentUser.profile.highestStage}");
                 }
 
+                // 획득 아이템 저장
+                await SaveAccumulatedItemsAsync();
+
                 Debug.Log("[StageClearPanel] 클리어 데이터 저장 완료");
             }
         }
@@ -153,6 +158,36 @@ public class StageClearPanelController : MonoBehaviour
         }
     }
     
+    // 획득 아이템 DB 저장
+    private async UniTask SaveAccumulatedItemsAsync()
+    {
+        if (currentItems == null || currentItems.Count == 0)
+            return;
+
+        Debug.Log($"[StageClearPanel] 획득 아이템 DB 저장 시작 ({currentItems.Count}종)");
+
+        foreach (var item in currentItems)
+        {
+            int itemId = item.Key;
+            int count = item.Value;
+
+            bool success = await DatabaseManager.Instance.AddItemAsync(itemId, count);
+            if (success)
+            {
+                Debug.Log($"  - 아이템 저장 완료: {itemId} x{count}");
+            }
+            else
+            {
+                Debug.LogWarning($"  - 아이템 저장 실패: {itemId} x{count}");
+            }
+        }
+
+        // PlayData 동기화
+        PlayData.SyncItemsFromDatabase();
+
+        Debug.Log("[StageClearPanel] 획득 아이템 DB 저장 완료");
+    }
+
     public void Hide()
     {
         panelRoot?.SetActive(false);

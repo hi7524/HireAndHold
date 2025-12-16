@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -11,6 +12,9 @@ public class StageManager : MonoBehaviour
 
     private float accumulatedGold = 0f;
     private float accumulatedAccountExp = 0f;
+
+    // 스테이지 중 획득한 아이템 누적 (itemId -> count)
+    private Dictionary<int, int> accumulatedItems = new Dictionary<int, int>();
 
     public event Action<int> OnStageStart;
     public event Action<int> OnStageComplete;
@@ -48,6 +52,9 @@ public class StageManager : MonoBehaviour
         {
             monsterSpawner.OnMonsterDeath += OnMonsterKilled;
         }
+
+        // DropItem 이벤트 구독
+        DropItem.OnItemCollected += OnItemCollected;
     }
 
 
@@ -71,6 +78,7 @@ public class StageManager : MonoBehaviour
         RemainingMonsters = TotalMonsters;
         accumulatedGold = 0f;
         accumulatedAccountExp = 0f;
+        accumulatedItems.Clear();
         Debug.Log($"  - 총 적 수: {TotalMonsters}마리");
 
         OnMonsterCountChanged?.Invoke(RemainingMonsters);
@@ -157,6 +165,20 @@ public class StageManager : MonoBehaviour
         OnMonsterCountChanged?.Invoke(RemainingMonsters);
     }
 
+    // 아이템 획득 시 호출
+    private void OnItemCollected(DropItem dropItem)
+    {
+        int itemId = dropItem.ItemId;
+        int count = dropItem.ItemCount;
+
+        if (accumulatedItems.ContainsKey(itemId))
+            accumulatedItems[itemId] += count;
+        else
+            accumulatedItems[itemId] = count;
+
+        Debug.Log($"[StageManager] 아이템 획득: {dropItem.ItemData?.ITEM_NAME ?? itemId.ToString()} x{count}");
+    }
+
     public void CompleteStage()
     {
         int stars = CalculateStars();
@@ -197,17 +219,19 @@ public class StageManager : MonoBehaviour
         Debug.Log($"  - 몰스터 보상 골드: {(int)accumulatedGold}");
         Debug.Log($"  - 별 보상 골드: {starBonusGold}");
         Debug.Log($"  - 총 골드: {totalGold}");
+        Debug.Log($"  - 획득 아이템: {accumulatedItems.Count}종");
 
         OnStageComplete?.Invoke(CurrentStageId);
 
-        // 클리어 패널 표시
+        // 클리어 패널 표시 (아이템 정보 전달 - 로딩 씬에서 DB 저장)
         if (stageUiManager != null && CurrentStageData != null)
         {
             stageUiManager.ShowStageClearPanel(
                 CurrentStageData.StringName,
                 totalExp,
                 totalGold,
-                stars
+                stars,
+                accumulatedItems
             );
         }
     }
@@ -233,12 +257,15 @@ public class StageManager : MonoBehaviour
         int totalGold = (int)accumulatedGold;
         int totalExp = (int)accumulatedAccountExp;
 
+        Debug.Log($"[StageManager] 스테이지 {CurrentStageId} 실패");
+        Debug.Log($"  - 획득 골드: {totalGold}");
+        Debug.Log($"  - 획득 아이템: {accumulatedItems.Count}종");
 
         OnStageFailed?.Invoke(CurrentStageId);
 
         if (stageUiManager != null)
         {
-            stageUiManager.ShowGameOverPanel(totalExp, totalGold);
+            stageUiManager.ShowGameOverPanel(totalExp, totalGold, accumulatedItems);
         }
 
         gameManager.GameEnd();
@@ -266,5 +293,8 @@ public class StageManager : MonoBehaviour
         {
             monsterSpawner.OnMonsterDeath -= OnMonsterKilled;
         }
+
+        // DropItem 이벤트 해제
+        DropItem.OnItemCollected -= OnItemCollected;
     }
 }

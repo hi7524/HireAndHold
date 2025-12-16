@@ -14,7 +14,10 @@ public class DropItem : MonoBehaviour
     private int itemCount;
     private ItemData itemData;
     private ObjectPoolManager poolManager;
+    private ExperienceCollector expCollector;
     private bool isCollected = false;
+    private bool isMoving = false;
+    private Vector3 targetPos;
 
     public int ItemId => itemId;
     public int ItemCount => itemCount;
@@ -25,15 +28,24 @@ public class DropItem : MonoBehaviour
     /// <summary>
     /// 풀에서 가져올 때 호출 (Enemy.TryDropItems에서 사용)
     /// </summary>
-    public void Initialize(int itemId, int count, ObjectPoolManager manager)
+    public void Initialize(int itemId, int count, ObjectPoolManager manager, ExperienceCollector collector)
     {
         this.itemId = itemId;
         this.itemCount = count;
         this.poolManager = manager;
         this.isCollected = false;
+        this.isMoving = false;
 
         // DOTween 정리
         transform.DOKill();
+
+        // ExperienceCollector 이벤트 구독 (Experience와 동일한 패턴)
+        if (expCollector != null)
+            expCollector.OnCollectTriggered -= MoveToTarget;
+
+        expCollector = collector;
+        if (expCollector != null)
+            expCollector.OnCollectTriggered += MoveToTarget;
 
         // ItemTable에서 아이템 데이터 조회
         itemData = DataTableManager.ItemTable.Get(itemId);
@@ -50,6 +62,10 @@ public class DropItem : MonoBehaviour
 
     private void LoadItemIcon(string iconKey)
     {
+        // spriteRenderer가 할당되지 않았으면 자동으로 가져오기
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+
         if (spriteRenderer == null || string.IsNullOrEmpty(iconKey))
             return;
 
@@ -81,6 +97,26 @@ public class DropItem : MonoBehaviour
             });
     }
 
+    private void MoveToTarget(Vector3 target)
+    {
+        if (isMoving || isCollected)
+            return;
+
+        targetPos = target;
+
+        transform.DOLocalMoveY(0.5f, 0.2f)
+            .SetRelative(true)
+            .SetEase(Ease.OutQuad)
+            .SetUpdate(false)
+            .OnComplete(() =>
+            {
+                isMoving = true;
+                transform.DOMove(targetPos, moveTime)
+                    .SetEase(Ease.InOutQuad)
+                    .SetUpdate(false);
+            });
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         // Wall 또는 Player 태그와 충돌 시 아이템 획득
@@ -103,8 +139,6 @@ public class DropItem : MonoBehaviour
         // 아이템 획득 이벤트 발생 (인벤토리 시스템에서 구독)
         OnItemCollected?.Invoke(this);
 
-        Debug.Log($"[DropItem] 아이템 획득: {itemData?.ITEM_NAME ?? "Unknown"} x{itemCount}");
-
         ReturnToPool();
     }
 
@@ -112,6 +146,10 @@ public class DropItem : MonoBehaviour
     {
         // DOTween 정리
         transform.DOKill();
+
+        // 이벤트 해제
+        if (expCollector != null)
+            expCollector.OnCollectTriggered -= MoveToTarget;
 
         if (poolManager != null)
             poolManager.Release("DropItem", gameObject);
@@ -122,5 +160,7 @@ public class DropItem : MonoBehaviour
     private void OnDisable()
     {
         transform.DOKill();
+        if (expCollector != null)
+            expCollector.OnCollectTriggered -= MoveToTarget;
     }
 }

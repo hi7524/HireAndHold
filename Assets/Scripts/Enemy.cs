@@ -661,19 +661,19 @@ public class Enemy : MonoBehaviour, IDamagable
         if (data == null)
             return;
 
-        // 드롭 아이템 1 처리
+        // 드롭 아이템 1 처리 (RATE 값이 1이면 1% 확률)
         if (data.DROP_ITEM1_ID > 0 && data.DROP_ITEM1_RATE > 0)
         {
-            if (UnityEngine.Random.Range(0, 10000) < data.DROP_ITEM1_RATE)
+            if (UnityEngine.Random.Range(0, 100) < data.DROP_ITEM1_RATE)
             {
                 SpawnDropItem(data.DROP_ITEM1_ID, data.DROP_ITEM1_COUNT);
             }
         }
 
-        // 드롭 아이템 2 처리
+        // 드롭 아이템 2 처리 (RATE 값이 1이면 1% 확률)
         if (data.DROP_ITEM2_ID > 0 && data.DROP_ITEM2_RATE > 0)
         {
-            if (UnityEngine.Random.Range(0, 10000) < data.DROP_ITEM2_RATE)
+            if (UnityEngine.Random.Range(0, 100) < data.DROP_ITEM2_RATE)
             {
                 SpawnDropItem(data.DROP_ITEM2_ID, data.DROP_ITEM2_COUNT);
             }
@@ -698,7 +698,7 @@ public class Enemy : MonoBehaviour, IDamagable
         DropItem dropItem = dropObj.GetComponent<DropItem>();
         if (dropItem != null)
         {
-            dropItem.Initialize(itemId, count, poolManager);
+            dropItem.Initialize(itemId, count, poolManager, cachedExpCollector);
         }
     }
 
