@@ -23,6 +23,7 @@ public class GameOverPanelController : MonoBehaviour
     private int currentGold;
     private int currentExp;
     private float currentPlayTime;
+    private System.Collections.Generic.Dictionary<int, int> currentItems;
     
     private void Awake()
     {
@@ -37,7 +38,7 @@ public class GameOverPanelController : MonoBehaviour
         }
     }
 
-    public void Show(int expReward, int goldReward)
+    public void Show(int expReward, int goldReward, System.Collections.Generic.Dictionary<int, int> items = null)
     {
         if (stageManager != null)
         {
@@ -47,6 +48,8 @@ public class GameOverPanelController : MonoBehaviour
 
         currentGold = goldReward;
         currentExp = expReward;
+        currentItems = items != null ? new System.Collections.Generic.Dictionary<int, int>(items) : null;
+
         SetData(expReward, goldReward);
         panelRoot.SetActive(true);
         gameManager?.PauseGame();
@@ -122,16 +125,49 @@ public class GameOverPanelController : MonoBehaviour
             {
                 await DatabaseManager.Instance.AddGoldAsync(gold);
             }
-            
+
+            // 획득 아이템 저장
+            await SaveAccumulatedItemsAsync();
+
             Debug.Log($"[GameOverPanel] 실패 데이터 저장 완료 (플레이 횟수: {progress.playCount}, 골드: +{gold})");
         }
     }
     
+    // 획득 아이템 DB 저장
+    private async UniTask SaveAccumulatedItemsAsync()
+    {
+        if (currentItems == null || currentItems.Count == 0)
+            return;
+
+        Debug.Log($"[GameOverPanel] 획득 아이템 DB 저장 시작 ({currentItems.Count}종)");
+
+        foreach (var item in currentItems)
+        {
+            int itemId = item.Key;
+            int count = item.Value;
+
+            bool success = await DatabaseManager.Instance.AddItemAsync(itemId, count);
+            if (success)
+            {
+                Debug.Log($"  - 아이템 저장 완료: {itemId} x{count}");
+            }
+            else
+            {
+                Debug.LogWarning($"  - 아이템 저장 실패: {itemId} x{count}");
+            }
+        }
+
+        // PlayData 동기화
+        PlayData.SyncItemsFromDatabase();
+
+        Debug.Log("[GameOverPanel] 획득 아이템 DB 저장 완료");
+    }
+
     public void Hide()
     {
         panelRoot?.SetActive(false);
     }
-    
+
     private void OnDestroy()
     {
         if (retryButton != null)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -64,11 +65,11 @@ public class StageUiManager : MonoBehaviour
         gameOverPanel.SetActive(true);
     }
     
-    public void ShowGameOverPanel(int exp, int gold)
+    public void ShowGameOverPanel(int exp, int gold, Dictionary<int, int> items = null)
     {
         if (gameOverPanelController != null)
         {
-            gameOverPanelController.Show(exp, gold);
+            gameOverPanelController.Show(exp, gold, items);
         }
         else
         {
@@ -142,9 +143,9 @@ public class StageUiManager : MonoBehaviour
         }
     }
 
-    public void ShowStageClearPanel(string stageName, int exp, int gold, int stars)
+    public void ShowStageClearPanel(string stageName, int exp, int gold, int stars, Dictionary<int, int> items = null)
     {
-        stageClearPanel?.Show(stageName, exp, gold, stars);
+        stageClearPanel?.Show(stageName, exp, gold, stars, items);
     }
 
     public void UpdateInfoText(string msg, Color? color = null)

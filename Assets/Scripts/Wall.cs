@@ -16,6 +16,12 @@ public class Wall : MonoBehaviour, IDamagable
     public float CurrentHp => currentHp;
     public float MaxHp => maxHp;
     private bool isDead = false;
+    private bool hasEverTakenDamage = false;
+
+    /// <summary>
+    /// 방벽이 한 번이라도 피해를 받았는지 여부
+    /// </summary>
+    public bool HasEverTakenDamage => hasEverTakenDamage;
 
     private float regenTimer = 0f;
     private const float REGEN_INTERVAL = 1f; // 1초마다 회복
@@ -77,6 +83,7 @@ public class Wall : MonoBehaviour, IDamagable
     {
         if (isDead) return;
 
+        hasEverTakenDamage = true;
         currentHp -= damage;
         hpSlider.value = currentHp / maxHp;
 

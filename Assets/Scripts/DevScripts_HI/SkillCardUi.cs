@@ -7,17 +7,29 @@ using System;
 
 public class SkillCardUi : BaseCardUi
 {
+    public enum CardMode
+    {
+        PassiveSkill,   // 패시브 스킬 모드
+        PlayerSkill,    // 플레이어 스킬 모드
+        Gold            // 골드 보상 모드
+    }
+
     [SerializeField] private Image skillIcon;  // 스킬 아이콘 이미지
     [SerializeField] private Image[] starIcons;
     [SerializeField] private GameObject focusImg;
+    [SerializeField] private GameObject starsRoot;  // 별 아이콘들의 부모 (숨기기 위해)
     [Space]
     [SerializeField] private Color defaultColor;
     [SerializeField] private Color filledColor;
+    [Header("Gold Card")]
+    [SerializeField] private Sprite goldIconSprite;  // 골드 아이콘 스프라이트
 
     private LevelUpRewardController levelUpRewardController;
     private PassiveSkillManager passiveSkillManager;
     private int currentSkillId = -1;
     private bool isSelected = false;
+    private CardMode currentMode = CardMode.PassiveSkill;
+    private int goldAmount = 0;
 
     private AsyncOperationHandle<Sprite> iconHandle;
 
@@ -32,19 +44,88 @@ public class SkillCardUi : BaseCardUi
     }
 
     public bool IsSelected => isSelected;
+    public CardMode CurrentMode => currentMode;
 
-    public void SetPassiveSkillId(int skillId)
+    /// <summary>
+    /// 패시브 스킬 카드로 설정
+    /// </summary>
+    public void SetAsPassiveSkillCard(int skillId)
     {
+        currentMode = CardMode.PassiveSkill;
         currentSkillId = skillId;
+        goldAmount = 0;
+        ShowStars(true);
         UpdateSkillUI();
         SetFocus(false);
     }
 
-    public void SetPlayerSkillId(int skillId)
+    /// <summary>
+    /// 기존 메서드 호환성 유지 (SetPassiveSkillId -> SetAsPassiveSkillCard)
+    /// </summary>
+    public void SetPassiveSkillId(int skillId)
     {
+        SetAsPassiveSkillCard(skillId);
+    }
+
+    /// <summary>
+    /// 플레이어 스킬 카드로 설정
+    /// </summary>
+    public void SetAsPlayerSkillCard(int skillId)
+    {
+        currentMode = CardMode.PlayerSkill;
         currentSkillId = skillId;
+        goldAmount = 0;
+        ShowStars(false);
         UpdatePlayerSkillUI();
         SetFocus(false);
+    }
+
+    /// <summary>
+    /// 기존 메서드 호환성 유지 (SetPlayerSkillId -> SetAsPlayerSkillCard)
+    /// </summary>
+    public void SetPlayerSkillId(int skillId)
+    {
+        SetAsPlayerSkillCard(skillId);
+    }
+
+    /// <summary>
+    /// 골드 카드로 설정
+    /// </summary>
+    public void SetAsGoldCard(int amount)
+    {
+        currentMode = CardMode.Gold;
+        currentSkillId = -1;
+        goldAmount = amount;
+        ShowStars(false);
+        UpdateGoldCardUI();
+        SetFocus(false);
+    }
+
+    private void UpdateGoldCardUI()
+    {
+        // 아이콘을 골드 이미지로 변경
+        if (skillIcon != null && goldIconSprite != null)
+            skillIcon.sprite = goldIconSprite;
+
+        // 텍스트를 골드 금액으로 표시
+        if (text != null)
+            text.text = $"{goldAmount}G";
+    }
+
+    private void ShowStars(bool show)
+    {
+        if (starsRoot != null)
+        {
+            starsRoot.SetActive(show);
+        }
+        else if (starIcons != null)
+        {
+            foreach (var star in starIcons)
+            {
+                if (star != null)
+                    star.gameObject.SetActive(show);
+            }
+        }
     }
 
     private void UpdatePlayerSkillUI()
@@ -94,7 +175,7 @@ public class SkillCardUi : BaseCardUi
     // 카드 클릭 시 선택
     public void OnCardClicked()
     {
-        // LevelUpRewardController가 있으면 바로 스킬 적용
+        // LevelUpRewardController가 있는 경우
         if (levelUpRewardController != null)
         {
             // 이미 선택 중이면 무시
@@ -105,7 +186,14 @@ public class SkillCardUi : BaseCardUi
             SetFocus(true);
             isSelected = true;
 
-            // 스킬 적용
+            // 골드 카드 모드일 때
+            if (currentMode == CardMode.Gold)
+            {
+                levelUpRewardController.OnGoldCardAcquired(this, goldAmount);
+                return;
+            }
+
+            // 스킬 카드 모드일 때
             bool success = ApplySkill();
             if (success)
             {

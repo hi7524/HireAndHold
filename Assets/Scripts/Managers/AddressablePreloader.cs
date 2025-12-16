@@ -132,6 +132,18 @@ public class AddressablePreloader : MonoBehaviour
             }
         }
 
+        // 3-1. 아이템 아이콘 키 수집
+        var itemTable = DataTableManager.ItemTable.GetAll();
+        foreach (var item in itemTable)
+        {
+            if (!string.IsNullOrEmpty(item.ITEM_ICON) &&
+                !spriteKeys.Contains(item.ITEM_ICON) &&
+                IsValidAddressableKey(item.ITEM_ICON))
+            {
+                spriteKeys.Add(item.ITEM_ICON);
+            }
+        }
+
         // 4. 스테이지 맵 키 수집
         var stageTable = DataTableManager.StageTable.GetAll();
         foreach (var stage in stageTable)
