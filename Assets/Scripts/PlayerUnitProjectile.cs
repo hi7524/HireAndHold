@@ -34,10 +34,8 @@ public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
         target = data.target;
         transform.position = data.spawnPosition;
 
-        if (target != null)
-            direction = (target.position - transform.position).normalized;
-        else
-            direction = transform.up;
+        direction = data.customDirection.normalized;
+        target = null;
     }
 
     // 레거시 호환용
@@ -95,12 +93,8 @@ public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
         if (hitEffect != null)
             hitEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
-        if (target != null)
-        {
-            direction = (target.transform.position - transform.position).normalized;
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.Euler(0, 0, angle + rotationOffset);
-        }
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle + rotationOffset);
     }
 
     private void FixedUpdate()

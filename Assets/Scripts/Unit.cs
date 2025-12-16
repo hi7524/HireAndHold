@@ -5,6 +5,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Assets.HeroEditor.Common.Scripts.CharacterScripts;
+using System.Linq;
 
 /// <summary>
 // 플레이어 유닛을 관리하는 클래스
@@ -566,10 +567,26 @@ public class Unit : MonoBehaviour
     {
         if (poolManager == null || AttackTarget == null) return;
 
+        // 보너스 투사체 개수 확인
+        int bonusProjectile = GetHeroProjectileBonus();
+        int totalProjectiles = 1 + bonusProjectile;
+
+        if (totalProjectiles == 1)
+        {
+            FireSingleProjectile();
+        }
+        else
+        {
+            FireMultipleProjectiles(totalProjectiles);
+        }
+    }
+
+    private void FireSingleProjectile()
+    {
         GameObject projectileObj = poolManager.Get(unitData.PROJECTILE);
         if (projectileObj == null)
         {
-            projectileObj = poolManager.Get("TestProjectile"); // 테스트용
+            projectileObj = poolManager.Get("TestProjectile");
         }
 
         projectileObj.transform.position = transform.position;
@@ -603,6 +620,73 @@ public class Unit : MonoBehaviour
         projectile.SetHitAudioClip(unitData.HIT_AUDIO_CLIP);
         projectile.Launch();
     }
+
+    // 여러개의 투사체 발사 
+    private void FireMultipleProjectiles(int projectileCount)
+    {
+        if (attackTriggerZone == null) return;
+
+        var targets = attackTriggerZone.GetEnemiesInZone().Where(e => e != null && !e.IsDead)
+            .OrderBy(e => Vector3.Distance(transform.position, e.transform.position))
+            .Take(projectileCount)
+            .ToList();
+
+        if (targets.Count == 0) return;
+
+        // 공통 데미지 계산
+        float damage = attackDamage.Value;
+        bool isCritical = Random.value < (criticalRate.Value / PercentToDivider);
+
+        if (isCritical)
+        {
+            damage *= criticalDamage.Value;
+        }
+
+        damage *= heroAttackMultiplier;
+        float finalDamage = Mathf.Round(damage * 10f) / 10f;
+
+        foreach (var target in targets)
+        {
+            FireProjectileStraight(target, finalDamage, isCritical);
+        }
+    }
+
+    private void FireProjectileStraight(Enemy target,float damage,bool isCritical)
+    {
+        GameObject projectileObj = poolManager.Get(unitData.PROJECTILE);
+        if (projectileObj == null)
+        {
+            projectileObj = poolManager.Get("TestProjectile");
+        }
+
+        if (projectileObj == null)
+        {
+            return;
+        }
+
+        projectileObj.transform.position = transform.position;
+
+        Vector3 dir = (target.transform.position - transform.position).normalized;
+
+        var skillProjectile = projectileObj.GetComponent<ISkillProjectile>();
+        if (skillProjectile != null)
+        {
+            var data = new SkillProjectileData
+            {
+                poolManager = poolManager,
+                poolKey = projectileKey,
+                damage = damage,
+                isCritical = isCritical,
+                target = target.transform,
+                spawnPosition = transform.position,
+                customDirection = dir
+            };
+
+            skillProjectile.Initialize(ref data);
+            skillProjectile.Launch();
+        }
+    }
+  
 
     // 대상에게 가할 최종 데미지를 계산
     private float CalculateDamage(Enemy target)
