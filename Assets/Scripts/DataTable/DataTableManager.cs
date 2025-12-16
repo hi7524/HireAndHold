@@ -55,7 +55,10 @@ public static class DataTableManager
             LoadTableAsync<DataTable_HeroEnforceEffect>(DataTableIds.HeroEnforceEffect),
             LoadTableAsync<DataTable_UnitGacha>(DataTableIds.UnitGacha),
 
-            // LoadTableAsync<DataTable_Character>(DataTableIds.Character),
+            // 던전
+            LoadTableAsync<DataTable_Ore>(DataTableIds.Ore),
+            LoadTableAsync<DataTable_OreDungeon>(DataTableIds.OreDungeon),
+            LoadTableAsync<DataTable_DungeonSetting>(DataTableIds.DungeonSetting),
         };
 
         await UniTask.WhenAll(loadTasks);
@@ -88,9 +91,11 @@ public static class DataTableManager
     public static DataTable_Selling SellingTable => Get<DataTable_Selling>(DataTableIds.Selling);
     public static DataTable_StageLevel StageLevelTable => Get<DataTable_StageLevel>(DataTableIds.StageLevel);
     public static DataTable_HeroEnforce heroEnforceTable => Get<DataTable_HeroEnforce>(DataTableIds.HeroEnforce);
-
     public static DataTable_HeroEnforceEffect heroEnforceEffectTable => Get<DataTable_HeroEnforceEffect>(DataTableIds.HeroEnforceEffect);
     public static DataTable_UnitGacha UnitGachaTable => Get<DataTable_UnitGacha>(DataTableIds.UnitGacha);
+    public static DataTable_Ore OreTable => Get<DataTable_Ore>(DataTableIds.Ore);
+    public static DataTable_OreDungeon OreDungeonTable => Get<DataTable_OreDungeon>(DataTableIds.OreDungeon);
+    public static DataTable_DungeonSetting DungeonSettingTable => Get<DataTable_DungeonSetting>(DataTableIds.DungeonSetting);
 
     public static T Get<T>(string id) where T : DataTable
     {
