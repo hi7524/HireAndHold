@@ -4,7 +4,9 @@ using System.Collections.Generic;
 public class PassiveSkillManager : MonoBehaviour
 {
     public event System.Action OnPassiveSkillChanged;
-    
+
+    [SerializeField] private Wall wall;
+
     private Dictionary<PassiveSkillType, PassiveSkillGroup> skillGroups = new Dictionary<PassiveSkillType, PassiveSkillGroup>();
     private PassiveSkillEffects currentEffects = new PassiveSkillEffects();
     
@@ -107,37 +109,87 @@ public class PassiveSkillManager : MonoBehaviour
     {
         List<int> skillIds = new List<int>();
         List<PassiveSkillGroup> availableGroups = new List<PassiveSkillGroup>();
-        
-        
+        PassiveSkillGroup shieldRegenGroup = null;
+
+        bool shouldIncludeShieldRegen = ShouldIncludeShieldRegen();
+
         foreach (PassiveSkillGroup group in skillGroups.Values)
         {
-            if (group.currentStar < 3)
+            if (group.currentStar >= 3)
+                continue;
+
+            // ShieldRegen은 별도로 저장 (우선순위 처리용)
+            if (group.skillType == PassiveSkillType.ShieldRegen)
             {
-                availableGroups.Add(group);
+                if (shouldIncludeShieldRegen)
+                    shieldRegenGroup = group;
+                continue;
             }
+
+            availableGroups.Add(group);
         }
-        
-        if (availableGroups.Count == 0)
+
+        if (availableGroups.Count == 0 && shieldRegenGroup == null)
         {
             Debug.LogWarning("[PassiveSkillManager] 획득 가능한 패시브 스킬이 없습니다.");
             return skillIds;
         }
-        
-        for (int i = 0; i < count && availableGroups.Count > 0; i++)
+
+        // 일반 스킬 랜덤 선택 (ShieldRegen 슬롯 확보)
+        int normalSkillCount = shieldRegenGroup != null ? count - 1 : count;
+
+        for (int i = 0; i < normalSkillCount && availableGroups.Count > 0; i++)
         {
             int randomIndex = UnityEngine.Random.Range(0, availableGroups.Count);
             PassiveSkillGroup selected = availableGroups[randomIndex];
-            
-            int skillId = selected.currentStar == 0 
-                ? selected.GetSkillIdByStar(1) 
+
+            int skillId = selected.currentStar == 0
+                ? selected.GetSkillIdByStar(1)
                 : selected.GetNextSkillId();
-            
+
             skillIds.Add(skillId);
-            
+
             availableGroups.RemoveAt(randomIndex);
         }
-        
+
+        // ShieldRegen을 마지막에 추가 (골드 카드보다 우선)
+        if (shieldRegenGroup != null && skillIds.Count < count)
+        {
+            int shieldSkillId = shieldRegenGroup.currentStar == 0
+                ? shieldRegenGroup.GetSkillIdByStar(1)
+                : shieldRegenGroup.GetNextSkillId();
+
+            skillIds.Add(shieldSkillId);
+        }
+
         return skillIds;
+    }
+
+    /// <summary>
+    /// ShieldRegen 스킬이 선택지에 포함되어야 하는지 확인
+    /// 조건: 1) 이미 배운 경우, 2) 방벽이 피해를 받은 적 있는 경우, 3) 다른 5종류가 모두 MAX인 경우
+    /// </summary>
+    private bool ShouldIncludeShieldRegen()
+    {
+        // 조건 1: ShieldRegen을 이미 배운 경우
+        if (skillGroups[PassiveSkillType.ShieldRegen].currentStar > 0)
+            return true;
+
+        // 조건 2: 방벽이 피해를 받은 적 있는 경우
+        if (wall != null && wall.HasEverTakenDamage)
+            return true;
+
+        // 조건 3: ShieldRegen 제외 다른 5종류가 모두 MAX(3성)인 경우
+        int maxedCount = 0;
+        foreach (var group in skillGroups.Values)
+        {
+            if (group.skillType != PassiveSkillType.ShieldRegen && group.currentStar >= 3)
+                maxedCount++;
+        }
+        if (maxedCount >= 5)
+            return true;
+
+        return false;
     }
     
     private void RecalculateEffects()

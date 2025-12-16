@@ -20,6 +20,7 @@ public class LevelUpRewardController : MonoBehaviour
     [SerializeField] private DragManager dragManager;
     [SerializeField] private GridManager gridManager;
     [SerializeField] private BattleUnitManager battleUnitManager;
+    [SerializeField] private StageManager stageManager;
 
     private int rerollCost = 50;
 
@@ -39,7 +40,7 @@ public class LevelUpRewardController : MonoBehaviour
     public Dictionary<int, Sprite> SpriteCache => spriteCache; // 테스트용**
 
     private bool isSelectedReward = false;
-    private int defaultGoldReward = 25;
+    private int defaultGoldReward = 50;
     private bool isSkillCardSelecting = false; // 스킬 카드 선택 중 플래그
 
     // 애니메이션 상수
@@ -318,6 +319,69 @@ public class LevelUpRewardController : MonoBehaviour
             confirmBtn.interactable = true;
     }
 
+    // 골드 카드가 선택되었을 때 호출
+    public void OnGoldCardAcquired(SkillCardUi selectedCard, int goldAmount)
+    {
+        // 이미 선택 중이면 무시
+        if (isSkillCardSelecting)
+            return;
+
+        // 선택 중 플래그 설정
+        isSkillCardSelecting = true;
+
+        // 골드 지급 (스테이지 클리어 골드로 누적)
+        if (stageManager != null)
+            stageManager.AddBonusGold(goldAmount);
+        uiManager.UpdateInfoText($"{goldAmount}G 획득!");
+
+        // Layout Group 비활성화 (위치 고정)
+        if (layoutGroup != null)
+            layoutGroup.enabled = false;
+
+        // 선택된 카드를 제외하고 나머지만 역순으로 작아지면서 비활성화
+        for (int i = 0; i < skillCardUIs.Length; i++)
+        {
+            var card = skillCardUIs[i];
+
+            // 선택된 카드는 특별한 애니메이션 적용
+            if (card == selectedCard)
+            {
+                card.transform.DOKill();
+
+                Vector3 originalPos = card.transform.localPosition;
+
+                Sequence selectedSequence = DOTween.Sequence();
+                selectedSequence.SetUpdate(true);
+
+                selectedSequence.Append(card.transform.DOLocalMoveY(originalPos.y + SelectedCardMoveY, CardAnimDuration).SetEase(Ease.OutQuad));
+                selectedSequence.Join(card.transform.DOScale(SelectedCardScale, CardAnimDuration).SetEase(Ease.OutQuad));
+
+                selectedSequence.AppendInterval(SelectedCardWaitTime);
+
+                selectedSequence.Append(card.transform.DOScale(0f, CardAnimDuration).SetEase(Ease.InBack));
+
+                selectedSequence.OnComplete(() => card.gameObject.SetActive(false));
+
+                continue;
+            }
+
+            int reverseIndex = skillCardUIs.Length - 1 - i;
+
+            card.transform.DOKill();
+
+            card.transform.DOScale(Vector3.zero, CardAnimDuration)
+                .SetDelay(reverseIndex * CardAnimDelayInterval)
+                .SetEase(Ease.InBack)
+                .SetUpdate(true)
+                .OnComplete(() => card.gameObject.SetActive(false));
+        }
+
+        isSelectedReward = true;
+
+        if (confirmBtn != null)
+            confirmBtn.interactable = true;
+    }
+
     // 스킬 카드 선택 가능 여부 확인
     public bool CanSelectSkillCard()
     {
@@ -327,7 +391,7 @@ public class LevelUpRewardController : MonoBehaviour
     // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
-        // 보상을 선택하지 않은채로 확인 버튼을 누를 경우 25G 지급
+        // 보상을 선택하지 않은채로 확인 버튼을 누를 경우 25G 지급 (인게임 골드)
         if (!isSelectedReward)
         {
             playerStageGold.AddGold(defaultGoldReward);
@@ -449,13 +513,14 @@ public class LevelUpRewardController : MonoBehaviour
             if (i < randomSkillIds.Count)
             {
                 // 스킬 ID가 있으면 설정하고 활성화
-                skillCardUIs[i].SetPassiveSkillId(randomSkillIds[i]);
+                skillCardUIs[i].SetAsPassiveSkillCard(randomSkillIds[i]);
                 skillCardUIs[i].gameObject.SetActive(true);
             }
             else
             {
-                // 스킬이 부족하면 돈을 주거나
-                Debug.LogWarning($"[LevelUpRewardController] {i + 1}번째 스킬 카드를 표시할 수 없습니다.");
+                // 스킬이 부족하면 골드 카드로 대체
+                skillCardUIs[i].SetAsGoldCard(defaultGoldReward);
+                skillCardUIs[i].gameObject.SetActive(true);
             }
         }
     }

@@ -31,8 +31,13 @@ public class RewardPanelController : MonoBehaviour
     [SerializeField] private Button confirmButton;
     [SerializeField] private GameManager gameManager;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
-    
+    [SerializeField] private StageManager stageManager;
+
+    [Header("골드 보상")]
+    [SerializeField] private int defaultGoldReward = 50;
+
     private List<int> currentRewardSkillIds = new List<int>();
+    private List<int> goldRewardSlotIndices = new List<int>();  // 골드 카드로 대체된 슬롯 인덱스
     private bool isBoxOpened = false;
     private RewardType currentRewardType;
     
@@ -71,26 +76,33 @@ public class RewardPanelController : MonoBehaviour
     {
         currentRewardType = RewardType.Warning;
         currentRewardSkillIds.Clear();
-        
+        goldRewardSlotIndices.Clear();
+
         if (passiveSkillManager == null)
         {
             return;
         }
-        
+
         List<int> randomSkills = passiveSkillManager.GetRandomPassiveSkillsForReward(1);
-        
+
+        warningRewardSection.SetActive(true);
+        bossRewardSection.SetActive(false);
+
         if (randomSkills.Count > 0)
         {
             currentRewardSkillIds = randomSkills;
             int skillId = randomSkills[0];
-            
-            warningRewardSection.SetActive(true);
-            bossRewardSection.SetActive(false);
-            
+
             // SkillCardUi에 스킬 ID 설정
-            warningRewardSlot.SetPassiveSkillId(skillId);
+            warningRewardSlot.SetAsPassiveSkillCard(skillId);
         }
-        
+        else
+        {
+            // 스킬이 없으면 골드 카드로 대체
+            warningRewardSlot.SetAsGoldCard(defaultGoldReward);
+            goldRewardSlotIndices.Add(0);
+        }
+
         ShowBox();
     }
 
@@ -99,32 +111,35 @@ public class RewardPanelController : MonoBehaviour
     {
         currentRewardType = RewardType.Boss;
         currentRewardSkillIds.Clear();
-        
+        goldRewardSlotIndices.Clear();
+
         if (passiveSkillManager == null)
         {
             return;
         }
-          
+
         warningRewardSection.SetActive(false);
         bossRewardSection.SetActive(true);
-        
 
         List<int> selectedPassiveIds = passiveSkillManager.GetRandomPassiveSkillsForReward(3);
         currentRewardSkillIds = selectedPassiveIds;
-        
+
         for (int i = 0; i < passiveRewardSlots.Length; i++)
         {
             if (i < selectedPassiveIds.Count)
             {
-                passiveRewardSlots[i].SetPassiveSkillId(selectedPassiveIds[i]);
+                passiveRewardSlots[i].SetAsPassiveSkillCard(selectedPassiveIds[i]);
                 passiveRewardSlots[i].gameObject.SetActive(true);
             }
             else
             {
-                passiveRewardSlots[i].gameObject.SetActive(false);
+                // 스킬이 부족하면 골드 카드로 대체
+                passiveRewardSlots[i].SetAsGoldCard(defaultGoldReward);
+                passiveRewardSlots[i].gameObject.SetActive(true);
+                goldRewardSlotIndices.Add(i);
             }
         }
-        
+
         ShowBox();
     }
 
@@ -194,13 +209,20 @@ public class RewardPanelController : MonoBehaviour
         {
             passiveSkillManager.AddOrUpgradePassiveSkill(skillId);
         }
-        
-        
+
+        // 골드 카드 보상 지급 (스테이지 클리어 골드로 누적)
+        if (goldRewardSlotIndices.Count > 0 && stageManager != null)
+        {
+            int totalGold = goldRewardSlotIndices.Count * defaultGoldReward;
+            stageManager.AddBonusGold(totalGold);
+            Debug.Log($"[RewardPanelController] 골드 보상 지급 (스테이지 골드): {totalGold}G ({goldRewardSlotIndices.Count}개 슬롯)");
+        }
+
         // 보스 보상이면 SkillSelectUi 열기
         if (currentRewardType == RewardType.Boss)
         {
             rewardDisplayPanel.SetActive(false);
-            
+
             if (skillSelectUi != null)
             {
                 skillSelectUi.Show();

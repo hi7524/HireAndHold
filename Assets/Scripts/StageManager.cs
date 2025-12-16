@@ -165,6 +165,17 @@ public class StageManager : MonoBehaviour
         OnMonsterCountChanged?.Invoke(RemainingMonsters);
     }
 
+    /// <summary>
+    /// 보너스 골드 추가 (패시브 스킬 골드 카드 등)
+    /// 스테이지 클리어 시 총 골드에 포함됨
+    /// </summary>
+    public void AddBonusGold(int amount)
+    {
+        if (amount <= 0) return;
+        accumulatedGold += amount;
+        Debug.Log($"[StageManager] 보너스 골드 추가: +{amount}G (누적: {accumulatedGold}G)");
+    }
+
     // 아이템 획득 시 호출
     private void OnItemCollected(DropItem dropItem)
     {
