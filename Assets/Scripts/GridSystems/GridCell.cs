@@ -124,8 +124,6 @@ public class GridCell : MonoBehaviour, IDroppable
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
         {
-            // GridUnit의 경우 항상 canDrop = true로 설정
-            // 실제 배치 가능 여부는 GridUnit.OnDrag()와 OnDrop()에서 처리
             canDrop = true;
             return;
         }
@@ -141,6 +139,8 @@ public class GridCell : MonoBehaviour, IDroppable
                 if (existingUnit != null && CanMergeWithUi(existingUnit, draggableUnitUi))
                 {
                     canDrop = true;
+                    // 머지 가능 시 프리뷰 효과 시작
+                    draggableUnitUi.OnMergeAvailable();
                     return;
                 }
             }
@@ -159,6 +159,13 @@ public class GridCell : MonoBehaviour, IDroppable
 
     public void OnDragExit(IDraggable draggable)
     {
+        // DraggableGridUnitUi인 경우 머지 효과 중지
+        var draggableUnitUi = draggable.GameObject.GetComponent<DraggableGridUnitUi>();
+        if (draggableUnitUi != null)
+        {
+            draggableUnitUi.OnMergeUnavailable();
+        }
+
         // 그리드 색상 변경
         gridManager.ClearAllGridsColor();
         gridManager.ChangeOccupiedCellColor();
@@ -202,6 +209,7 @@ public class GridCell : MonoBehaviour, IDroppable
                         {
                             gridManager.ClearAllGridsColor();
                             gridManager.ChangeOccupiedCellColor();
+                            draggable.OnDropSuccess();
                             return;
                         }
                     }
@@ -222,6 +230,7 @@ public class GridCell : MonoBehaviour, IDroppable
                     {
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
+                        draggable.OnDropSuccess();
                         return;
                     }
                     else
@@ -265,6 +274,9 @@ public class GridCell : MonoBehaviour, IDroppable
 
             // 성급에 따라 그리드 아이콘 설정
             gridManager.SetGridIcons(anchorPosition, occupiedCells, gridUnit.UnitId, gridUnit.StarLevel);
+
+            // GridUnit 배치 성공
+            draggable.OnDropSuccess();
         }
 
         // DraggableGridUnitUi 처리 - GridUnit 생성 (Inventory와 LevelUp 모두 통합)
@@ -282,6 +294,7 @@ public class GridCell : MonoBehaviour, IDroppable
                         Debug.Log("머지");
                         gridManager.ClearAllGridsColor();
                         gridManager.ChangeOccupiedCellColor();
+                        draggable.OnDropSuccess();
                         return;
                     }
                     else
@@ -343,6 +356,9 @@ public class GridCell : MonoBehaviour, IDroppable
 
             // 유닛이 그리드에 배치되었음을 알림
             gridManager.IncrementUnitCount();
+
+            // DraggableGridUnitUi 배치 성공
+            draggable.OnDropSuccess();
         }
 
         gridManager.ClearAllGridsColor();
@@ -396,6 +412,31 @@ public class GridCell : MonoBehaviour, IDroppable
 
         // 같은 성급
         if (existingUnit.StarLevel != draggingUnit.StarLevel)
+            return false;
+
+        // 3성 이상 합성 불가
+        if (existingUnit.StarLevel >= 3)
+            return false;
+
+        return true;
+    }
+
+    // DraggableGridUnitUi와 머지 가능한지 public으로 체크 (외부에서 호출 가능)
+    public bool CheckCanMergeWithUi(int unitId, int starLevel)
+    {
+        if (placedObject == null)
+            return false;
+
+        var existingUnit = placedObject.GetComponent<GridUnit>();
+        if (existingUnit == null)
+            return false;
+
+        // 같은 유닛 ID
+        if (existingUnit.UnitId != unitId)
+            return false;
+
+        // 같은 성급
+        if (existingUnit.StarLevel != starLevel)
             return false;
 
         // 3성 이상 합성 불가

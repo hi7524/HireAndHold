@@ -126,7 +126,22 @@ public class DraggableGridUnitUi : MonoBehaviour, IDraggable
         HidePreviewCells();
         SetImageAlpha(OpaqueAlpha);
 
+        // 머지 효과 중지
+        previewHelper?.StopMergeEffect();
+
         dropFailed = false;
+    }
+
+    // 머지 가능 시 호출 (GridCell의 OnDragEnter에서 호출)
+    public void OnMergeAvailable()
+    {
+        previewHelper?.StartMergeEffect();
+    }
+
+    // 머지 불가능 시 호출 (GridCell의 OnDragExit에서 호출)
+    public void OnMergeUnavailable()
+    {
+        previewHelper?.StopMergeEffect();
     }
 
     // 드롭 실패
