@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class GridPreviewHelper
 {
     private readonly List<GameObject> previewCells = new List<GameObject>();
     private readonly Transform parentTransform;
     private readonly float cellSize;
+    private Sequence mergeEffectSequence;
 
     public GridPreviewHelper(Transform parent, float cellSize)
     {
@@ -66,12 +68,82 @@ public class GridPreviewHelper
     // 프리뷰 셀 정리
     public void Clear()
     {
+        StopMergeEffect();
+
         foreach (var cell in previewCells)
         {
             if (cell != null)
                 Object.Destroy(cell);
         }
         previewCells.Clear();
+    }
+
+    // 머지 가능 시각 효과 시작 (펄스 + 글로우)
+    public void StartMergeEffect()
+    {
+        StopMergeEffect();
+
+        if (previewCells.Count == 0)
+            return;
+
+        mergeEffectSequence = DOTween.Sequence();
+
+        foreach (var cellObj in previewCells)
+        {
+            if (cellObj == null)
+                continue;
+
+            RectTransform rect = cellObj.GetComponent<RectTransform>();
+            Image img = cellObj.GetComponent<Image>();
+
+            if (rect != null && img != null)
+            {
+                // 각 셀의 초기 상태 저장
+                Vector3 originalScale = rect.localScale;
+
+                // 펄스 + 글로우 시퀀스
+                Sequence cellSequence = DOTween.Sequence()
+                    .Append(rect.DOScale(originalScale * 1.15f, 0.3f))
+                    .Join(img.DOFade(1f, 0.3f))
+                    .Append(rect.DOScale(originalScale, 0.3f))
+                    .Join(img.DOFade(0.7f, 0.4f))
+                    .SetLoops(-1);
+
+                // 메인 시퀀스에 추가 (모든 셀이 동시에 애니메이션)
+                mergeEffectSequence.Join(cellSequence);
+            }
+        }
+    }
+
+    // 머지 효과 중지
+    public void StopMergeEffect()
+    {
+        mergeEffectSequence?.Kill();
+        mergeEffectSequence = null;
+
+        // 모든 셀을 원래 스케일과 알파로 복원
+        foreach (var cellObj in previewCells)
+        {
+            if (cellObj == null)
+                continue;
+
+            RectTransform rect = cellObj.GetComponent<RectTransform>();
+            Image img = cellObj.GetComponent<Image>();
+
+            if (rect != null)
+            {
+                rect.DOKill();
+                rect.localScale = Vector3.one;
+            }
+
+            if (img != null)
+            {
+                img.DOKill();
+                Color color = img.color;
+                color.a = 1f;
+                img.color = color;
+            }
+        }
     }
 
     // 프리뷰 셀 개수가 있는지 확인
