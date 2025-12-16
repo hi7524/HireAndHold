@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public struct SkillProjectileData
 {
@@ -9,5 +9,6 @@ public struct SkillProjectileData
     public Transform target;
     public Vector3 spawnPosition;
     public Vector3 targetPosition;
+    public Vector3 customDirection;
     public float range;
 }
