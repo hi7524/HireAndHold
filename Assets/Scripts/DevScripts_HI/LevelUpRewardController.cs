@@ -49,6 +49,8 @@ public class LevelUpRewardController : MonoBehaviour
     private const float SelectedCardScale = 1.1f; // 선택된 카드 최대 스케일
     private const float SelectedCardWaitTime = 0.2f; // 선택된 카드 대기 시간
 
+    private const int DefaultRerollCost = 50;
+
     // 초기 세팅
     private void Start()
     {
@@ -114,6 +116,8 @@ public class LevelUpRewardController : MonoBehaviour
     {
         // 패널 비활성화 시 모든 애니메이션 정리 및 카드 강제 비활성화
         CleanupAllAnimations();
+
+        rerollCost = DefaultRerollCost;
     }
 
     private void OnDestroy()
@@ -497,6 +501,9 @@ public class LevelUpRewardController : MonoBehaviour
                 unitCardUIs[i].SetDragState(true);
                 unitCardUIs[i].SetColor();
             }
+
+            // 리롤 코스트 증가
+            rerollCost *= 2;
 
             // 리롤 후 버튼 상태 갱신
             UpdateRerollBtn();
