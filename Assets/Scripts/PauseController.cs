@@ -1,20 +1,28 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
+using System.Collections.Generic;
 
 public class PauseController : MonoBehaviour
 {
-
     [Header("References")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private StageManager stageManager;
+    [SerializeField] private PassiveSkillManager passiveSkillManager;
     [SerializeField] private GameObject panelRoot;
 
     [Header("UI Elements")]
-
     [SerializeField] private Button lobbbyButton;
+
+    [Header("Owned Skills Display")]
+    [SerializeField] private Transform ownedSkillsContent;
+    [SerializeField] private GameObject ownedSkillSlotPrefab;
+
+    [Header("Owned Items Display")]
+    [SerializeField] private Transform ownedItemsContent;
+    [SerializeField] private GameObject ownedItemSlotPrefab;
 
     private int currentStageId;
     private int currentStars;
@@ -28,7 +36,20 @@ public class PauseController : MonoBehaviour
         {
             lobbbyButton.onClick.AddListener(OnConfirmButtonClick);
         }
-       
+    }
+
+    private void OnEnable()
+    {
+        RefreshOwnedSkills();
+        RefreshOwnedItems();
+        if (gameManager != null)
+            gameManager.PauseGame();
+    }
+
+    private void OnDisable()
+    {
+        if (gameManager != null)
+            gameManager.ResumeGame();
     }
 
     public void Show(string stageName, int expReward, int goldReward, int stars = 3)
@@ -44,15 +65,157 @@ public class PauseController : MonoBehaviour
         currentExp = expReward;
 
         panelRoot.SetActive(true);
-        gameManager?.PauseGame();
     }
 
+    public void TogglePanel()
+    {
+        if (panelRoot == null) return;
 
-   
+        if (panelRoot.activeSelf)
+            Hide();
+        else
+            panelRoot.SetActive(true);
+    }
+
+    private void RefreshOwnedSkills()
+    {
+        if (passiveSkillManager == null || ownedSkillsContent == null) return;
+
+        var ownedSkills = passiveSkillManager.GetOwnedPassiveSkills();
+        if (ownedSkills == null) return;
+
+        int slotIndex = 0;
+
+        foreach (var skill in ownedSkills)
+        {
+            int skillId = skill.GetCurrentSkillId();
+            if (skillId < 0) continue;
+
+            SkillData skillData = DataTableManager.SkillTable?.Get(skillId);
+            if (skillData == null) continue;
+
+            // 슬롯 가져오기 또는 생성
+            GameObject slot;
+            if (slotIndex < ownedSkillsContent.childCount)
+            {
+                slot = ownedSkillsContent.GetChild(slotIndex).gameObject;
+                slot.SetActive(true);
+            }
+            else if (ownedSkillSlotPrefab != null)
+            {
+                slot = Instantiate(ownedSkillSlotPrefab, ownedSkillsContent);
+            }
+            else
+            {
+                continue;
+            }
+
+            // 스킬 아이콘 설정
+            Transform iconTransform = slot.transform.Find("SkillIcon");
+            if (iconTransform != null)
+            {
+                Image iconImage = iconTransform.GetComponent<Image>();
+                if (iconImage != null && !string.IsNullOrEmpty(skillData.SKILL_ICON))
+                {
+                    if (AddressablePreloader.Instance != null)
+                    {
+                        Sprite sprite = AddressablePreloader.Instance.GetCachedSprite(skillData.SKILL_ICON);
+                        if (sprite != null)
+                            iconImage.sprite = sprite;
+                    }
+                }
+            }
+
+            // 별 표시 설정
+            Transform starsTransform = slot.transform.Find("Stars");
+            if (starsTransform != null)
+            {
+                for (int i = 0; i < starsTransform.childCount; i++)
+                {
+                    starsTransform.GetChild(i).gameObject.SetActive(i < skill.currentStar);
+                }
+            }
+
+            slotIndex++;
+        }
+
+        // 남은 슬롯 비활성화
+        for (int i = slotIndex; i < ownedSkillsContent.childCount; i++)
+        {
+            ownedSkillsContent.GetChild(i).gameObject.SetActive(false);
+        }
+    }
+
+    private void RefreshOwnedItems()
+    {
+        if (stageManager == null || ownedItemsContent == null) return;
+
+        Dictionary<int, int> items = stageManager.GetAccumulatedItems();
+        if (items == null) return;
+
+        int slotIndex = 0;
+
+        foreach (var kvp in items)
+        {
+            int itemId = kvp.Key;
+            int count = kvp.Value;
+
+            ItemData itemData = DataTableManager.ItemTable?.Get(itemId);
+            if (itemData == null) continue;
+
+            // 슬롯 가져오기 또는 생성
+            GameObject slot;
+            if (slotIndex < ownedItemsContent.childCount)
+            {
+                slot = ownedItemsContent.GetChild(slotIndex).gameObject;
+                slot.SetActive(true);
+            }
+            else if (ownedItemSlotPrefab != null)
+            {
+                slot = Instantiate(ownedItemSlotPrefab, ownedItemsContent);
+            }
+            else
+            {
+                continue;
+            }
+
+            // 아이템 아이콘 설정
+            Transform iconTransform = slot.transform.Find("ItemIcon");
+            if (iconTransform != null)
+            {
+                Image iconImage = iconTransform.GetComponent<Image>();
+                if (iconImage != null && !string.IsNullOrEmpty(itemData.ITEM_ICON))
+                {
+                    if (AddressablePreloader.Instance != null)
+                    {
+                        Sprite sprite = AddressablePreloader.Instance.GetCachedSprite(itemData.ITEM_ICON);
+                        if (sprite != null)
+                            iconImage.sprite = sprite;
+                    }
+                }
+            }
+
+            // 수량 텍스트 설정
+            TMP_Text countText = slot.GetComponentInChildren<TMP_Text>();
+            if (countText != null)
+            {
+                countText.text = $"x{count}";
+            }
+
+            slotIndex++;
+        }
+
+        // 남은 슬롯 비활성화
+        for (int i = slotIndex; i < ownedItemsContent.childCount; i++)
+        {
+            ownedItemsContent.GetChild(i).gameObject.SetActive(false);
+        }
+    }
 
     public void Hide()
     {
-        panelRoot?.SetActive(false);
+        if (panelRoot != null)
+            panelRoot.SetActive(false);
     }
 
     private void OnDestroy()
@@ -61,7 +224,6 @@ public class PauseController : MonoBehaviour
         {
             lobbbyButton.onClick.RemoveListener(OnConfirmButtonClick);
         }
-       
     }
 
     private async void OnConfirmButtonClick()
@@ -70,8 +232,7 @@ public class PauseController : MonoBehaviour
         Time.timeScale = 1f;
 
         // 로비로 이동 (로딩씬 사용)
-        LoadingRequest request = new LoadingRequest("Lobby");
+        LoadingRequest request = new("Lobby");
         await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
-
 }

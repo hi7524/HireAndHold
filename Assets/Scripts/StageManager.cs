@@ -166,6 +166,14 @@ public class StageManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 스테이지 중 획득한 아이템 목록 반환
+    /// </summary>
+    public Dictionary<int, int> GetAccumulatedItems()
+    {
+        return new Dictionary<int, int>(accumulatedItems);
+    }
+
+    /// <summary>
     /// 보너스 골드 추가 (패시브 스킬 골드 카드 등)
     /// 스테이지 클리어 시 총 골드에 포함됨
     /// </summary>
