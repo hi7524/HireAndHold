@@ -99,6 +99,12 @@ public class UnitSellZone : MonoBehaviour, IDroppable
         playerGold.AddGold(gold);
         ShowSellMessage(gold);
 
+        // 유닛 제거 전에 카운트 감소
+        if (gridManager != null)
+        {
+            gridManager.DecrementUnitCount();
+        }
+
         gridUnit.gameObject.SetActive(false);
         //PlayDropAnimation();
     }
