@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 [System.Serializable]
 public class CachedCharacter
@@ -63,6 +64,9 @@ public static class PlayData
 
     //초기화 상태
     public static bool IsInitialized => isInitialized;
+
+    public static event Action OnProfileChanged;
+
 
     //DatabaseManager에서 데이터 동기화
     public static void SyncFromDatabase()
@@ -145,6 +149,7 @@ public static class PlayData
     public static void SetNicknameImmediate(string nickname)
     {
         cachedNickname = nickname;
+        OnProfileChanged?.Invoke();
     }
 
 
@@ -339,6 +344,20 @@ public static class PlayData
 
         return 0;
     }
+
+    public static void SetProfileImmediate(int level, int exp)
+    {
+        cachedLevel = level;
+        cachedExp = exp;
+        NotifyProfileChanged();
+    }
+
+    public static void NotifyProfileChanged()
+{
+    OnProfileChanged?.Invoke();
+}
+
+
 
 
 }

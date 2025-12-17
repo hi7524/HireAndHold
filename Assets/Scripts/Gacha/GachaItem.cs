@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [System.Serializable]
 public class GachaItem
@@ -6,7 +6,7 @@ public class GachaItem
     public int unitId;
 
     public string unitName;
-    public Sprite unitIcon;
+    //public Sprite unitIcon;
 
     [Range(0f, 100f)]
     public float probability;
@@ -23,6 +23,7 @@ public enum GachaRarity
 {
     Common,
     Rare,
+    Unique,
     Epic,
     Legendary
 }

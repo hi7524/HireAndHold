@@ -90,7 +90,6 @@ public class DatabaseManager : MonoBehaviour
             Debug.Log($"[DB] 신규 유저 저장 결과: {saveResult}");
         }
 
-        AddTempUnitsForDebug();
         SyncPresetsToPlayData();
 
         PlayData.SyncFromDatabase();
@@ -437,26 +436,26 @@ public class DatabaseManager : MonoBehaviour
         {
             CurrentUser.profile.exp += amount;
 
-            // 레벨업 체크 (간단한 공식: 레벨 * 100)
             int expForNextLevel = CurrentUser.profile.level * 100;
             while (CurrentUser.profile.exp >= expForNextLevel)
             {
                 CurrentUser.profile.exp -= expForNextLevel;
                 CurrentUser.profile.level++;
                 expForNextLevel = CurrentUser.profile.level * 100;
-
-                Debug.Log($"[DB] 레벨업! 새 레벨: {CurrentUser.profile.level}");
             }
 
-            // 레벨이 변경되었으면 프로필 저장
-            if (CurrentUser.profile.exp < amount)
-            {
-                await SaveProfileAsync();
-            }
+            await SaveProfileAsync();
+
+   
+            PlayData.SetProfileImmediate(
+                CurrentUser.profile.level,
+                CurrentUser.profile.exp
+            );
         }
 
         return success;
     }
+
 
     #endregion
 
@@ -530,33 +529,33 @@ public class DatabaseManager : MonoBehaviour
     {
         return new List<OwnedCharacter>(CurrentUser.characters.Values);
     }
-    private void AddTempUnitsForDebug()
-    {
-        AddTempUnit("11119");
+    //private void AddTempUnitsForDebug()
+    //{
+    //    AddTempUnit("11119");
 
-        PlayData.SyncCharactersFromDatabase();
+    //    PlayData.SyncCharactersFromDatabase();
 
-        Debug.Log("[Debug] 임시 유닛 PlayData 반영 완료");
-    }
+    //    Debug.Log("[Debug] 임시 유닛 PlayData 반영 완료");
+    //}
 
-    private void AddTempUnit(string unitId)
-    {
-        if (!CurrentUser.characters.ContainsKey(unitId))
-        {
-            CurrentUser.characters[unitId] = new OwnedCharacter
-            {
-                id = unitId,
-                level = 1,
-                star = 1,
-                exp = 0,
-                awakening = 0,
-                enforceLevel = 0,
-                heroEnforceLevel = 0
-            };
+    //private void AddTempUnit(string unitId)
+    //{
+    //    if (!CurrentUser.characters.ContainsKey(unitId))
+    //    {
+    //        CurrentUser.characters[unitId] = new OwnedCharacter
+    //        {
+    //            id = unitId,
+    //            level = 1,
+    //            star = 1,
+    //            exp = 0,
+    //            awakening = 0,
+    //            enforceLevel = 0,
+    //            heroEnforceLevel = 0
+    //        };
 
-            Debug.Log($"[Debug] 임시 유닛 추가됨: {unitId}");
-        }
-    }
+    //        Debug.Log($"[Debug] 임시 유닛 추가됨: {unitId}");
+    //    }
+    //}
 
 
     #endregion

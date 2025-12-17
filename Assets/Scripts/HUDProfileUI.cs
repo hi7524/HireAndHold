@@ -2,35 +2,41 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ProfileUI : MonoBehaviour
+public class HUDProfileUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text nicknameText;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text expText;
-    [SerializeField] private Slider expSlider;
+    [SerializeField] private Slider levelExpSlider;
 
-    private void OnEnable()
+    private void Awake()
     {
         Refresh();
         PlayData.OnProfileChanged += Refresh;
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
         PlayData.OnProfileChanged -= Refresh;
     }
 
-    public void Refresh()
+    private void Refresh()
     {
+        if (!PlayData.IsInitialized)
+            return;
+
         int level = PlayData.Level;
         int exp = PlayData.Exp;
         int maxExp = level * 100;
 
         nicknameText.text = PlayData.Nickname;
         levelText.text = $"{level}";
-        expText.text = $"{exp} / {maxExp}";
 
-        expSlider.maxValue = maxExp;
-        expSlider.value = exp;
+        if (expText != null)
+            expText.text = $"{exp} / {maxExp}";
+
+        levelExpSlider.minValue = 0;
+        levelExpSlider.maxValue = maxExp;
+        levelExpSlider.value = exp;
     }
 }

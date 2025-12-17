@@ -49,6 +49,14 @@ public class Stat
         cachedValue = null;
     }
 
+    public void RemoveModifiersBySource(string sourceId)
+    {
+        if (string.IsNullOrEmpty(sourceId))
+            return;
+
+        modifiers.RemoveAll(m => m.SourceId == sourceId);
+    }
+
     private float CalculateFinalValue()
     {
         float finalValue = baseValue + upgradeValue;
@@ -84,13 +92,16 @@ public class StatModifier
 {
     public float Value;
     public ModifierType Type;
+    public string SourceId; 
 
-    public StatModifier(float value, ModifierType type)
+    public StatModifier(float value, ModifierType type, string sourceId = null)
     {
         Value = value;
         Type = type;
+        SourceId = sourceId;
     }
 }
+
 
 public enum ModifierType
 {
