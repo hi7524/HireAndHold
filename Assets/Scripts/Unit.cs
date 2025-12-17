@@ -58,6 +58,14 @@ public class Unit : MonoBehaviour
     //영구 캐릭터 아이디 (합성 기본 구분)
     public int BaseCharacterID { get; private set; }
 
+    private void ResetHeroEnforceValues()
+    {
+        heroAttackMultiplier = 1f;
+        heroSkillDamageMultiplier = 1f;
+        heroProjectileBonus = 0;
+        heroSkillDurationBonus = 0f;
+        heroSkillCooltimeBonus = 1f;
+    }
 
     public void AddHeroAttackMultiplier(float mul)
     {
@@ -246,6 +254,8 @@ public class Unit : MonoBehaviour
     // 강화 데이터 유닛에 저장 (모든 레벨 효과 누적)
     private void ApplyEnforceBonus()
     {
+        ResetHeroEnforceValues();
+
         // DatabaseManager가 없으면 스킵 (TestScene 등)
         if (DatabaseManager.Instance == null)
         {
@@ -279,11 +289,13 @@ public class Unit : MonoBehaviour
                 }
             }
 
-            attackDamage.AddModifier(new StatModifier(totalAtkUp, ModifierType.Flat));
-            Debug.Log($"[Normal Enforce 적용] Unit:{UnitID}, Lv:{enforceLv}, +Atk:{totalAtkUp}");
+            attackDamage.RemoveModifiersBySource("NormalEnforce");
+            attackDamage.AddModifier(new StatModifier(totalAtkUp, ModifierType.Flat, "NormalEnforce")
+            );
+
         }
 
-        // HERO 강화 효과 적용 (⭐ 모든 레벨 누적)
+        // HERO 강화 효과 적용 (모든 레벨 누적)
         int heroLv = character.heroEnforceLevel;
         if (heroLv <= 0)
         {
@@ -295,7 +307,7 @@ public class Unit : MonoBehaviour
         int skill1 = unitData.UNIT_SKILL1;
         int skill2 = unitData.UNIT_SKILL2;
 
-        // ⭐ 1레벨부터 현재 레벨까지 모든 효과 누적 적용
+        //1레벨부터 현재 레벨까지 모든 효과 누적 적용
         for (int lv = 1; lv <= heroLv; lv++)
         {
             var heroData = DataTableManager.heroEnforceTable.Get(BaseCharacterID, lv);
