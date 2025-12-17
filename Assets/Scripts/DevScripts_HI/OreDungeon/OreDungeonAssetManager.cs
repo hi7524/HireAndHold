@@ -11,6 +11,7 @@ public class OreDungeonAssetManager : MonoBehaviour
     [SerializeField] private OreDungeonManager gameManager;
 
     public DataTable_OreDungeon OreDungeonTable { get; private set; }
+    public DataTable_Ore OreTable { get; private set; }
 
     private bool isPreloaded;
 
@@ -40,11 +41,13 @@ public class OreDungeonAssetManager : MonoBehaviour
         {
             Debug.Log("캐시된 리소스 사용");
             OreDungeonTable = DataTableManager.OreDungeonTable;
+            OreTable = DataTableManager.OreTable;
         }
         else
         {
             Debug.Log("직접 리소스 로드 시작");
             await LoadOreDungeonTableDirectly();
+            await LoadOreTableDirectly();
         }
     }
 
@@ -55,11 +58,24 @@ public class OreDungeonAssetManager : MonoBehaviour
         {
             OreDungeonTable = new DataTable_OreDungeon();
             await OreDungeonTable.LoadAsync(DataTableIds.OreDungeon);
-            Debug.Log("OreDungeon 테이블 로드 완료");
         }
         catch (System.Exception e)
         {
             Debug.LogError($"OreDungeon 테이블 로드 실패: {e.Message}");
+        }
+    }
+
+    // Ore 테이블 직접 로드
+    private async UniTask LoadOreTableDirectly()
+    {
+        try
+        {
+            OreTable = new DataTable_Ore();
+            await OreTable.LoadAsync(DataTableIds.Ore);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Ore 테이블 로드 실패: {e.Message}");
         }
     }
 

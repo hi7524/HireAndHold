@@ -7,6 +7,7 @@ using UnityEngine;
 public class OreSpawner : MonoBehaviour
 {
     [SerializeField] private OreDungeonManager gameManager;
+    [SerializeField] private OreDungeonAssetManager assetManager;
     [SerializeField] private ObjectPoolManager poolManager;
     [SerializeField] private Ore orePrf;
     [SerializeField] private Canvas canvas;
@@ -187,8 +188,8 @@ public class OreSpawner : MonoBehaviour
         RectTransform rectTransform = ore.GetComponent<RectTransform>();
         rectTransform.anchoredPosition = position;
 
-        // 광석 타입 설정
-        ore.SetOreType(oresID);
+        // 광석 타입 설정 (OreTable, Manager 전달)
+        ore.SetOreType(oresID, assetManager.OreTable, gameManager);
 
         return ore;
     }
@@ -212,6 +213,12 @@ public class OreSpawner : MonoBehaviour
         if (gameManager == null)
         {
             Debug.LogError($"{nameof(OreDungeonManager)} 참조가 누락되었습니다.");
+            return false;
+        }
+
+        if (assetManager == null)
+        {
+            Debug.LogError($"{nameof(OreDungeonAssetManager)} 참조가 누락되었습니다.");
             return false;
         }
 
