@@ -8,7 +8,7 @@ public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
     [SerializeField] private float launchSpeed = 5f;
     [SerializeField] private ParticleSystem mainProjectile;
     [SerializeField] private ParticleSystem hitEffect;
-    [SerializeField] private float rotationOffset = 0f; // 프리팹마다 기본 회전이 다를 경우 조정
+    [SerializeField] private float rotationOffset = -90f; // 스프라이트가 위쪽을 향하는 경우 -90 (기본값)
 
     private ObjectPoolManager poolManager;
     private string poolKey;

@@ -6,6 +6,7 @@ public class PierceProjectile : MonoBehaviour, ISkillProjectile
     [SerializeField] private float launchSpeed = 10f;
     [SerializeField] private float lifeTime = 5f;
     [SerializeField] private float pierceWidth = 0.5f;
+    [SerializeField] private float rotationOffset = -90f; // 스프라이트가 위쪽을 향하는 경우 -90 (기본값)
     [SerializeField] private ParticleSystem mainEffect;
 
     private SkillProjectileData data;
@@ -36,7 +37,7 @@ public class PierceProjectile : MonoBehaviour, ISkillProjectile
 
         // 회전 적용
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        transform.rotation = Quaternion.Euler(0, 0, angle + rotationOffset);
 
         // 이펙트 재생
         if (mainEffect != null)
