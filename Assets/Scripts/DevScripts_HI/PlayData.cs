@@ -19,7 +19,7 @@ public static class PlayData
 {
     public static Dictionary<int, float> unitFragments = new();
 
-    public static HashSet<int> selectedUnitIds = new HashSet<int>{ 11119, 11104, 11122, 11128, 11113 };
+    public static HashSet<int> selectedUnitIds = new HashSet<int> { 11119, 11104, 11122, 11128, 11113 };
 
     //편성된 덱 배열
 
@@ -65,6 +65,8 @@ public static class PlayData
     //초기화 상태
     public static bool IsInitialized => isInitialized;
 
+    // 던전 선택 정보 (ID)
+    public static int OreDungeonID { get; private set; }
     public static event Action OnProfileChanged;
 
 
@@ -345,6 +347,13 @@ public static class PlayData
         return 0;
     }
 
+    // 현재 선택된 던전 ID 저장
+    public static void SetSelectedOreDungeonId(int id)
+    {
+        OreDungeonID = id;
+        Debug.Log($"현재 선택된 던전 ID: {OreDungeonID}");
+    }
+}
     public static void SetProfileImmediate(int level, int exp)
     {
         cachedLevel = level;

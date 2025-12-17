@@ -225,6 +225,57 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &184195542
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 184195544}
+  - component: {fileID: 184195543}
+  m_Layer: 0
+  m_Name: ObjectPoolManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &184195543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 184195542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 339da9c024d9a264aa243121714bb382, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  floatingTextSpawner: {fileID: 0}
+  poolItems:
+  - key: 
+    addressableKey: 
+    isLabel: 0
+    defaultCapacity: 0
+    maxSize: 0
+--- !u!4 &184195544
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 184195542}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &313870909
 GameObject:
   m_ObjectHideFlags: 0
@@ -1865,6 +1916,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17a6ae5cb3297e0419dcadf1317c60ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CurDungeonIdForTesting: 15101
   assetManager: {fileID: 2065071293}
 --- !u!222 &161662724081251804
 CanvasRenderer:
@@ -2205,5 +2257,6 @@ SceneRoots:
   - {fileID: 2065071292}
   - {fileID: 2122810348}
   - {fileID: 880366161}
+  - {fileID: 184195544}
   - {fileID: 181593918}
   - {fileID: 1445209041}
