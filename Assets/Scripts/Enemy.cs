@@ -22,6 +22,7 @@ public class Enemy : MonoBehaviour, IDamagable
     private static readonly int ANIM_DEATH = Animator.StringToHash("Death");
 
     public event Action<Enemy> OnDeath;
+    public event Action<Enemy> OnDeathAnimationComplete;
     public int MonsterId { get; private set; }
 
     [SerializeField] private float maxHp;
@@ -153,7 +154,7 @@ public class Enemy : MonoBehaviour, IDamagable
         {
             currentHp = maxHp;
             speed *= 1.5f;
-            transform.localScale = originalScale * 3f;
+            transform.localScale = originalScale * 5f;
         }
         else
         {
@@ -171,16 +172,17 @@ public class Enemy : MonoBehaviour, IDamagable
 
         // 이벤트 초기화 (풀에서 재사용 시 중복 구독 방지)
         OnDeath = null;
+        OnDeathAnimationComplete = null;
     }
 
-    public void InitializeWithData(ObjectPoolManager manager, string key, MonsterData data, bool boss = false, float hpMultiplier = 1f, float expMultiplier = 1f)
+    public void InitializeWithData(ObjectPoolManager manager, string key, MonsterData data, bool boss = false, float hpMultiplier = 1f, float expMultiplier = 1f, float speedMultiplier = 1f)
     {
         poolManager = manager;
         poolKey = key;
         isDead = false;
         maxHp = data.MON_HP * hpMultiplier;
         currentHp = maxHp;
-        speed = data.MON_SPEED;
+        speed = data.MON_SPEED * speedMultiplier;
         attackDamage = data.MON_ATK;
         isAttacking = false;
         isStunned = false;
@@ -199,7 +201,7 @@ public class Enemy : MonoBehaviour, IDamagable
             currentHp = maxHp;
             speed *= 0.7f;
             attackDamage *= 2f;
-            transform.localScale = originalScale * 3f;
+            transform.localScale = originalScale * 5f;
         }
         else
         {
@@ -217,6 +219,7 @@ public class Enemy : MonoBehaviour, IDamagable
 
         // 이벤트 초기화 (풀에서 재사용 시 중복 구독 방지)
         OnDeath = null;
+        OnDeathAnimationComplete = null;
     }
 
     /// <summary>
@@ -561,15 +564,16 @@ public class Enemy : MonoBehaviour, IDamagable
 
         currentHp -= damage;
 
-        if (damage < 999999f && currentHp > 0)
-        {
-            PlayHitAnimationAsync().Forget();
-        }
-
         if (currentHp <= 0)
         {
             isDead = true;
             Die();
+            return;
+        }
+
+        if (damage < 999999f)
+        {
+            PlayHitAnimationAsync().Forget();
         }
     }
 
@@ -606,6 +610,9 @@ public class Enemy : MonoBehaviour, IDamagable
         {
             return;
         }
+
+        // 사망 애니메이션 완료 이벤트 발생
+        OnDeathAnimationComplete?.Invoke(this);
 
         ExpItemSpawned();
         TryDropItems();

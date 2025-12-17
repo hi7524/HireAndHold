@@ -39,7 +39,7 @@ public class MonsterSpawner : MonoBehaviour
     /// </summary>
     public IReadOnlyList<Enemy> GetActiveMonsters() => activeMonsters;
 
-    public void SpawnMonsterById(int monsterId, bool isBoss = false, float hpMultiplier = 1f, float expMultiplier = 1f)
+    public void SpawnMonsterById(int monsterId, bool isBoss = false, float hpMultiplier = 1f, float expMultiplier = 1f, float speedMultiplier = 1f)
     {
         MonsterData data = DataTableManager.MonsterTable.Get(monsterId);
         if (data == null)
@@ -58,7 +58,7 @@ public class MonsterSpawner : MonoBehaviour
 
         Enemy monster = monsterObj.GetComponent<Enemy>();
         monster.transform.position = spawnPos;
-        monster.InitializeWithData(poolManager, key, data, isBoss, hpMultiplier, expMultiplier);
+        monster.InitializeWithData(poolManager, key, data, isBoss, hpMultiplier, expMultiplier, speedMultiplier);
 
         // Enemy 사망 이벤트 구독
         monster.OnDeath += OnMonsterRemoved;
@@ -101,6 +101,49 @@ public class MonsterSpawner : MonoBehaviour
         }
     }
 
+    // 모든 몬스터 제거 후 사망 애니메이션 완료까지 대기
+    public async UniTask KillAllMonstersAsync()
+    {
+        var monstersToKill = new List<Enemy>(activeMonsters);
+
+        if (monstersToKill.Count == 0)
+            return;
+
+        int completedCount = 0;
+        int totalCount = monstersToKill.Count;
+        var tcs = new UniTaskCompletionSource();
+
+        foreach (var monster in monstersToKill)
+        {
+            // 유효하고 아직 살아있는 몬스터만 처리
+            if (monster != null && monster.gameObject.activeSelf && !monster.IsDead)
+            {
+                monster.OnDeathAnimationComplete += (e) =>
+                {
+                    completedCount++;
+                    if (completedCount >= totalCount)
+                    {
+                        tcs.TrySetResult();
+                    }
+                };
+                monster.TakeDamage(999999f);
+            }
+            else
+            {
+                // 이미 죽었거나 비활성화된 몬스터는 바로 완료 처리
+                completedCount++;
+                if (completedCount >= totalCount)
+                {
+                    tcs.TrySetResult();
+                }
+            }
+        }
+
+        // 타임아웃 3초 (안전장치)
+        var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(3));
+        await UniTask.WhenAny(tcs.Task, timeoutTask);
+    }
+
     // 보스 전용 스폰 (Monster 참조 반환) - 동기 버전
     public Enemy SpawnBossById(int bossId)
     {
@@ -140,7 +183,7 @@ public class MonsterSpawner : MonoBehaviour
         return boss;
     }
 
-    // 보스 사망 대기 (UniTask)
+    // 보스 사망 대기 (UniTask) - 사망 애니메이션 완료까지 대기
     public void WaitForBossDeath(Enemy boss, Action onDeath)
     {
         WaitForBossDeathAsync(boss, onDeath).Forget();
@@ -148,8 +191,33 @@ public class MonsterSpawner : MonoBehaviour
 
     private async UniTaskVoid WaitForBossDeathAsync(Enemy boss, Action onDeath)
     {
-        // 보스가 죽을 때까지 대기
+        if (boss == null)
+        {
+            onDeath?.Invoke();
+            return;
+        }
+
+        var tcs = new UniTaskCompletionSource();
+
+        // 사망 애니메이션 완료 이벤트 구독
+        boss.OnDeathAnimationComplete += (e) =>
+        {
+            tcs.TrySetResult();
+        };
+
+        // 보스가 죽을 때까지 대기 (예외 처리: 이미 죽어있거나 비활성화된 경우)
         await UniTask.WaitUntil(() => boss == null || !boss.gameObject.activeSelf || boss.IsDead);
+
+        // 이미 비활성화된 경우 바로 콜백 실행
+        if (boss == null || !boss.gameObject.activeSelf)
+        {
+            onDeath?.Invoke();
+            return;
+        }
+
+        // 사망 애니메이션 완료 대기
+        await tcs.Task;
+
         // 콜백 실행
         onDeath?.Invoke();
     }
