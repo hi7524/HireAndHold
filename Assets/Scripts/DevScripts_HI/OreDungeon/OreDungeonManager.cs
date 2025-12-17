@@ -12,6 +12,8 @@ public class OreDungeonManager : MonoBehaviour
     public bool IsPreloaded { get; private set; }
     public int CurDungeonID { get; private set; }
     public OreDungeonData DungeonData { get; private set; }
+    public int RemainTouchCount { get; private set; }
+    public int RemainOreCount { get; private set; }
 
     public event Action OnInitialized; // 초기화 및 데이터 로드 완료 후 실행할 메서드
 
@@ -34,7 +36,7 @@ public class OreDungeonManager : MonoBehaviour
         DungeonData = oreDungeonTable?.Get(CurDungeonID);
 
         Debug.Log($"OreDungeonManager 초기화 완료 - ID: {CurDungeonID}, Preloaded: {IsPreloaded}, DungeonData: {(DungeonData != null ? "로드 성공" : "로드 실패")}");
-        
+
         // 초기화 완료 이벤트 발행
         OnInitialized?.Invoke();
     }
