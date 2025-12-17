@@ -186,7 +186,10 @@ public class ObjectPoolManager : MonoBehaviour
     // 풀이 maxSize 초과 시 오브젝트 파괴
     private void OnDestroyPoolObject(GameObject obj)
     {
-        Destroy(obj.gameObject);
+        if (Application.isPlaying)
+            Destroy(obj);
+        else
+            DestroyImmediate(obj);
     }
 
     // 키로 풀에서 오브젝트 가져오기
@@ -207,7 +210,10 @@ public class ObjectPoolManager : MonoBehaviour
         if (!pools.ContainsKey(key))
         {
             Debug.Log($"Pool {key} X ");
-            Destroy(obj);
+            if (Application.isPlaying)
+                Destroy(obj);
+            else
+                DestroyImmediate(obj);
             return;
         }
 

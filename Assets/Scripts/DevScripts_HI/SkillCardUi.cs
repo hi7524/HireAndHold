@@ -22,7 +22,9 @@ public class SkillCardUi : BaseCardUi
     [SerializeField] private Color defaultColor;
     [SerializeField] private Color filledColor;
     [Header("Gold Card")]
-    [SerializeField] private Sprite goldIconSprite;  // 골드 아이콘 스프라이트
+    [SerializeField] private string goldIconAddress = "ItemIcon_Coin_Gold";  // 골드 아이콘 Addressable 주소
+    private Sprite goldIconSprite;  // 로드된 골드 아이콘 스프라이트
+    private AsyncOperationHandle<Sprite> goldIconHandle;
 
     private LevelUpRewardController levelUpRewardController;
     private PassiveSkillManager passiveSkillManager;
@@ -103,13 +105,60 @@ public class SkillCardUi : BaseCardUi
 
     private void UpdateGoldCardUI()
     {
-        // 아이콘을 골드 이미지로 변경
-        if (skillIcon != null && goldIconSprite != null)
-            skillIcon.sprite = goldIconSprite;
-
         // 텍스트를 골드 금액으로 표시
         if (text != null)
             text.text = $"{goldAmount}G";
+
+        // 아이콘을 골드 이미지로 변경
+        if (skillIcon != null)
+        {
+            // 캐시된 스프라이트가 있으면 즉시 사용
+            if (goldIconSprite != null)
+            {
+                skillIcon.sprite = goldIconSprite;
+            }
+            else
+            {
+                // 캐시에 없으면 로드
+                LoadGoldIconAsync().Forget();
+            }
+        }
+    }
+
+    private async UniTaskVoid LoadGoldIconAsync()
+    {
+        // 이미 로드 중이거나 로드 완료된 경우
+        if (goldIconHandle.IsValid())
+        {
+            if (goldIconHandle.Status == AsyncOperationStatus.Succeeded)
+            {
+                goldIconSprite = goldIconHandle.Result;
+                if (skillIcon != null)
+                    skillIcon.sprite = goldIconSprite;
+            }
+            return;
+        }
+
+        // 캐시에서 먼저 확인
+        var cachedSprite = AddressablePreloader.Instance?.GetCachedSprite(goldIconAddress);
+        if (cachedSprite != null)
+        {
+            goldIconSprite = cachedSprite;
+            if (skillIcon != null)
+                skillIcon.sprite = goldIconSprite;
+            return;
+        }
+
+        // Addressable로 로드
+        goldIconHandle = Addressables.LoadAssetAsync<Sprite>(goldIconAddress);
+        var sprite = await goldIconHandle.ToUniTask();
+
+        if (goldIconHandle.Status == AsyncOperationStatus.Succeeded)
+        {
+            goldIconSprite = sprite;
+            if (skillIcon != null)
+                skillIcon.sprite = goldIconSprite;
+        }
     }
 
     private void ShowStars(bool show)
@@ -327,6 +376,10 @@ public class SkillCardUi : BaseCardUi
         if (iconHandle.IsValid())
         {
             Addressables.Release(iconHandle);
+        }
+        if (goldIconHandle.IsValid())
+        {
+            Addressables.Release(goldIconHandle);
         }
     }
 }

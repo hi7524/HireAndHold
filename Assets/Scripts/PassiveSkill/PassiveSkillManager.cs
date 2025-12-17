@@ -152,8 +152,8 @@ public class PassiveSkillManager : MonoBehaviour
             availableGroups.RemoveAt(randomIndex);
         }
 
-        // ShieldRegen을 마지막에 추가 (골드 카드보다 우선)
-        if (shieldRegenGroup != null && skillIds.Count < count)
+        // ShieldRegen을 마지막에 추가 (골드 카드 자리를 대체)
+        if (shieldRegenGroup != null)
         {
             int shieldSkillId = shieldRegenGroup.currentStar == 0
                 ? shieldRegenGroup.GetSkillIdByStar(1)
@@ -167,7 +167,7 @@ public class PassiveSkillManager : MonoBehaviour
 
     /// <summary>
     /// ShieldRegen 스킬이 선택지에 포함되어야 하는지 확인
-    /// 조건: 1) 이미 배운 경우, 2) 방벽이 피해를 받은 적 있는 경우, 3) 다른 5종류가 모두 MAX인 경우
+    /// 조건: 1) 이미 배운 경우, 2) 방벽이 피해를 받은 적 있는 경우, 3) 다른 5종류가 모두 MAX인 경우, 4) 획득 가능한 일반 스킬이 2개 이하인 경우
     /// </summary>
     private bool ShouldIncludeShieldRegen()
     {
@@ -179,14 +179,20 @@ public class PassiveSkillManager : MonoBehaviour
         if (wall != null && wall.HasEverTakenDamage)
             return true;
 
-        // 조건 3: ShieldRegen 제외 다른 5종류가 모두 MAX(3성)인 경우
-        int maxedCount = 0;
+        // 조건 3, 4: ShieldRegen 제외 획득 가능한 스킬 개수 확인
+        int availableCount = 0;
         foreach (var group in skillGroups.Values)
         {
-            if (group.skillType != PassiveSkillType.ShieldRegen && group.currentStar >= 3)
-                maxedCount++;
+            if (group.skillType != PassiveSkillType.ShieldRegen && group.currentStar < 3)
+                availableCount++;
         }
-        if (maxedCount >= 5)
+
+        // 다른 5종류가 모두 MAX(3성)인 경우
+        if (availableCount == 0)
+            return true;
+
+        // 획득 가능한 일반 스킬이 2개 이하면 해금 (골드 카드 대신 방벽회복)
+        if (availableCount <= 2)
             return true;
 
         return false;

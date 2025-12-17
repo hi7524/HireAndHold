@@ -564,15 +564,16 @@ public class Enemy : MonoBehaviour, IDamagable
 
         currentHp -= damage;
 
-        if (damage < 999999f && currentHp > 0)
-        {
-            PlayHitAnimationAsync().Forget();
-        }
-
         if (currentHp <= 0)
         {
             isDead = true;
             Die();
+            return;
+        }
+
+        if (damage < 999999f)
+        {
+            PlayHitAnimationAsync().Forget();
         }
     }
 
