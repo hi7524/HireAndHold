@@ -153,20 +153,27 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        // 일반 몬스터 스폰 - HP/EXP 배율 전달
+        // 워닝 웨이브는 스폰 시간을 26초로 제한 (마지막 3초는 스폰 없음)
+        int spawnEndTime = wave.WAVE_END_T;
+        if (wave.WAVE_TYPE == 2)
+        {
+            spawnEndTime = wave.WAVE_START_T + 26;
+        }
+
+        // 일반 몬스터 스폰 - HP/EXP/Speed 배율 전달
         if (wave.SPAWN_MON1_ID > 0 && wave.MON1_COUNT > 0)
         {
-            SpawnMonsters(wave.SPAWN_MON1_ID, wave.MON1_COUNT, wave.WAVE_START_T, wave.WAVE_END_T, wave.MON_HP_UP, wave.MON_EXP_UP);
+            SpawnMonsters(wave.SPAWN_MON1_ID, wave.MON1_COUNT, wave.WAVE_START_T, spawnEndTime, wave.MON_HP_UP, wave.MON_EXP_UP, wave.WAVE_SPEED);
         }
 
         if (wave.SPAWN_MON2_ID > 0 && wave.MON2_COUNT > 0)
         {
-            SpawnMonsters(wave.SPAWN_MON2_ID, wave.MON2_COUNT, wave.WAVE_START_T, wave.WAVE_END_T, wave.MON_HP_UP, wave.MON_EXP_UP);
+            SpawnMonsters(wave.SPAWN_MON2_ID, wave.MON2_COUNT, wave.WAVE_START_T, spawnEndTime, wave.MON_HP_UP, wave.MON_EXP_UP, wave.WAVE_SPEED);
         }
     }
 
 
-    private void SpawnMonsters(int monsterId, int count, int startTime, int endTime, float hpMultiplier, float expMultiplier)
+    private void SpawnMonsters(int monsterId, int count, int startTime, int endTime, float hpMultiplier, float expMultiplier, float speedMultiplier)
     {
         float duration = endTime - startTime;
         float interval = duration / count;
@@ -188,34 +195,39 @@ public class WaveManager : MonoBehaviour
             int currentMonsterId = monsterId;
             float currentHpMult = hpMultiplier;
             float currentExpMult = expMultiplier;
+            float currentSpeedMult = speedMultiplier;
 
             var spawnEvent = gameManager.AddTimeEvent(spawnMinutes, spawnSeconds, () =>
             {
-                SpawnSingleMonster(currentMonsterId, currentHpMult, currentExpMult);
+                SpawnSingleMonster(currentMonsterId, currentHpMult, currentExpMult, currentSpeedMult);
             });
             registeredEvents.Add(spawnEvent);
         }
     }
 
-    private void SpawnSingleMonster(int monsterId, float hpMultiplier, float expMultiplier)
+    private void SpawnSingleMonster(int monsterId, float hpMultiplier, float expMultiplier, float speedMultiplier)
     {
-        monsterSpawner.SpawnMonsterById(monsterId, false, hpMultiplier, expMultiplier);
+        monsterSpawner.SpawnMonsterById(monsterId, false, hpMultiplier, expMultiplier, speedMultiplier);
     }
 
     private void OnWarningTimeEnd(WaveData wave)
     {
-        // 모든 몬스터 제거
+        OnWarningTimeEndAsync().Forget();
+    }
+
+    private async UniTaskVoid OnWarningTimeEndAsync()
+    {
+        // 모든 몬스터 제거 후 사망 애니메이션 완료까지 대기
         if (monsterSpawner != null)
         {
-
-            monsterSpawner.KillAllMonsters();
+            await monsterSpawner.KillAllMonstersAsync();
         }
+
         // 보상 패널 표시
         if (stageUiManager != null)
         {
             stageUiManager.ShowWarningReward();
         }
-
     }
 
     private void SpawnBoss(WaveData wave)

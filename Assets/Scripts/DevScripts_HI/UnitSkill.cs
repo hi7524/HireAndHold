@@ -98,6 +98,17 @@ public class UnitSkill
 
         // 데미지 계산 (스킬 치명타 스탯 사용)
         float baseDamage = owner.GetAttackDamageStat().Value;
+
+        // EFFECT_TYPE 10: 공격력 퍼센트 적용
+        if (skillData.SKILL_EFFECT1_ID > 0)
+        {
+            var effectData = DataTableManager.EffectTable.Get(skillData.SKILL_EFFECT1_ID);
+            if (effectData != null && effectData.EFFECT_TYPE == 10)
+            {
+                baseDamage *= effectData.EFFECT_VALUE / 100f;
+            }
+        }
+
         var (damage, isCritical) = owner.CalculateDamageWithCrit(target, baseDamage, skillData.SKILL_CRT, skillData.SKILL_CRT_DMG);
         damage *= owner.GetHeroSkillDamageMultiplier();
 
