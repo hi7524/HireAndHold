@@ -8,10 +8,11 @@ using UnityEngine;
 /// </summary>
 public class OreDungeonAssetManager : MonoBehaviour
 {
-    [SerializeField] private OreDungeonManager manager;
+    [SerializeField] private OreDungeonManager gameManager;
+
+    public DataTable_OreDungeon OreDungeonTable { get; private set; }
 
     private bool isPreloaded;
-    private DataTable_OreDungeon oreDungeonTable;
 
 
     private void Awake()
@@ -29,7 +30,7 @@ public class OreDungeonAssetManager : MonoBehaviour
     {
         await LoadResources();
 
-        manager.Initialize(isPreloaded);
+        gameManager.Initialize(isPreloaded);
     }
 
     // Manager의 CurDungeonID에 따라 리소스를 로드하거나 캐시에서 가져옴
@@ -38,6 +39,7 @@ public class OreDungeonAssetManager : MonoBehaviour
         if (isPreloaded)
         {
             Debug.Log("캐시된 리소스 사용");
+            OreDungeonTable = DataTableManager.OreDungeonTable;
         }
         else
         {
@@ -51,8 +53,8 @@ public class OreDungeonAssetManager : MonoBehaviour
     {
         try
         {
-            oreDungeonTable = new DataTable_OreDungeon();
-            await oreDungeonTable.LoadAsync(DataTableIds.OreDungeon);
+            OreDungeonTable = new DataTable_OreDungeon();
+            await OreDungeonTable.LoadAsync(DataTableIds.OreDungeon);
             Debug.Log("OreDungeon 테이블 로드 완료");
         }
         catch (System.Exception e)
@@ -61,16 +63,10 @@ public class OreDungeonAssetManager : MonoBehaviour
         }
     }
 
-    // Manager가 호출하는 메서드 - 직접 로드한 테이블 반환
-    public DataTable_OreDungeon GetOreDungeonTable()
-    {
-        return isPreloaded ? DataTableManager.OreDungeonTable : oreDungeonTable;
-    }
-
     // 참조 누락 확인
     private bool ValidateReferences()
     {
-        if (manager == null)
+        if (gameManager == null)
         {
             Debug.LogError($"{nameof(OreDungeonManager)} 참조가 누락되었습니다.");
             return false;
