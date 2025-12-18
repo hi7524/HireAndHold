@@ -19,7 +19,16 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private Transform wallTransform;
     [SerializeField] private ExperienceCollector expCollector;
 
+    [Header("Screen Bounds")]
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private float screenPaddingPixels = 150f;
+
+    [Header("Spawn Distribution")]
+    [SerializeField] private float minSpawnDistance = 0.5f;
+    [SerializeField] private int maxRetryCount = 5;
+
     private List<Enemy> activeMonsters = new List<Enemy>();
+    private float lastSpawnX;
 
     private void Awake()
     {
@@ -53,7 +62,8 @@ public class MonsterSpawner : MonoBehaviour
         if (monsterObj == null) return;
 
         Vector3 spawnPos = spawnPoint.position;
-        spawnPos.x += UnityEngine.Random.Range(-horizontalRange, horizontalRange);
+        spawnPos.x = GetDistributedSpawnX(spawnPos);
+
         monsterObj.transform.position = spawnPos;
 
         Enemy monster = monsterObj.GetComponent<Enemy>();
@@ -160,6 +170,10 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         Vector3 spawnPos = spawnPoint.position;
+
+        // X축만 SafeArea 안으로 클램프
+        spawnPos.x = ClampToSafeAreaX(spawnPos.x, spawnPos);
+
         bossObj.transform.position = spawnPos;
 
         Enemy boss = bossObj.GetComponent<Enemy>();
@@ -220,6 +234,60 @@ public class MonsterSpawner : MonoBehaviour
 
         // 콜백 실행
         onDeath?.Invoke();
+    }
+
+    private bool GetSafeAreaScreenBounds(out float minX, out float maxX)
+    {
+        if (mainCamera == null)
+        {
+            minX = 0;
+            maxX = 0;
+            return false;
+        }
+
+        Rect safeArea = Screen.safeArea;
+        minX = safeArea.xMin + screenPaddingPixels;
+        maxX = safeArea.xMax - screenPaddingPixels;
+        return true;
+    }
+
+    private float ClampToSafeAreaX(float worldX, Vector3 referencePos)
+    {
+        if (!GetSafeAreaScreenBounds(out float minScreenX, out float maxScreenX))
+            return worldX;
+
+        // 참조 위치의 Y, Z를 유지하면서 X만 변경
+        Vector3 worldPos = new Vector3(worldX, referencePos.y, referencePos.z);
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+
+        // SafeArea 범위로 클램프
+        screenPos.x = Mathf.Clamp(screenPos.x, minScreenX, maxScreenX);
+
+        // 다시 월드 좌표로 변환 (Z 거리 유지)
+        Vector3 clampedWorldPos = mainCamera.ScreenToWorldPoint(screenPos);
+
+        return clampedWorldPos.x;
+    }
+
+    private float GetDistributedSpawnX(Vector3 referencePos)
+    {
+        float baseX = spawnPoint.position.x;
+        float candidateX = baseX;
+
+        for (int i = 0; i < maxRetryCount; i++)
+        {
+            candidateX = baseX + UnityEngine.Random.Range(-horizontalRange, horizontalRange);
+            candidateX = ClampToSafeAreaX(candidateX, referencePos);
+
+            // 최근 스폰 위치와 충분히 떨어져 있으면 사용
+            if (Mathf.Abs(candidateX - lastSpawnX) >= minSpawnDistance)
+            {
+                break;
+            }
+        }
+
+        lastSpawnX = candidateX;
+        return candidateX;
     }
 
 }

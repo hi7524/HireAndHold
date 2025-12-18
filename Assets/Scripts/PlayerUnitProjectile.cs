@@ -34,8 +34,15 @@ public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
         target = data.target;
         transform.position = data.spawnPosition;
 
-        direction = data.customDirection.normalized;
-        target = null;
+        // customDirection이 있으면 사용, 없으면 targetPosition에서 방향 계산
+        if (data.customDirection != Vector3.zero)
+        {
+            direction = data.customDirection.normalized;
+        }
+        else
+        {
+            direction = (data.targetPosition - data.spawnPosition).normalized;
+        }
     }
 
     // 레거시 호환용

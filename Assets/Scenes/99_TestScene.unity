@@ -3441,6 +3441,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 692bdf67c5456f0439d22990d828769a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  wall: {fileID: 0}
 --- !u!4 &1100007650
 Transform:
   m_ObjectHideFlags: 0
@@ -5522,6 +5523,8 @@ MonoBehaviour:
   horizontalRange: 2
   wallTransform: {fileID: 0}
   expCollector: {fileID: 0}
+  mainCamera: {fileID: 330585545}
+  screenPadding: 0.1
 --- !u!4 &1960643257
 Transform:
   m_ObjectHideFlags: 0
