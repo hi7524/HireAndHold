@@ -16,18 +16,29 @@ public class GachaResultCard : MonoBehaviour
     public async void Setup(GachaItem item)
     {
         var unitData = DataTableManager.UnitTable.Get(item.unitId);
-        if (unitData == null)
+        if (unitData == null) return;
+
+        string iconAddress;
+
+        if (item.isDuplicate)
         {
-            Debug.LogError($"[GachaResultCard] UnitData 없음: {item.unitId}");
-            return;
+            var fragmentItem = DataTableManager.ItemTable
+                .Get(unitData.FRAGMENT_ITEM_ID);
+
+            iconAddress = fragmentItem?.ITEM_ICON;
+        }
+        else
+        {
+            iconAddress = unitData.UNIT_ICON;
+        }
+        if (unitNameText != null)
+        {
+            unitNameText.text = $"ID : {item.unitId}";
         }
 
-        //unitNameText.text = unitData.NAME;
-
-        // Addressables 아이콘 로드
-        if (!string.IsNullOrEmpty(unitData.UNIT_ICON))
+        if (!string.IsNullOrEmpty(iconAddress))
         {
-            iconHandle = Addressables.LoadAssetAsync<Sprite>(unitData.UNIT_ICON);
+            iconHandle = Addressables.LoadAssetAsync<Sprite>(iconAddress);
             await iconHandle.Value.Task;
 
             if (iconHandle.Value.Status == AsyncOperationStatus.Succeeded)
@@ -35,14 +46,11 @@ public class GachaResultCard : MonoBehaviour
                 unitIcon.sprite = iconHandle.Value.Result;
                 unitIcon.enabled = true;
             }
-            else
-            {
-                Debug.LogError($"[GachaResultCard] 아이콘 로드 실패: {unitData.UNIT_ICON}");
-            }
         }
 
         ApplyRarityBackground(item.rarity);
     }
+
 
     private void OnDestroy()
     {

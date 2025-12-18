@@ -9,9 +9,6 @@ public class NormalEnforceSystem
     private readonly DataTable_NormalEnforce enforceTable;
     private readonly DataTable_Unit unitTable;
     public static DataTable_NormalEnforce SharedTable;
-    //임시 재화
-    //public int TempGold = 999999;
-    //public int TempMaterial = 9999;
 
     public NormalEnforceSystem(BattleUnitManager battleUnitManager, DataTable_NormalEnforce enforceTable,DataTable_Unit unitTable)
     {
