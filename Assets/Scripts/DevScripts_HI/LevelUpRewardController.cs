@@ -119,8 +119,6 @@ public class LevelUpRewardController : MonoBehaviour
     {
         // 패널 비활성화 시 모든 애니메이션 정리 및 카드 강제 비활성화
         CleanupAllAnimations();
-
-        rerollCost = DefaultRerollCost;
     }
 
     private void OnDestroy()
