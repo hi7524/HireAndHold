@@ -479,6 +479,11 @@ public class GridCell : MonoBehaviour, IDroppable
         gridManager.SetGridIcons(GridPosition, occupiedCells, newUnitId, newStarLevel);
 
         // 드래그 중이던 유닛 삭제 (2개가 1개로 합쳐지므로 카운트 감소)
+        var draggingUnitComponent = draggingUnit.GetComponent<Unit>();
+        if (draggingUnitComponent != null && gridManager.UnitManager != null)
+        {
+            gridManager.UnitManager.UnregisterUnit(draggingUnitComponent);
+        }
         Destroy(draggingUnit.gameObject);
         gridManager.DecrementUnitCount();
         return true;

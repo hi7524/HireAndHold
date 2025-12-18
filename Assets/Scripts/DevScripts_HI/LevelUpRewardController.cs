@@ -229,8 +229,8 @@ public class LevelUpRewardController : MonoBehaviour
         // 그리드가 꽉 차있고 모든 유닛이 2성 이상이면 무조건 스킬 뽑기
         bool forceSkillDraw = ShouldForceSkillDraw();
 
-        // 플레이어 레벨이 3의 배수일 때 또는 강제 스킬 뽑기 조건일 때 스킬 뽑기
-        if (playerExp.Level % 3 == 0 || forceSkillDraw)
+        // 강제 스킬 뽑기 조건이거나 플레이어 레벨이 3의 배수일 때 스킬 뽑기
+        if (forceSkillDraw || playerExp.Level % 3 == 0)
         {
             DrawPassiveSkills();
             SetActiveCards(skillCardUIs, true);
