@@ -111,7 +111,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lifeTime: 1
+  damageDelay: 0
   effect: {fileID: 3367681384337962786}
+  vfxEffect: {fileID: 0}
 --- !u!1001 &3206134131099045342
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -207,6 +209,30 @@ PrefabInstance:
     - target: {fileID: 4948516383853630, guid: 5bea49531fc500c408823a2e2863106f, type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.297958
+      objectReference: {fileID: 0}
+    - target: {fileID: 198157517556015438, guid: 5bea49531fc500c408823a2e2863106f, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198271889703459560, guid: 5bea49531fc500c408823a2e2863106f, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198321086533307592, guid: 5bea49531fc500c408823a2e2863106f, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198741542255655676, guid: 5bea49531fc500c408823a2e2863106f, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198861294839731928, guid: 5bea49531fc500c408823a2e2863106f, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198907911106580028, guid: 5bea49531fc500c408823a2e2863106f, type: 3}
+      propertyPath: looping
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 199057218975048044, guid: 5bea49531fc500c408823a2e2863106f, type: 3}
       propertyPath: m_Materials.Array.size
