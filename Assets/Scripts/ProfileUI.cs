@@ -8,6 +8,7 @@ public class ProfileUI : MonoBehaviour
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text expText;
     [SerializeField] private Slider expSlider;
+    [SerializeField] private TMP_Text stageProgressText;
 
     private void OnEnable()
     {
@@ -32,5 +33,6 @@ public class ProfileUI : MonoBehaviour
 
         expSlider.maxValue = maxExp;
         expSlider.value = exp;
+        stageProgressText.text = $"스테이지 {PlayData.LastClearedStage}";
     }
 }

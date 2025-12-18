@@ -239,15 +239,6 @@ public class Unit : MonoBehaviour
             attackCooltime = new Stat(unitData.ATTACK_COOLTIME);
             criticalRate = new Stat(unitData.ATTACK_CRITICAL);
             criticalDamage = new Stat(unitData.CRITICAL_DAMAGE);
-
-            //  저장된 영구 강화 불러오기 예시
-            // PlayerUpgradeData upgradeData = SaveManager.Instance.LoadUpgradeData();
-            // Attack.SetUpgradeValue(upgradeData.AttackUpgrade);
-            // Defense.SetUpgradeValue(upgradeData.DefenseUpgrade);
-            // MaxHealth.SetUpgradeValue(upgradeData.HealthUpgrade);
-
-            //ApplyEnforceBonus();
-            //강화 데이터 유닛에 저장(junseo)
         }
     }
 
@@ -256,14 +247,13 @@ public class Unit : MonoBehaviour
     {
         ResetHeroEnforceValues();
 
-        // DatabaseManager가 없으면 스킵 (TestScene 등)
+        // DatabaseManager가 없으면 스킵 
         if (DatabaseManager.Instance == null)
         {
             Debug.Log($"[Enforce] DatabaseManager가 없어 강화 적용 스킵 (ID:{UnitID})");
             return;
         }
 
-        //string id = UnitID.ToString();
         string id = BaseCharacterID.ToString();
         var character = DatabaseManager.Instance.GetCharacter(id);
 
@@ -290,24 +280,21 @@ public class Unit : MonoBehaviour
             }
 
             attackDamage.RemoveModifiersBySource("NormalEnforce");
-            attackDamage.AddModifier(new StatModifier(totalAtkUp, ModifierType.Flat, "NormalEnforce")
-            );
-
+            attackDamage.AddModifier(new StatModifier(totalAtkUp, ModifierType.Flat, "NormalEnforce"));
         }
 
         // HERO 강화 효과 적용 (모든 레벨 누적)
         int heroLv = character.heroEnforceLevel;
+
         if (heroLv <= 0)
         {
-            Debug.Log("[HeroEnforce] Lv 0 → Skip");
+            Debug.Log("[HeroEnforce] Lv 0 (미강화) → Skip");
             return;
         }
 
         // 현재 유닛의 스킬
         int skill1 = unitData.UNIT_SKILL1;
         int skill2 = unitData.UNIT_SKILL2;
-
-        //1레벨부터 현재 레벨까지 모든 효과 누적 적용
         for (int lv = 1; lv <= heroLv; lv++)
         {
             var heroData = DataTableManager.heroEnforceTable.Get(BaseCharacterID, lv);
@@ -393,8 +380,6 @@ public class Unit : MonoBehaviour
 
         Debug.Log($"[HeroEnforce Final] atkMul={heroAttackMultiplier}, dmgMul={heroSkillDamageMultiplier}, proj={heroProjectileBonus}, cool={heroSkillCooltimeBonus}");
     }
-
-
     // 유닛 데이터에서 스킬 로드 및 추가
     private void SetSkills()
     {

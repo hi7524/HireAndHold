@@ -92,7 +92,7 @@ namespace GameData
             this.isLocked = false;
             this.obtainedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             this.enforceLevel = 1;
-            this.heroEnforceLevel = 1;
+            this.heroEnforceLevel = 0;
         }
     }
 

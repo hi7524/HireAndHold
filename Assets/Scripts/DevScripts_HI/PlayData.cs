@@ -79,8 +79,10 @@ public static class PlayData
         OnCurrencyChanged?.Invoke();
     }
 
-
-
+    public static void SetLastClearedStageImmediate(int stage)
+    {
+        LastClearedStage = stage;
+    }
     //DatabaseManager에서 데이터 동기화
     public static void SyncFromDatabase()
     {
@@ -281,11 +283,11 @@ public static class PlayData
         return true;
     }
 
-    public static void SetLastClearedStageImmediate(int stageId)
-    {
-        LastClearedStage = stageId;
-        OnProfileChanged?.Invoke();
-    }
+    //public static void SetLastClearedStageImmediate(int stageId)
+    //{
+    //    LastClearedStage = stageId;
+    //    OnProfileChanged?.Invoke();
+    //}
 
     public static bool IsAnyPresetSaved()
     {
