@@ -36,14 +36,14 @@ public class GridLayoutData : ScriptableObject
 [Serializable]
 public class CrossBuffData
 {
-    public string horizontalBuffName = "Horizontal Buff";
-    public string verticalBuffName = "Vertical Buff";
+    public string horizontalBuffName = "가로 스테이지 버프";
+    public string verticalBuffName = "세로 스테이지 버프";
     public Vector2Int centerPos;
 }
 
 [Serializable]
 public class RegionBuffData
 {
-    public string buffName = "Region Buff";
+    public string buffName = "영역 스테이지 버프";
     public List<Vector2Int> regionCells = new List<Vector2Int>();
 }
