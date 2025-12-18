@@ -299,6 +299,12 @@ public class LevelUpRewardController : MonoBehaviour
                 selectedSequence.Append(card.transform.DOLocalMoveY(originalPos.y + SelectedCardMoveY, CardAnimDuration).SetEase(Ease.OutQuad));
                 selectedSequence.Join(card.transform.DOScale(SelectedCardScale, CardAnimDuration).SetEase(Ease.OutQuad));
 
+                // 카드가 위로 올라간 후 별 색칠 시작
+                selectedSequence.AppendCallback(() =>
+                {
+                    bool canFillStar = card.FillNextStar();
+                });
+
                 selectedSequence.AppendInterval(SelectedCardWaitTime);
 
                 selectedSequence.Append(card.transform.DOScale(0f, CardAnimDuration).SetEase(Ease.InBack));

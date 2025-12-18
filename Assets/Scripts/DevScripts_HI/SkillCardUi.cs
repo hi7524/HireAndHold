@@ -4,6 +4,8 @@ using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using System;
+using DG.Tweening;
+using AssetKits.ParticleImage;
 
 public class SkillCardUi : BaseCardUi
 {
@@ -18,6 +20,7 @@ public class SkillCardUi : BaseCardUi
     [SerializeField] private Image[] starIcons;
     [SerializeField] private GameObject focusImg;
     [SerializeField] private GameObject starsRoot;  // 별 아이콘들의 부모 (숨기기 위해)
+    [SerializeField] private ParticleImage starEffect;
     [Space]
     [SerializeField] private Color defaultColor;
     [SerializeField] private Color filledColor;
@@ -214,6 +217,65 @@ public class SkillCardUi : BaseCardUi
             else
                 SetIconColor(starIcons[i], defaultColor);
         }
+    }
+
+    /// <summary>
+    /// 다음 별을 색칠하는 애니메이션 (스킬 레벨업용)
+    /// </summary>
+    /// <returns>색칠할 별이 있으면 true, 이미 최대 레벨이면 false</returns>
+    public bool FillNextStar()
+    {
+        if (starIcons == null || starIcons.Length == 0) return false;
+
+        // 현재 스킬 레벨 계산 (색칠된 별 개수)
+        int currentStarLevel = GetStarLevelFromSkillId(currentSkillId);
+        int currentFilledStars = currentStarLevel - 1; // 0-based index
+
+        // 이미 최대 레벨 (3성)이면 색칠할 별이 없음
+        if (currentFilledStars >= starIcons.Length)
+            return false;
+
+        // 다음 별을 색칠 (애니메이션 효과)
+        int nextStarIndex = currentFilledStars;
+        if (nextStarIndex < starIcons.Length)
+        {
+            // 별 색칠 애니메이션
+            starIcons[nextStarIndex].transform.DOKill();
+
+            // 파티클 이펙트를 별 위치로 이동 및 재생
+            if (starEffect != null)
+            {
+                // RectTransform 위치 설정
+                if (starEffect.transform is RectTransform starEffectRect && starIcons[nextStarIndex].transform is RectTransform starRect)
+                {
+                    starEffectRect.position = starRect.position;
+                }
+                else
+                {
+                    starEffect.transform.position = starIcons[nextStarIndex].transform.position;
+                }
+
+                starEffect.gameObject.SetActive(true);
+
+                // 기존 재생 중인 파티클 정지 후 재생
+                starEffect.Play();
+            }
+
+            // 시퀀스로 스케일과 색칠 동시에 처리
+            Sequence starSequence = DOTween.Sequence();
+            starSequence.SetUpdate(true);
+
+            // 색칠과 동시에 커지기 시작
+            starSequence.AppendCallback(() => SetIconColor(starIcons[nextStarIndex], filledColor));
+            starSequence.Join(starIcons[nextStarIndex].transform.DOScale(1.5f, 0.2f).SetEase(Ease.OutQuad));
+
+            // 원래 크기로 돌아오기
+            starSequence.Append(starIcons[nextStarIndex].transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
+
+            return true;
+        }
+
+        return false;
     }
 
     public void SetLevelUpRewardController(LevelUpRewardController levelUpRewardController)
