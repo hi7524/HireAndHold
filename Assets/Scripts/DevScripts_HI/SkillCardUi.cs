@@ -6,6 +6,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using System;
 using DG.Tweening;
 using AssetKits.ParticleImage;
+using TMPro;
 
 public class SkillCardUi : BaseCardUi
 {
@@ -20,6 +21,7 @@ public class SkillCardUi : BaseCardUi
     [SerializeField] private Image[] starIcons;
     [SerializeField] private GameObject focusImg;
     [SerializeField] private GameObject starsRoot;  // 별 아이콘들의 부모 (숨기기 위해)
+    [SerializeField] private TextMeshProUGUI descriptionText;  // 패시브 스킬 설명 텍스트
     [SerializeField] private ParticleImage starEffect;
     [Space]
     [SerializeField] private Color defaultColor;
@@ -166,6 +168,7 @@ public class SkillCardUi : BaseCardUi
 
     private void ShowStars(bool show)
     {
+        // 별 아이콘 표시/숨김
         if (starsRoot != null)
         {
             starsRoot.SetActive(show);
@@ -177,6 +180,12 @@ public class SkillCardUi : BaseCardUi
                 if (star != null)
                     star.gameObject.SetActive(show);
             }
+        }
+
+        // 설명 텍스트 표시/숨김
+        if (descriptionText != null)
+        {
+            descriptionText.gameObject.SetActive(show);
         }
     }
 
@@ -192,12 +201,7 @@ public class SkillCardUi : BaseCardUi
 
         // 스킬 이름 설정 (StringTable에서 가져오기)
         if (text != null)
-        {
-            if (int.TryParse(skillData.SKILL_NAME, out int nameId))
-                text.text = DataTableManager.StringTable.Get(nameId);
-            else
-                text.text = skillData.SKILL_NAME;
-        }
+            text.text = GetLocalizedString(skillData.SKILL_NAME);
 
         // PlayerSkill은 별 레벨이 없으므로 별 UI 숨김 (0개)
         UpdateStarUI(0);
@@ -357,12 +361,11 @@ public class SkillCardUi : BaseCardUi
 
         // 이펙트 이름 설정 (StringTable에서 가져오기)
         if (text != null)
-        {
-            if (int.TryParse(effectData.EFFECT_NAME, out int nameId))
-                text.text = DataTableManager.StringTable.Get(nameId);
-            else
-                text.text = effectData.EFFECT_NAME;
-        }
+            text.text = GetLocalizedString(effectData.EFFECT_NAME);
+
+        // 패시브 스킬 설명 설정 (StringTable에서 가져오기)
+        if (descriptionText != null)
+            descriptionText.text = GetLocalizedString(effectData.EFFECT_DESCRIPTION);
 
         int starLevel = GetStarLevelFromSkillId(currentSkillId);
         UpdateStarUI(starLevel - 1);
@@ -419,6 +422,18 @@ public class SkillCardUi : BaseCardUi
         }
     }
 
+    #region Helper Methods
+
+    /// <summary>
+    /// StringTable에서 지역화된 문자열 가져오기
+    /// </summary>
+    private string GetLocalizedString(string value)
+    {
+        if (int.TryParse(value, out int id))
+            return DataTableManager.StringTable.Get(id);
+        return value;
+    }
+
     private int GetStarLevelFromSkillId(int skillId)
     {
         if (skillId < 22070 || skillId > 22087) return 1;
@@ -431,6 +446,8 @@ public class SkillCardUi : BaseCardUi
         if (img != null)
             img.color = color;
     }
+
+    #endregion
 
     private void OnDestroy()
     {

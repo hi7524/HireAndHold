@@ -42,7 +42,8 @@ public class LevelUpRewardController : MonoBehaviour
     public Dictionary<int, Sprite> SpriteCache => spriteCache; // 테스트용**
 
     private bool isSelectedReward = false;
-    private int defaultGoldReward = 50;
+    private int defaultGoldReward = 25; // 보상 패스 시 지급 골드
+    private int passiveSkillGoldReward = 50; // 패시브 스킬 골드 카드 보상
     private bool isSkillCardSelecting = false; // 스킬 카드 선택 중 플래그
 
     // 애니메이션 상수
@@ -533,7 +534,7 @@ public class LevelUpRewardController : MonoBehaviour
             else
             {
                 // 스킬이 부족하면 골드 카드로 대체
-                skillCardUIs[i].SetAsGoldCard(defaultGoldReward);
+                skillCardUIs[i].SetAsGoldCard(passiveSkillGoldReward);
                 skillCardUIs[i].gameObject.SetActive(true);
             }
         }
