@@ -11,7 +11,7 @@ public class StageUiManager : MonoBehaviour
      [Header("Uis")]
     [SerializeField] private GameObject gameControllBtns;
     [SerializeField] private TextMeshProUGUI timerText;
-    [SerializeField] private TextMeshProUGUI goldText;
+    [SerializeField] private TextMeshProUGUI creditText;
     [SerializeField] private TextMeshProUGUI speedLevelText;
     [SerializeField] private TextMeshProUGUI infoText;
     [SerializeField] private BossHPBar bossHealthBar;
@@ -95,9 +95,9 @@ public class StageUiManager : MonoBehaviour
         gameControllBtns.SetActive(isActive);
     }
 
-    public void UpdateStageGoldText(int curGold)
+    public void UpdateCreditText(int curGold)
     {
-        goldText.text = $"{curGold:N0}G";
+        creditText.text = $"{curGold:N0}";
     }
 
     public void ShowWarningPanel()
