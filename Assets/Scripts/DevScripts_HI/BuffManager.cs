@@ -232,7 +232,7 @@ public class BuffManager : MonoBehaviour
     private void ActivateBuff(string buffName)
     {
         if (uiManager != null)
-            uiManager.UpdateInfoText($"{buffName} 버프 활성화!");
+            uiManager.UpdateInfoText($"{buffName} 활성화!");
 
         if (gridManager != null)
         {
@@ -245,7 +245,7 @@ public class BuffManager : MonoBehaviour
     private void DeactivateBuff(string buffName)
     {
         if (uiManager != null)
-            uiManager.UpdateInfoText($"{buffName} 버프 해제!");
+            uiManager.UpdateInfoText($"{buffName} 해제!");
 
         if (gridManager != null)
         {
