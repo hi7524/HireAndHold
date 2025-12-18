@@ -52,6 +52,14 @@ public class FlagOfCourageSkill : PlayerSkillBase, IUnitManagerInjectable
 
         foreach (Unit unit in units)
         {
+            // 버프 이펙트 표시 (StatusEffectManager 사용)
+            var statusEffectManager = unit.GetComponent<StatusEffectManager>();
+            if (statusEffectManager != null)
+            {
+                var buffEffect = new StatusEffectBuff(StatusEffectType.AttackUp, buffDuration);
+                statusEffectManager.AddStatusEffect(StatusEffectType.AttackUp, buffEffect);
+            }
+
             // 공격력 버프 적용
             Stat attackStat = unit.GetAttackDamageStat();
             if (attackStat != null)

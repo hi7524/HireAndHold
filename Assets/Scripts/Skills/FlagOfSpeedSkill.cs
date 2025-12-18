@@ -52,6 +52,14 @@ public class FlagOfSpeedSkill : PlayerSkillBase, IUnitManagerInjectable
 
         foreach (Unit unit in units)
         {
+            // 버프 이펙트 표시 (StatusEffectManager 사용)
+            var statusEffectManager = unit.GetComponent<StatusEffectManager>();
+            if (statusEffectManager != null)
+            {
+                var buffEffect = new StatusEffectBuff(StatusEffectType.DamageUpPercent, buffDuration);
+                statusEffectManager.AddStatusEffect(StatusEffectType.DamageUpPercent, buffEffect);
+            }
+
             // 공격속도 버프 적용 (쿨타임 감소)
             // 공격속도 75% 증가 = 쿨타임 약 43% 감소 (1 / 1.75 ≈ 0.57)
             Stat cooldownStat = unit.GetAttackCooltimeStat();
