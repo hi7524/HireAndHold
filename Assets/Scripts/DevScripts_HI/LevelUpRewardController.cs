@@ -23,6 +23,8 @@ public class LevelUpRewardController : MonoBehaviour
     [SerializeField] private GridManager gridManager;
     [SerializeField] private BattleUnitManager battleUnitManager;
     [SerializeField] private StageManager stageManager;
+    [SerializeField] private GameObject buffPanel;
+    [SerializeField] private GameObject skillButton;
 
     private int rerollCost = 50;
 
@@ -45,6 +47,7 @@ public class LevelUpRewardController : MonoBehaviour
     private int defaultGoldReward = 25; // 보상 패스 시 지급 골드
     private int passiveSkillGoldReward = 50; // 패시브 스킬 골드 카드 보상
     private bool isSkillCardSelecting = false; // 스킬 카드 선택 중 플래그
+    private bool skillActived = false;
 
     // 애니메이션 상수
     private const float CardAnimDuration = 0.25f; // 카드 스케일 애니메이션 시간
@@ -114,12 +117,25 @@ public class LevelUpRewardController : MonoBehaviour
     {
         // 패널 활성화 시 모든 카드 상태 초기화
         ResetAllCards();
+        
+        buffPanel.SetActive(false);
+
+        if (skillButton.activeSelf)
+            skillActived = true;
+
+        if (skillActived)
+            skillButton.SetActive(false);
     }
 
     private void OnDisable()
     {
         // 패널 비활성화 시 모든 애니메이션 정리 및 카드 강제 비활성화
         CleanupAllAnimations();
+
+        buffPanel.SetActive(true);
+
+        if (skillActived)
+            skillButton.SetActive(true);
     }
 
     private void OnDestroy()
