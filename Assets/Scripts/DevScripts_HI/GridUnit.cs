@@ -91,11 +91,23 @@ public class GridUnit : MonoBehaviour, IDraggable
         if (gridManager == null || GridData == null)
             return;
 
-        // 유닛의 현재 월드 위치를 그리드 위치로 변환
-        Vector2Int currentGridPos = gridManager.WorldToGridPosition(transform.position);
+        // OverlapPoint로 해당 위치의 모든 collider를 확인
+        Collider2D[] colliders = Physics2D.OverlapPointAll(transform.position);
+        foreach (var collider in colliders)
+        {
+            GridCell cell = collider.GetComponent<GridCell>();
+            if (cell != null)
+            {
+                // GridCell 위에 있을 때만 색상 업데이트
+                Vector2Int currentGridPos = cell.GridPosition;
+                gridManager.CanPlaceUnit(currentGridPos, GridData.GetOccupiedCells());
+                return;
+            }
+        }
 
-        // 현재 그리드 위치 기준으로 배치 가능 여부 체크 및 색상 업데이트
-        gridManager.CanPlaceUnit(currentGridPos, GridData.GetOccupiedCells());
+        // GridCell 위에 없으면 색상 초기화
+        gridManager.ClearAllGridsColor();
+        gridManager.ChangeOccupiedCellColor();
     }
 
     public void OnDragEnd()

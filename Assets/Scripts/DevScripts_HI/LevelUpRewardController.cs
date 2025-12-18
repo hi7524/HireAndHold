@@ -244,6 +244,14 @@ public class LevelUpRewardController : MonoBehaviour
         else
         {
             DrawUnitID();
+
+            // 드래그 상태 활성화 (카드 활성화 전에 설정)
+            for (int i = 0; i < unitCardUIs.Length; i++)
+            {
+                unitCardUIs[i].SetDragState(true);
+                unitCardUIs[i].SetColor();
+            }
+
             SetActiveCards(unitCardUIs, true);
         }
     }

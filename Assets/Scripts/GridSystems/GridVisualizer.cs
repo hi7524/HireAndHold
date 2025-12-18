@@ -95,14 +95,11 @@ public class GridVisualizer : MonoBehaviour
 
         foreach (var pos in positions)
         {
-            if (IsWithinBounds(pos))
+            GridCell cell = GetGridCellAt(pos);
+            if (cell != null)
             {
-                GridCell cell = gridCells[pos.x, pos.y];
-                if (cell != null)
-                {
-                    cell.SetColor(highlightColor);
-                    highlightedCells.Add(cell);
-                }
+                cell.SetColor(highlightColor);
+                highlightedCells.Add(cell);
             }
         }
     }
@@ -135,13 +132,10 @@ public class GridVisualizer : MonoBehaviour
 
         foreach (var pos in allPositions)
         {
-            if (IsWithinBounds(pos))
+            GridCell cell = GetGridCellAt(pos);
+            if (cell != null)
             {
-                GridCell cell = gridCells[pos.x, pos.y];
-                if (cell != null)
-                {
-                    cell.SetColor(color);
-                }
+                cell.SetColor(color);
             }
         }
     }
