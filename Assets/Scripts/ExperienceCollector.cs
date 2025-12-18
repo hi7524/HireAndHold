@@ -9,7 +9,8 @@ public class ExperienceCollector : MonoBehaviour
     [Space]
     [SerializeField] private PlayerExperience playerExp;
     
-    public event Action<Vector3> OnCollectTriggered;
+    public event Action<Vector3> OnCollectTriggered;       // Experience용
+    public event Action<Vector3> OnItemCollectTriggered;   // DropItem용
 
     private float lastCollectedTime;
 
@@ -26,6 +27,7 @@ public class ExperienceCollector : MonoBehaviour
     public void TriggerCollection()
     {
         OnCollectTriggered?.Invoke(transform.position);
+        OnItemCollectTriggered?.Invoke(transform.position);
     }
 
     public void CollectExperience(int amount)
