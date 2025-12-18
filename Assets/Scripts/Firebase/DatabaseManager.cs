@@ -141,14 +141,14 @@ public class DatabaseManager : MonoBehaviour
                 maxStamina = 120,
                 lastStaminaTime = now,
                 summonTicket = 10,
-                enhanceStone = 0,
+                enhanceStone = 1000,
                 skillPoint = 0
             },
             activePresetIndex = 0,
             settings = new UserSettings()
         };
 
-        int[] initialUnitIds = { 11101, 11104, 11107, 11110, 11113 };
+        int[] initialUnitIds = { 11101, 11119, 11107, 11110, 11113 };
 
         foreach (int id in initialUnitIds)
         {
@@ -378,6 +378,7 @@ public class DatabaseManager : MonoBehaviour
         {
             CurrentUser.currency.enhanceStone += amount;
             PlayData.SetEnhanceStoneImmediate(CurrentUser.currency.enhanceStone);
+            PlayData.NotifyCurrencyChanged();
         }
 
         return success;
@@ -529,33 +530,6 @@ public class DatabaseManager : MonoBehaviour
     {
         return new List<OwnedCharacter>(CurrentUser.characters.Values);
     }
-    //private void AddTempUnitsForDebug()
-    //{
-    //    AddTempUnit("11119");
-
-    //    PlayData.SyncCharactersFromDatabase();
-
-    //    Debug.Log("[Debug] 임시 유닛 PlayData 반영 완료");
-    //}
-
-    //private void AddTempUnit(string unitId)
-    //{
-    //    if (!CurrentUser.characters.ContainsKey(unitId))
-    //    {
-    //        CurrentUser.characters[unitId] = new OwnedCharacter
-    //        {
-    //            id = unitId,
-    //            level = 1,
-    //            star = 1,
-    //            exp = 0,
-    //            awakening = 0,
-    //            enforceLevel = 0,
-    //            heroEnforceLevel = 0
-    //        };
-
-    //        Debug.Log($"[Debug] 임시 유닛 추가됨: {unitId}");
-    //    }
-    //}
 
 
     #endregion
@@ -633,33 +607,26 @@ public class DatabaseManager : MonoBehaviour
         string key = itemId.ToString();
         string path = $"users/{UserId}/items/{key}";
 
-        // items가 null이면 초기화
-        if (CurrentUser.items == null)
-        {
-            CurrentUser.items = new Dictionary<string, int>();
-        }
-
         bool success = await database.IncrementValueAsync(path, amount);
 
         if (success)
         {
             if (!CurrentUser.items.ContainsKey(key))
-            {
                 CurrentUser.items[key] = 0;
-            }
+
             CurrentUser.items[key] += amount;
 
-            // 0 이하면 제거
             if (CurrentUser.items[key] <= 0)
-            {
                 CurrentUser.items.Remove(key);
-            }
 
-            Debug.Log($"[DB] 아이템 변경: {itemId} ({amount:+#;-#;0}), 현재: {GetItemCount(itemId)}");
+            int newCount = GetItemCount(itemId);
+            PlayData.SetItemCountImmediate(itemId, newCount);
+            PlayData.NotifyCurrencyChanged();
         }
 
         return success;
     }
+
 
     /// <summary>
     /// 아이템 수량 조회
@@ -698,7 +665,19 @@ public class DatabaseManager : MonoBehaviour
         if (starRating > progress.starRating)
             progress.starRating = starRating;
 
+        int stageNumber = int.Parse(stageId);
+
+        if (stageNumber > CurrentUser.profile.highestStage)
+        {
+            CurrentUser.profile.highestStage = stageNumber;
+            await SaveProfileAsync();
+
+            PlayData.SetLastClearedStageImmediate(stageNumber);
+        }
+
         return await SaveStageProgressAsync(stageId);
+
+
     }
 
     public StageProgress GetStageProgress(string stageId)

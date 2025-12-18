@@ -11,7 +11,7 @@ public class DataTable_HeroEnforce : DataTable
         public int Hero_Enforce_LV { get; set; }
         public int Hero_Enforce_EffectID { get; set; }
         public int IngredientID { get; set; }
-        public float IngredientNum { get; set; }
+        public int IngredientNum { get; set; }
         public int Gold_Cost { get; set; }
 
         public int Apply_Unit_ID_1 { get; set; }

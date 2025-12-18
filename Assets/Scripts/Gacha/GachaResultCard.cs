@@ -11,6 +11,13 @@ public class GachaResultCard : MonoBehaviour
     [SerializeField] private TextMeshProUGUI unitNameText;
     [SerializeField] private Image rarityBackground;
 
+    [Header("Overlays")]
+    [SerializeField] private GameObject newBadge;
+    [SerializeField] private GameObject fragmentOverlay;
+
+    [Header("Visual Control")]
+    [SerializeField] private CanvasGroup cardCanvasGroup;
+
     private AsyncOperationHandle<Sprite>? iconHandle;
 
     public async void Setup(GachaItem item)
@@ -33,7 +40,7 @@ public class GachaResultCard : MonoBehaviour
         }
         if (unitNameText != null)
         {
-            unitNameText.text = $"ID : {item.unitId}";
+            unitNameText.text = $"{item.unitName}";
         }
 
         if (!string.IsNullOrEmpty(iconAddress))
@@ -49,6 +56,30 @@ public class GachaResultCard : MonoBehaviour
         }
 
         ApplyRarityBackground(item.rarity);
+
+        if(newBadge != null)
+        {
+            newBadge.SetActive(item.isNew);
+        }
+
+        if (item.isDuplicate)
+        {
+            // 카드 톤 다운 
+            if (cardCanvasGroup != null)
+                cardCanvasGroup.alpha = 0.6f;
+
+            // 조각 오버레이 표시
+            if (fragmentOverlay != null)
+                fragmentOverlay.SetActive(true);    
+        }
+        else
+        {
+            if (cardCanvasGroup != null)
+                cardCanvasGroup.alpha = 1f;
+
+            if (fragmentOverlay != null)
+                fragmentOverlay.SetActive(false);
+        }
     }
 
 

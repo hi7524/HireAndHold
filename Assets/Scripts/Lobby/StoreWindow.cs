@@ -321,11 +321,11 @@ public class StoreWindow : GenericWindow
         // 상태 리셋
         isPlaying = false;
         
-        // 결과 패널 즉시 닫기
-        if (gachaResultPanel != null)
-        {
-            gachaResultPanel.SetActive(false);
-        }
+        //// 결과 패널 즉시 닫기
+        //if (gachaResultPanel != null)
+        //{
+        //    gachaResultPanel.SetActive(false);
+        //}
         
         // 카드들 정리
         ClearResultCards();

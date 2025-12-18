@@ -108,10 +108,9 @@ public class NormalEnforceSystem
         }
 
         // PlayData를 통한 재화 차감 (내부에서 DB 동기화)
-        PlayData.AddGold(-data.Gold_Cost);
+        await DatabaseManager.Instance.AddGoldAsync(-data.Gold_Cost);
+        await DatabaseManager.Instance.AddEnhanceStoneAsync(-data.IngredientNum);
 
-        int requiredStone = Mathf.RoundToInt(data.IngredientNum);
-        PlayData.AddEnhanceStone(-requiredStone);
 
         // 유닛에 강화 적용
         ApplyEnforceToUnit(unit, data);
@@ -220,7 +219,7 @@ public class NormalEnforceSystem
         // 현재 공격력 + 다음 강화 효과
         return currAtk + nextAtkUp;
     }
-
+    
 
 
 
