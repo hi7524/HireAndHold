@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using TMPro;
 
 public class LevelUpRewardController : MonoBehaviour
 {
@@ -11,10 +12,11 @@ public class LevelUpRewardController : MonoBehaviour
     [Header("UI")]
     [SerializeField] private Button reRollBtn;
     [SerializeField] private Button confirmBtn;
+    [SerializeField] private TextMeshProUGUI rerollCostText;
     [Header("Others")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private StageUiManager uiManager;
-    [SerializeField] private PlayerStageGold playerStageGold;
+    [SerializeField] private PlayerStageGold playerCredit;
     [SerializeField] private PlayerExperience playerExp;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
     [SerializeField] private DragManager dragManager;
@@ -63,7 +65,7 @@ public class LevelUpRewardController : MonoBehaviour
         layoutGroup = GetComponent<HorizontalLayoutGroup>();
 
         playerExp.OnLevelUp += DrawLevelUpReward;
-        playerStageGold.OnChangeGold += UpdateRerollBtn;
+        playerCredit.OnChangeGold += UpdateRerollBtn;
 
         // 드래그 이벤트 구독
         if (dragManager != null)
@@ -117,14 +119,12 @@ public class LevelUpRewardController : MonoBehaviour
     {
         // 패널 비활성화 시 모든 애니메이션 정리 및 카드 강제 비활성화
         CleanupAllAnimations();
-
-        rerollCost = DefaultRerollCost;
     }
 
     private void OnDestroy()
     {
         playerExp.OnLevelUp -= DrawLevelUpReward;
-        playerStageGold.OnChangeGold -= UpdateRerollBtn;
+        playerCredit.OnChangeGold -= UpdateRerollBtn;
 
         // 드래그 이벤트 구독 해제
         if (dragManager != null)
@@ -227,8 +227,8 @@ public class LevelUpRewardController : MonoBehaviour
         // 그리드가 꽉 차있고 모든 유닛이 2성 이상이면 무조건 스킬 뽑기
         bool forceSkillDraw = ShouldForceSkillDraw();
 
-        // 플레이어 레벨이 3의 배수일 때 또는 강제 스킬 뽑기 조건일 때 스킬 뽑기
-        if (playerExp.Level % 3 == 0 || forceSkillDraw)
+        // 강제 스킬 뽑기 조건이거나 플레이어 레벨이 3의 배수일 때 스킬 뽑기
+        if (forceSkillDraw || playerExp.Level % 3 == 0)
         {
             DrawPassiveSkills();
             SetActiveCards(skillCardUIs, true);
@@ -242,6 +242,14 @@ public class LevelUpRewardController : MonoBehaviour
         else
         {
             DrawUnitID();
+
+            // 드래그 상태 활성화 (카드 활성화 전에 설정)
+            for (int i = 0; i < unitCardUIs.Length; i++)
+            {
+                unitCardUIs[i].SetDragState(true);
+                unitCardUIs[i].SetColor();
+            }
+
             SetActiveCards(unitCardUIs, true);
         }
     }
@@ -290,6 +298,12 @@ public class LevelUpRewardController : MonoBehaviour
 
                 selectedSequence.Append(card.transform.DOLocalMoveY(originalPos.y + SelectedCardMoveY, CardAnimDuration).SetEase(Ease.OutQuad));
                 selectedSequence.Join(card.transform.DOScale(SelectedCardScale, CardAnimDuration).SetEase(Ease.OutQuad));
+
+                // 카드가 위로 올라간 후 별 색칠 시작
+                selectedSequence.AppendCallback(() =>
+                {
+                    bool canFillStar = card.FillNextStar();
+                });
 
                 selectedSequence.AppendInterval(SelectedCardWaitTime);
 
@@ -394,8 +408,8 @@ public class LevelUpRewardController : MonoBehaviour
         // 보상을 선택하지 않은채로 확인 버튼을 누를 경우 25G 지급 (인게임 골드)
         if (!isSelectedReward)
         {
-            playerStageGold.AddGold(defaultGoldReward);
-            uiManager.UpdateInfoText($"보상 선택을 패스하고 {defaultGoldReward}G 지급");
+            playerCredit.AddCredit(defaultGoldReward);
+            uiManager.UpdateInfoText($"보상 선택을 패스하고 {defaultGoldReward}크레딧 지급");
         }
 
         // 스킬은 이미 카드 클릭 시 적용되었으므로 여기서는 처리 안 함
@@ -533,11 +547,13 @@ public class LevelUpRewardController : MonoBehaviour
     // 리롤 버튼 상호작용 상태 설정
     private void UpdateRerollBtn()
     {
+        rerollCostText.text =  rerollCost.ToString();
+
         // 이미 보상을 획득했으면 리롤 버튼 상태 업데이트 안 함
         if (isSelectedReward)
             return;
 
-        if (playerStageGold.Gold < rerollCost)
+        if (playerCredit.Credit < rerollCost)
             reRollBtn.interactable = false;
         else
             reRollBtn.interactable = true;
@@ -546,8 +562,23 @@ public class LevelUpRewardController : MonoBehaviour
     // 리롤
     public void OnClickRerollBtn()
     {
-        if (playerStageGold.UseGold(rerollCost))
+        if (playerCredit.UseCredit(rerollCost))
         {
+            // 버튼 스케일 애니메이션 (기존 애니메이션 정리 후 실행)
+            if (reRollBtn != null)
+            {
+                reRollBtn.transform.DOKill();
+                reRollBtn.transform.DOScale(0.9f, 0.1f)
+                    .SetEase(Ease.OutQuad)
+                    .SetUpdate(true)
+                    .OnComplete(() =>
+                    {
+                        reRollBtn.transform.DOScale(1f, 0.1f)
+                            .SetEase(Ease.OutQuad)
+                            .SetUpdate(true);
+                    });
+            }
+
             // 선택된 스킬 카드 초기화
             if (selectedSkillCard != null)
             {

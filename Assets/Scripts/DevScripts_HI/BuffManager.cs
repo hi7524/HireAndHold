@@ -98,17 +98,17 @@ public class BuffManager : MonoBehaviour
 
         // 전체 채우기 버프 체크
         CheckFilledAllCells();
-        if (isFilledAllGrids && !ActivatedBuffs.Contains("FullGrid"))
+        if (isFilledAllGrids && !ActivatedBuffs.Contains("컴플리트 버프"))
         {
-            ActivateBuff("FullGrid");
-            ActivatedBuffs.Add("FullGrid");
+            ActivateBuff("컴플리트 버프");
+            ActivatedBuffs.Add("컴플리트 버프");
 
             GlobalBuffPercentage += TotalBuffRate;
         }
-        else if (!isFilledAllGrids && ActivatedBuffs.Contains("FullGrid"))
+        else if (!isFilledAllGrids && ActivatedBuffs.Contains("컴플리트 버프"))
         {
-            DeactivateBuff("FullGrid");
-            ActivatedBuffs.Remove("FullGrid");
+            DeactivateBuff("컴플리트 버프");
+            ActivatedBuffs.Remove("컴플리트 버프");
 
             GlobalBuffPercentage -= TotalBuffRate;
         }
@@ -231,8 +231,6 @@ public class BuffManager : MonoBehaviour
     // 버프 활성화
     private void ActivateBuff(string buffName)
     {
-        Debug.Log($"[BuffManager] 버프 활성화: {buffName}");
-
         if (uiManager != null)
             uiManager.UpdateInfoText($"{buffName} 버프 활성화!");
 

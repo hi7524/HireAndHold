@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -32,6 +33,9 @@ public class GridUnit : MonoBehaviour, IDraggable
     // 드래그 프록시 관리
     private List<GridUnitDragProxy> dragProxies = new List<GridUnitDragProxy>();
     private Vector2Int touchOffset = Vector2Int.zero; // 터치한 셀의 오프셋
+
+    // 머지 이펙트
+    private Sequence mergeEffectSequence;
 
 
     private void Awake()
@@ -87,16 +91,31 @@ public class GridUnit : MonoBehaviour, IDraggable
         if (gridManager == null || GridData == null)
             return;
 
-        // 유닛의 현재 월드 위치를 그리드 위치로 변환
-        Vector2Int currentGridPos = gridManager.WorldToGridPosition(transform.position);
+        // OverlapPoint로 해당 위치의 모든 collider를 확인
+        Collider2D[] colliders = Physics2D.OverlapPointAll(transform.position);
+        foreach (var collider in colliders)
+        {
+            GridCell cell = collider.GetComponent<GridCell>();
+            if (cell != null)
+            {
+                // GridCell 위에 있을 때만 색상 업데이트
+                Vector2Int currentGridPos = cell.GridPosition;
+                gridManager.CanPlaceUnit(currentGridPos, GridData.GetOccupiedCells());
+                return;
+            }
+        }
 
-        // 현재 그리드 위치 기준으로 배치 가능 여부 체크 및 색상 업데이트
-        gridManager.CanPlaceUnit(currentGridPos, GridData.GetOccupiedCells());
+        // GridCell 위에 없으면 색상 초기화
+        gridManager.ClearAllGridsColor();
+        gridManager.ChangeOccupiedCellColor();
     }
 
     public void OnDragEnd()
     {
         SetActiveChildrenObj(false);
+
+        // 머지 효과 중지
+        StopMergeEffect();
 
         // 드래그 종료 시 그리드 색상 초기화
         if (gridManager != null)
@@ -182,6 +201,80 @@ public class GridUnit : MonoBehaviour, IDraggable
     public Vector2Int GetTouchOffset()
     {
         return touchOffset;
+    }
+
+    // 머지 가능 시 호출
+    public void OnMergeAvailable()
+    {
+        StartMergeEffect();
+    }
+
+    // 머지 불가능 시 호출
+    public void OnMergeUnavailable()
+    {
+        StopMergeEffect();
+    }
+
+    // 머지 이펙트 시작 (프리뷰 셀에 펄스 + 글로우)
+    private void StartMergeEffect()
+    {
+        StopMergeEffect();
+
+        if (childrenObj == null || childrenObj.Count == 0)
+            return;
+
+        mergeEffectSequence = DOTween.Sequence();
+
+        foreach (var child in childrenObj)
+        {
+            if (child == null)
+                continue;
+
+            SpriteRenderer sr = child.GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                // 각 셀의 초기 상태 저장
+                Vector3 originalScale = child.localScale;
+                Color originalColor = sr.color;
+
+                // 펄스 + 글로우 시퀀스
+                Sequence cellSequence = DOTween.Sequence()
+                    .Append(child.DOScale(originalScale * 1.15f, 0.3f))
+                    .Join(sr.DOFade(1f, 0.3f))
+                    .Append(child.DOScale(originalScale, 0.3f))
+                    .Join(sr.DOFade(0.7f, 0.4f))
+                    .SetLoops(-1);
+
+                // 메인 시퀀스에 추가 (모든 셀이 동시에 애니메이션)
+                mergeEffectSequence.Join(cellSequence);
+            }
+        }
+    }
+
+    // 머지 이펙트 중지
+    private void StopMergeEffect()
+    {
+        mergeEffectSequence?.Kill();
+        mergeEffectSequence = null;
+
+        // 모든 셀을 원래 스케일과 알파로 복원
+        if (childrenObj == null)
+            return;
+
+        foreach (var child in childrenObj)
+        {
+            if (child == null)
+                continue;
+
+            child.DOKill();
+            child.localScale = GameConstants.previewCellSizeObject * Vector3.one;
+
+            SpriteRenderer sr = child.GetComponent<SpriteRenderer>();
+            if (sr != null && GridData != null)
+            {
+                sr.color = GridData.gridColor;
+            }
+        }
     }
 
     // 미리보기 스프라이트 제거

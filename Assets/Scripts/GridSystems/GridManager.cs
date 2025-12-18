@@ -19,6 +19,8 @@ public class GridManager : MonoBehaviour
     [SerializeField] private AttackTriggerZone attackTriggerZone;
     [SerializeField] private LevelUpRewardController levelUpRewardController;
 
+    public BattleUnitManager UnitManager => unitManager;
+
     [Header("Grid Settings")]
     [SerializeField] private float cellSize = 1f;
     [SerializeField] private float cellSpace = 0.1f;

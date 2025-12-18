@@ -5,33 +5,33 @@ public class PlayerStageGold : MonoBehaviour
 {
     [SerializeField] private StageUiManager uiManager;
 
-    public int Gold { get; private set; }
+    public int Credit { get; private set; }
 
     public event Action OnChangeGold;
 
 
     public void Start()
     {
-        uiManager.UpdateStageGoldText(Gold);
+        uiManager.UpdateCreditText(Credit);
     }
 
-    public void AddGold(int amount)
+    public void AddCredit(int amount)
     {
         if (amount < 0)
             return;
         
-        Gold += amount;
-        uiManager.UpdateStageGoldText(Gold);
+        Credit += amount;
+        uiManager.UpdateCreditText(Credit);
         OnChangeGold?.Invoke();
     }
 
-    public bool UseGold(int amount)
+    public bool UseCredit(int amount)
     {
-        if (Gold < amount || amount < 0)
+        if (Credit < amount || amount < 0)
             return false;
 
-        Gold -= amount;
-        uiManager.UpdateStageGoldText(Gold);
+        Credit -= amount;
+        uiManager.UpdateCreditText(Credit);
         OnChangeGold?.Invoke();
         return true;
     }

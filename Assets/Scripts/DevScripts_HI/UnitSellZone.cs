@@ -96,7 +96,7 @@ public class UnitSellZone : MonoBehaviour, IDroppable
     private void HandleGridUnitDrop(GridUnit gridUnit)
     {
         int gold = CalculateSellValue(gridUnit);
-        playerGold.AddGold(gold);
+        playerGold.AddCredit(gold);
         ShowSellMessage(gold);
 
         // 유닛 제거 전에 카운트 감소
