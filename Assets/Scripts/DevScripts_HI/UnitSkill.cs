@@ -21,7 +21,7 @@ public class UnitSkill
     {
         this.owner = owner;
         this.skillData = skillData;
-        this.lastUsedTime = -skillData.SKILL_COOLTIME; // 즉시 사용 가능하도록
+        this.lastUsedTime = Time.time; // 쿨타임만큼 기다린 후 첫 사용
 
         Debug.Log($"스킬 추가: {SkillName}");
     }
