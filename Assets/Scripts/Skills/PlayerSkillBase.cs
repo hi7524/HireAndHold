@@ -76,7 +76,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
             await UniTask.Yield();
         }
         isOnCoolTime = false;
-        skillData = DataTableManager.Instance.Get<DataTable_Skill>(DataTableIds.Skill)?.Get(skillID);
+        skillData = DataTableManager.Get<DataTable_Skill>(DataTableIds.Skill)?.Get(skillID);
 
         if (skillData != null)
         {
