@@ -98,17 +98,17 @@ public class BuffManager : MonoBehaviour
 
         // 전체 채우기 버프 체크
         CheckFilledAllCells();
-        if (isFilledAllGrids && !ActivatedBuffs.Contains("컴플리트 버프"))
+        if (isFilledAllGrids && !ActivatedBuffs.Contains("컴플리트"))
         {
-            ActivateBuff("컴플리트 버프");
-            ActivatedBuffs.Add("컴플리트 버프");
+            ActivateBuff("컴플리트");
+            ActivatedBuffs.Add("컴플리트");
 
             GlobalBuffPercentage += TotalBuffRate;
         }
-        else if (!isFilledAllGrids && ActivatedBuffs.Contains("컴플리트 버프"))
+        else if (!isFilledAllGrids && ActivatedBuffs.Contains("컴플리트"))
         {
-            DeactivateBuff("컴플리트 버프");
-            ActivatedBuffs.Remove("컴플리트 버프");
+            DeactivateBuff("컴플리트");
+            ActivatedBuffs.Remove("컴플리트");
 
             GlobalBuffPercentage -= TotalBuffRate;
         }
