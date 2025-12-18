@@ -44,7 +44,7 @@ public class UnitCard : MonoBehaviour
 
         if (assigned)
         {
-            icon.color = new Color(0.4f, 0.4f, 0.4f);
+            icon.color = new Color(0.2f, 0.2f, 0.2f);
         }
         else
         {

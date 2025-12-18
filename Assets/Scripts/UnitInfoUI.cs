@@ -23,7 +23,7 @@ public class UnitInfoUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI heroProgressText;
 
     [Header("Owned Resource UI")]
-    [SerializeField] private TextMeshProUGUI playerGoldText;
+    //[SerializeField] private TextMeshProUGUI playerGoldText;
     [SerializeField] private TextMeshProUGUI playerStoneText;
     [SerializeField] private TextMeshProUGUI playerPieceText;
 
@@ -157,7 +157,12 @@ public class UnitInfoUI : MonoBehaviour
         normalCloseButton.onClick.AddListener(() => normalPopupRoot.SetActive(false));
         heroCloseButton.onClick.AddListener(() => heroPopupRoot.SetActive(false));
         alertOk.onClick.AddListener(() => alertRoot.SetActive(false));
-        successOk.onClick.AddListener(() => successRoot.SetActive(false));
+        successOk.onClick.AddListener(() =>
+        {
+            successRoot.SetActive(false);
+            Refresh().Forget();
+        });
+
 
         normalConfirmButton.onClick.AddListener(() => ConfirmNormal().Forget());
         heroConfirmButton.onClick.AddListener(() => ConfirmHero().Forget());
@@ -224,25 +229,30 @@ public class UnitInfoUI : MonoBehaviour
         float attack = previewUnit.GetAttackDamageStat().Value;
         powerText.text = attack.ToString();
 
-        levelText.text = owned ?
-            $"{character.enforceLevel}/{NORMAL_MAX}" :
-            $"0/{NORMAL_MAX}";
+        levelText.text = owned
+           ? $"{character.enforceLevel }/{NORMAL_MAX}"
+           : $"-/{NORMAL_MAX}";
+
+
 
         LoadSprite(data.UNIT_ICON).Forget();
 
-        playerGoldText.text = PlayData.Gold.ToString();
+        //playerGoldText.text = PlayData.Gold.ToString();
         playerStoneText.text = PlayData.EnhanceStone.ToString();
-        int ownedPieces = PlayData.unitFragments.ContainsKey(currentUnitId)
-     ? (int)PlayData.unitFragments[currentUnitId]
-     : 0;
+        int fragmentItemId = data.FRAGMENT_ITEM_ID;
+        int ownedPieces = fragmentItemId > 0
+            ? PlayData.GetItemCount(fragmentItemId)
+            : 0;
+
 
         int heroLv = owned ? character.heroEnforceLevel : 0;
         heroStarText.text = $"영웅강화 등급: ★{heroLv}";
         heroProgressText.text = $"{heroLv}/{HERO_MAX}";
 
+
         RefreshHeroEffectList(heroLv);
 
-        normalEnforceButton.interactable = owned && normalSystem.CanEnforce(previewUnit, out _);
+        normalEnforceButton.interactable = owned;
         heroEnforceButton.interactable = owned && heroLv < HERO_MAX;
 
         mainRoot.SetActive(true);
@@ -319,18 +329,17 @@ public class UnitInfoUI : MonoBehaviour
         }
 
         int lv = character.enforceLevel;
-        int nextLv = Mathf.Min(lv + 1, NORMAL_MAX);
+
+        normalLevelCurrent.text = lv.ToString();
+        normalLevelNext.text = lv < NORMAL_MAX ? (lv + 1).ToString() : "MAX";
 
         float currAtk = previewUnit.GetAttackDamageStat().Value;
         float nextAtk = normalSystem.GetNextAttack(previewUnit);
 
         var (goldCost, stoneCost) = normalSystem.GetNextEnforceCost(previewUnit);
 
-        normalLevelCurrent.text = lv.ToString();
-        normalLevelNext.text = nextLv > NORMAL_MAX ? "MAX" : nextLv.ToString();
-
         normalPowerCurrent.text = currAtk.ToString();
-        normalPowerNext.text = nextLv > NORMAL_MAX ? "-" : nextAtk.ToString();
+        normalPowerNext.text = lv < NORMAL_MAX ? nextAtk.ToString() : "-";
 
         normalStoneHave.text = PlayData.EnhanceStone.ToString();
         normalStoneNeed.text = stoneCost.ToString();
@@ -338,8 +347,9 @@ public class UnitInfoUI : MonoBehaviour
         normalGoldHave.text = PlayData.Gold.ToString();
         normalGoldNeed.text = goldCost.ToString();
 
-        normalPopupRoot.SetActive(true);
+        //normalPopupRoot.SetActive(true);
     }
+
 
     private async UniTaskVoid ConfirmNormal()
     {
@@ -361,9 +371,6 @@ public class UnitInfoUI : MonoBehaviour
             return;
         }
 
-        await DatabaseManager.Instance.LoadUserDataAsync();
-        PlayData.SyncFromDatabase();
-
         int afterLv = character.enforceLevel;
         float afterAtk = previewUnit.GetAttackDamageStat().Value;
 
@@ -380,18 +387,17 @@ public class UnitInfoUI : MonoBehaviour
         if (character == null) return;
 
         int lv = character.enforceLevel;
-        int nextLv = Mathf.Min(lv + 1, NORMAL_MAX);
+
+        normalLevelCurrent.text = lv.ToString();
+        normalLevelNext.text = lv < NORMAL_MAX ? (lv + 1).ToString() : "MAX";
 
         float currAtk = previewUnit.GetAttackDamageStat().Value;
         float nextAtk = normalSystem.GetNextAttack(previewUnit);
 
         var (goldCost, stoneCost) = normalSystem.GetNextEnforceCost(previewUnit);
 
-        normalLevelCurrent.text = lv.ToString();
-        normalLevelNext.text = nextLv > NORMAL_MAX ? "MAX" : nextLv.ToString();
-
         normalPowerCurrent.text = currAtk.ToString();
-        normalPowerNext.text = nextLv > NORMAL_MAX ? "-" : nextAtk.ToString();
+        normalPowerNext.text = lv < NORMAL_MAX ? nextAtk.ToString() : "-";
 
         normalStoneHave.text = PlayData.EnhanceStone.ToString();
         normalStoneNeed.text = stoneCost.ToString();
@@ -432,15 +438,12 @@ public class UnitInfoUI : MonoBehaviour
         heroPopupPieceNeed.text = next?.IngredientNum.ToString();
         heroPopupGoldNeed.text = next?.Gold_Cost.ToString();
 
-        int havePieces = PlayData.GetUnitFragments(currentUnitId);
+        var unitData = unitTable.Get(currentUnitId);
+        int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
+
+        int havePieces = PlayData.GetItemCount(fragmentItemId);
+
         int needPieces = (int)nextData.IngredientNum;
-
-        if (havePieces < needPieces)
-        {
-            ShowAlert("조각이 부족합니다");
-            return;
-        }
-
 
         heroPopupPieceHave.text = havePieces.ToString();
         heroPopupPieceNeed.text = needPieces.ToString();
@@ -462,8 +465,8 @@ public class UnitInfoUI : MonoBehaviour
             txt.text = $"{(lv <= heroLv ? "[활성]" : "[잠김]")} LV {lv}: {eff.DescriptionText}";
 
         }
-
-        heroPopupRoot.SetActive(true);
+        RefreshHeroPopup();
+        heroPopupRoot.SetActive(true); // ?
     }
 
     private async UniTaskVoid ConfirmHero()
@@ -494,9 +497,9 @@ public class UnitInfoUI : MonoBehaviour
 
         ShowSuccess("영웅 강화 성공!", $"★{beforeLv} → ★{afterLv}\n효과: {desc}");
 
-
-        await Refresh();
+        //await Refresh();
         RefreshHeroPopup();
+      
 
     }
 
@@ -508,11 +511,16 @@ public class UnitInfoUI : MonoBehaviour
         int heroLv = character.heroEnforceLevel;
         var next = heroTable.Get(currentUnitId, heroLv + 1);
 
-        int havePieces = PlayData.GetUnitFragments(currentUnitId);
+        var unitData = unitTable.Get(currentUnitId);
+        int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
+
+        int havePieces = PlayData.GetItemCount(fragmentItemId);
+
         int needPieces = (int)(next?.IngredientNum ?? 0);
 
         heroPopupLevelCurrent.text = $"★{heroLv}";
-        heroPopupLevelNext.text = heroLv < HERO_MAX ? $"★{heroLv + 1}" : "MAX";
+        heroPopupLevelNext.text =
+            heroLv < HERO_MAX ? $"★{heroLv + 1}" : "MAX";
 
         heroPopupPieceHave.text = havePieces.ToString();
         heroPopupPieceNeed.text = needPieces.ToString();
@@ -661,8 +669,6 @@ public class UnitInfoUI : MonoBehaviour
         }
     }
 
-
-
     private async void ReplaceSlot(int slotIndex)
     {
         int activePreset = PlayData.currentSelectedPreset;
@@ -707,5 +713,67 @@ public class UnitInfoUI : MonoBehaviour
         successRoot.SetActive(true);
     }
 
+    private void RefreshNormalCostUI()
+    {
+        if (previewUnit == null) return;
+
+        var (goldCost, stoneCost) = normalSystem.GetNextEnforceCost(previewUnit);
+
+        normalGoldHave.text = PlayData.Gold.ToString();
+        normalGoldNeed.text = goldCost.ToString();
+
+        normalStoneHave.text = PlayData.EnhanceStone.ToString();
+        normalStoneNeed.text = stoneCost.ToString();
+    }
+
+    private void RefreshHeroCostUI()
+    {
+
+        if (heroPopupRoot == null) return;
+        if (!heroPopupRoot.activeSelf) return;
+
+        if (previewUnit == null) return;
+
+        heroPopupGoldHave.text = PlayData.Gold.ToString();
+
+        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        if (character == null) return;
+
+        int heroLv = character.heroEnforceLevel;
+        var next = heroTable.Get(currentUnitId, heroLv + 1);
+
+        heroPopupGoldNeed.text = (next?.Gold_Cost ?? 0).ToString();
+
+        var unitData = unitTable.Get(currentUnitId);
+        int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
+
+        heroPopupPieceHave.text = PlayData.GetItemCount(fragmentItemId).ToString();
+        heroPopupPieceNeed.text = ((int)(next?.IngredientNum ?? 0)).ToString();
+    }
+
+
+    private void RefreshUIOnly()
+    {
+        //playerGoldText.text = PlayData.Gold.ToString();
+        playerStoneText.text = PlayData.EnhanceStone.ToString();
+    }
+
+    private void OnEnable()
+    {
+        PlayData.OnCurrencyChanged += RefreshUIOnly;
+        PlayData.OnCurrencyChanged += RefreshNormalCostUI;
+        PlayData.OnCurrencyChanged += RefreshHeroCostUI;
+    }
+
+    private void OnDisable()
+    {
+        PlayData.OnCurrencyChanged -= RefreshUIOnly;
+        PlayData.OnCurrencyChanged -= RefreshNormalCostUI;
+        PlayData.OnCurrencyChanged += RefreshHeroCostUI;
+    }
+
+
     #endregion
+
+
 }

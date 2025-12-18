@@ -17,7 +17,7 @@ public class CachedCharacter
 
 public static class PlayData
 {
-    public static Dictionary<int, float> unitFragments = new();
+    //public static Dictionary<int, float> unitFragments = new();
 
     public static HashSet<int> selectedUnitIds = new HashSet<int> { 11119, 11104, 11122, 11128, 11113 };
 
@@ -40,6 +40,9 @@ public static class PlayData
     private static int cachedLevel = 1;
     private static int cachedExp = 0;
     private static string cachedNickname = "";
+
+    public static int LastClearedStage { get; private set; }
+
 
     //캐릭터 데이터 캐싱
     private static Dictionary<string, CachedCharacter> cachedCharacters = new Dictionary<string, CachedCharacter>();
@@ -68,6 +71,14 @@ public static class PlayData
     // 던전 선택 정보 (ID)
     public static int OreDungeonID { get; private set; }
     public static event Action OnProfileChanged;
+
+    public static event Action OnCurrencyChanged;
+
+    public static void NotifyCurrencyChanged()
+    {
+        OnCurrencyChanged?.Invoke();
+    }
+
 
 
     //DatabaseManager에서 데이터 동기화
@@ -175,49 +186,12 @@ public static class PlayData
     }
 
     //재화 변경 로컬 캐시 + DB 동기화
-    public static async void AddGold(long amount)
-    {
-        cachedGold += amount;
-        await DatabaseManager.Instance.AddGoldAsync(amount);
-        Debug.Log($"골드 변경: {amount:+#;-#;0} (현재: {cachedGold})");
-    }
-
-    public static async void AddDiamond(int amount)
-    {
-        cachedDiamond += amount;
-        await DatabaseManager.Instance.AddDiamondAsync(amount);
-        Debug.Log($"다이아 변경: {amount:+#;-#;0} (현재: {cachedDiamond})");
-    }
-
-    public static async void AddEnhanceStone(int amount)
-    {
-        cachedEnhanceStone += amount;
-
-        var user = DatabaseManager.Instance.CurrentUser;
-        if (user != null)
-        {
-            user.currency.enhanceStone += amount;
-            await DatabaseManager.Instance.SaveCurrencyAsync();
-        }
-
-        Debug.Log($"강화석 변경: {amount:+#;-#;0} (현재: {cachedEnhanceStone})");
-    }
 
     public static async void AddStamina(int amount)
     {
         cachedStamina += amount;
         await DatabaseManager.Instance.AddStaminaAsync(amount);
         Debug.Log($" 스태미나 변경: {amount:+#;-#;0} (현재: {cachedStamina})");
-    }
-
-    public static void AddUnitFragments(int unitId, float amount)
-    {
-        if (!unitFragments.ContainsKey(unitId))
-            unitFragments[unitId] = 0;
-
-        unitFragments[unitId] += amount;
-
-        Debug.Log($"유닛 {unitId} 조각 +{amount} (현재: {unitFragments[unitId]})");
     }
 
 
@@ -307,6 +281,12 @@ public static class PlayData
         return true;
     }
 
+    public static void SetLastClearedStageImmediate(int stageId)
+    {
+        LastClearedStage = stageId;
+        OnProfileChanged?.Invoke();
+    }
+
     public static bool IsAnyPresetSaved()
     {
         for (int p = 0; p < 5; p++)
@@ -337,14 +317,6 @@ public static class PlayData
         isInitialized = false;
 
         Debug.Log("캐시 초기화");
-    }
-
-    public static int GetUnitFragments(int unitId)
-    {
-        if (unitFragments.TryGetValue(unitId, out float value))
-            return (int)value;
-
-        return 0;
     }
 
     // 현재 선택된 던전 ID 저장

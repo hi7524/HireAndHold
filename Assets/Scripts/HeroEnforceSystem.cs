@@ -48,12 +48,21 @@ public class HeroEnforceSystem
             return false;
         }
 
-        if (!PlayData.unitFragments.ContainsKey(unit.BaseCharacterID) ||
-            PlayData.unitFragments[unit.BaseCharacterID] < row.IngredientNum)
+        var unitData = unit.GetUnitData();
+        int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
+
+        if (fragmentItemId <= 0)
+        {
+            reason = "조각 아이템 없음";
+            return false;
+        }
+
+        if (!PlayData.HasEnoughItem(fragmentItemId, row.IngredientNum))
         {
             reason = "조각 부족";
             return false;
         }
+
 
         reason = "";
         return true;
@@ -72,8 +81,15 @@ public class HeroEnforceSystem
         var row = table.Get(unit.BaseCharacterID, nextLv);
 
         // 재화 차감
-        PlayData.AddGold(-row.Gold_Cost);
-        PlayData.unitFragments[unit.BaseCharacterID] -= Mathf.RoundToInt(row.IngredientNum);
+        await DatabaseManager.Instance.AddGoldAsync(-row.Gold_Cost);
+
+        var unitData = unit.GetUnitData();
+        int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
+
+        await DatabaseManager.Instance.AddItemAsync(
+            fragmentItemId,
+            -row.IngredientNum
+        );
 
         // DB 저장
         ch.heroEnforceLevel = nextLv;

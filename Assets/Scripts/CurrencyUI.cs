@@ -10,7 +10,14 @@ public class CurrencyUI : MonoBehaviour
     private void OnEnable()
     {
         Refresh();
+        PlayData.OnCurrencyChanged += Refresh;
     }
+
+    private void OnDisable()
+    {
+        PlayData.OnCurrencyChanged -= Refresh;
+    }
+
 
     public void Refresh()
     {

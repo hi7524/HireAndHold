@@ -64,22 +64,35 @@ public class MainUISceneManager : MonoBehaviour
         wrapper.transform.SetParent(worldUnitRoot);
 
         UnitData data = DataTableManager.UnitTable.Get(unitId);
-        GameObject combatPrefab = await Addressables.LoadAssetAsync<GameObject>(data.PREFAB_NAME);
+        GameObject combatPrefab =
+            await Addressables.LoadAssetAsync<GameObject>(data.PREFAB_NAME);
 
         GameObject visual = Instantiate(combatPrefab, wrapper.transform);
         visual.transform.localScale = Vector3.one * 0.4f;
 
+
         foreach (var r in visual.GetComponentsInChildren<SpriteRenderer>())
         {
             r.sortingLayerName = "LobbyWorld";
-            r.sortingOrder = 1;
         }
 
         var group = visual.GetComponentInChildren<SortingGroup>();
         if (group != null)
         {
             group.sortingLayerName = "LobbyWorld";
-            group.sortingOrder = 1;
+
+        }
+
+        await UniTask.DelayFrame(1);
+
+        var character = visual.GetComponentInChildren<
+            Assets.HeroEditor.Common.Scripts.CharacterScripts.Character>();
+
+        if (character != null && character.LayerManager != null)
+        {
+            character.LayerManager.GetSpritesBySortingOrder();
+            character.LayerManager.SetSpritesBySortingOrder();
         }
     }
+
 }

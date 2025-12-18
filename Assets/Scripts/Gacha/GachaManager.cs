@@ -62,11 +62,24 @@ public class GachaManager : MonoBehaviour
 
         foreach (var item in catalog)
         {
-            GachaItem gachaItem = new GachaItem();
-            gachaItem.unitId = item.TARGET_ID;
-            gachaItem.probability = item.Probability;
-            // Weight가 없으므로 Probability를 10000배하여 정수 weight로 사용
-            gachaItem.weight = (int)(item.Probability * 10000);
+            var unitData = DataTableManager.UnitTable.Get(item.TARGET_ID);
+            if (unitData == null)
+            {
+                Debug.LogError($"[GachaManager] UnitData 없음: {item.TARGET_ID}");
+                continue;
+            }
+
+            GachaItem gachaItem = new GachaItem
+            {
+                unitId = item.TARGET_ID,
+                probability = item.Probability,
+                weight = (int)(item.Probability * 10000),
+                rarity = ConvertRankToRarity(unitData.RANK),
+
+                isDuplicate = false,
+                isNew = false
+            };
+
             gachaItems.Add(gachaItem);
         }
         BuildCumulativeTable(gachaType, gachaItems);
@@ -196,8 +209,9 @@ public class GachaManager : MonoBehaviour
 
                 if (!alreadyOwnedInDB && !alreadyProcessedInThisGacha)
                 {
-
+                    //신규 유닛
                     item.isDuplicate = false;
+                    item.isNew = true; 
 
                     await DatabaseManager.Instance.AddCharacterAsync(characterId, 1);
 
@@ -205,7 +219,9 @@ public class GachaManager : MonoBehaviour
                 }
                 else
                 {
+                    // 중복 유닛
                     item.isDuplicate = true;
+                    item.isNew = false;
 
                     var unitData = DataTableManager.UnitTable.Get(unitId);
                     if (unitData != null && unitData.FRAGMENT_ITEM_ID > 0)
@@ -215,6 +231,7 @@ public class GachaManager : MonoBehaviour
                         );
                     }
                 }
+
             }
 
 
@@ -245,6 +262,7 @@ public class GachaManager : MonoBehaviour
         {
             isExecuting = false;
         }
+
     }
 
     /// <summary>
@@ -312,7 +330,8 @@ public class GachaManager : MonoBehaviour
             probability = origin.probability,
             weight = origin.weight,
             rarity = origin.rarity,
-            isDuplicate = false
+            isDuplicate = false,
+            isNew = false
         };
     }
 
@@ -343,4 +362,18 @@ public class GachaManager : MonoBehaviour
     {
         return totalWeightByType.TryGetValue(gachaType, out int weight) ? weight : 0;
     }
+
+    private GachaRarity ConvertRankToRarity(int rank)
+    {
+        return rank switch
+        {
+            1 => GachaRarity.Common,
+            2 => GachaRarity.Rare,
+            3 => GachaRarity.Unique,
+            4 => GachaRarity.Epic,
+            5 => GachaRarity.Legendary,
+            _ => GachaRarity.Common
+        };
+    }
+
 }

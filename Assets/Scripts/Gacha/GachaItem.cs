@@ -19,6 +19,7 @@ public class GachaItem
     public GachaRarity rarity;
 
     public bool isDuplicate;
+    public bool isNew;
 }
 
 public enum GachaRarity
@@ -29,6 +30,7 @@ public enum GachaRarity
     Epic,
     Legendary
 }
+
 
 public enum GachaType
 {

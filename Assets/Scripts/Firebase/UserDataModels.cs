@@ -91,8 +91,8 @@ namespace GameData
             this.awakening = 0;
             this.isLocked = false;
             this.obtainedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            this.enforceLevel = 0;
-            this.heroEnforceLevel = 0;
+            this.enforceLevel = 1;
+            this.heroEnforceLevel = 1;
         }
     }
 
