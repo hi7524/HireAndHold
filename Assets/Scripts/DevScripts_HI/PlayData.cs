@@ -353,7 +353,7 @@ public static class PlayData
         OreDungeonID = id;
         Debug.Log($"현재 선택된 던전 ID: {OreDungeonID}");
     }
-}
+
     public static void SetProfileImmediate(int level, int exp)
     {
         cachedLevel = level;
@@ -362,12 +362,7 @@ public static class PlayData
     }
 
     public static void NotifyProfileChanged()
-{
-    OnProfileChanged?.Invoke();
+    {
+        OnProfileChanged?.Invoke();
+    }
 }
-
-
-
-
-}
-
