@@ -1,9 +1,11 @@
 using UnityEngine;
+using UnityEngine.VFX;
 
 public class AreaProjectile : MonoBehaviour, ISkillProjectile
 {
     [SerializeField] private float lifeTime = 1f;
     [SerializeField] private ParticleSystem effect;
+    [SerializeField] private VisualEffect vfxEffect;
 
     private SkillProjectileData data;
 
@@ -20,6 +22,8 @@ public class AreaProjectile : MonoBehaviour, ISkillProjectile
         // 이펙트 재생
         if (effect != null)
             effect.Play();
+        if (vfxEffect != null)
+            vfxEffect.Play();
 
         // 범위 내 적 데미지
         DamageEnemiesInRange();

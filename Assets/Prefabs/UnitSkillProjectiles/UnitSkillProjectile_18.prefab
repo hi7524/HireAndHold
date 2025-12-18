@@ -110,7 +110,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2051fc4b53ea64544a2e020b1c5180bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  launchSpeed: 10
+  launchSpeed: 8
   lifeTime: 5
   pierceWidth: 0.5
   rotationOffset: -90
@@ -130,6 +130,10 @@ PrefabInstance:
     - target: {fileID: 1612413467584268638, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
       propertyPath: lengthInSec
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1612413467584268638, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4928264300982108632, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
       propertyPath: m_LocalRotation.w
@@ -243,10 +247,22 @@ PrefabInstance:
       propertyPath: lengthInSec
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 5091326583559439156, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 0.1
+      objectReference: {fileID: 0}
     - target: {fileID: 5091401750823671640, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
       propertyPath: lengthInSec
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 5091401750823671640, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5091572865435873314, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5092313508830776834, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
       propertyPath: looping
       value: 1
@@ -255,6 +271,18 @@ PrefabInstance:
       propertyPath: lengthInSec
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 5092313508830776834, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8938090192463823367, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8938177789432235919, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 8938285701607400461, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
       propertyPath: looping
       value: 1
@@ -262,6 +290,10 @@ PrefabInstance:
     - target: {fileID: 8938285701607400461, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
       propertyPath: lengthInSec
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8938285701607400461, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 9013476957354114504, guid: bb4a04ef32f61a94994e75769f44b0a5, type: 3}
       propertyPath: m_LocalScale.x

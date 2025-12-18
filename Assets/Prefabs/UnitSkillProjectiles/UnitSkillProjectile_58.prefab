@@ -111,7 +111,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lifeTime: 1
-  effect: {fileID: 0}
+  effect: {fileID: 2021806466690947576}
+  vfxEffect: {fileID: 0}
 --- !u!1001 &5370648240121486054
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -280,6 +281,10 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6234818457086919449, guid: 96c30f207bdbb3243abb88e8d5255d1e, type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6234818457086919455, guid: 96c30f207bdbb3243abb88e8d5255d1e, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
@@ -300,5 +305,10 @@ PrefabInstance:
 --- !u!4 &2021806465458379970 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6234818455853893156, guid: 96c30f207bdbb3243abb88e8d5255d1e, type: 3}
+  m_PrefabInstance: {fileID: 5370648240121486054}
+  m_PrefabAsset: {fileID: 0}
+--- !u!198 &2021806466690947576 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 6234818457086919454, guid: 96c30f207bdbb3243abb88e8d5255d1e, type: 3}
   m_PrefabInstance: {fileID: 5370648240121486054}
   m_PrefabAsset: {fileID: 0}
