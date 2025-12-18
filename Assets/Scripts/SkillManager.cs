@@ -14,7 +14,7 @@ public class SkillManager : MonoBehaviour
     [Header("스킬 발동 위치 참조")]
     [SerializeField] private BattleUnitManager battleUnitManager; // 유닛 매니저 참조
 
-    private static readonly int[] PlayerSkillIds = { 22059, 22060, 22061, 22062, 22063, 22064, 22065, 22066, 22067, 22068, 22069 };
+    private static readonly int[] PlayerSkillIds = { 22059, 22060, 22061, 22062, 22063, 22064, 22065, 22066, 22067, 22068 }; // 22069(신속의 깃발) 임시 제외
 
     private static readonly Dictionary<int, string> SkillAddressableKeys = new Dictionary<int, string>
     {
