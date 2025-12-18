@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6266743259424503086}
   - component: {fileID: 8564051668780969774}
   - component: {fileID: 6908712333835450721}
-  - component: {fileID: 697066246831646092}
+  - component: {fileID: -640431133648185742}
   m_Layer: 0
   m_Name: UnitSkillProjectile_33
   m_TagString: Untagged
@@ -29,7 +29,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1308696208770865465}
@@ -98,7 +98,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
---- !u!114 &697066246831646092
+--- !u!114 &-640431133648185742
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -107,11 +107,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 7012860003763290146}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2002eca1e4e44864790e186134ed4ff8, type: 3}
+  m_Script: {fileID: 11500000, guid: 2051fc4b53ea64544a2e020b1c5180bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lifeTime: 1
-  effect: {fileID: 1222787742963090055}
+  launchSpeed: 10
+  lifeTime: 5
+  pierceWidth: 0.5
+  rotationOffset: -90
+  mainEffect: {fileID: 1222787742963090055}
 --- !u!1001 &1313044618873889003
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -242,19 +245,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4982279646968274, guid: 52a726355873f9443b626e837ef94008, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 4982279646968274, guid: 52a726355873f9443b626e837ef94008, type: 3}
-      propertyPath: m_LocalRotation.x
       value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4982279646968274, guid: 52a726355873f9443b626e837ef94008, type: 3}
-      propertyPath: m_LocalRotation.y
+      propertyPath: m_LocalRotation.x
       value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4982279646968274, guid: 52a726355873f9443b626e837ef94008, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4982279646968274, guid: 52a726355873f9443b626e837ef94008, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.5
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4982279646968274, guid: 52a726355873f9443b626e837ef94008, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
