@@ -120,10 +120,23 @@ public class GridCell : MonoBehaviour, IDroppable
             return;
         }
 
-        // GridUnit은 OnDrag()에서 직접 처리하므로 여기서는 스킵
+        // GridUnit 처리
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
         {
+            // 합성 가능 여부 체크
+            if (placedObject != null)
+            {
+                var existingUnit = placedObject.GetComponent<GridUnit>();
+                if (existingUnit != null && CanMerge(existingUnit, gridUnit))
+                {
+                    canDrop = true;
+                    // 머지 가능 시 프리뷰 효과 시작
+                    gridUnit.OnMergeAvailable();
+                    return;
+                }
+            }
+
             canDrop = true;
             return;
         }
@@ -159,6 +172,13 @@ public class GridCell : MonoBehaviour, IDroppable
 
     public void OnDragExit(IDraggable draggable)
     {
+        // GridUnit인 경우 머지 효과 중지
+        var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
+        if (gridUnit != null)
+        {
+            gridUnit.OnMergeUnavailable();
+        }
+
         // DraggableGridUnitUi인 경우 머지 효과 중지
         var draggableUnitUi = draggable.GameObject.GetComponent<DraggableGridUnitUi>();
         if (draggableUnitUi != null)
