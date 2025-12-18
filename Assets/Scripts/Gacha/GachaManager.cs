@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -184,21 +184,40 @@ public class GachaManager : MonoBehaviour
 
             // 획득한 캐릭터 DB 저장
             List<string> failedCharacters = new List<string>();
+            HashSet<int> processedUnitsThisGacha = new HashSet<int>();
+
             foreach (var item in results)
             {
-                string characterId = item.unitId.ToString();
-                bool addSuccess = await DatabaseManager.Instance.AddCharacterAsync(characterId, 1);
+                int unitId = item.unitId;
+                string characterId = unitId.ToString();
 
-                if (addSuccess)
+                bool alreadyOwnedInDB = PlayData.HasCharacter(characterId);
+                bool alreadyProcessedInThisGacha = processedUnitsThisGacha.Contains(unitId);
+
+                if (!alreadyOwnedInDB && !alreadyProcessedInThisGacha)
                 {
-                    Debug.Log($"[GachaManager] 캐릭터 저장 완료: {characterId}");
+
+                    item.isDuplicate = false;
+
+                    await DatabaseManager.Instance.AddCharacterAsync(characterId, 1);
+
+                    processedUnitsThisGacha.Add(unitId);
                 }
                 else
                 {
-                    Debug.LogWarning($"[GachaManager] 캐릭터 저장 실패: {characterId}");
-                    failedCharacters.Add(characterId);
+                    item.isDuplicate = true;
+
+                    var unitData = DataTableManager.UnitTable.Get(unitId);
+                    if (unitData != null && unitData.FRAGMENT_ITEM_ID > 0)
+                    {
+                        await DatabaseManager.Instance.AddItemAsync(
+                            unitData.FRAGMENT_ITEM_ID, 1
+                        );
+                    }
                 }
             }
+
+
 
             // 저장 실패한 캐릭터가 있으면 로그 기록
             if (failedCharacters.Count > 0)
@@ -278,12 +297,25 @@ public class GachaManager : MonoBehaviour
 
     private GachaItem GachaSingle(GachaType gachaType = GachaType.Normal)
     {
-        List<GachaItem> targetGachaItems = GetGachaItemsByType(gachaType);
-        int targetTotalWeight = GetTotalWeightByType(gachaType);
+        List<GachaItem> source = GetGachaItemsByType(gachaType);
+        int totalWeight = GetTotalWeightByType(gachaType);
 
-        int randomWeight = UnityEngine.Random.Range(1, targetTotalWeight + 1);
-        return GetItemByWeight(randomWeight, targetGachaItems);
+        int randomWeight = UnityEngine.Random.Range(1, totalWeight + 1);
+        var origin = GetItemByWeight(randomWeight, source);
+
+        if (origin == null) return null;
+
+        return new GachaItem
+        {
+            unitId = origin.unitId,
+            unitName = origin.unitName,
+            probability = origin.probability,
+            weight = origin.weight,
+            rarity = origin.rarity,
+            isDuplicate = false
+        };
     }
+
 
     private GachaItem GetItemByWeight(int randomWeight, List<GachaItem> gachaItems)
     {

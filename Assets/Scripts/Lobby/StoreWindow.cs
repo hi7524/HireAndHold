@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
@@ -67,9 +67,7 @@ public class StoreWindow : GenericWindow
         Debug.Log("[StoreWindow] 초기화 완료");
     }
 
-    // ============================================
-    // 버튼 이벤트
-    // ============================================
+
 
     public void OnClickNormalSingle()
     {
@@ -139,9 +137,6 @@ public class StoreWindow : GenericWindow
         gachaManager.ExecuteGacha(GachaType.Premium, 10);
     }
 
-    // ============================================
-    // 가챠 결과 처리
-    // ============================================
 
     /// <summary>
     /// 가챠 완료 이벤트 핸들러
@@ -302,7 +297,7 @@ public class StoreWindow : GenericWindow
 
     // private void PlayLegendaryEffect(GameObject cardObj)
     // {
-    //     Debug.Log("[GachaUI] ✨ 전설 획득! ✨");
+    //     Debug.Log("[GachaUI] 전설 획득");
     //     // ParticleSystem, SFX 재생
     // }
 
@@ -367,7 +362,7 @@ public class StoreWindow : GenericWindow
     {
         Debug.Log("[StoreWindow] 치트 버튼 클릭");
 
-        // 일반 뽑기권 (5102), 프리미엄 뽑기권 (5103) 지급
+        // 일반 뽑기, 프리미엄 뽑기권 지급
         bool normalSuccess = await DatabaseManager.Instance.AddItemAsync(5102, cheatDiceAmount);
         bool premiumSuccess = await DatabaseManager.Instance.AddItemAsync(5103, cheatDiceAmount);
 

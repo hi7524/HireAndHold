@@ -17,6 +17,8 @@ public class GachaItem
     public int cumulativeWeight;
 
     public GachaRarity rarity;
+
+    public bool isDuplicate;
 }
 
 public enum GachaRarity
