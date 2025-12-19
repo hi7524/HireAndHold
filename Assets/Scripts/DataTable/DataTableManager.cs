@@ -2,76 +2,41 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-public class DataTableManager : MonoBehaviour
+public static class DataTableManager
 {
-    private static DataTableManager _instance;
-    public static DataTableManager Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                var go = new GameObject("DataTableManager");
-                _instance = go.AddComponent<DataTableManager>();
-                DontDestroyOnLoad(go);
-            }
-            return _instance;
-        }
-    }
-
-    private readonly Dictionary<string, DataTable> tables = new Dictionary<string, DataTable>();
-    private bool _isInitialized = false;
-    private bool _isInitializing = false;
-
-    // 기존 static 호출 유지
-    public static bool IsInitialized => _instance != null && _instance._isInitialized;
-
-    void Awake()
-    {
-        if (_instance == null)
-        {
-            _instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else if (_instance != this)
-        {
-            Destroy(gameObject);
-        }
-    }
+    private static readonly Dictionary<string, DataTable> tables = new Dictionary<string, DataTable>();
+    public static bool IsInitialized { get; private set; } = false;
+    private static bool isInitializing = false;
 
     public static async UniTask InitAsync()
     {
-        await Instance.InitAsyncInternal();
-    }
-
-    private async UniTask InitAsyncInternal()
-    {
-        if (_isInitialized)
+        if (IsInitialized)
             return;
-        if (_isInitializing)
+        if (isInitializing)
         {
-            while (!_isInitialized)
+            while (!IsInitialized)
             {
                 await UniTask.Yield();
             }
             return;
         }
-        _isInitializing = true;
+        isInitializing = true;
 
         try
         {
             await LoadAllTablesAsync();
             Debug.Log("DataTableManager initialized");
-            _isInitialized = true;
+            IsInitialized = true;
         }
         finally
         {
-            _isInitializing = false;
+            isInitializing = false;
         }
     }
 
-    private async UniTask LoadAllTablesAsync()
+    private static async UniTask LoadAllTablesAsync()
     {
+        // 모든 테이블을 병렬로 로드
         var loadTasks = new List<UniTask>
         {
             LoadTableAsync<DataTable_String>(DataTableIds.String),
@@ -99,8 +64,9 @@ public class DataTableManager : MonoBehaviour
         await UniTask.WhenAll(loadTasks);
     }
 
-    private async UniTask LoadTableAsync<T>(string id) where T : DataTable, new()
+    private static async UniTask LoadTableAsync<T>(string id) where T : DataTable, new()
     {
+        // 이미 로드된 테이블은 스킵
         if (tables.ContainsKey(id))
         {
             Debug.Log($"[DataTableManager] {id} 이미 로드됨 - 스킵");
@@ -112,27 +78,26 @@ public class DataTableManager : MonoBehaviour
         tables.Add(id, table);
     }
 
-    // static 프로퍼티 유지 - 기존 호출부 변경 불필요
-    public static DataTable_String StringTable => Instance.Get<DataTable_String>(DataTableIds.String);
-    public static DataTable_Stage StageTable => Instance.Get<DataTable_Stage>(DataTableIds.Stage);
-    public static DataTable_Monster MonsterTable => Instance.Get<DataTable_Monster>(DataTableIds.Monster);
-    public static DataTable_Wave WaveTable => Instance.Get<DataTable_Wave>(DataTableIds.Wave);
-    public static DataTable_UnitCatalog UnitCatalogTable => Instance.Get<DataTable_UnitCatalog>(DataTableIds.UnitCatalog);
-    public static DataTable_Unit UnitTable => Instance.Get<DataTable_Unit>(DataTableIds.Unit);
-    public static DataTable_Skill SkillTable => Instance.Get<DataTable_Skill>(DataTableIds.Skill);
-    public static DataTable_NormalEnforce NormalEnforceTable => Instance.Get<DataTable_NormalEnforce>(DataTableIds.NormalEnforce);
-    public static DataTable_Effect EffectTable => Instance.Get<DataTable_Effect>(DataTableIds.Effect);
-    public static DataTable_Item ItemTable => Instance.Get<DataTable_Item>(DataTableIds.Item);
-    public static DataTable_Selling SellingTable => Instance.Get<DataTable_Selling>(DataTableIds.Selling);
-    public static DataTable_StageLevel StageLevelTable => Instance.Get<DataTable_StageLevel>(DataTableIds.StageLevel);
-    public static DataTable_HeroEnforce heroEnforceTable => Instance.Get<DataTable_HeroEnforce>(DataTableIds.HeroEnforce);
-    public static DataTable_HeroEnforceEffect heroEnforceEffectTable => Instance.Get<DataTable_HeroEnforceEffect>(DataTableIds.HeroEnforceEffect);
-    public static DataTable_UnitGacha UnitGachaTable => Instance.Get<DataTable_UnitGacha>(DataTableIds.UnitGacha);
-    public static DataTable_Ore OreTable => Instance.Get<DataTable_Ore>(DataTableIds.Ore);
-    public static DataTable_OreDungeon OreDungeonTable => Instance.Get<DataTable_OreDungeon>(DataTableIds.OreDungeon);
-    public static DataTable_DungeonSetting DungeonSettingTable => Instance.Get<DataTable_DungeonSetting>(DataTableIds.DungeonSetting);
+    public static DataTable_String StringTable => Get<DataTable_String>(DataTableIds.String);
+    public static DataTable_Stage StageTable => Get<DataTable_Stage>(DataTableIds.Stage);
+    public static DataTable_Monster MonsterTable => Get<DataTable_Monster>(DataTableIds.Monster);
+    public static DataTable_Wave WaveTable => Get<DataTable_Wave>(DataTableIds.Wave);
+    public static DataTable_UnitCatalog UnitCatalogTable => Get<DataTable_UnitCatalog>(DataTableIds.UnitCatalog);
+    public static DataTable_Unit UnitTable => Get<DataTable_Unit>(DataTableIds.Unit);
+    public static DataTable_Skill SkillTable => Get<DataTable_Skill>(DataTableIds.Skill);
+    public static DataTable_NormalEnforce NormalEnforceTable => Get<DataTable_NormalEnforce>(DataTableIds.NormalEnforce);
+    public static DataTable_Effect EffectTable => Get<DataTable_Effect>(DataTableIds.Effect);
+    public static DataTable_Item ItemTable => Get<DataTable_Item>(DataTableIds.Item);
+    public static DataTable_Selling SellingTable => Get<DataTable_Selling>(DataTableIds.Selling);
+    public static DataTable_StageLevel StageLevelTable => Get<DataTable_StageLevel>(DataTableIds.StageLevel);
+    public static DataTable_HeroEnforce heroEnforceTable => Get<DataTable_HeroEnforce>(DataTableIds.HeroEnforce);
+    public static DataTable_HeroEnforceEffect heroEnforceEffectTable => Get<DataTable_HeroEnforceEffect>(DataTableIds.HeroEnforceEffect);
+    public static DataTable_UnitGacha UnitGachaTable => Get<DataTable_UnitGacha>(DataTableIds.UnitGacha);
+    public static DataTable_Ore OreTable => Get<DataTable_Ore>(DataTableIds.Ore);
+    public static DataTable_OreDungeon OreDungeonTable => Get<DataTable_OreDungeon>(DataTableIds.OreDungeon);
+    public static DataTable_DungeonSetting DungeonSettingTable => Get<DataTable_DungeonSetting>(DataTableIds.DungeonSetting);
 
-    public T Get<T>(string id) where T : DataTable
+    public static T Get<T>(string id) where T : DataTable
     {
         if (!tables.ContainsKey(id))
         {

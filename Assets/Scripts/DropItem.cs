@@ -39,13 +39,13 @@ public class DropItem : MonoBehaviour
         // DOTween 정리
         transform.DOKill();
 
-        // ExperienceCollector 이벤트 구독 (Experience와 동일한 패턴)
+        // ExperienceCollector 이벤트 구독 (DropItem 전용 이벤트 사용)
         if (expCollector != null)
-            expCollector.OnCollectTriggered -= MoveToTarget;
+            expCollector.OnItemCollectTriggered -= MoveToTarget;
 
         expCollector = collector;
         if (expCollector != null)
-            expCollector.OnCollectTriggered += MoveToTarget;
+            expCollector.OnItemCollectTriggered += MoveToTarget;
 
         // ItemTable에서 아이템 데이터 조회
         itemData = DataTableManager.ItemTable.Get(itemId);
@@ -149,7 +149,7 @@ public class DropItem : MonoBehaviour
 
         // 이벤트 해제
         if (expCollector != null)
-            expCollector.OnCollectTriggered -= MoveToTarget;
+            expCollector.OnItemCollectTriggered -= MoveToTarget;
 
         if (poolManager != null)
             poolManager.Release("DropItem", gameObject);
@@ -161,6 +161,6 @@ public class DropItem : MonoBehaviour
     {
         transform.DOKill();
         if (expCollector != null)
-            expCollector.OnCollectTriggered -= MoveToTarget;
+            expCollector.OnItemCollectTriggered -= MoveToTarget;
     }
 }

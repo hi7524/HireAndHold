@@ -53,7 +53,7 @@ public class GachaManager : MonoBehaviour
 
     private void Init(GachaType gachaType, int catalogId, List<GachaItem> gachaItems)
     {
-        var catalog = DataTableManager.Instance.Get<DataTable_UnitCatalog>(DataTableIds.UnitCatalog).Get(catalogId);
+        var catalog = DataTableManager.Get<DataTable_UnitCatalog>(DataTableIds.UnitCatalog).Get(catalogId);
         if (catalog == null)
         {
             Debug.LogError($"[GachaManager] 카탈로그를 찾을 수 없음: {catalogId}");
