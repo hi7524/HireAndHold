@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,20 +9,22 @@ public class ProfileUI : MonoBehaviour
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text expText;
     [SerializeField] private Slider expSlider;
-    [SerializeField] private TMP_Text stageProgressText;
+    [SerializeField] private TextMeshProUGUI stageProgressText;
 
-    private void OnEnable()
+    private async void OnEnable()
     {
+        await UniTask.WaitUntil(() => PlayData.IsInitialized);
         Refresh();
         PlayData.OnProfileChanged += Refresh;
     }
+
 
     private void OnDisable()
     {
         PlayData.OnProfileChanged -= Refresh;
     }
 
-    public void Refresh()
+    public async void Refresh()
     {
         int level = PlayData.Level;
         int exp = PlayData.Exp;
@@ -33,6 +36,7 @@ public class ProfileUI : MonoBehaviour
 
         expSlider.maxValue = maxExp;
         expSlider.value = exp;
-        stageProgressText.text = $"스테이지 {PlayData.LastClearedStage}";
+        stageProgressText.text =
+        $"스테이지 {PlayData.LastClearedStageNumber}";
     }
 }

@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 [System.Serializable]
 public class CachedCharacter
@@ -41,8 +42,6 @@ public static class PlayData
     private static int cachedExp = 0;
     private static string cachedNickname = "";
 
-    public static int LastClearedStage { get; private set; }
-
 
     //캐릭터 데이터 캐싱
     private static Dictionary<string, CachedCharacter> cachedCharacters = new Dictionary<string, CachedCharacter>();
@@ -65,6 +64,10 @@ public static class PlayData
     public static int Exp => cachedExp;
     public static string Nickname => cachedNickname;
 
+    private static string cachedProfileIconAddress;
+    public static string ProfileIconAddress => cachedProfileIconAddress;
+
+
     //초기화 상태
     public static bool IsInitialized => isInitialized;
 
@@ -74,15 +77,30 @@ public static class PlayData
 
     public static event Action OnCurrencyChanged;
 
+
+    public static int LastClearedStageId { get; private set; }
+
+    public static int LastClearedStageNumber
+    {
+        get
+        {
+            const int STAGE_ID_START = 701;
+            return Mathf.Max(1, LastClearedStageId - STAGE_ID_START + 1);
+        }
+    }
+
+
+
     public static void NotifyCurrencyChanged()
     {
         OnCurrencyChanged?.Invoke();
     }
-
-    public static void SetLastClearedStageImmediate(int stage)
+    public static void SetLastClearedStageImmediate(int stageId)
     {
-        LastClearedStage = stage;
+        LastClearedStageId = stageId;
+        OnProfileChanged?.Invoke();
     }
+
     //DatabaseManager에서 데이터 동기화
     public static void SyncFromDatabase()
     {
@@ -100,7 +118,7 @@ public static class PlayData
         cachedStamina = user.currency.stamina;
         cachedEnhanceStone = user.currency.enhanceStone;
         cachedSummonTicket = user.currency.summonTicket;
-
+        LastClearedStageId = user.profile.highestStage;
 
         cachedLevel = user.profile.level;
         cachedExp = user.profile.exp;
@@ -112,11 +130,15 @@ public static class PlayData
         // 아이템 동기화
         SyncItemsFromDatabase();
         SyncSelectedUnitIdsFromActivePreset();
+        cachedProfileIconAddress = user.profile.profileIconAddress;
+
 
         isInitialized = true;
         Debug.Log("데이터 동기화 완료");
         Debug.Log($"골드: {cachedGold}, 다이아: {cachedDiamond}, 강화석: {cachedEnhanceStone}");
         Debug.Log($"선택된 유닛: {string.Join(", ", selectedUnitIds)}");
+
+        OnProfileChanged?.Invoke();
     }
 
     private static void SyncSelectedUnitIdsFromActivePreset()
@@ -164,6 +186,12 @@ public static class PlayData
     public static void SetNicknameImmediate(string nickname)
     {
         cachedNickname = nickname;
+        OnProfileChanged?.Invoke();
+    }
+
+    public static void SetProfileIconImmediate(string address)
+    {
+        cachedProfileIconAddress = address;
         OnProfileChanged?.Invoke();
     }
 

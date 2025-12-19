@@ -44,6 +44,8 @@ namespace GameData
         public int totalPlayTime;
         public int highestStage;
         public int totalPower;          // 총 전투력
+
+        public string profileIconAddress;
     }
 
     #endregion

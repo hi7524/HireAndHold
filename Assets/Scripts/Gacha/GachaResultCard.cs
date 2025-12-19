@@ -25,22 +25,21 @@ public class GachaResultCard : MonoBehaviour
         var unitData = DataTableManager.UnitTable.Get(item.unitId);
         if (unitData == null) return;
 
-        string iconAddress;
+        string iconAddress = null;
 
         if (item.isDuplicate)
         {
-            var fragmentItem = DataTableManager.ItemTable
-                .Get(unitData.FRAGMENT_ITEM_ID);
-
-            iconAddress = fragmentItem?.ITEM_ICON;
+            iconAddress = GetFragmentIconAddress(unitData);
         }
         else
         {
+            // 기존 유닛 아이콘
             iconAddress = unitData.UNIT_ICON;
         }
+
         if (unitNameText != null)
         {
-            unitNameText.text = $"{item.unitName}";
+            unitNameText.text = unitData.StringName;
         }
 
         if (!string.IsNullOrEmpty(iconAddress))
@@ -53,7 +52,12 @@ public class GachaResultCard : MonoBehaviour
                 unitIcon.sprite = iconHandle.Value.Result;
                 unitIcon.enabled = true;
             }
+            else
+            {
+                Debug.LogWarning($"[GachaResultCard] Icon load failed: {iconAddress}");
+            }
         }
+
 
         ApplyRarityBackground(item.rarity);
 
@@ -95,12 +99,31 @@ public class GachaResultCard : MonoBehaviour
     {
         rarityBackground.color = rarity switch
         {
-            GachaRarity.Common => Color.white,
-            GachaRarity.Rare => Color.green,
-            GachaRarity.Unique => Color.blue,
-            GachaRarity.Legendary => new Color(0.6f, 0.3f, 0.9f),
-            GachaRarity.Epic => new Color(1f, 0.8f, 0.2f),
-            _ => Color.white
+            GachaRarity.Common => new Color32(78, 70, 56, 255),   // Dark Warm Brown
+            GachaRarity.Rare => new Color32(64, 100, 78, 255),  // Dark Emerald Green
+            GachaRarity.Unique => new Color32(60, 82, 122, 255),  // Dark Sapphire Blue
+            GachaRarity.Epic => new Color32(142, 114, 58, 255), // Dark Gold / Bronze
+            GachaRarity.Legendary => new Color32(120, 78, 150, 255), // Dark Violet
+            _ => new Color32(70, 70, 70, 255)
         };
     }
+
+
+
+    private string GetFragmentIconAddress(UnitData unitData)
+    {
+        if (unitData == null || string.IsNullOrEmpty(unitData.UNIT_ICON))
+            return null;
+
+        // UNIT_ICON 예: MILIA1, TARON2, VALEN3
+        string icon = unitData.UNIT_ICON;
+
+        // 뒤 숫자 제거
+        icon = System.Text.RegularExpressions.Regex.Replace(icon, @"\d+$", "");
+
+        // Addressables 주소 생성
+        return $"unit/fragment/{icon}";
+    }
+
+
 }

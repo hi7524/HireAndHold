@@ -33,6 +33,9 @@ public class StoreWindow : GenericWindow
     private bool isPlaying = false;
     private CancellationTokenSource cts;
 
+    private bool isPlayingAnimation = false; 
+    private bool isSkipping = false;
+
     private void Start()
     {
         // 초기 상태 설정
@@ -185,51 +188,79 @@ public class StoreWindow : GenericWindow
     /// </summary>
     private async UniTask PlayResultAnimationAsync(GachaResult result, CancellationToken ct)
     {
+        isPlaying = true;
+        isPlayingAnimation = true;
+        isSkipping = false;
+
+        if (gachaResultPanel != null)
+            gachaResultPanel.SetActive(true);
+
+        ClearResultCards();
+
         try
         {
-            isPlaying = true;
-            Debug.Log("[StoreWindow] 결과 애니메이션 시작");
-
-            if (gachaResultPanel != null)
-            {
-                gachaResultPanel.SetActive(true);
-            }
-
-            // 기존 카드 제거
-            ClearResultCards();
-
-            // 카드 하나씩 표시
             for (int i = 0; i < result.items.Count; i++)
             {
-                ct.ThrowIfCancellationRequested();
+                if (isSkipping)
+                {
+                    ShowAllRemainingCards(result, i);
+                    break;
+                }
 
-                var item = result.items[i];
-                await ShowResultCardAsync(item, i, ct);
-                Debug.Log($"[GachaUI] 카드 표시: {item.unitId} ({item.rarity})");
+                ct.ThrowIfCancellationRequested();
+                await ShowResultCardAsync(result.items[i], i, ct);
 
                 if (i < result.items.Count - 1)
                 {
-                    await UniTask.Delay(TimeSpan.FromSeconds(cardAppearDelay), cancellationToken: ct);
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(cardAppearDelay),
+                        cancellationToken: ct
+                    );
                 }
             }
-
-            // 모든 카드 표시 후 대기
-            await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: ct);
-            
-            Debug.Log("[StoreWindow] 결과 애니메이션 정상 완료");
         }
         catch (OperationCanceledException)
         {
-            Debug.Log("[StoreWindow] 결과 애니메이션 취소됨");
-            throw; // 상위로 전파
+            if (isSkipping)
+            {
+                ShowAllRemainingCards(result, resultContainer.childCount);
+            }
+            else
+            {
+                throw;
+            }
         }
         finally
         {
-            // 어떤 경우든 isPlaying 상태는 반드시 리셋
+            isPlayingAnimation = false;
             isPlaying = false;
-            Debug.Log("[StoreWindow] isPlaying 상태 리셋 완료");
+            Debug.Log("[StoreWindow] 연출 종료");
         }
     }
+
+    private void ShowAllRemainingCards(GachaResult result, int startIndex)
+    {
+        for (int i = startIndex; i < result.items.Count; i++)
+        {
+            var cardObj = Instantiate(gachaResultCardPrefab, resultContainer);
+            var card = cardObj.GetComponent<GachaResultCard>();
+            card?.Setup(result.items[i]);
+
+            // 애니메이션 없이 즉시 표시
+            var rect = cardObj.GetComponent<RectTransform>();
+            rect.localScale = Vector3.one;
+
+            var canvasGroup = cardObj.GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+                canvasGroup = cardObj.AddComponent<CanvasGroup>();
+
+            canvasGroup.alpha = 1f;
+        }
+
+        Debug.Log("[StoreWindow] 스킵 → 모든 결과 카드 즉시 표시");
+    }
+
+
 
     // <summary>
     // 결과 카드 표시
@@ -313,47 +344,34 @@ public class StoreWindow : GenericWindow
 
     private void OnClickSkip()
     {
-        Debug.Log("[StoreWindow] Skip 버튼 클릭");
-        
-        // 애니메이션 취소
+        if (!isPlayingAnimation || isSkipping) return;
+
+        Debug.Log("[StoreWindow] Skip 버튼 클릭 - 연출 스킵");
+
+        isSkipping = true;
         cts?.Cancel();
-        
-        // 상태 리셋
-        isPlaying = false;
-        
-        //// 결과 패널 즉시 닫기
-        //if (gachaResultPanel != null)
-        //{
-        //    gachaResultPanel.SetActive(false);
-        //}
-        
-        // 카드들 정리
-        ClearResultCards();
-        
-        Debug.Log("[StoreWindow] Skip 처리 완료, 다시 가챠 가능");
     }
+
+
 
     private void OnClickClose()
     {
         Debug.Log("[StoreWindow] Close 버튼 클릭");
 
-        // 애니메이션 취소
         cts?.Cancel();
 
-        // 상태 리셋
         isPlaying = false;
+        isPlayingAnimation = false;
+        isSkipping = false;
 
-        // 결과 패널 닫기
         if (gachaResultPanel != null)
-        {
             gachaResultPanel.SetActive(false);
-        }
 
-        // 카드들 정리
         ClearResultCards();
 
         Debug.Log("[StoreWindow] Close 처리 완료, 다시 가챠 가능");
     }
+
 
     /// <summary>
     /// 치트 버튼: 뽑기권 지급

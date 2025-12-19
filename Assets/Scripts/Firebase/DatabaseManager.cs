@@ -131,7 +131,7 @@ public class DatabaseManager : MonoBehaviour
                 createdAt = now,
                 totalPlayTime = 0,
                 highestStage = 701,
-                totalPower = 0
+                totalPower = 0,
             },
             currency = new UserCurrency
             {
@@ -245,7 +245,6 @@ public class DatabaseManager : MonoBehaviour
 
         return await SavePresetAsync(index);
     }
-
 
 
     #endregion
@@ -651,7 +650,11 @@ public class DatabaseManager : MonoBehaviour
 
     #region 스테이지 관리
 
-    public async UniTask<bool> RecordStageClearAsync(string stageId, int score, float clearTime, int starRating)
+    public async UniTask<bool> RecordStageClearAsync(
+     string stageId,
+     int score,
+     float clearTime,
+     int starRating)
     {
         if (!CurrentUser.stageProgress.TryGetValue(stageId, out var progress))
         {
@@ -667,18 +670,16 @@ public class DatabaseManager : MonoBehaviour
 
         int stageNumber = int.Parse(stageId);
 
+        PlayData.SetLastClearedStageImmediate(stageNumber);
         if (stageNumber > CurrentUser.profile.highestStage)
         {
             CurrentUser.profile.highestStage = stageNumber;
             await SaveProfileAsync();
-
-            PlayData.SetLastClearedStageImmediate(stageNumber);
         }
 
         return await SaveStageProgressAsync(stageId);
-
-
     }
+
 
     public StageProgress GetStageProgress(string stageId)
     {
@@ -689,6 +690,8 @@ public class DatabaseManager : MonoBehaviour
     {
         return CurrentUser.stageProgress.TryGetValue(stageId, out var progress) && progress.isCleared;
     }
+
+
 
     #endregion
 
