@@ -674,16 +674,38 @@ public class UnitInfoUI : MonoBehaviour
         }
     }
 
+    private bool IsAlreadyEquippedInPreset(int preset, int unitId, int exceptSlot)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            if (i == exceptSlot) continue;
+
+            if (PlayData.selectedDeckUnitIds[preset, i] == unitId)
+                return true;
+        }
+        return false;
+    }
+
+
     private async void ReplaceSlot(int slotIndex)
     {
         int activePreset = PlayData.currentSelectedPreset;
+        if (IsAlreadyEquippedInPreset(activePreset, currentUnitId, slotIndex))
+        {
+            ShowAlert("이미 다른 슬롯에 편성된 유닛입니다.");
+            return;
+        }
 
-        // 기존 유닛 정보 가져오기
         int oldUnitId = PlayData.selectedDeckUnitIds[activePreset, slotIndex];
         var oldData = unitTable.Get(oldUnitId);
         var newData = unitTable.Get(currentUnitId);
 
-        // 교체 수행
+        if (newData == null)
+        {
+            ShowAlert("유닛 데이터 오류");
+            return;
+        }
+
         PlayData.selectedDeckUnitIds[activePreset, slotIndex] = currentUnitId;
         PlayData.selectedDeckUnitIconAddresses[activePreset, slotIndex] = newData.UNIT_ICON;
 
@@ -696,7 +718,10 @@ public class UnitInfoUI : MonoBehaviour
         replacePopupRoot.SetActive(false);
         mainRoot.SetActive(false);
 
-        ShowSuccess("교체 완료",$"슬롯 {slotIndex + 1}번\n{oldData?.StringName ?? "빈 슬롯"} → {newData.StringName}");
+        ShowSuccess(
+            "교체 완료",
+            $"슬롯 {slotIndex + 1}번\n{oldData?.StringName ?? "빈 슬롯"} → {newData.StringName}"
+        );
     }
 
     #endregion
