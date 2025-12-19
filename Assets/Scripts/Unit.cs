@@ -265,7 +265,7 @@ public class Unit : MonoBehaviour
 
         // NORMAL 강화 효과 적용
         int enforceLv = character.enforceLevel;
-        if (enforceLv > 0)
+        if (enforceLv > 0 && NormalEnforceSystem.SharedTable != null)
         {
             float totalAtkUp = 0f;
             int rank = unitData.RANK;

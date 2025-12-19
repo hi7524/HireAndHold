@@ -522,11 +522,15 @@ public class DatabaseManager : MonoBehaviour
 
     public OwnedCharacter GetCharacter(string characterId)
     {
+        if (CurrentUser == null || CurrentUser.characters == null)
+            return null;
         return CurrentUser.characters.TryGetValue(characterId, out var character) ? character : null;
     }
 
     public List<OwnedCharacter> GetAllCharacters()
     {
+        if (CurrentUser == null || CurrentUser.characters == null)
+            return new List<OwnedCharacter>();
         return new List<OwnedCharacter>(CurrentUser.characters.Values);
     }
 
