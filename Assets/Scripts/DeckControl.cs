@@ -83,40 +83,57 @@ public class DeckControl : MonoBehaviour
     {
         await InitializeData();
         await CreateUnitCards();
-        //LoadPresets();
+
         await LoadAndSetupPresets();
+
+        ApplyPresetToSelectedUnitIds();
+
         UpdateAllUI();
         unitInfoUI.SetUnitManager(battleUnitManager);
         unitInfoUI.SetDeckControl(this);
 
-        ApplyPresetToSelectedUnitIds();
         Debug.Log($"[DeckControl Start] PlayData.selectedUnitIds = {string.Join(", ", PlayData.selectedUnitIds)}");
 
         isInitialized = true;
     }
+
 
     async void OnEnable()
     {
         if (!isInitialized)
             return;
 
+        Debug.Log("[DeckControl] OnEnable - Firebase 새로고침 시작");
         await RefreshFromFirebase();
     }
 
     async UniTask RefreshFromFirebase()
     {
         await DatabaseManager.Instance.WaitForInitializationAsync();
+
         await DatabaseManager.Instance.LoadUserDataAsync();
 
-        // 새로 획득한 캐릭터 카드 생성
         await CreateNewUnitCards();
 
+  
         DatabaseManager.Instance.SyncPresetsToPlayData();
+
         LoadPresets();
+
+        if (PlayData.IsPresetCompletelyEmpty(activePresetIndex))
+        {
+            Debug.LogWarning("[DeckControl OnEnable] 활성 프리셋 비어있음 → 자동 편성");
+            await AutoFillPresetIfEmpty(activePresetIndex);
+        }
+
         LoadPreset(activePresetIndex);
+
+        ApplyPresetToSelectedUnitIds();
+
         UpdateAllUI();
 
         Debug.Log("[DeckControl] Firebase 데이터 새로고침 완료");
+        Debug.Log($"[DeckControl OnEnable] PlayData.selectedUnitIds = {string.Join(", ", PlayData.selectedUnitIds)}");
     }
 
     async UniTask CreateNewUnitCards()
@@ -195,21 +212,22 @@ public class DeckControl : MonoBehaviour
         DatabaseManager.Instance.SyncPresetsToPlayData();
         LoadPresets();
 
-        if (!PlayData.IsAnyPresetSaved())
+
+        bool activePresetEmpty = PlayData.IsPresetCompletelyEmpty(activePresetIndex);
+
+        if (activePresetEmpty)
         {
-            Debug.Log("처음 실행 → 자동 편성 실행");
-            for (int i = 0; i < 5; i++)
-            {
-                await AutoFillPresetIfEmpty(i);
-            }
+            Debug.LogWarning($"[DeckControl] 활성 프리셋({activePresetIndex})이 비어있음 → 자동 편성 시작");
+            await AutoFillPresetIfEmpty(activePresetIndex);
         }
         else
         {
-            Debug.Log("이미 프리셋 있음 → 자동 편성 스킵");
+            Debug.Log($"[DeckControl] 활성 프리셋({activePresetIndex})에 이미 덱이 있음");
         }
 
         LoadPreset(activePresetIndex);
     }
+
 
 
     async UniTask CreateUnitCards()
@@ -274,34 +292,56 @@ public class DeckControl : MonoBehaviour
 
         if (!isEmpty)
         {
-            Debug.Log($"Preset {presetIndex} 이미 있음 no 자동채움");
+            Debug.Log($"[DeckControl] Preset {presetIndex} 이미 있음 - 자동 채움 스킵");
             return;
         }
 
         var owned = DatabaseManager.Instance.GetAllCharacters();
         if (owned.Count == 0)
         {
+            Debug.LogError("[DeckControl] 보유한 캐릭터가 없음!");
             return;
         }
 
+        await UniTask.WaitUntil(() => unitModelMap.Count > 0);
+
+        int filledCount = 0;
         for (int i = 0; i < 5 && i < owned.Count; i++)
         {
             int unitId = int.Parse(owned[i].id);
 
             if (!unitModelMap.ContainsKey(unitId))
             {
+                Debug.LogWarning($"[DeckControl] UnitModelMap에 {unitId} 없음 - 스킵");
                 continue;
             }
 
             DeckUnitModel model = unitModelMap[unitId];
-            preset.units[i] = model;
 
+ 
+            if (string.IsNullOrEmpty(model.iconAddress))
+            {
+                Debug.LogWarning($"[DeckControl] {unitId} 아이콘 주소 누락 - 보정 시도");
+                model.FixMissingAddress();
+            }
+
+            preset.units[i] = model;
             PlayData.selectedDeckUnitIds[presetIndex, i] = model.unitId;
             PlayData.selectedDeckUnitIconAddresses[presetIndex, i] = model.iconAddress;
+
+            filledCount++;
         }
 
-        await DatabaseManager.Instance.SavePresetFromPlayDataAsync(presetIndex);
-        Debug.Log($"Preset {presetIndex} 자동 편성 완료");
+        if (filledCount > 0)
+        {
+
+            bool saved = await DatabaseManager.Instance.SavePresetFromPlayDataAsync(presetIndex);
+            Debug.Log($"[DeckControl] Preset {presetIndex} 자동 편성 완료: {filledCount}개 유닛, 저장 결과={saved}");
+        }
+        else
+        {
+            Debug.LogError("[DeckControl] 자동 편성 실패 - 유효한 유닛 없음");
+        }
     }
 
     public async void OnClickPresetButton(int index)
@@ -557,20 +597,17 @@ public class DeckControl : MonoBehaviour
 
         await DatabaseManager.Instance.SavePresetFromPlayDataAsync(activePresetIndex);
 
-        //if (hasRandomFill && notification != null)
-        //{
-        //    notification.Show("빈 슬롯이 랜덤으로 채워졌습니다!");
-        //}
-
         ExitEditMode();
+
+
+        ApplyPresetToSelectedUnitIds();
 
         if (stageDeck != null && stageDeck.isActiveAndEnabled)
         {
             stageDeck.Refresh();
         }
-
-        ApplyPresetToSelectedUnitIds();
     }
+
 
     bool FillEmptySlotsWithRandomUnits()
     {
@@ -755,8 +792,14 @@ public class DeckControl : MonoBehaviour
             }
         }
 
-        Debug.Log($"[DeckControl] PlayData.selectedUnitIds = {string.Join(", ", PlayData.selectedUnitIds)}");
+        Debug.Log($"[DeckControl] ApplyPresetToSelectedUnitIds → {string.Join(", ", PlayData.selectedUnitIds)}");
+
+        if (PlayData.selectedUnitIds.Count == 0)
+        {
+            Debug.LogError("[DeckControl] CRITICAL: selectedUnitIds가 비어있습니다!");
+        }
     }
+
 
     public DeckUnitModel GetDeckUnitModelFromPreset(int preset, int slot)
     {

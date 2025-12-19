@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -95,6 +95,7 @@ public class RewardPanelController : MonoBehaviour
 
             // SkillCardUi에 스킬 ID 설정
             warningRewardSlot.SetAsPassiveSkillCard(skillId);
+            warningRewardSlot.FillNextStar();
         }
         else
         {
@@ -130,6 +131,7 @@ public class RewardPanelController : MonoBehaviour
             {
                 passiveRewardSlots[i].SetAsPassiveSkillCard(selectedPassiveIds[i]);
                 passiveRewardSlots[i].gameObject.SetActive(true);
+                passiveRewardSlots[i].FillNextStar();
             }
             else
             {

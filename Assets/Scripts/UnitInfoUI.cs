@@ -210,7 +210,6 @@ public class UnitInfoUI : MonoBehaviour
             return;
 
         await CreatePreview();
-
         await UniTask.DelayFrame(1);
 
         var data = unitTable.Get(currentUnitId);
@@ -230,29 +229,25 @@ public class UnitInfoUI : MonoBehaviour
         powerText.text = attack.ToString();
 
         levelText.text = owned
-           ? $"{character.enforceLevel }/{NORMAL_MAX}"
+           ? $"{character.enforceLevel}/{NORMAL_MAX}"
            : $"-/{NORMAL_MAX}";
-
-
 
         LoadSprite(data.UNIT_ICON).Forget();
 
-        //playerGoldText.text = PlayData.Gold.ToString();
         playerStoneText.text = PlayData.EnhanceStone.ToString();
         int fragmentItemId = data.FRAGMENT_ITEM_ID;
         int ownedPieces = fragmentItemId > 0
             ? PlayData.GetItemCount(fragmentItemId)
             : 0;
 
-
         int heroLv = owned ? character.heroEnforceLevel : 0;
         heroStarText.text = $"영웅강화 등급: ★{heroLv}";
         heroProgressText.text = $"{heroLv}/{HERO_MAX}";
 
-
         RefreshHeroEffectList(heroLv);
 
         normalEnforceButton.interactable = owned;
+
         heroEnforceButton.interactable = owned && heroLv < HERO_MAX;
 
         mainRoot.SetActive(true);
@@ -288,7 +283,9 @@ public class UnitInfoUI : MonoBehaviour
     private void RefreshHeroEffectList(int heroLv)
     {
         foreach (Transform t in heroEffectListParent)
+        {
             Destroy(t.gameObject);
+        }
 
         for (int lv = 1; lv <= HERO_MAX; lv++)
         {
@@ -301,7 +298,6 @@ public class UnitInfoUI : MonoBehaviour
             var go = Instantiate(heroEffectItemPrefab, heroEffectListParent);
             var txt = go.GetComponentInChildren<TextMeshProUGUI>();
 
-
             if (txt == null)
             {
                 Debug.LogError("heroEffectItemPrefab 안에 TMP Text 없음!");
@@ -312,6 +308,8 @@ public class UnitInfoUI : MonoBehaviour
             txt.color = lv <= heroLv ? heroEffectUnlockedColor : heroEffectLockedColor;
         }
     }
+    
+
 
     #endregion
 
@@ -423,32 +421,38 @@ public class UnitInfoUI : MonoBehaviour
         }
 
         int heroLv = character.heroEnforceLevel;
+
         if (heroLv >= HERO_MAX)
         {
             ShowAlert("최대 영웅강화입니다.");
             return;
         }
-        var nextData = heroTable.Get(currentUnitId, heroLv + 1);
 
-        var next = heroTable.Get(currentUnitId, heroLv + 1);
+        int nextLv = heroLv + 1;
+        var next = heroTable.Get(currentUnitId, nextLv);
 
+        if (next == null)
+        {
+            ShowAlert("강화 데이터가 없습니다.");
+            return;
+        }
+
+        // UI 표시
         heroPopupLevelCurrent.text = $"★{heroLv}";
-        heroPopupLevelNext.text = heroLv + 1 <= HERO_MAX ? $"★{heroLv + 1}" : "MAX";
+        heroPopupLevelNext.text = $"★{nextLv}";
 
-        heroPopupPieceNeed.text = next?.IngredientNum.ToString();
-        heroPopupGoldNeed.text = next?.Gold_Cost.ToString();
+        heroPopupGoldNeed.text = next.Gold_Cost.ToString();
 
         var unitData = unitTable.Get(currentUnitId);
         int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
-
         int havePieces = PlayData.GetItemCount(fragmentItemId);
-
-        int needPieces = (int)nextData.IngredientNum;
+        int needPieces = (int)next.IngredientNum;
 
         heroPopupPieceHave.text = havePieces.ToString();
         heroPopupPieceNeed.text = needPieces.ToString();
+        heroPopupGoldHave.text = PlayData.Gold.ToString();
 
-
+        // 효과 리스트 표시
         foreach (Transform t in heroPopupEffectListParent)
             Destroy(t.gameObject);
 
@@ -462,11 +466,13 @@ public class UnitInfoUI : MonoBehaviour
 
             var go = Instantiate(heroPopupEffectItemPrefab, heroPopupEffectListParent);
             var txt = go.GetComponentInChildren<TextMeshProUGUI>();
-            txt.text = $"{(lv <= heroLv ? "[활성]" : "[잠김]")} LV {lv}: {eff.DescriptionText}";
 
+            string status = lv <= heroLv ? "[활성]" : "[잠김]";
+            txt.text = $"{status} LV {lv}: {eff.DescriptionText}";
         }
+
         RefreshHeroPopup();
-        heroPopupRoot.SetActive(true); // ?
+        heroPopupRoot.SetActive(true);
     }
 
     private async UniTaskVoid ConfirmHero()
@@ -491,16 +497,14 @@ public class UnitInfoUI : MonoBehaviour
         PlayData.SyncFromDatabase();
 
         int afterLv = character.heroEnforceLevel;
+
         var ef = heroTable.Get(currentUnitId, afterLv);
         var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
         var desc = effectTable.FormatEffect(effData);
 
         ShowSuccess("영웅 강화 성공!", $"★{beforeLv} → ★{afterLv}\n효과: {desc}");
 
-        //await Refresh();
         RefreshHeroPopup();
-      
-
     }
 
     private void RefreshHeroPopup()
@@ -509,18 +513,19 @@ public class UnitInfoUI : MonoBehaviour
         if (character == null) return;
 
         int heroLv = character.heroEnforceLevel;
-        var next = heroTable.Get(currentUnitId, heroLv + 1);
+
+        int nextLv = heroLv + 1;
+        var next = nextLv <= HERO_MAX ? heroTable.Get(currentUnitId, nextLv) : null;
 
         var unitData = unitTable.Get(currentUnitId);
         int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
 
         int havePieces = PlayData.GetItemCount(fragmentItemId);
-
         int needPieces = (int)(next?.IngredientNum ?? 0);
 
         heroPopupLevelCurrent.text = $"★{heroLv}";
         heroPopupLevelNext.text =
-            heroLv < HERO_MAX ? $"★{heroLv + 1}" : "MAX";
+            heroLv < HERO_MAX ? $"★{nextLv}" : "MAX";
 
         heroPopupPieceHave.text = havePieces.ToString();
         heroPopupPieceNeed.text = needPieces.ToString();
@@ -542,12 +547,12 @@ public class UnitInfoUI : MonoBehaviour
             var go = Instantiate(heroPopupEffectItemPrefab, heroPopupEffectListParent);
             var txt = go.GetComponentInChildren<TextMeshProUGUI>();
             string desc = effectTable.FormatEffect(eff);
-            txt.text = $"{(lv <= heroLv ? "[활성]" : "[잠김]")} LV {lv}: {desc}";
 
+            string status = lv <= heroLv ? "[활성]" : "[잠김]";
+            txt.text = $"{status} LV {lv}: {desc}";
         }
     }
-
-        #endregion
+    #endregion
 
     #region ===== Equip (장착) =====
 
@@ -669,16 +674,38 @@ public class UnitInfoUI : MonoBehaviour
         }
     }
 
+    private bool IsAlreadyEquippedInPreset(int preset, int unitId, int exceptSlot)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            if (i == exceptSlot) continue;
+
+            if (PlayData.selectedDeckUnitIds[preset, i] == unitId)
+                return true;
+        }
+        return false;
+    }
+
+
     private async void ReplaceSlot(int slotIndex)
     {
         int activePreset = PlayData.currentSelectedPreset;
+        if (IsAlreadyEquippedInPreset(activePreset, currentUnitId, slotIndex))
+        {
+            ShowAlert("이미 다른 슬롯에 편성된 유닛입니다.");
+            return;
+        }
 
-        // 기존 유닛 정보 가져오기
         int oldUnitId = PlayData.selectedDeckUnitIds[activePreset, slotIndex];
         var oldData = unitTable.Get(oldUnitId);
         var newData = unitTable.Get(currentUnitId);
 
-        // 교체 수행
+        if (newData == null)
+        {
+            ShowAlert("유닛 데이터 오류");
+            return;
+        }
+
         PlayData.selectedDeckUnitIds[activePreset, slotIndex] = currentUnitId;
         PlayData.selectedDeckUnitIconAddresses[activePreset, slotIndex] = newData.UNIT_ICON;
 
@@ -691,7 +718,10 @@ public class UnitInfoUI : MonoBehaviour
         replacePopupRoot.SetActive(false);
         mainRoot.SetActive(false);
 
-        ShowSuccess("교체 완료",$"슬롯 {slotIndex + 1}번\n{oldData?.StringName ?? "빈 슬롯"} → {newData.StringName}");
+        ShowSuccess(
+            "교체 완료",
+            $"슬롯 {slotIndex + 1}번\n{oldData?.StringName ?? "빈 슬롯"} → {newData.StringName}"
+        );
     }
 
     #endregion
