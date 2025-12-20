@@ -81,7 +81,6 @@ public class TestWaveSettingsController : MonoBehaviour
         }
 
         availableStages.Sort();
-        Debug.Log($"[TestWaveSettings] WaveTable 로드 완료 - {availableStages.Count}개 스테이지");
     }
 
     private void SetupUI()
@@ -135,7 +134,6 @@ public class TestWaveSettingsController : MonoBehaviour
         {
             CurrentStageId = availableStages[index];
             ApplyWavePreset(CurrentWave);
-            Debug.Log($"[TestWaveSettings] 스테이지 변경: {CurrentStageId}");
         }
     }
 
@@ -180,8 +178,6 @@ public class TestWaveSettingsController : MonoBehaviour
 
         // 자동으로 MonsterSpawnController에 배율 전달
         ApplySettings();
-
-        Debug.Log($"[TestWaveSettings] Stage {CurrentStageId} Wave {CurrentWave} - HP: x{HpMultiplier}, EXP: x{ExpMultiplier}");
     }
 
     private string GetWaveTypeName(int waveType)

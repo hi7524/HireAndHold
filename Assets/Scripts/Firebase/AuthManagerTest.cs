@@ -31,7 +31,6 @@ public class AuthManagerTester : MonoBehaviour
 
     private void Append(string msg)
     {
-        Debug.Log(msg);
         log = $"{DateTime.Now:HH:mm:ss} {msg}\n" + log;
     }
 

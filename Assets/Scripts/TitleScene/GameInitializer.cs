@@ -40,20 +40,17 @@ public class GameInitializer : MonoBehaviour
 
         // 2. AuthManager 초기화 대기
         ShowLoading(true, "인증 시스템 초기화 중...");
-        Debug.Log(AuthManager.Instance.IsInitialized);
         await UniTask.WaitUntil(() => AuthManager.Instance != null && AuthManager.Instance.IsInitialized);
 
 
         // 3. 로그인 상태 확인
         if (AuthManager.Instance.IsLoggedIn)
         {
-            Debug.Log("[GameInitializer] 사용자 이미 로그인됨. 로비로 이동합니다.");
             ShowLoading(true, "데이터 로드 중...");
             await LoadDataAndGoToLobbyAsync();
         }
         else
         {
-            Debug.Log("[GameInitializer] 로그인 필요. 로그인 화면을 표시합니다.");
             ShowLoading(false);
             ShowLoginScreen();
         }
@@ -87,7 +84,6 @@ public class GameInitializer : MonoBehaviour
             {
                 if (FirebaseInitializer.Instance.IsInitialized)
                 {
-                    Debug.Log("[GameInitializer] Firebase 초기화 성공");
                     return true;
                 }
                 else
@@ -112,7 +108,6 @@ public class GameInitializer : MonoBehaviour
 
     private async UniTask LoadDataAndGoToLobbyAsync()
     {
-        Debug.Log("[GameInitializer] 로비 씬 로딩 시작");
         LoadingRequest request = new LoadingRequest("Lobby");
 
         // 데이터 테이블 로드
@@ -136,7 +131,6 @@ public class GameInitializer : MonoBehaviour
 
         request.onLoadingComplete = () =>
         {
-            Debug.Log("로비 씬 로딩 완료!");
         };
 
         await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
@@ -167,22 +161,16 @@ public class GameInitializer : MonoBehaviour
 
     public async void OnLoginSuccess()
     {
-        Debug.Log("[GameInitializer] OnLoginSuccess 호출됨");
-        
         if (loginPanel != null)
         {
             loginPanel.SetActive(false);
         }
-
-        Debug.Log("[GameInitializer] LoadDataAndGoToLobbyAsync 호출 시작");
         await LoadDataAndGoToLobbyAsync();
-        Debug.Log("[GameInitializer] LoadDataAndGoToLobbyAsync 완료");
     }
 
 
     private void QuitApplication()
     {
-        Debug.Log("[GameInitializer] 애플리케이션을 종료합니다...");
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Firebase.Database;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
@@ -16,7 +16,6 @@ public class Database
     {
         firebaseDatabase = FirebaseDatabase.DefaultInstance;
         root = firebaseDatabase.RootReference;
-        Debug.Log("[Database] 초기화 완료");
     }
 
     #region Read

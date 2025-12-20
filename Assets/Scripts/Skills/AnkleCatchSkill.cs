@@ -10,7 +10,5 @@ public class AnkleCatchSkill : PlayerSkillBase
         SpawnEffect(spawnPoint, effectLifetime);
 
         int hitCount = DamageAndApplyEffectInRange(spawnPoint, Mathf.Infinity);
-
-        Debug.Log($"[AnkleCatch] 발목 잡기 발동! 전체 {hitCount}마리 속박 ({statusEffectDuration}초), 데미지: {damage}");
     }
 }

@@ -43,9 +43,6 @@ public class OreDungeonManager : MonoBehaviour
             RemainTouchCount = 10; // 임시로 10 정해둠 *TODO: 나중에 공격력과 연관짓기
             RemainOreCount = DungeonData.Number_Of_Ores + DungeonData.Number_Of_Ores2;
         }
-
-        Debug.Log($"OreDungeonManager 초기화 완료 - ID: {CurDungeonID}, Preloaded: {IsPreloaded}, DungeonData: {(DungeonData != null ? "로드 성공" : "로드 실패")}");
-
         // 초기화 완료 이벤트 발행
         OnInitialized?.Invoke();
     }

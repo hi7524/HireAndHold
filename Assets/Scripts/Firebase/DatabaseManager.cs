@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
@@ -44,7 +44,6 @@ public class DatabaseManager : MonoBehaviour
         database.Initialize();
 
         isInitialized = true;
-        Debug.Log("[DatabaseManager] 초기화 완료");
     }
 
     public async UniTask WaitForInitializationAsync()
@@ -63,13 +62,8 @@ public class DatabaseManager : MonoBehaviour
             Debug.LogError("[DB] 로그인 필요");
             return null;
         }
-
-        Debug.Log($"[DB] 유저 데이터 로드 시작: {UserId}");
         string path = $"users/{UserId}";
         var (data, success) = await database.GetDataAsync<UserData>(path);
-
-        Debug.Log($"[DB] GetData 결과: success={success}, data={(data != null ? "있음" : "null")}");
-
         if (success && data != null)
         {
             CurrentUser = data;
@@ -77,17 +71,11 @@ public class DatabaseManager : MonoBehaviour
             // 마지막 로그인 시간 갱신
             CurrentUser.profile.lastLoginTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             await SaveProfileAsync();
-
-            Debug.Log($"[DB] 유저 데이터 로드: {CurrentUser.profile?.nickname}");
         }
         else
         {
-            Debug.Log("[DB] 기존 데이터 없음, 신규 유저 생성 시작");
             CurrentUser = CreateNewUserData();
-            Debug.Log($"[DB] 신규 유저 데이터 생성 완료: {CurrentUser.profile.nickname}");
-
             bool saveResult = await SaveAllAsync();
-            Debug.Log($"[DB] 신규 유저 저장 결과: {saveResult}");
         }
 
         SyncPresetsToPlayData();
@@ -109,7 +97,6 @@ public class DatabaseManager : MonoBehaviour
 
         if (success)
         {
-            //Debug.Log("[DB] 전체 저장 완료");
         }
 
         return success;
@@ -326,12 +313,7 @@ public class DatabaseManager : MonoBehaviour
 
         try
         {
-            Debug.Log("[GoldTest] Increment 시작");
-
             bool success = await database.IncrementValueAsync(path, amount);
-
-            Debug.Log($"[GoldTest] Increment 결과 = {success}");
-
             if (success)
             {
                 CurrentUser.currency.gold += amount;
@@ -339,8 +321,6 @@ public class DatabaseManager : MonoBehaviour
             }
 
             var (value, ok) = await database.GetDataAsync<object>(path);
-            Debug.Log($"[GoldCheck] value={value}, type={value?.GetType()}");
-
             return success;
         }
         catch (Exception e)
@@ -516,7 +496,6 @@ public class DatabaseManager : MonoBehaviour
         CurrentUser.characters[characterId].enforceLevel = newLevel;
 
         await SaveCharacterAsync(characterId);
-        Debug.Log($"[DB] 강화레벨 저장 완료: ID={characterId}, enforce={newLevel}");
     }
 
 

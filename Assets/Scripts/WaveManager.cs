@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
@@ -48,7 +48,6 @@ public class WaveManager : MonoBehaviour
         completedWaveNums.Clear(); // 초기화
 
         RegisterWaveEvents();
-        Debug.Log($"[WaveManager] Stage {stageId} 웨이브 초기화 완료. 총 웨이브 수: {TotalWaves}");
     }
 
 
@@ -69,7 +68,6 @@ public class WaveManager : MonoBehaviour
 
                     var warningEvent = gameManager.AddTimeEvent(warnMinutes, warnSeconds, () =>
                     {
-                        Debug.Log($"[WaveManager] 워닝 패널 표시! 시간: {warnMinutes}:{warnSeconds}");
                         stageUiManager.ShowWarningPanel();
                     });
                     registeredEvents.Add(warningEvent);
@@ -116,7 +114,6 @@ public class WaveManager : MonoBehaviour
 
     private void StartWave(WaveData wave)
     {
-        Debug.Log($"[WaveManager] StartWave: WAVE_NUM={wave.WAVE_NUM}, TYPE={wave.WAVE_TYPE}");
         CurrentWaveNum = wave.WAVE_NUM;
         OnWaveStart?.Invoke(wave.WAVE_NUM);
         SpawnWaveMonsters(wave);

@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -134,10 +134,6 @@ public static class PlayData
 
 
         isInitialized = true;
-        Debug.Log("데이터 동기화 완료");
-        Debug.Log($"골드: {cachedGold}, 다이아: {cachedDiamond}, 강화석: {cachedEnhanceStone}");
-        Debug.Log($"선택된 유닛: {string.Join(", ", selectedUnitIds)}");
-
         OnProfileChanged?.Invoke();
     }
 
@@ -156,8 +152,6 @@ public static class PlayData
                 selectedUnitIds.Add(unitId);
             }
         }
-
-        Debug.Log($"[PlayData] selectedUnitIds 동기화: {string.Join(", ", selectedUnitIds)}");
     }
 
     // 캐릭터 데이터 동기화
@@ -179,8 +173,6 @@ public static class PlayData
                 heroEnforceLevel = character.heroEnforceLevel
             };
         }
-
-        Debug.Log($"캐릭터 {cachedCharacters.Count}개 동기화 완료");
     }
 
     public static void SetNicknameImmediate(string nickname)
@@ -211,8 +203,6 @@ public static class PlayData
                 cachedItems[itemId] = kvp.Value;
             }
         }
-
-        Debug.Log($"아이템 {cachedItems.Count}종 동기화 완료");
     }
 
     //재화 변경 로컬 캐시 + DB 동기화
@@ -221,7 +211,6 @@ public static class PlayData
     {
         cachedStamina += amount;
         await DatabaseManager.Instance.AddStaminaAsync(amount);
-        Debug.Log($" 스태미나 변경: {amount:+#;-#;0} (현재: {cachedStamina})");
     }
 
 
@@ -345,15 +334,12 @@ public static class PlayData
         cachedCharacters.Clear();
         cachedItems.Clear();
         isInitialized = false;
-
-        Debug.Log("캐시 초기화");
     }
 
     // 현재 선택된 던전 ID 저장
     public static void SetSelectedOreDungeonId(int id)
     {
         OreDungeonID = id;
-        Debug.Log($"현재 선택된 던전 ID: {OreDungeonID}");
     }
 
     public static void SetProfileImmediate(int level, int exp)

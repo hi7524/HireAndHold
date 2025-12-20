@@ -42,15 +42,11 @@ public class AreaProjectile : MonoBehaviour, ISkillProjectile
 
         // Physics2D로 범위 내 콜라이더 감지
         var hits = Physics2D.OverlapCircleAll(pos, data.range);
-
-        Debug.Log($"[AreaProjectile] pos={pos}, range={data.range}, damage={data.damage}, hits={hits.Length}");
-
         foreach (var hit in hits)
         {
             Enemy enemy = hit.GetComponent<Enemy>();
             if (enemy != null && !enemy.IsDead)
             {
-                Debug.Log($"[AreaProjectile] hit enemy={enemy.name}");
                 enemy.TakeDamage(data.damage, data.isCritical);
             }
         }

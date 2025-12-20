@@ -24,8 +24,6 @@ public class StatusEffectRoot : StatusEffect
             monster.speed = 0f; // 이속을 0으로
             
             startTime = Time.time;
-            
-            Debug.Log($"[Root] {target.name} 속박됨! {effectDuration}초간 이동 불가!");
         }
     }
 
@@ -40,8 +38,6 @@ public class StatusEffectRoot : StatusEffect
         if (monster != null)
         {
             monster.speed = originalSpeed;
-            
-            Debug.Log($"[Root] {target.name} 속박 해제! 이속 복구!");
         }
     }
 }

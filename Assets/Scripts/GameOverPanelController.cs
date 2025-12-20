@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
@@ -107,8 +107,6 @@ public class GameOverPanelController : MonoBehaviour
         
         if (currentUser != null)
         {
-            Debug.Log($"[GameOverPanel] 스테이지 {stageKey} 실패 데이터 저장 중...");
-            
             // 플레이 카운트 증가
             if (!currentUser.stageProgress.TryGetValue(stageKey, out var progress))
             {
@@ -128,8 +126,6 @@ public class GameOverPanelController : MonoBehaviour
 
             // 획득 아이템 저장
             await SaveAccumulatedItemsAsync();
-
-            Debug.Log($"[GameOverPanel] 실패 데이터 저장 완료 (플레이 횟수: {progress.playCount}, 골드: +{gold})");
         }
     }
     
@@ -138,9 +134,6 @@ public class GameOverPanelController : MonoBehaviour
     {
         if (currentItems == null || currentItems.Count == 0)
             return;
-
-        Debug.Log($"[GameOverPanel] 획득 아이템 DB 저장 시작 ({currentItems.Count}종)");
-
         foreach (var item in currentItems)
         {
             int itemId = item.Key;
@@ -149,7 +142,6 @@ public class GameOverPanelController : MonoBehaviour
             bool success = await DatabaseManager.Instance.AddItemAsync(itemId, count);
             if (success)
             {
-                Debug.Log($"  - 아이템 저장 완료: {itemId} x{count}");
             }
             else
             {
@@ -159,8 +151,6 @@ public class GameOverPanelController : MonoBehaviour
 
         // PlayData 동기화
         PlayData.SyncItemsFromDatabase();
-
-        Debug.Log("[GameOverPanel] 획득 아이템 DB 저장 완료");
     }
 
     public void Hide()

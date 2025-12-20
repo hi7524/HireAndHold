@@ -151,11 +151,8 @@ public class LoginUI : MonoBehaviour
         if (success)
         {
             ShowFeedback("게스트 로그인 성공!", true);
-            Debug.Log("[LoginUI] 게스트 로그인 성공 - GameInitializer 호출 시도");
-            
             if (gameInitializer != null)
             {
-                Debug.Log("[LoginUI] GameInitializer.OnLoginSuccess() 호출");
                 gameInitializer.OnLoginSuccess();
             }
             else

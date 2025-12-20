@@ -58,19 +58,16 @@ public class Ore : MonoBehaviour
             // 대성공
             int dropCount = Random.Range(oreData.Jackpot_Percent_Minimum_Number_Of_Drops,
                                           oreData.Jackpot_Percent_Maximum_Number_Of_Drops + 1);
-            Debug.Log($"<color=yellow>대성공!</color> 드롭 개수: {dropCount}");
         }
         else if (randomValue < jackpotPercent + fiascoPercent)
         {
             // 대실패
             int dropCount = oreData.Fiasco_Drops;
-            Debug.Log($"<color=red>대실패!</color> 드롭 개수: {dropCount}");
         }
         else
         {
             // 일반 성공
             int dropCount = oreData.Base_Number_Of_Successful_Drops;
-            Debug.Log($"<color=green>성공!</color> 드롭 개수: {dropCount}");
         }
     }
 }

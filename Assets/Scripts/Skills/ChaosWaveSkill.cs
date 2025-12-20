@@ -10,7 +10,5 @@ public class ChaosWaveSkill : PlayerSkillBase
         SpawnEffect(spawnPoint, effectLifetime);
 
         int hitCount = DamageAndApplyEffectInRange(spawnPoint, Mathf.Infinity);
-
-        Debug.Log($"[ChaosWave] 혼돈의 파동 발동! 전체 {hitCount}마리 방어력 감소 ({statusEffectValue * 100}% 증뎀), 데미지: {damage}");
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -47,8 +47,6 @@ public class GachaManager : MonoBehaviour
         {
             Debug.LogError("[GachaManager] premiumGacha가 null입니다!");
         }
-
-        Debug.Log("[GachaManager] InitializeTables 완료");
     }
 
     private void Init(GachaType gachaType, int catalogId, List<GachaItem> gachaItems)
@@ -83,7 +81,6 @@ public class GachaManager : MonoBehaviour
             gachaItems.Add(gachaItem);
         }
         BuildCumulativeTable(gachaType, gachaItems);
-        Debug.Log($"[GachaManager] {gachaType} 카탈로그 초기화 완료: {gachaItems.Count}개 아이템, 총 Weight: {totalWeightByType[gachaType]}");
     }
 
     private void BuildCumulativeTable(GachaType gachaType, List<GachaItem> gachaItems)
@@ -168,15 +165,10 @@ public class GachaManager : MonoBehaviour
             {
                 return null;
             }
-
-            Debug.Log($"[GachaManager] 비용 {costAmount} 차감 성공 (ItemID: {costItemId})");
-
             // 뽑기 실행
             List<GachaItem> results = new List<GachaItem>();
             var gachaItems = GetGachaItemsByType(type);
             var totalWeight = GetTotalWeightByType(type);
-            Debug.Log($"[GachaManager] 뽑기 시작 - Type: {type}, 아이템 수: {gachaItems.Count}, 총 Weight: {totalWeight}");
-
             for (int i = 0; i < count; i++)
             {
                 var gachaResult = GachaSingle(type);
@@ -248,8 +240,6 @@ public class GachaManager : MonoBehaviour
             // 결과 생성 및 이벤트 발생
             GachaResult result = new GachaResult(results, type);
             OnGachaComplete?.Invoke(result);
-
-            Debug.Log($"[GachaManager] {type} {count}회 뽑기 완료");
             return result;
         }
         catch (Exception ex)
@@ -294,7 +284,6 @@ public class GachaManager : MonoBehaviour
         {
             // 캐시 업데이트
             PlayData.SetItemCountImmediate(itemId, currentCount - amount);
-            Debug.Log($"[GachaManager] {itemData.ITEM_NAME} {amount}개 차감 완료");
         }
         else
         {

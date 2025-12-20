@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class FlexibleAttendanceGrid : MonoBehaviour
@@ -102,8 +102,6 @@ public class FlexibleAttendanceGrid : MonoBehaviour
             child.anchoredPosition = new Vector2(posX, posY);
             child.sizeDelta = cellSize;
         }
-
-        Debug.Log($"Grid 배치 완료 - Spacing X: {spacingX:F1}, Y: {spacingY:F1}");
     }
 
     // 수동으로 재배치가 필요할 때 호출

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
@@ -94,9 +94,6 @@ public class StageClearPanelController : MonoBehaviour
         }
         
         string stageKey = stageId.ToString();
-        
-        Debug.Log($"[StageClearPanel] 스테이지 {stageKey} 결과 저장 중 (클리어: {isCleared})");
-        
         if (isCleared)
         {
             // 성공: 클리어 기록
@@ -122,13 +119,10 @@ public class StageClearPanelController : MonoBehaviour
                 {
                     currentUser.profile.highestStage = stageId + 1;  // 다음 스테이지 ID 저장
                     await DatabaseManager.Instance.SaveProfileAsync();
-                    Debug.Log($"[StageClearPanel] 최고 스테이지 갱신: {currentUser.profile.highestStage}");
                 }
 
                 // 획득 아이템 저장
                 await SaveAccumulatedItemsAsync();
-
-                Debug.Log("[StageClearPanel] 클리어 데이터 저장 완료");
             }
         }
         else
@@ -152,8 +146,6 @@ public class StageClearPanelController : MonoBehaviour
                 {
                     await DatabaseManager.Instance.AddGoldAsync(gold);
                 }
-                
-                Debug.Log($"[StageClearPanel] 실패 데이터 저장 완료 (플레이 횟수: {progress.playCount})");
             }
         }
     }
@@ -163,9 +155,6 @@ public class StageClearPanelController : MonoBehaviour
     {
         if (currentItems == null || currentItems.Count == 0)
             return;
-
-        Debug.Log($"[StageClearPanel] 획득 아이템 DB 저장 시작 ({currentItems.Count}종)");
-
         foreach (var item in currentItems)
         {
             int itemId = item.Key;
@@ -174,7 +163,6 @@ public class StageClearPanelController : MonoBehaviour
             bool success = await DatabaseManager.Instance.AddItemAsync(itemId, count);
             if (success)
             {
-                Debug.Log($"  - 아이템 저장 완료: {itemId} x{count}");
             }
             else
             {
@@ -184,8 +172,6 @@ public class StageClearPanelController : MonoBehaviour
 
         // PlayData 동기화
         PlayData.SyncItemsFromDatabase();
-
-        Debug.Log("[StageClearPanel] 획득 아이템 DB 저장 완료");
     }
 
     public void Hide()

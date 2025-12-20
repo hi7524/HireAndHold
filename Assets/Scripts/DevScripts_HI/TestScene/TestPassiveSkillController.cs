@@ -130,8 +130,6 @@ public class TestPassiveSkillController : MonoBehaviour
                 passiveSkillManager.AddOrUpgradePassiveSkill(skillId);
             }
         }
-        
-        Debug.Log($"[TestPassiveSkill] {type} 레벨 변경: {level}");
     }
     
     private int GetCurrentSkillLevel(PassiveSkillType type)
@@ -169,8 +167,6 @@ public class TestPassiveSkillController : MonoBehaviour
         {
             item.SetLevel(0);
         }
-        
-        Debug.Log("[TestPassiveSkill] 모든 패시브 스킬 리셋됨");
     }
     
     private void UpdateStatusDisplay()

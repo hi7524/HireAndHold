@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using TMPro;
@@ -80,9 +80,7 @@ public class StageUiManager : MonoBehaviour
 
     public void SetLevelUpRewardPanelActive(bool value)
     {
-        Debug.Log($"[StageUiManager] SetLevelUpRewardPanelActive({value}) 호출됨");
         levelUpRewardPanel.SetActive(value);
-        Debug.Log($"[StageUiManager] levelUpRewardPanel.activeSelf = {levelUpRewardPanel.activeSelf}");
     }
 
     public void ActiveSkillSelectPanel()

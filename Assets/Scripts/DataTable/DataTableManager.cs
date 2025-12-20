@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -25,7 +25,6 @@ public static class DataTableManager
         try
         {
             await LoadAllTablesAsync();
-            Debug.Log("DataTableManager initialized");
             IsInitialized = true;
         }
         finally
@@ -72,7 +71,6 @@ public static class DataTableManager
         // 이미 로드된 테이블은 스킵
         if (tables.ContainsKey(id))
         {
-            Debug.Log($"[DataTableManager] {id} 이미 로드됨 - 스킵");
             return;
         }
 

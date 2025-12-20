@@ -133,8 +133,6 @@ public class TestUnitStatEditor : MonoBehaviour
         {
             OnUnitTableSelected(0);
         }
-
-        Debug.Log($"[UnitStatEditor] UnitTable 로드 완료: {unitDataList.Count}개 유닛");
     }
 
     private void SetupUI()
@@ -176,7 +174,6 @@ public class TestUnitStatEditor : MonoBehaviour
             selectedUnitData = unitDataList[index];
             UpdateInfoText();
             UpdateInputFieldsFromDataTable();
-            Debug.Log($"[UnitStatEditor] 선택: {selectedUnitData.StringName} (ID: {selectedUnitData.UNIT_ID})");
         }
     }
 
@@ -270,7 +267,6 @@ public class TestUnitStatEditor : MonoBehaviour
         }
 
         UpdateInfoText();
-        Debug.Log($"[UnitStatEditor] 씬 유닛 갱신 완료 ({sceneUnits.Count}개)");
     }
 
     [Obsolete("Use OnUnitTableSelected instead")]
@@ -383,8 +379,6 @@ public class TestUnitStatEditor : MonoBehaviour
                 attackCooltimeStat.SetBaseValue(newCooltime);
             }
         }
-        
-        Debug.Log("[TestUnitStatEditor] 스탯 변경 적용됨");
         UpdateStatDisplay();
     }
     
@@ -425,8 +419,6 @@ public class TestUnitStatEditor : MonoBehaviour
                 critDamageStat.AddModifier(new StatModifier(critDamageMod, ModifierType.Flat));
             }
         }
-        
-        Debug.Log("[TestUnitStatEditor] 모디파이어 추가됨");
         UpdateStatDisplay();
     }
     
@@ -485,7 +477,6 @@ public class TestUnitStatEditor : MonoBehaviour
         OnDataTableModified?.Invoke(selectedUnitData.UNIT_ID);
 
         UpdateInfoText();
-        Debug.Log($"[UnitStatEditor] DataTable 수정 완료: {selectedUnitData.StringName} (ATK:{selectedUnitData.ATTACK}, CD:{selectedUnitData.ATTACK_COOLTIME:F2}, CR:{selectedUnitData.ATTACK_CRITICAL:F1}%, CDmg:{selectedUnitData.CRITICAL_DAMAGE:F2})");
     }
 
     /// <summary>
@@ -511,7 +502,6 @@ public class TestUnitStatEditor : MonoBehaviour
 
             UpdateInputFieldsFromDataTable();
             UpdateInfoText();
-            Debug.Log($"[UnitStatEditor] DataTable 원본 복구: {selectedUnitData.StringName}");
         }
         else
         {
@@ -540,7 +530,6 @@ public class TestUnitStatEditor : MonoBehaviour
         originalDataTableValues.Clear();
         UpdateInputFieldsFromDataTable();
         UpdateInfoText();
-        Debug.Log("[UnitStatEditor] 모든 DataTable 원본 복구 완료");
     }
 
     /// <summary>
@@ -594,9 +583,6 @@ public class TestUnitStatEditor : MonoBehaviour
             }
 
             File.WriteAllText(fullPath, sb.ToString(), Encoding.UTF8);
-
-            Debug.Log($"[UnitStatEditor] CSV 저장 완료: {fullPath}");
-
 #if UNITY_EDITOR
             // 에디터에서 에셋 새로고침
             UnityEditor.AssetDatabase.Refresh();
@@ -681,7 +667,6 @@ public class TestUnitStatEditor : MonoBehaviour
         if (currentTestSlot != null)
         {
             currentTestSlot.gameObject.SetActive(true);
-            Debug.Log($"[UnitStatEditor] 유닛 슬롯 생성: {selectedUnitData.StringName} (ID: {selectedUnitData.UNIT_ID})");
         }
     }
 
@@ -694,7 +679,6 @@ public class TestUnitStatEditor : MonoBehaviour
         {
             Destroy(currentTestSlot.gameObject);
             currentTestSlot = null;
-            Debug.Log("[UnitStatEditor] 유닛 슬롯 제거됨");
         }
     }
 

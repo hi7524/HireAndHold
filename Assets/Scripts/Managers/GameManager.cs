@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -126,7 +126,6 @@ public class GameManager : MonoBehaviour
 
     private void GameManagerLog(string msg)
     {
-        Debug.Log($"<color=#E155E1>{msg}</color>");
     }
     
 }

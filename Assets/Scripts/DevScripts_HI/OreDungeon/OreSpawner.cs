@@ -105,8 +105,6 @@ public class OreSpawner : MonoBehaviour
         {
             ore.gameObject.SetActive(true);
         }
-
-        Debug.Log($"광석 스폰 완료: {oreList.Count}개");
     }
 
     private List<Vector2> GenerateGridPositions(Vector2 areaMin, Vector2 areaMax)

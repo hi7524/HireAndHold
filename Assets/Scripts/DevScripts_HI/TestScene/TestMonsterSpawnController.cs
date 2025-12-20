@@ -167,7 +167,6 @@ public class TestMonsterSpawnController : MonoBehaviour, IMonsterProvider
 
         if (cachedMonsterPrefab != null)
         {
-            Debug.Log("[TestMonsterSpawnController] Monster 프리팹 로드 완료");
         }
         else
         {
@@ -208,8 +207,6 @@ public class TestMonsterSpawnController : MonoBehaviour, IMonsterProvider
         {
             selectedMonsterId = monsterList[0].MON_ID;
         }
-        
-        Debug.Log($"[TestMonsterSpawnController] {monsterList.Count}개 몬스터 로드 완료");
     }
     
     private void SetupButtons()
@@ -236,7 +233,6 @@ public class TestMonsterSpawnController : MonoBehaviour, IMonsterProvider
         if (index >= 0 && index < monsterList.Count)
         {
             selectedMonsterId = monsterList[index].MON_ID;
-            Debug.Log($"[TestMonsterSpawnController] 선택된 몬스터: {monsterList[index].MON_NAME} (ID: {selectedMonsterId})");
         }
     }
     
@@ -268,8 +264,6 @@ public class TestMonsterSpawnController : MonoBehaviour, IMonsterProvider
         {
             SpawnMonster(selectedMonsterId, isBoss);
         }
-        
-        Debug.Log($"[TestMonsterSpawnController] {spawnCount}마리 스폰 완료 (Boss: {isBoss}, HP: x{hpMultiplier}, EXP: x{expMultiplier})");
     }
     
     private void SpawnMonster(int monsterId, bool isBoss)
@@ -345,7 +339,6 @@ public class TestMonsterSpawnController : MonoBehaviour, IMonsterProvider
                 monsterStatEditor.TryGetOverrideStats(monsterId, out float overrideHp, out float overrideSpeed, out int overrideExp))
             {
                 ApplyStatsToEnemy(enemy, overrideHp, overrideSpeed, overrideExp);
-                Debug.Log($"[TestMonsterSpawnController] 오버라이드 스탯 적용: HP={overrideHp}, Speed={overrideSpeed}, Exp={overrideExp}");
             }
         }
     }
@@ -388,8 +381,6 @@ public class TestMonsterSpawnController : MonoBehaviour, IMonsterProvider
                 enemy.TakeDamage(999999f);
             }
         }
-
-        Debug.Log("[TestMonsterSpawnController] 모든 몬스터 제거됨");
     }
     
     // 외부에서 배율 설정

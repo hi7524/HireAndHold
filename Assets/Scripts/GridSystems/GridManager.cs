@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -117,7 +117,6 @@ public class GridManager : MonoBehaviour
             if (newLayoutData != null)
             {
                 LayoutData = newLayoutData;
-                Debug.Log($"GridLayoutData 설정 완료: {gridLayoutKey}");
                 return;
             }
         }
@@ -147,8 +146,6 @@ public class GridManager : MonoBehaviour
         defaultLayout.enableRegionBuffs = false;
         defaultLayout.crossBuffs = new List<CrossBuffData>();
         defaultLayout.regionBuffs = new List<RegionBuffData>();
-
-        Debug.Log("기본 3x3 그리드 레이아웃 생성 완료");
         return defaultLayout;
     }
 

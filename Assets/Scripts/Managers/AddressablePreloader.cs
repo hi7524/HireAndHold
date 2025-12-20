@@ -259,7 +259,6 @@ public class AddressablePreloader : MonoBehaviour
         await UniTask.WhenAll(loadTasks);
 
         IsLoaded = true;
-        Debug.Log($"[AddressablePreloader] 프리로드 완료: {cachedPrefabs.Count} 프리팹, {cachedGridData.Count} GridData, {cachedSprites.Count} Sprite, {cachedMaps.Count} 맵, {cachedGridLayouts.Count} GridLayout, {cachedAudioClips.Count} AudioClip, {cachedGridIcons.Count} GridIcon");
     }
 
     private async UniTask LoadPrefabWithProgress(string key, CancellationToken ct, Action onComplete)
@@ -354,8 +353,6 @@ public class AddressablePreloader : MonoBehaviour
             });
             handles.Add(handle);
             await handle.ToUniTask(cancellationToken: ct);
-
-            Debug.Log($"[AddressablePreloader] PlayerSkillPrefab Label 로드 완료: {handle.Result?.Count ?? 0}개");
         }
         catch (OperationCanceledException)
         {
@@ -392,8 +389,6 @@ public class AddressablePreloader : MonoBehaviour
             });
             handles.Add(handle);
             await handle.ToUniTask(cancellationToken: ct);
-
-            Debug.Log($"[AddressablePreloader] UnitGridIcons Label 로드 완료: {handle.Result?.Count ?? 0}개");
         }
         catch (OperationCanceledException)
         {

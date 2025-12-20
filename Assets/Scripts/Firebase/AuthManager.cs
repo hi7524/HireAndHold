@@ -44,12 +44,9 @@ public class AuthManager : MonoBehaviour
 
         if (currentUser != null)
         {
-            Debug.Log($"[Auth] 이미 로그인됨: {UserId}");
         }
         else
         {
-            Debug.Log($"[Auth] 로그인 필요");
-
         }
 
         isInitialized = true;
@@ -76,14 +73,12 @@ public class AuthManager : MonoBehaviour
             bool signedIn = auth.CurrentUser != currentUser && auth.CurrentUser != null;
             if (!signedIn && currentUser != null)
             {
-                // Debug.Log("[Auth] 로그 아웃 됨");
             }
 
             currentUser = auth.CurrentUser;
 
             if (signedIn)
             {
-                // Debug.Log("[Auth] 로그 인 됨");
             }
         }
     }
@@ -93,18 +88,12 @@ public class AuthManager : MonoBehaviour
     {
         try
         {
-            Debug.Log("[Auth] 익명 로그인 시도...");
-
             AuthResult result = await auth.SignInAnonymouslyAsync().AsUniTask();
             currentUser = result.User;
-
-            Debug.Log($"[Auth] 익명 로그인 성공: {UserId}");
-
             return (true, null);
         }
         catch (System.Exception ex)
         {
-            Debug.Log($"[Auth] 익명 로그인 실패: {ex.Message}");
             return (false, ex.Message);
         }
 
@@ -114,18 +103,12 @@ public class AuthManager : MonoBehaviour
     {
         try
         {
-            // Debug.Log("[Auth] 회원 가입 시도...");
-
             AuthResult result = await auth.CreateUserWithEmailAndPasswordAsync(email, passwd).AsUniTask();
             currentUser = result.User;
-
-            // Debug.Log($"[Auth] 회원 가입 성공: {UserId}");
-
             return (true, null);
         }
         catch (System.Exception ex)
         {
-            // Debug.Log($"[Auth] 회원 가입 실패: {ex.Message}");
             return (false, ex.Message);
         }
     }
@@ -134,18 +117,12 @@ public class AuthManager : MonoBehaviour
     {
         try
         {
-            // Debug.Log("[Auth] 로그인 시도...");
-
             AuthResult result = await auth.SignInWithEmailAndPasswordAsync(email, passwd).AsUniTask();
             currentUser = result.User;
-
-            // Debug.Log($"[Auth] 로그인 성공: {UserId}");
-
             return (true, null);
         }
         catch (System.Exception ex)
         {
-            // Debug.Log($"[Auth] 로그인 실패: {ex.Message}");
             return (false, ex.Message);
         }
 
@@ -166,7 +143,6 @@ public class AuthManager : MonoBehaviour
 
             if (result == 0)
             {
-                Debug.Log("[Auth] 로그아웃 완료");
             }
             else
             {

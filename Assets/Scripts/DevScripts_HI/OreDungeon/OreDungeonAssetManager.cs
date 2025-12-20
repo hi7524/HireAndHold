@@ -39,13 +39,11 @@ public class OreDungeonAssetManager : MonoBehaviour
     {
         if (isPreloaded)
         {
-            Debug.Log("캐시된 리소스 사용");
             OreDungeonTable = DataTableManager.OreDungeonTable;
             OreTable = DataTableManager.OreTable;
         }
         else
         {
-            Debug.Log("직접 리소스 로드 시작");
             await LoadOreDungeonTableDirectly();
             await LoadOreTableDirectly();
         }

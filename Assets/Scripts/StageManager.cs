@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -33,7 +33,6 @@ public class StageManager : MonoBehaviour
     {
         // CurrentStageId 먼저 설정 (다른 컴포넌트가 Start에서 참조할 수 있도록)
         CurrentStageId = PageSnap.SelectedStageId;
-        Debug.Log($"[StageManager] 초기 스테이지 ID 설정: {CurrentStageId}");
         CurrentStageData = DataTableManager.StageTable.Get(CurrentStageId);
         if (CurrentStageData != null)
         {
@@ -79,8 +78,6 @@ public class StageManager : MonoBehaviour
         accumulatedGold = 0f;
         accumulatedAccountExp = 0f;
         accumulatedItems.Clear();
-        Debug.Log($"  - 총 적 수: {TotalMonsters}마리");
-
         OnMonsterCountChanged?.Invoke(RemainingMonsters);
         OnStageStart?.Invoke(stageId);
         waveManager.InitializeWaves(stageId);
@@ -106,7 +103,6 @@ public class StageManager : MonoBehaviour
         {
             mapSpriteRenderer1.sprite = mapSprite;
             mapSpriteRenderer2.sprite = mapSprite;
-            Debug.Log($"[StageManager] 맵 스프라이트 적용: {mapKey}");
         }
         else
         {
@@ -181,7 +177,6 @@ public class StageManager : MonoBehaviour
     {
         if (amount <= 0) return;
         accumulatedGold += amount;
-        Debug.Log($"[StageManager] 보너스 골드 추가: +{amount}G (누적: {accumulatedGold}G)");
     }
 
     // 아이템 획득 시 호출
@@ -194,8 +189,6 @@ public class StageManager : MonoBehaviour
             accumulatedItems[itemId] += count;
         else
             accumulatedItems[itemId] = count;
-
-        Debug.Log($"[StageManager] 아이템 획득: {dropItem.ItemData?.ITEM_NAME ?? itemId.ToString()} x{count}");
     }
 
     public void CompleteStage()
@@ -228,18 +221,6 @@ public class StageManager : MonoBehaviour
 
         totalGold += starBonusGold;
         totalExp += starBonusExp;
-
-        Debug.Log($"[StageManager] 스테이지 {CurrentStageId} 클리어! ({stars}성)");
-        Debug.Log($"  - 기본 보상 경험치: {CurrentStageData.STAGE_C_EXP}");
-        Debug.Log($"  - 몰스터 보상 경험치: {(int)accumulatedAccountExp}");
-        Debug.Log($"  - 별 보상 경험치: {starBonusExp}");
-        Debug.Log($"  - 총 경험치: {totalExp}");
-        Debug.Log($"  - 기본 보상 골드: {CurrentStageData.STAGE_C_GOLD}");
-        Debug.Log($"  - 몰스터 보상 골드: {(int)accumulatedGold}");
-        Debug.Log($"  - 별 보상 골드: {starBonusGold}");
-        Debug.Log($"  - 총 골드: {totalGold}");
-        Debug.Log($"  - 획득 아이템: {accumulatedItems.Count}종");
-
         OnStageComplete?.Invoke(CurrentStageId);
 
         // 클리어 패널 표시 (아이템 정보 전달 - 로딩 씬에서 DB 저장)
@@ -275,11 +256,6 @@ public class StageManager : MonoBehaviour
     {
         int totalGold = (int)accumulatedGold;
         int totalExp = (int)accumulatedAccountExp;
-
-        Debug.Log($"[StageManager] 스테이지 {CurrentStageId} 실패");
-        Debug.Log($"  - 획득 골드: {totalGold}");
-        Debug.Log($"  - 획득 아이템: {accumulatedItems.Count}종");
-
         OnStageFailed?.Invoke(CurrentStageId);
 
         if (stageUiManager != null)
@@ -295,8 +271,6 @@ public class StageManager : MonoBehaviour
     /// </summary>
     public void ForceCompleteStage()
     {
-        Debug.Log("[StageManager] 강제 클리어 실행!");
-
         // 남은 몬스터 수를 0으로 설정
         RemainingMonsters = 0;
 

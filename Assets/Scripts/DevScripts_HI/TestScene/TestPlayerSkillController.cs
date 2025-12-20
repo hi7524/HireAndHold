@@ -196,8 +196,6 @@ public class TestPlayerSkillController : MonoBehaviour
             selectedSkillIndex = 0;
             UpdateSkillInfo();
         }
-
-        Debug.Log($"[TestPlayerSkill] {playerSkillInfos.Count}개 플레이어 스킬 로드 완료");
     }
 
     /// <summary>
@@ -233,7 +231,6 @@ public class TestPlayerSkillController : MonoBehaviour
         {
             selectedSkillIndex = index;
             UpdateSkillInfo();
-            Debug.Log($"[TestPlayerSkill] 선택: {playerSkillInfos[index].skillName} (ID: {playerSkillInfos[index].skillId})");
         }
     }
 
@@ -333,8 +330,6 @@ public class TestPlayerSkillController : MonoBehaviour
         skill.TryUse(spawnPos);
 
         var info = playerSkillInfos.Find(x => x.skillId == skillId);
-        Debug.Log($"[TestPlayerSkill] 스킬 사용: {info.skillName} (위치: {spawnPos})");
-
         // 버프 스킬이 아닌 경우에만 테스트 씬용 직접 데미지/상태이상 적용
         if (!info.isBuff)
         {
@@ -415,7 +410,6 @@ public class TestPlayerSkillController : MonoBehaviour
     private void OnNoCooldownChanged(bool value)
     {
         noCooldown = value;
-        Debug.Log($"[TestPlayerSkill] 쿨다운 무시: {noCooldown}");
     }
 
     /// <summary>
@@ -483,8 +477,6 @@ public class TestPlayerSkillController : MonoBehaviour
 
             hitCount++;
         }
-
-        Debug.Log($"[TestPlayerSkill] {hitCount}마리 몬스터에 데미지({info.damage}) 및 상태이상({(StatusEffectType)info.effectType}) 적용");
     }
 
     /// <summary>
@@ -540,7 +532,6 @@ public class TestPlayerSkillController : MonoBehaviour
                 skill.elapsed = skill.CoolDown;
             }
         }
-        Debug.Log("[TestPlayerSkill] 모든 스킬 쿨다운 리셋됨");
     }
 
     /// <summary>

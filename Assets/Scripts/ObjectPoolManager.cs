@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -63,8 +63,6 @@ public class ObjectPoolManager : MonoBehaviour
                 CreatePool(item);
             }
         }
-
-        Debug.Log("[ObjectPoolManager] 모든 풀 생성 완료");
     }
 
     // AddressablePreloader 캐시에서 에셋 가져오기 (없으면 동기 로드)
@@ -104,7 +102,6 @@ public class ObjectPoolManager : MonoBehaviour
 
                     if (item.cachedPrefab != null)
                     {
-                        Debug.Log($"[ObjectPoolManager] '{item.addressableKey}' 동기 로드 완료");
                     }
                     else
                     {
@@ -197,7 +194,6 @@ public class ObjectPoolManager : MonoBehaviour
     {
         if(!pools.ContainsKey(key))
         {
-            Debug.Log($"Pool {key} 없음");
             return null;
         }
 
@@ -209,7 +205,6 @@ public class ObjectPoolManager : MonoBehaviour
     {
         if (!pools.ContainsKey(key))
         {
-            Debug.Log($"Pool {key} X ");
             if (Application.isPlaying)
                 Destroy(obj);
             else
@@ -219,7 +214,6 @@ public class ObjectPoolManager : MonoBehaviour
 
         if (!obj.activeSelf)
         {
-            Debug.Log($"이미 반환 됨 {obj.name}");
             return;
         }
 

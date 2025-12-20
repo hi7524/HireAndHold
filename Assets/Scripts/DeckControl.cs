@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using GameData;
 using System.Collections.Generic;
 using UnityEngine;
@@ -91,9 +91,6 @@ public class DeckControl : MonoBehaviour
         UpdateAllUI();
         unitInfoUI.SetUnitManager(battleUnitManager);
         unitInfoUI.SetDeckControl(this);
-
-        Debug.Log($"[DeckControl Start] PlayData.selectedUnitIds = {string.Join(", ", PlayData.selectedUnitIds)}");
-
         isInitialized = true;
     }
 
@@ -102,8 +99,6 @@ public class DeckControl : MonoBehaviour
     {
         if (!isInitialized)
             return;
-
-        Debug.Log("[DeckControl] OnEnable - Firebase 새로고침 시작");
         await RefreshFromFirebase();
     }
 
@@ -131,9 +126,6 @@ public class DeckControl : MonoBehaviour
         ApplyPresetToSelectedUnitIds();
 
         UpdateAllUI();
-
-        Debug.Log("[DeckControl] Firebase 데이터 새로고침 완료");
-        Debug.Log($"[DeckControl OnEnable] PlayData.selectedUnitIds = {string.Join(", ", PlayData.selectedUnitIds)}");
     }
 
     async UniTask CreateNewUnitCards()
@@ -176,8 +168,6 @@ public class DeckControl : MonoBehaviour
 
                     unitCards.Add(card);
                     unitModelMap[unitId] = model;
-
-                    Debug.Log($"[DeckControl] 새 캐릭터 카드 생성: {model.unitName}");
                 });
 
             loadTasks.Add(loadTask);
@@ -222,7 +212,6 @@ public class DeckControl : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[DeckControl] 활성 프리셋({activePresetIndex})에 이미 덱이 있음");
         }
 
         LoadPreset(activePresetIndex);
@@ -292,7 +281,6 @@ public class DeckControl : MonoBehaviour
 
         if (!isEmpty)
         {
-            Debug.Log($"[DeckControl] Preset {presetIndex} 이미 있음 - 자동 채움 스킵");
             return;
         }
 
@@ -336,7 +324,6 @@ public class DeckControl : MonoBehaviour
         {
 
             bool saved = await DatabaseManager.Instance.SavePresetFromPlayDataAsync(presetIndex);
-            Debug.Log($"[DeckControl] Preset {presetIndex} 자동 편성 완료: {filledCount}개 유닛, 저장 결과={saved}");
         }
         else
         {
@@ -503,7 +490,6 @@ public class DeckControl : MonoBehaviour
                 slot.ClearPending();
                 NotifyUnitCleared(model);
                 UpdateCompleteButton();
-                Debug.Log($"슬롯에서 제거: {model.unitName}");
                 return;
             }
 
@@ -514,7 +500,6 @@ public class DeckControl : MonoBehaviour
                 slot.CommitPending();
                 NotifyUnitCleared(model);
                 UpdateCompleteButton();
-                Debug.Log($"슬롯에서 제거: {model.unitName}");
                 return;
             }
         }
@@ -526,12 +511,9 @@ public class DeckControl : MonoBehaviour
                 slot.SetPending(model);
                 NotifyUnitAssigned(model);
                 UpdateCompleteButton();
-                Debug.Log($"빈 슬롯에 배치: {model.unitName}");
                 return;
             }
         }
-
-        Debug.Log("빈 슬롯이 없음.");
     }
 
     void HandleViewModeCardClick(DeckUnitModel model)
@@ -539,7 +521,6 @@ public class DeckControl : MonoBehaviour
         ExitEditModeIfEditing();
         detailedPanel.SetActive(true);
         unitInfoUI.SetUnit(model.unitId);
-        Debug.Log("선택된 유닛: " + model.unitId);
     }
 
     public void NotifyUnitAssigned(DeckUnitModel data)
@@ -654,8 +635,6 @@ public class DeckControl : MonoBehaviour
 
                 availableUnits.RemoveAt(randomIndex);
                 hasRandomFill = true;
-
-                Debug.Log($"빈 슬롯에 랜덤 {randomUnit.unitName}");
             }
         }
 
@@ -791,9 +770,6 @@ public class DeckControl : MonoBehaviour
                 PlayData.selectedUnitIds.Add(unitId);
             }
         }
-
-        Debug.Log($"[DeckControl] ApplyPresetToSelectedUnitIds → {string.Join(", ", PlayData.selectedUnitIds)}");
-
         if (PlayData.selectedUnitIds.Count == 0)
         {
             Debug.LogError("[DeckControl] CRITICAL: selectedUnitIds가 비어있습니다!");

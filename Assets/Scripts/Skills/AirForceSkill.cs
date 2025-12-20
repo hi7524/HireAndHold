@@ -10,7 +10,5 @@ public class AirForceSkill : PlayerSkillBase
         SpawnEffect(spawnPoint, effectLifetime);
 
         int hitCount = DamageAndApplyEffectInRange(spawnPoint, Mathf.Infinity);
-
-        Debug.Log($"[AirForce] 에어포스 발동! 전체 {hitCount}마리 넉백, 데미지: {damage}");
     }
 }

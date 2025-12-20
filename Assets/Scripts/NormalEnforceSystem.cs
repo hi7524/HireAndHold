@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class NormalEnforceSystem
@@ -94,7 +94,6 @@ public class NormalEnforceSystem
     {
         if (!CanEnforce(unit, out string reason))
         {
-            Debug.Log($"강화 실패: {reason}");
             return false;
         }
 
@@ -115,10 +114,6 @@ public class NormalEnforceSystem
         // 유닛에 강화 적용
         ApplyEnforceToUnit(unit, data);
         await SaveUnitEnforceLevel(unit, nextLevel);
-
-        Debug.Log($"강화 성공! Level {nextLevel}, +ATK {data.AttackUp}");
-        Debug.Log($"남은 골드: {PlayData.Gold}, 남은 강화석: {PlayData.EnhanceStone}");
-
         return true;
     }
 
@@ -136,7 +131,6 @@ public class NormalEnforceSystem
             int currentRank = GetUnitRank(unit);
             if (data.Class != currentRank)
             {
-                Debug.Log($"등급 상승: {currentRank} -> {data.Class}");
             }
         }
     }

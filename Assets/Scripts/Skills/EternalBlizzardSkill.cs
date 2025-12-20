@@ -13,8 +13,5 @@ public class EternalBlizzardSkill : PlayerSkillBase
 
         // 데미지 + 상태이상 적용
         int hitCount = DamageAndApplyEffectInRange(spawnPoint, blizzardRange);
-
-        Debug.Log($"[EternalBlizzard] 블리자드 발동! {hitCount}마리 타격, " +
-                  $"데미지: {damage}, 이속 감소: {statusEffectValue * 100}% / {statusEffectDuration}초");
     }
 }

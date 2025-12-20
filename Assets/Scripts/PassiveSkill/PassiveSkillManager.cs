@@ -297,20 +297,12 @@ public class PassiveSkillManager : MonoBehaviour
     
     public void LogOwnedSkills()
     {
-        Debug.Log("=== 보유 패시브 스킬 ===");
         foreach (PassiveSkillGroup group in skillGroups.Values)
         {
             if (group.currentStar > 0)
             {
-                Debug.Log($"{group.displayName}: {group.currentStar}");
             }
         }
-        Debug.Log($"bossDamageBonus: {currentEffects.bossDamageBonus}");
-        Debug.Log($"damageBonus: {currentEffects.damageBonus}");
-        Debug.Log($"critRateBonus: {currentEffects.critRateBonus}");
-        Debug.Log($"critDamageBonus: {currentEffects.critDamageBonus}");
-        Debug.Log($"expBonus: {currentEffects.expBonus}");
-        Debug.Log($"shieldRegenBonus: {currentEffects.shieldRegenBonus}");
     }
     
 }

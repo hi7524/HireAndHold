@@ -22,7 +22,6 @@ public class LobbyToGameLoader : MonoBehaviour
 
         request.onLoadingComplete = () =>
         {
-            Debug.Log("[LobbyToGameLoader] Stage 씬 로딩 완료!");
         };
 
         LoadingSceneManager.Instance.LoadSceneWithLoading(request);

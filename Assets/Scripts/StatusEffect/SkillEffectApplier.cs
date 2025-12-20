@@ -56,8 +56,6 @@ public class SkillEffectApplier : MonoBehaviour
                 }
             }
         }
-
-        Debug.Log($"{affectedCount}마리의 몬스터에게 {type} 적용!");
     }
 
 
@@ -71,7 +69,6 @@ public class SkillEffectApplier : MonoBehaviour
         }
         else
         {
-            Debug.Log("범위 내에 몬스터가 없습니다!");
         }
     }
 
