@@ -3,12 +3,15 @@ using UnityEngine.VFX;
 
 public class AreaProjectile : MonoBehaviour, ISkillProjectile
 {
+    private const int EFFECT_SORTING_ORDER = 100;
+
     [SerializeField] private float lifeTime = 1f;
     [SerializeField] private float damageDelay = 0f;
     [SerializeField] private ParticleSystem effect;
     [SerializeField] private VisualEffect vfxEffect;
 
     private SkillProjectileData data;
+    private bool sortingOrderSet = false;
 
     public void Initialize(ref SkillProjectileData data)
     {
@@ -19,6 +22,13 @@ public class AreaProjectile : MonoBehaviour, ISkillProjectile
     {
         // 타겟 위치에 즉시 이동
         transform.position = data.targetPosition;
+
+        // Sorting Order 설정 (최초 1회)
+        if (!sortingOrderSet)
+        {
+            SetEffectSortingOrder();
+            sortingOrderSet = true;
+        }
 
         // 이펙트 재생
         if (effect != null)
@@ -61,6 +71,15 @@ public class AreaProjectile : MonoBehaviour, ISkillProjectile
     private void OnDisable()
     {
         CancelInvoke();
+    }
+
+    private void SetEffectSortingOrder()
+    {
+        var renderers = GetComponentsInChildren<ParticleSystemRenderer>(true);
+        foreach (var renderer in renderers)
+        {
+            renderer.sortingOrder = EFFECT_SORTING_ORDER;
+        }
     }
 
 #if UNITY_EDITOR
