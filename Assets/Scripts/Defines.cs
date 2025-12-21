@@ -20,6 +20,7 @@ public static class DataTableIds
     public static readonly string Ore = "OreTable";
     public static readonly string OreDungeon = "OreDungeonTable";
     public static readonly string DungeonSetting = "DungeonSettingTable";
+    public static readonly string DailyReward = "DailyRewardTable";
 }
 
 public static class Tags

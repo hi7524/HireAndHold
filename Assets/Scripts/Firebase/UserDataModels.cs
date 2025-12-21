@@ -17,6 +17,7 @@ namespace GameData
         public Dictionary<string, int> items;
         public int activePresetIndex;
         public UserSettings settings;
+        public DailyRewardData dailyReward;
 
         public UserData()
         {
@@ -25,6 +26,7 @@ namespace GameData
             stageProgress = new Dictionary<string, StageProgress>();
             partyPresets = new Dictionary<string, PartyPreset>();
             items = new Dictionary<string, int>();
+            dailyReward = new DailyRewardData();
         }
     }
 
@@ -227,6 +229,27 @@ namespace GameData
             pushNotification = true;
             language = "ko";
             graphicQuality = 2;
+        }
+    }
+
+    #endregion
+
+    #region 일일 보상
+
+    [Serializable]
+    public class DailyRewardData
+    {
+        public List<string> claimedDates;      // 보상 받은 날짜 목록 (yyyy-MM-dd)
+        public string lastClaimDate;           // 마지막으로 보상 받은 날짜
+        public int totalClaimCount;            // 총 출석 횟수
+        public string currentMonth;            // 현재 월 (yyyy-MM)
+
+        public DailyRewardData()
+        {
+            claimedDates = new List<string>();
+            lastClaimDate = null;
+            totalClaimCount = 0;
+            currentMonth = null;
         }
     }
 
