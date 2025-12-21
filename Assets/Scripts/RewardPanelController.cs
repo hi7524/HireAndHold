@@ -32,6 +32,7 @@ public class RewardPanelController : MonoBehaviour
     [SerializeField] private GameManager gameManager;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
     [SerializeField] private StageManager stageManager;
+    [SerializeField] private DragManager dragManager;
 
     [Header("골드 보상")]
     [SerializeField] private int defaultGoldReward = 50;
@@ -69,6 +70,17 @@ public class RewardPanelController : MonoBehaviour
         {
             canvasEffect.SetActive(false);
         }
+
+        // 드래그 비활성화
+        if (dragManager != null)
+            dragManager.SetDragEnabled(false);
+    }
+
+    private void OnDisable()
+    {
+        // 드래그 재활성화
+        if (dragManager != null)
+            dragManager.SetDragEnabled(true);
     }
 
     // 워닝 타임 보상 표시

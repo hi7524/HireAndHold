@@ -11,6 +11,7 @@ public class PauseController : MonoBehaviour
     [SerializeField] private GameManager gameManager;
     [SerializeField] private StageManager stageManager;
     [SerializeField] private PassiveSkillManager passiveSkillManager;
+    [SerializeField] private DragManager dragManager;
     [SerializeField] private GameObject panelRoot;
 
     [Header("UI Elements")]
@@ -44,12 +45,20 @@ public class PauseController : MonoBehaviour
         RefreshOwnedItems();
         if (gameManager != null)
             gameManager.PauseGame();
+
+        // 드래그 비활성화
+        if (dragManager != null)
+            dragManager.SetDragEnabled(false);
     }
 
     private void OnDisable()
     {
         if (gameManager != null)
             gameManager.ResumeGame();
+
+        // 드래그 재활성화
+        if (dragManager != null)
+            dragManager.SetDragEnabled(true);
     }
 
     public void Show(string stageName, int expReward, int goldReward, int stars = 3)
