@@ -99,8 +99,15 @@ public class DropItem : MonoBehaviour
 
     private void MoveToTarget(Vector3 target)
     {
-        if (isMoving || isCollected)
+        if (isCollected)
             return;
+
+        // 이미 이동 중이면 기존 애니메이션 중단 후 새로 시작
+        if (isMoving)
+        {
+            transform.DOKill();
+            isMoving = false;
+        }
 
         targetPos = target;
 
@@ -113,7 +120,8 @@ public class DropItem : MonoBehaviour
                 isMoving = true;
                 transform.DOMove(targetPos, moveTime)
                     .SetEase(Ease.InOutQuad)
-                    .SetUpdate(false);
+                    .SetUpdate(false)
+                    .OnComplete(() => isMoving = false);
             });
     }
 
