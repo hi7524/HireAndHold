@@ -114,6 +114,18 @@ public class StageClearPanelController : MonoBehaviour
                 // 경험치 지급
                 await DatabaseManager.Instance.AddExpAsync(exp);
 
+                // 업적 연동: 스테이지 클리어
+                int stageNumber = stageId - 700; // STAGE_ID_START = 701, 스테이지 1번 = 701
+                await AchievementManager.UpdateStageMaxClearAsync(stageNumber);
+
+                // 업적 연동: 골드 획득
+                if (gold > 0)
+                    await AchievementManager.AddGoldGetAsync(gold);
+
+                // 업적 연동: 무피해 클리어 (3성 = 벽 체력 100%)
+                if (stars == 3)
+                    await AchievementManager.CompleteBarrierNoDamageAsync();
+
                 // highestStage 갱신 (스테이지 ID로 저장)
                 var currentUser = DatabaseManager.Instance.CurrentUser;
 

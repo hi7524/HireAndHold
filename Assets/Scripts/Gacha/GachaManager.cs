@@ -237,6 +237,9 @@ public class GachaManager : MonoBehaviour
             // PlayData 캐릭터 캐시 동기화
             PlayData.SyncCharactersFromDatabase();
 
+            // 업적 연동
+            await UpdateGachaAchievementsAsync(type, count, results);
+
             // 결과 생성 및 이벤트 발생
             GachaResult result = new GachaResult(results, type);
             OnGachaComplete?.Invoke(result);
@@ -365,4 +368,45 @@ public class GachaManager : MonoBehaviour
         };
     }
 
+    /// <summary>
+    /// 가챠 관련 업적 업데이트
+    /// </summary>
+    private async UniTask UpdateGachaAchievementsAsync(GachaType type, int count, List<GachaItem> results)
+    {
+        // 총 가챠 횟수 업적
+        await AchievementManager.AddGachaTotalAsync(count);
+
+        // 타입별 업적
+        if (type == GachaType.Normal)
+        {
+            if (count == 1)
+                await AchievementManager.CompleteGachaNormalAsync();
+            else if (count == 10)
+                await AchievementManager.CompleteGachaNormal10Async();
+        }
+        else if (type == GachaType.Premium)
+        {
+            if (count == 1)
+                await AchievementManager.CompleteGachaPremiumAsync();
+            else if (count == 10)
+                await AchievementManager.CompleteGachaPremium10Async();
+        }
+
+        // 레어리티별 업적 (에픽, 레전더리, 유니크 획득)
+        foreach (var item in results)
+        {
+            switch (item.rarity)
+            {
+                case GachaRarity.Unique:
+                    await AchievementManager.CompleteGachaGetUniqueAsync();
+                    break;
+                case GachaRarity.Epic:
+                    await AchievementManager.CompleteGachaGetEpicAsync();
+                    break;
+                case GachaRarity.Legendary:
+                    await AchievementManager.CompleteGachaGetLegendAsync();
+                    break;
+            }
+        }
+    }
 }

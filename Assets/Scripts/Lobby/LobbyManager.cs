@@ -13,6 +13,9 @@ public class LobbyManager : MonoBehaviour
 
         // 우편함 테스트 로그
         TestMailSystem();
+
+        // 업적 시스템 테스트 로그
+        TestAchievementSystem();
     }
 
     private void TestMailSystem()
@@ -99,6 +102,45 @@ public class LobbyManager : MonoBehaviour
             foreach (var item in reward.items)
             {
                 Debug.Log($"[Mail Test]   아이템 {item.Key}: {item.Value}개");
+            }
+        }
+    }
+
+    private void TestAchievementSystem()
+    {
+        Debug.Log("========== [Achievement Test] 업적 시스템 테스트 시작 ==========");
+
+        // 전체 업적 상태 출력
+        AchievementManager.DebugPrintAllAchievements();
+
+        // 테스트: 튜토리얼 완료 업적 진행 (조건키로 테스트)
+        TestAchievementProgressAsync().Forget();
+
+        Debug.Log("========== [Achievement Test] 업적 시스템 테스트 완료 ==========");
+    }
+
+    private async UniTaskVoid TestAchievementProgressAsync()
+    {
+        // 몬스터 킬 업적 테스트 (누적형)
+        Debug.Log("[Achievement Test] 몬스터 킬 +10 테스트...");
+        await AchievementManager.AddMonsterKillAsync(10);
+
+        // 로그인 일수 업적 테스트 (절대값)
+        Debug.Log("[Achievement Test] 로그인 1일차 테스트...");
+        await AchievementManager.UpdateLoginDaysAsync(1);
+
+        // 진행 후 상태 재출력
+        Debug.Log("[Achievement Test] ===== 진행 후 상태 =====");
+        AchievementManager.DebugPrintAllAchievements();
+
+        // 수령 가능한 업적 확인
+        var claimable = AchievementManager.GetClaimableAchievements();
+        if (claimable.Count > 0)
+        {
+            Debug.Log($"[Achievement Test] 수령 가능한 업적 {claimable.Count}개:");
+            foreach (var achievement in claimable)
+            {
+                Debug.Log($"[Achievement Test] - ID:{achievement.Achievements_ID}, 조건:{achievement.Condition_Key}");
             }
         }
     }

@@ -70,8 +70,17 @@ public class DatabaseManager : MonoBehaviour
         {
             CurrentUser = data;
 
+            // 로그인 일수 계산 및 업적 연동
+            long lastLogin = CurrentUser.profile.lastLoginTime;
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long createdAt = CurrentUser.profile.createdAt;
+
+            // 계정 생성 후 경과 일수 (1일차부터 시작)
+            int daysSinceCreated = (int)((now - createdAt) / 86400) + 1;
+            await AchievementManager.UpdateLoginDaysAsync(daysSinceCreated);
+
             // 마지막 로그인 시간 갱신
-            CurrentUser.profile.lastLoginTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            CurrentUser.profile.lastLoginTime = now;
             await SaveProfileAsync();
         }
         else
@@ -292,7 +301,25 @@ public class DatabaseManager : MonoBehaviour
 
         preset.lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         string path = $"users/{UserId}/partyPresets/{key}";
-        return await database.SetDataAsync(path, preset);
+        bool success = await database.SetDataAsync(path, preset);
+
+        // 업적 연동: 덱 5자리 모두 채움
+        if (success && IsDeckFull(preset))
+            await AchievementManager.CompleteDeckFullAsync();
+
+        return success;
+    }
+
+    private bool IsDeckFull(PartyPreset preset)
+    {
+        if (preset?.characterId == null) return false;
+
+        for (int i = 0; i < preset.characterId.Length; i++)
+        {
+            if (string.IsNullOrEmpty(preset.characterId[i]))
+                return false;
+        }
+        return true;
     }
 
     public async UniTask<bool> SaveActivePresetIndexAsync()
@@ -363,6 +390,10 @@ public class DatabaseManager : MonoBehaviour
             CurrentUser.currency.enhanceStone += amount;
             PlayData.SetEnhanceStoneImmediate(CurrentUser.currency.enhanceStone);
             PlayData.NotifyCurrencyChanged();
+
+            // 업적 연동: 강화석 획득 (양수일 때만)
+            if (amount > 0)
+                await AchievementManager.AddStoneGetAsync(amount);
         }
 
         return success;
@@ -463,7 +494,16 @@ public class DatabaseManager : MonoBehaviour
         }
 
         CurrentUser.characters[characterId] = new OwnedCharacter(characterId, star);
-        return await SaveCharacterAsync(characterId);
+        bool success = await SaveCharacterAsync(characterId);
+
+        // 업적 연동: 유닛 수집
+        if (success)
+        {
+            int totalUnitCount = CurrentUser.characters.Count;
+            await AchievementManager.UpdateUnitCollectCountAsync(totalUnitCount);
+        }
+
+        return success;
     }
 
     public async UniTask<bool> LevelUpCharacterAsync(string characterId, int addExp)
@@ -1418,6 +1458,92 @@ public class DatabaseManager : MonoBehaviour
     public int GetTotalClaimCount()
     {
         return CurrentUser?.dailyReward?.totalClaimCount ?? 0;
+    }
+
+    #endregion
+
+    #region 업적 관리
+
+    /// <summary>
+    /// 업적 진행도 저장
+    /// </summary>
+    public async UniTask<bool> SaveAchievementProgressAsync(int achievementId, AchievementProgress progress)
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        string key = achievementId.ToString();
+
+        // 로컬 캐시 업데이트
+        if (CurrentUser.achievements == null)
+            CurrentUser.achievements = new Dictionary<string, AchievementProgress>();
+
+        CurrentUser.achievements[key] = progress;
+
+        // Firebase 저장
+        string path = $"users/{UserId}/achievements/{key}";
+        bool success = await database.SetDataAsync(path, progress);
+
+        if (success)
+        {
+            PlayData.NotifyAchievementsChanged();
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 업적 진행도 조회
+    /// </summary>
+    public AchievementProgress GetAchievementProgress(int achievementId)
+    {
+        if (CurrentUser?.achievements == null) return null;
+
+        string key = achievementId.ToString();
+        return CurrentUser.achievements.TryGetValue(key, out var progress) ? progress : null;
+    }
+
+    /// <summary>
+    /// 모든 업적 진행도 조회
+    /// </summary>
+    public List<AchievementProgress> GetAllAchievementProgress()
+    {
+        if (CurrentUser?.achievements == null)
+            return new List<AchievementProgress>();
+
+        return new List<AchievementProgress>(CurrentUser.achievements.Values);
+    }
+
+    /// <summary>
+    /// 수령 가능한 업적 개수
+    /// </summary>
+    public int GetClaimableAchievementCount()
+    {
+        if (CurrentUser?.achievements == null) return 0;
+
+        int count = 0;
+        foreach (var progress in CurrentUser.achievements.Values)
+        {
+            if (progress.isCompleted && !progress.isRewarded)
+                count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// 완료된 업적 개수
+    /// </summary>
+    public int GetCompletedAchievementCount()
+    {
+        if (CurrentUser?.achievements == null) return 0;
+
+        int count = 0;
+        foreach (var progress in CurrentUser.achievements.Values)
+        {
+            if (progress.isCompleted)
+                count++;
+        }
+        return count;
     }
 
     #endregion

@@ -97,6 +97,14 @@ public class HeroEnforceSystem
         // 인게임 유닛에 적용 단일 레벨만 추가 적용
         var effect = effectTable.Get(row.Hero_Enforce_EffectID);
         ApplyEffectToUnit(unit, effect, nextLv);
+
+        // 업적 연동: 영웅 강화 성공
+        await AchievementManager.AddHeroUpgradeSuccessAsync(1);
+
+        // 최대 레벨 달성 시 업적
+        if (nextLv >= MAX_LEVEL)
+            await AchievementManager.CompleteHeroUpgradeMaxAsync();
+
         return true;
     }
 

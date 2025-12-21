@@ -77,6 +77,7 @@ public static class PlayData
 
     public static event Action OnCurrencyChanged;
     public static event Action OnMailsChanged;
+    public static event Action OnAchievementsChanged;
 
 
     public static int LastClearedStageId { get; private set; }
@@ -369,5 +370,21 @@ public static class PlayData
     public static int GetClaimableMailCount()
     {
         return DatabaseManager.Instance?.GetClaimableMailCount() ?? 0;
+    }
+
+    // 업적 관련
+    public static void NotifyAchievementsChanged()
+    {
+        OnAchievementsChanged?.Invoke();
+    }
+
+    public static int GetClaimableAchievementCount()
+    {
+        return DatabaseManager.Instance?.GetClaimableAchievementCount() ?? 0;
+    }
+
+    public static int GetCompletedAchievementCount()
+    {
+        return DatabaseManager.Instance?.GetCompletedAchievementCount() ?? 0;
     }
 }

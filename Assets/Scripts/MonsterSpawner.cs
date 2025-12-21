@@ -94,6 +94,9 @@ public class MonsterSpawner : MonoBehaviour
             // 이벤트 구독 해제
             monster.OnDeath -= OnMonsterRemoved;
             OnMonsterDeath?.Invoke(monster);
+
+            // 업적 연동: 몬스터 처치
+            AchievementManager.AddMonsterKillAsync(1).Forget();
         }
     }
     // 모든 활성 몬스터 즉시 제거

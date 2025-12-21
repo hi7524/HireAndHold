@@ -1,5 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
+using Cysharp.Threading.Tasks;
 
 public class GridCell : MonoBehaviour, IDroppable
 {
@@ -505,6 +506,10 @@ public class GridCell : MonoBehaviour, IDroppable
         }
         Destroy(draggingUnit.gameObject);
         gridManager.DecrementUnitCount();
+
+        // 업적 연동: 합성
+        UpdateCombineAchievementsAsync(newStarLevel).Forget();
+
         return true;
     }
 
@@ -558,7 +563,26 @@ public class GridCell : MonoBehaviour, IDroppable
         var occupiedCells = existingUnit.GridData.GetOccupiedCells();
         gridManager.SetGridIcons(GridPosition, occupiedCells, newUnitId, newStarLevel);
 
+        // 업적 연동: 합성
+        UpdateCombineAchievementsAsync(newStarLevel).Forget();
+
         return true;
+    }
+
+    // 합성 업적 업데이트
+    private async UniTaskVoid UpdateCombineAchievementsAsync(int newStarLevel)
+    {
+        // 첫 합성 업적
+        await AchievementManager.CompleteFirstCombineAsync();
+
+        // 합성 횟수 업적
+        await AchievementManager.AddCombineCountAsync(1);
+
+        // 성급별 합성 업적
+        if (newStarLevel == 2)
+            await AchievementManager.AddCombineStar2Async(1);
+        else if (newStarLevel == 3)
+            await AchievementManager.AddCombineStar3Async(1);
     }
 
     // Sorting Order 업데이트
