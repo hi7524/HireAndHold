@@ -857,4 +857,107 @@ public class DatabaseManager : MonoBehaviour
     }
 
     #endregion
+
+    #region 일일 보상 관리
+
+    /// <summary>
+    /// 월별 초기화 체크 및 실행
+    /// </summary>
+    private void CheckAndResetMonthlyReward()
+    {
+        if (CurrentUser?.dailyReward == null)
+            return;
+
+        string thisMonth = DateTime.Now.ToString("yyyy-MM");
+
+        // 현재 월과 다르면 초기화
+        if (CurrentUser.dailyReward.currentMonth != thisMonth)
+        {
+            Debug.Log($"[DB] 월 변경 감지: {CurrentUser.dailyReward.currentMonth} -> {thisMonth}, 출석 데이터 초기화");
+
+            // UI 표시용 날짜 목록 초기화
+            CurrentUser.dailyReward.claimedDates.Clear();
+            // lastClaimDate는 유지 (자정 지나면 다시 받을 수 있도록)
+            CurrentUser.dailyReward.currentMonth = thisMonth;
+
+            // Firebase에 저장
+            SaveDailyRewardAsync().Forget();
+        }
+    }
+
+    /// <summary>
+    /// 오늘 출석 체크했는지 확인
+    /// </summary>
+    public bool HasClaimedToday()
+    {
+        if (CurrentUser?.dailyReward == null)
+            return false;
+
+        CheckAndResetMonthlyReward();
+
+        string today = DateTime.Now.ToString("yyyy-MM-dd");
+        return CurrentUser.dailyReward.lastClaimDate == today;
+    }
+
+    /// <summary>
+    /// 특정 날짜에 출석 체크했는지 확인
+    /// </summary>
+    public bool HasClaimedOnDate(DateTime date)
+    {
+        if (CurrentUser?.dailyReward == null)
+            return false;
+
+        CheckAndResetMonthlyReward();
+
+        string dateStr = date.ToString("yyyy-MM-dd");
+        return CurrentUser.dailyReward.claimedDates.Contains(dateStr);
+    }
+
+    /// <summary>
+    /// 오늘 일일 보상 받기
+    /// </summary>
+    public async UniTask<bool> ClaimDailyRewardAsync()
+    {
+        CheckAndResetMonthlyReward();
+
+        if (HasClaimedToday())
+        {
+            Debug.LogWarning("[DB] 오늘 이미 출석 체크함");
+            return false;
+        }
+
+        string today = DateTime.Now.ToString("yyyy-MM-dd");
+        string thisMonth = DateTime.Now.ToString("yyyy-MM");
+
+        // claimedDates에 추가
+        if (!CurrentUser.dailyReward.claimedDates.Contains(today))
+        {
+            CurrentUser.dailyReward.claimedDates.Add(today);
+        }
+
+        CurrentUser.dailyReward.lastClaimDate = today;
+        CurrentUser.dailyReward.currentMonth = thisMonth;
+        CurrentUser.dailyReward.totalClaimCount++;
+
+        return await SaveDailyRewardAsync();
+    }
+
+    /// <summary>
+    /// 일일 보상 데이터 저장
+    /// </summary>
+    public async UniTask<bool> SaveDailyRewardAsync()
+    {
+        string path = $"users/{UserId}/dailyReward";
+        return await database.SetDataAsync(path, CurrentUser.dailyReward);
+    }
+
+    /// <summary>
+    /// 총 출석 일수 조회
+    /// </summary>
+    public int GetTotalClaimCount()
+    {
+        return CurrentUser?.dailyReward?.totalClaimCount ?? 0;
+    }
+
+    #endregion
 }
