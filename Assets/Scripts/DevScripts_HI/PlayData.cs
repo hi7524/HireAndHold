@@ -76,6 +76,7 @@ public static class PlayData
     public static event Action OnProfileChanged;
 
     public static event Action OnCurrencyChanged;
+    public static event Action OnMailsChanged;
 
 
     public static int LastClearedStageId { get; private set; }
@@ -352,5 +353,21 @@ public static class PlayData
     public static void NotifyProfileChanged()
     {
         OnProfileChanged?.Invoke();
+    }
+
+    // 메일 관련
+    public static void NotifyMailsChanged()
+    {
+        OnMailsChanged?.Invoke();
+    }
+
+    public static int GetUnreadMailCount()
+    {
+        return DatabaseManager.Instance?.GetUnreadMailCount() ?? 0;
+    }
+
+    public static int GetClaimableMailCount()
+    {
+        return DatabaseManager.Instance?.GetClaimableMailCount() ?? 0;
     }
 }

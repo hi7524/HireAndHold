@@ -284,6 +284,7 @@ GameObject:
   - component: {fileID: 191005245336347879}
   - component: {fileID: 6869760581521254375}
   - component: {fileID: 8618491372437969930}
+  - component: {fileID: -7477335234336915356}
   m_Layer: 5
   m_Name: PostElement
   m_TagString: Untagged
@@ -407,6 +408,28 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
+--- !u!114 &-7477335234336915356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5916595833775618579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be0931a1f0e12e74b90b568736ad2e24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  titleText: {fileID: 3222966523431518916}
+  descriptionText: {fileID: 5076659685610786905}
+  expireDateText: {fileID: 3229310990322771594}
+  button: {fileID: 8618491372437969930}
+  backgroundImage: {fileID: 6869760581521254375}
+  unreadIndicator: {fileID: 0}
+  claimedIndicator: {fileID: 0}
+  rewardIcon: {fileID: 0}
+  normalColor: {r: 0.84, g: 0.62, b: 0.37, a: 0.61}
+  claimedColor: {r: 0.7, g: 0.7, b: 0.7, a: 0.5}
 --- !u!1 &6688978825058022812
 GameObject:
   m_ObjectHideFlags: 0

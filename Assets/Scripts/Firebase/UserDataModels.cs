@@ -15,6 +15,8 @@ namespace GameData
         public Dictionary<string, StageProgress> stageProgress;
         public Dictionary<string, PartyPreset> partyPresets;
         public Dictionary<string, int> items;
+        public Dictionary<string, MailData> mails;
+        public Dictionary<string, bool> claimedGlobalMails; // 수령한 전역 메일 ID
         public int activePresetIndex;
         public UserSettings settings;
         public DailyRewardData dailyReward;
@@ -26,6 +28,8 @@ namespace GameData
             stageProgress = new Dictionary<string, StageProgress>();
             partyPresets = new Dictionary<string, PartyPreset>();
             items = new Dictionary<string, int>();
+            mails = new Dictionary<string, MailData>();
+            claimedGlobalMails = new Dictionary<string, bool>();
             dailyReward = new DailyRewardData();
         }
     }
@@ -268,6 +272,17 @@ namespace GameData
         public bool isClaimed;
         public long createdAt;
         public long expireAt;
+
+        public MailData()
+        {
+            reward = new MailReward();
+        }
+
+        public bool IsExpired()
+        {
+            if (expireAt <= 0) return false;
+            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > expireAt;
+        }
     }
 
     [Serializable]
@@ -276,11 +291,61 @@ namespace GameData
         public long gold;
         public int diamond;
         public int stamina;
-        public List<string> itemIds;
+        public int enhanceStone;
+        public Dictionary<int, int> items; // itemId -> count
 
         public MailReward()
         {
-            itemIds = new List<string>();
+            items = new Dictionary<int, int>();
+        }
+
+        public bool HasReward()
+        {
+            return gold > 0 || diamond > 0 || stamina > 0 || enhanceStone > 0 || (items != null && items.Count > 0);
+        }
+    }
+
+    /// <summary>
+    /// 전역 메일 데이터 (모든 유저에게 공통으로 보내는 메일)
+    /// Firebase 경로: globalMails/{mailId}
+    /// </summary>
+    [Serializable]
+    public class GlobalMailData
+    {
+        public string mailId;
+        public string title;
+        public string content;
+        public MailReward reward;
+        public long createdAt;
+        public long expireAt;
+
+        public GlobalMailData()
+        {
+            reward = new MailReward();
+        }
+
+        public bool IsExpired()
+        {
+            if (expireAt <= 0) return false;
+            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > expireAt;
+        }
+
+        /// <summary>
+        /// 전역 메일을 개인 메일 형태로 변환 (UI 표시용)
+        /// </summary>
+        public MailData ToMailData(bool isClaimed)
+        {
+            return new MailData
+            {
+                mailId = mailId,
+                title = title,
+                content = content,
+                reward = reward,
+                isRead = isClaimed, // 수령했으면 읽음 처리
+                isClaimed = isClaimed,
+                createdAt = createdAt,
+                expireAt = expireAt
+            };
         }
     }
 
