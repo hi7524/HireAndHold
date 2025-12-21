@@ -6,6 +6,8 @@ using UnityEngine.AddressableAssets;
 
 public class StageClearPanelController : MonoBehaviour
 {
+    private const int ENHANCE_STONE_ITEM_ID = 5201;
+
     [Header("References")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private StageManager stageManager;
@@ -155,16 +157,26 @@ public class StageClearPanelController : MonoBehaviour
     {
         if (currentItems == null || currentItems.Count == 0)
             return;
+
         foreach (var item in currentItems)
         {
             int itemId = item.Key;
             int count = item.Value;
 
-            bool success = await DatabaseManager.Instance.AddItemAsync(itemId, count);
-            if (success)
+            // 강화석(5201)은 currency.enhanceStone으로 처리
+            if (itemId == ENHANCE_STONE_ITEM_ID)
             {
+                bool success = await DatabaseManager.Instance.AddEnhanceStoneAsync(count);
+                if (!success)
+                {
+                    Debug.LogWarning($"  - 강화석 저장 실패: {count}개");
+                }
+                continue;
             }
-            else
+
+            // 일반 아이템
+            bool itemSuccess = await DatabaseManager.Instance.AddItemAsync(itemId, count);
+            if (!itemSuccess)
             {
                 Debug.LogWarning($"  - 아이템 저장 실패: {itemId} x{count}");
             }

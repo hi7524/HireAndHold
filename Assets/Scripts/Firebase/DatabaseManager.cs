@@ -6,6 +6,8 @@ using GameData;
 
 public class DatabaseManager : MonoBehaviour
 {
+    private const int ENHANCE_STONE_ITEM_ID = 5201;
+
     private static DatabaseManager instance;
     public static DatabaseManager Instance => instance;
 
@@ -971,7 +973,15 @@ public class DatabaseManager : MonoBehaviour
         {
             foreach (var item in reward.items)
             {
-                await AddItemAsync(item.Key, item.Value);
+                // 강화석(5201)은 currency.enhanceStone으로 처리
+                if (item.Key == ENHANCE_STONE_ITEM_ID)
+                {
+                    await AddEnhanceStoneAsync(item.Value);
+                }
+                else
+                {
+                    await AddItemAsync(item.Key, item.Value);
+                }
             }
         }
 
@@ -1193,7 +1203,15 @@ public class DatabaseManager : MonoBehaviour
             {
                 foreach (var item in reward.items)
                 {
-                    await AddItemAsync(item.Key, item.Value);
+                    // 강화석(5201)은 currency.enhanceStone으로 처리
+                    if (item.Key == ENHANCE_STONE_ITEM_ID)
+                    {
+                        await AddEnhanceStoneAsync(item.Value);
+                    }
+                    else
+                    {
+                        await AddItemAsync(item.Key, item.Value);
+                    }
                 }
             }
         }
