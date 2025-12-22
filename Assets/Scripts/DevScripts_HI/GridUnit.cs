@@ -56,11 +56,6 @@ public class GridUnit : MonoBehaviour, IDraggable
         unit.UpdateUnitID(unitId);
     } 
 
-    public void SetInventoryPlaceable(bool value)
-    {
-        canPlaceInInventory = value;
-    }
-
     public void SetBattleUnitManager(BattleUnitManager manager)
     {
         battleUnitManager = manager;

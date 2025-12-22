@@ -44,6 +44,9 @@ public class OreDungeonAssetManager : MonoBehaviour
         }
         else
         {
+            // DataTableManager 초기화 대기 (UnitTable 등 필요)
+            await DataTableManager.InitAsync();
+
             await LoadOreDungeonTableDirectly();
             await LoadOreTableDirectly();
         }
