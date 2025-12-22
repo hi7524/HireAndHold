@@ -45,6 +45,7 @@ public class Unit : MonoBehaviour
     private Animator visualAnimator;
     private SortingGroup sortingGroup;
     private AnimationEvents animationEvents;
+    private bool isDragging = false; // 드래그 중인지 여부
 
     // 영웅 강화 공격력 배율 (기본 1.0)
     private float heroAttackMultiplier = 1f;
@@ -131,7 +132,8 @@ public class Unit : MonoBehaviour
     {
         AttackTarget = FindNearestTarget();
 
-        if (AttackTarget != null && Time.time >= lastAttackTime + attackCooltime.Value)
+        // 드래그 중에는 공격하지 않음
+        if (!isDragging && AttackTarget != null && Time.time >= lastAttackTime + attackCooltime.Value)
         {
             lastAttackTime = Time.time;
             Attack(AttackTarget);
@@ -825,6 +827,10 @@ public class Unit : MonoBehaviour
     public float GetHeroSkillCooltimeMultiplier() => heroSkillCooltimeBonus;
     public float GetHeroSkillDurationBonus() => heroSkillDurationBonus;
 
-
+    // 드래그 상태 설정 (드래그 중에는 공격 중지)
+    public void SetDragging(bool dragging)
+    {
+        isDragging = dragging;
+    }
 
 }
