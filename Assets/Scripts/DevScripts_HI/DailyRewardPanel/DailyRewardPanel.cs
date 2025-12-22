@@ -7,6 +7,7 @@ public class DailyRewardPanel : MonoBehaviour
     [SerializeField] private DailyRewardSlot[] slots;
     [SerializeField] private GameObject interactiveAreaObj;
     [SerializeField] private GameObject rewardClaimedPanel;
+    [SerializeField] private DailyRewardNoticeDot noticeDotController;
 
     private void OnEnable()
     {
@@ -15,6 +16,7 @@ public class DailyRewardPanel : MonoBehaviour
 
     private async void Start()
     {
+        UpdateInteractiveArea();
         await InitializePanelAsync();
     }
 
@@ -142,6 +144,10 @@ public class DailyRewardPanel : MonoBehaviour
             // Interactive Area 비활성화
             UpdateInteractiveArea();
             rewardClaimedPanel.SetActive(true);
+
+            // NoticeDot 업데이트
+            if (noticeDotController != null)
+                noticeDotController.UpdateNoticeDot();
         }
         else
         {
