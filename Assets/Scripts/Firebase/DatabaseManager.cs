@@ -1352,13 +1352,15 @@ public class DatabaseManager : MonoBehaviour
 
         return personalClaimable + globalClaimable;
     }
-
+    
     /// <summary>
     /// 전역 메일인지 확인
     /// </summary>
     public bool IsGlobalMail(string mailId)
     {
         return cachedGlobalMails.ContainsKey(mailId);
+    }
+    #endregion
     #region 일일 보상 관리
 
     /// <summary>
