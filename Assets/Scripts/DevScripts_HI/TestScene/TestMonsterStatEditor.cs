@@ -113,8 +113,6 @@ public class TestMonsterStatEditor : MonoBehaviour
         {
             OnMonsterSelected(0);
         }
-
-        Debug.Log($"[MonsterStatEditor] MonsterTable 로드 완료: {monsterDataList.Count}개 몬스터");
     }
 
     private void SetupUI()
@@ -162,7 +160,6 @@ public class TestMonsterStatEditor : MonoBehaviour
             selectedMonsterData = monsterDataList[index];
             UpdateInfoText();
             UpdateInputFields();
-            Debug.Log($"[MonsterStatEditor] 선택: {selectedMonsterData.MON_NAME} (ID: {selectedMonsterData.MON_ID})");
         }
     }
 
@@ -265,7 +262,6 @@ public class TestMonsterStatEditor : MonoBehaviour
         OnMonsterStatChanged?.Invoke(selectedMonsterData.MON_ID, newHp, newSpeed, newExp);
 
         UpdateInfoText();
-        Debug.Log($"[MonsterStatEditor] {selectedMonsterData.MON_NAME}에 스탯 적용 완료 (씬: {appliedCount}마리)");
     }
 
     /// <summary>
@@ -286,8 +282,6 @@ public class TestMonsterStatEditor : MonoBehaviour
                 appliedCount++;
             }
         }
-
-        Debug.Log($"[MonsterStatEditor] 모든 몬스터에 오버라이드 적용 완료 ({appliedCount}마리)");
     }
 
     /// <summary>
@@ -310,7 +304,6 @@ public class TestMonsterStatEditor : MonoBehaviour
         }
 
         UpdateInfoText();
-        Debug.Log($"[MonsterStatEditor] 씬 몬스터 갱신 완료 ({appliedCount}마리에 오버라이드 적용)");
     }
 
     private int ApplyStatsToSceneMonstersByID(int monsterId, float hp, float speed, int exp)
@@ -414,7 +407,6 @@ public class TestMonsterStatEditor : MonoBehaviour
             statOverrides.Remove(selectedMonsterData.MON_ID);
             UpdateInputFields();
             UpdateInfoText();
-            Debug.Log($"[MonsterStatEditor] {selectedMonsterData.MON_NAME} 오버라이드 초기화됨");
         }
     }
 
@@ -426,7 +418,6 @@ public class TestMonsterStatEditor : MonoBehaviour
         statOverrides.Clear();
         UpdateInputFields();
         UpdateInfoText();
-        Debug.Log("[MonsterStatEditor] 모든 오버라이드 초기화됨");
     }
 
     /// <summary>
@@ -492,7 +483,6 @@ public class TestMonsterStatEditor : MonoBehaviour
         OnDataTableModified?.Invoke(selectedMonsterData.MON_ID);
 
         UpdateInfoText();
-        Debug.Log($"[MonsterStatEditor] DataTable 수정 완료: {selectedMonsterData.MON_NAME} (HP:{selectedMonsterData.MON_HP}, Speed:{selectedMonsterData.MON_SPEED}, Exp:{selectedMonsterData.MON_STAGE_EXP})");
     }
 
     /// <summary>
@@ -516,7 +506,6 @@ public class TestMonsterStatEditor : MonoBehaviour
 
             UpdateInputFields();
             UpdateInfoText();
-            Debug.Log($"[MonsterStatEditor] DataTable 원본 복구: {selectedMonsterData.MON_NAME}");
         }
         else
         {
@@ -543,7 +532,6 @@ public class TestMonsterStatEditor : MonoBehaviour
         originalDataTableValues.Clear();
         UpdateInputFields();
         UpdateInfoText();
-        Debug.Log("[MonsterStatEditor] 모든 DataTable 원본 복구 완료");
     }
 
     /// <summary>
@@ -598,9 +586,6 @@ public class TestMonsterStatEditor : MonoBehaviour
             }
 
             File.WriteAllText(fullPath, sb.ToString(), Encoding.UTF8);
-
-            Debug.Log($"[MonsterStatEditor] CSV 저장 완료: {fullPath}");
-
 #if UNITY_EDITOR
             // 에디터에서 에셋 새로고침
             UnityEditor.AssetDatabase.Refresh();

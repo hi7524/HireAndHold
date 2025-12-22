@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
@@ -86,7 +86,6 @@ public class SkillUI : MonoBehaviour
             if (icon != null)
             {
                 icon.sprite = cachedSprite;
-                Debug.Log($"[SkillUI] 아이콘 캐시 로드 성공: {iconAddress}");
             }
             return;
         }
@@ -106,7 +105,6 @@ public class SkillUI : MonoBehaviour
             if (iconHandle.Status == AsyncOperationStatus.Succeeded && icon != null)
             {
                 icon.sprite = sprite;
-                Debug.Log($"[SkillUI] 아이콘 로드 성공: {iconAddress}");
             }
         }
         catch (System.Exception e)

@@ -252,7 +252,6 @@ public class LevelUpRewardController : MonoBehaviour
 
             if (forceSkillDraw)
             {
-                Debug.Log("[LevelUpRewardController] 그리드가 꽉 차고 모든 유닛이 2성 이상이므로 패시브 스킬을 강제로 뽑습니다.");
             }
         }
         // 그 외에는 유닛 뽑기

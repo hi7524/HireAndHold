@@ -32,8 +32,6 @@ public class FlagOfSpeedSkill : PlayerSkillBase, IUnitManagerInjectable
 
         // 모든 아군 유닛에게 버프 적용
         ApplyBuffToAllUnits();
-
-        Debug.Log($"[FlagOfSpeed] 신속의 깃발 발동! 아군 공격속도 {attackSpeedUpPercent}% 증가 ({buffDuration}초)");
     }
 
     private void ApplyBuffToAllUnits()
@@ -80,7 +78,6 @@ public class FlagOfSpeedSkill : PlayerSkillBase, IUnitManagerInjectable
     {
         await UniTask.Delay((int)(duration * 1000), cancellationToken: this.GetCancellationTokenOnDestroy());
         RemoveAllBuffs();
-        Debug.Log("[FlagOfSpeed] 신속의 깃발 버프 종료!");
     }
 
     private void RemoveAllBuffs()

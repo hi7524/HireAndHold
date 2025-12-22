@@ -41,8 +41,6 @@ public class TestStatusEffectController : MonoBehaviour
         SetupDropdown();
         SetupButtons();
         SetupInputs();
-
-        Debug.Log("[TestStatusEffect] 상태 효과 테스트 컨트롤러 초기화 완료");
     }
 
     private void SetupDropdown()
@@ -101,7 +99,6 @@ public class TestStatusEffectController : MonoBehaviour
         if (index >= 0 && index < availableEffects.Count)
         {
             selectedEffectType = availableEffects[index];
-            Debug.Log($"[TestStatusEffect] 선택된 효과: {effectDisplayNames[selectedEffectType]}");
         }
     }
 
@@ -159,8 +156,6 @@ public class TestStatusEffectController : MonoBehaviour
                 count++;
             }
         }
-
-        Debug.Log($"[TestStatusEffect] {count}마리 몬스터에 {effectDisplayNames[type]} 적용 (지속: {duration}초, 값: {value})");
     }
 
     private void ApplyEffectToNearestMonster(StatusEffectType type, float duration, float value)
@@ -198,7 +193,6 @@ public class TestStatusEffectController : MonoBehaviour
             if (effect != null)
             {
                 statusEffectManager.AddStatusEffect(type, effect);
-                Debug.Log($"[TestStatusEffect] 가장 가까운 몬스터에 {effectDisplayNames[type]} 적용");
             }
         }
         else
@@ -221,8 +215,6 @@ public class TestStatusEffectController : MonoBehaviour
                 count++;
             }
         }
-
-        Debug.Log($"[TestStatusEffect] {count}마리 몬스터의 모든 상태 효과 제거됨");
     }
 
     /// <summary>

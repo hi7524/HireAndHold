@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -48,7 +48,6 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
         if (DatabaseManager.Instance != null && DatabaseManager.Instance.IsInitialized)
         {
             unlockedStage = DatabaseManager.Instance.CurrentUser?.profile?.highestStage ?? 701;
-            Debug.Log($"[PageSnap] 유저 최고 스테이지: {unlockedStage}");
         }
         else
         {
@@ -65,7 +64,6 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
 
         if (pages.Length == 0)
         {
-            Debug.Log("X 프리팹");
             return;
         }
 
@@ -174,7 +172,6 @@ public class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDrag
                     // 잠금 여부는 유저 데이터에서 확인
                     bool isLocked = stageId > unlockedStage;
                     card.SetLocked(isLocked);
-                    Debug.Log($"[PageSnap] Stage ID {stageId} 잠금 여부: {isLocked}");
                 }
             }
         }

@@ -59,8 +59,6 @@ public class TestSceneUIBuilder : MonoBehaviour
 
         // UI 생성
         BuildUI();
-
-        Debug.Log("[TestSceneUIBuilder] UI 생성 완료");
     }
 
     private void AutoFindReferences()
@@ -104,7 +102,6 @@ public class TestSceneUIBuilder : MonoBehaviour
             if (existingTmp != null && existingTmp.font != null)
             {
                 defaultFont = existingTmp.font;
-                Debug.Log($"[TestSceneUIBuilder] 씬에서 폰트 발견: {defaultFont.name}");
             }
 
             // TMP 기본 폰트 사용
@@ -115,7 +112,6 @@ public class TestSceneUIBuilder : MonoBehaviour
 
             if (defaultFont != null)
             {
-                Debug.Log($"[TestSceneUIBuilder] 폰트 로드 완료: {defaultFont.name}");
             }
             else
             {
@@ -144,7 +140,6 @@ public class TestSceneUIBuilder : MonoBehaviour
                     if (fontName.Contains(pattern))
                     {
                         defaultFont = tmp.font;
-                        Debug.Log($"[TestSceneUIBuilder] 씬에서 한글 폰트 발견: {defaultFont.name}");
                         return;
                     }
                 }
@@ -166,7 +161,6 @@ public class TestSceneUIBuilder : MonoBehaviour
                 defaultFont = await handle.ToUniTask();
                 if (defaultFont != null)
                 {
-                    Debug.Log($"[TestSceneUIBuilder] Addressables 폰트 로드 성공: {defaultFont.name}");
                     return;
                 }
             }
@@ -184,7 +178,6 @@ public class TestSceneUIBuilder : MonoBehaviour
                 if (tmp.font != null)
                 {
                     defaultFont = tmp.font;
-                    Debug.Log($"[TestSceneUIBuilder] 대체 폰트 사용: {defaultFont.name}");
                     return;
                 }
             }

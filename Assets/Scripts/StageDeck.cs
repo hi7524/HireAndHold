@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 
@@ -47,7 +47,6 @@ public class StageDeck : MonoBehaviour
 
         if (!isEmpty)
         {
-            Debug.Log($"[StageDeck] Preset {preset}는 이미 편성되어 있음");
             return;
         }
 
@@ -59,9 +58,6 @@ public class StageDeck : MonoBehaviour
             Debug.LogWarning("[StageDeck] 소유한 캐릭터가 없음");
             return;
         }
-
-        Debug.Log($"[StageDeck] Preset {preset} 자동 편성 시작 (소유 캐릭터: {owned.Count}개)");
-
         if (DataTableManager.UnitTable == null)
         {
             Debug.LogError("[StageDeck] UnitTable이 초기화되지 않음");
@@ -82,26 +78,18 @@ public class StageDeck : MonoBehaviour
 
             PlayData.selectedDeckUnitIds[preset, i] = unitId;
             PlayData.selectedDeckUnitIconAddresses[preset, i] = unitData.UNIT_ICON;
-
-            Debug.Log($"[StageDeck] Slot {i}에 {unitData.NAME} (ID:{unitId}) 편성");
         }
 
         // DB에 저장
         await DatabaseManager.Instance.SavePresetFromPlayDataAsync(preset);
-
-        Debug.Log($"[StageDeck] Preset {preset} 자동 편성 완료");
     }
 
     public void Init()
     {
         int preset = PlayData.currentSelectedPreset;
-        Debug.Log("[StageDeck] Using Preset = " + preset);
-
         for (int i = 0; i < slotImages.Length; i++)
         {
             int unitId = PlayData.selectedDeckUnitIds[preset, i];
-            Debug.Log("[StageDeck] slot " + i + " = " + unitId);
-
             if (unitId == 0)
             {
                 slotImages[i].sprite = emptySprite;

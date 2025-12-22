@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
@@ -189,10 +189,6 @@ public class SkillSelectUi : MonoBehaviour
 
 
         selectedSkillIndex = randomSkillIndices[cardIndex];
-        Debug.Log($"[SkillSelectUi] 스킬 카드 선택됨: CardIndex={cardIndex}, SkillIndex={selectedSkillIndex}");
-
-
-
         if (confirmButton == null)
         {
             ConfirmSelection();

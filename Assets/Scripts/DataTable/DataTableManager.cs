@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -25,7 +25,6 @@ public static class DataTableManager
         try
         {
             await LoadAllTablesAsync();
-            Debug.Log("DataTableManager initialized");
             IsInitialized = true;
         }
         finally
@@ -60,6 +59,8 @@ public static class DataTableManager
             LoadTableAsync<DataTable_OreDungeon>(DataTableIds.OreDungeon),
             LoadTableAsync<DataTable_DungeonSetting>(DataTableIds.DungeonSetting),
 
+            // 업적
+            LoadTableAsync<DataTable_Achievement>(DataTableIds.Achievement),
             // 일일 보상
             LoadTableAsync<DataTable_DailyReward>(DataTableIds.DailyReward),
         };
@@ -72,7 +73,6 @@ public static class DataTableManager
         // 이미 로드된 테이블은 스킵
         if (tables.ContainsKey(id))
         {
-            Debug.Log($"[DataTableManager] {id} 이미 로드됨 - 스킵");
             return;
         }
 
@@ -99,6 +99,7 @@ public static class DataTableManager
     public static DataTable_Ore OreTable => Get<DataTable_Ore>(DataTableIds.Ore);
     public static DataTable_OreDungeon OreDungeonTable => Get<DataTable_OreDungeon>(DataTableIds.OreDungeon);
     public static DataTable_DungeonSetting DungeonSettingTable => Get<DataTable_DungeonSetting>(DataTableIds.DungeonSetting);
+    public static DataTable_Achievement AchievementTable => Get<DataTable_Achievement>(DataTableIds.Achievement);
     public static DataTable_DailyReward DailyRewardTable => Get<DataTable_DailyReward>(DataTableIds.DailyReward);
 
     public static T Get<T>(string id) where T : DataTable

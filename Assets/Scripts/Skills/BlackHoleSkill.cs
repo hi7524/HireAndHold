@@ -9,7 +9,5 @@ public class BlackHoleSkill : PlayerSkillBase
     {
         SpawnEffect(spawnPoint, effectLifetime);
         int hitCount = DamageAndApplyEffectInRange(spawnPoint, Mathf.Infinity);
-
-        Debug.Log($"[BlackHole] 블랙홀 발동! 전체 {hitCount}마리 끌어당김, 데미지: {damage}");
     }
 }

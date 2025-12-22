@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class PierceProjectile : MonoBehaviour, ISkillProjectile
 {
+    private const int EFFECT_SORTING_ORDER = 100;
+
     [SerializeField] private float launchSpeed = 10f;
     [SerializeField] private float lifeTime = 5f;
     [SerializeField] private float pierceWidth = 0.5f;
@@ -14,6 +16,7 @@ public class PierceProjectile : MonoBehaviour, ISkillProjectile
     private float spawnTime;
     private Rigidbody2D rb;
     private HashSet<Enemy> hitEnemies;
+    private bool sortingOrderSet = false;
 
     private void Awake()
     {
@@ -32,6 +35,13 @@ public class PierceProjectile : MonoBehaviour, ISkillProjectile
         spawnTime = Time.time;
         transform.position = data.spawnPosition;
 
+        // Sorting Order 설정 (최초 1회)
+        if (!sortingOrderSet)
+        {
+            SetEffectSortingOrder();
+            sortingOrderSet = true;
+        }
+
         // 방향 계산
         direction = (data.targetPosition - data.spawnPosition).normalized;
 
@@ -42,6 +52,15 @@ public class PierceProjectile : MonoBehaviour, ISkillProjectile
         // 이펙트 재생
         if (mainEffect != null)
             mainEffect.Play();
+    }
+
+    private void SetEffectSortingOrder()
+    {
+        var renderers = GetComponentsInChildren<ParticleSystemRenderer>(true);
+        foreach (var renderer in renderers)
+        {
+            renderer.sortingOrder = EFFECT_SORTING_ORDER;
+        }
     }
 
     private void FixedUpdate()

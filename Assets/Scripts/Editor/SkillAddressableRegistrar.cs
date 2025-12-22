@@ -41,7 +41,6 @@ public static class SkillAddressableRegistrar
         if (!settings.GetLabels().Contains(PlayerSkillLabel))
         {
             settings.AddLabel(PlayerSkillLabel);
-            Debug.Log($"[SkillAddressableRegistrar] '{PlayerSkillLabel}' Label 생성됨");
         }
 
         // PlayerSkillPrefab 그룹 찾기 또는 생성
@@ -49,7 +48,6 @@ public static class SkillAddressableRegistrar
         if (group == null)
         {
             group = settings.CreateGroup("PlayerSkillPrefab", false, false, false, null, typeof(UnityEditor.AddressableAssets.Settings.GroupSchemas.BundledAssetGroupSchema));
-            Debug.Log("[SkillAddressableRegistrar] PlayerSkillPrefab 그룹 생성됨");
         }
 
         int registeredCount = 0;
@@ -75,7 +73,6 @@ public static class SkillAddressableRegistrar
                 {
                     existingEntry.SetLabel(PlayerSkillLabel, true);
                 }
-                Debug.Log($"[SkillAddressableRegistrar] 키 업데이트: {assetPath} -> {addressableKey}");
             }
             else
             {
@@ -83,14 +80,11 @@ public static class SkillAddressableRegistrar
                 var entry = settings.CreateOrMoveEntry(guid, group, false, false);
                 entry.address = addressableKey;
                 entry.SetLabel(PlayerSkillLabel, true);
-                Debug.Log($"[SkillAddressableRegistrar] 등록 완료: {assetPath} -> {addressableKey}");
             }
             registeredCount++;
         }
 
         settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, null, true);
         AssetDatabase.SaveAssets();
-
-        Debug.Log($"[SkillAddressableRegistrar] 총 {registeredCount}개 스킬 프리팹 Addressable 등록 완료! (Label: {PlayerSkillLabel})");
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -217,7 +217,6 @@ public class RewardPanelController : MonoBehaviour
         {
             int totalGold = goldRewardSlotIndices.Count * defaultGoldReward;
             stageManager.AddBonusGold(totalGold);
-            Debug.Log($"[RewardPanelController] 골드 보상 지급 (스테이지 골드): {totalGold}G ({goldRewardSlotIndices.Count}개 슬롯)");
         }
 
         // 보스 보상이면 SkillSelectUi 열기

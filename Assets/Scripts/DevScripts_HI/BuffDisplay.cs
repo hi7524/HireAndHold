@@ -25,8 +25,6 @@ public class BuffDisplay : MonoBehaviour
         {
             buffManager.OnBuffPercentageChanged += UpdateDisplay;
             buffManager.OnActivatedBuffsChanged += UpdateDetailText;
-            Debug.Log("[BuffDisplay] 이벤트 구독 완료");
-
             // 현재 버프 상태를 즉시 반영
             UpdateDisplay(buffManager.GlobalBuffPercentage);
             UpdateDetailText(buffManager.ActivatedBuffs);

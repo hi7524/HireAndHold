@@ -11,7 +11,5 @@ public class SupernovaSkill : PlayerSkillBase
 
         // 전체 범위 공격 (Mathf.Infinity = 무한 범위)
         int hitCount = DamageAndApplyEffectInRange(spawnPoint, Mathf.Infinity);
-
-        Debug.Log($"[Supernova] 슈퍼노바 발동! 전체 {hitCount}마리 타격, 데미지: {damage}");
     }
 }

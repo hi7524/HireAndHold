@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
@@ -6,6 +6,8 @@ using GameData;
 
 public class DatabaseManager : MonoBehaviour
 {
+    private const int ENHANCE_STONE_ITEM_ID = 5201;
+
     private static DatabaseManager instance;
     public static DatabaseManager Instance => instance;
 
@@ -44,7 +46,6 @@ public class DatabaseManager : MonoBehaviour
         database.Initialize();
 
         isInitialized = true;
-        Debug.Log("[DatabaseManager] 초기화 완료");
     }
 
     public async UniTask WaitForInitializationAsync()
@@ -63,36 +64,37 @@ public class DatabaseManager : MonoBehaviour
             Debug.LogError("[DB] 로그인 필요");
             return null;
         }
-
-        Debug.Log($"[DB] 유저 데이터 로드 시작: {UserId}");
         string path = $"users/{UserId}";
         var (data, success) = await database.GetDataAsync<UserData>(path);
-
-        Debug.Log($"[DB] GetData 결과: success={success}, data={(data != null ? "있음" : "null")}");
-
         if (success && data != null)
         {
             CurrentUser = data;
 
-            // 마지막 로그인 시간 갱신
-            CurrentUser.profile.lastLoginTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            await SaveProfileAsync();
+            // 로그인 일수 계산 및 업적 연동
+            long lastLogin = CurrentUser.profile.lastLoginTime;
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long createdAt = CurrentUser.profile.createdAt;
 
-            Debug.Log($"[DB] 유저 데이터 로드: {CurrentUser.profile?.nickname}");
+            // 계정 생성 후 경과 일수 (1일차부터 시작)
+            int daysSinceCreated = (int)((now - createdAt) / 86400) + 1;
+            await AchievementManager.UpdateLoginDaysAsync(daysSinceCreated);
+
+            // 마지막 로그인 시간 갱신
+            CurrentUser.profile.lastLoginTime = now;
+            await SaveProfileAsync();
         }
         else
         {
-            Debug.Log("[DB] 기존 데이터 없음, 신규 유저 생성 시작");
             CurrentUser = CreateNewUserData();
-            Debug.Log($"[DB] 신규 유저 데이터 생성 완료: {CurrentUser.profile.nickname}");
-
             bool saveResult = await SaveAllAsync();
-            Debug.Log($"[DB] 신규 유저 저장 결과: {saveResult}");
         }
 
         SyncPresetsToPlayData();
 
         PlayData.SyncFromDatabase();
+
+        // 전역 메일 로드
+        await LoadGlobalMailsAsync();
 
         return CurrentUser;
     }
@@ -109,7 +111,6 @@ public class DatabaseManager : MonoBehaviour
 
         if (success)
         {
-            //Debug.Log("[DB] 전체 저장 완료");
         }
 
         return success;
@@ -300,7 +301,25 @@ public class DatabaseManager : MonoBehaviour
 
         preset.lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         string path = $"users/{UserId}/partyPresets/{key}";
-        return await database.SetDataAsync(path, preset);
+        bool success = await database.SetDataAsync(path, preset);
+
+        // 업적 연동: 덱 5자리 모두 채움
+        if (success && IsDeckFull(preset))
+            await AchievementManager.CompleteDeckFullAsync();
+
+        return success;
+    }
+
+    private bool IsDeckFull(PartyPreset preset)
+    {
+        if (preset?.characterId == null) return false;
+
+        for (int i = 0; i < preset.characterId.Length; i++)
+        {
+            if (string.IsNullOrEmpty(preset.characterId[i]))
+                return false;
+        }
+        return true;
     }
 
     public async UniTask<bool> SaveActivePresetIndexAsync()
@@ -326,12 +345,7 @@ public class DatabaseManager : MonoBehaviour
 
         try
         {
-            Debug.Log("[GoldTest] Increment 시작");
-
             bool success = await database.IncrementValueAsync(path, amount);
-
-            Debug.Log($"[GoldTest] Increment 결과 = {success}");
-
             if (success)
             {
                 CurrentUser.currency.gold += amount;
@@ -339,8 +353,6 @@ public class DatabaseManager : MonoBehaviour
             }
 
             var (value, ok) = await database.GetDataAsync<object>(path);
-            Debug.Log($"[GoldCheck] value={value}, type={value?.GetType()}");
-
             return success;
         }
         catch (Exception e)
@@ -378,6 +390,10 @@ public class DatabaseManager : MonoBehaviour
             CurrentUser.currency.enhanceStone += amount;
             PlayData.SetEnhanceStoneImmediate(CurrentUser.currency.enhanceStone);
             PlayData.NotifyCurrencyChanged();
+
+            // 업적 연동: 강화석 획득 (양수일 때만)
+            if (amount > 0)
+                await AchievementManager.AddStoneGetAsync(amount);
         }
 
         return success;
@@ -478,7 +494,16 @@ public class DatabaseManager : MonoBehaviour
         }
 
         CurrentUser.characters[characterId] = new OwnedCharacter(characterId, star);
-        return await SaveCharacterAsync(characterId);
+        bool success = await SaveCharacterAsync(characterId);
+
+        // 업적 연동: 유닛 수집
+        if (success)
+        {
+            int totalUnitCount = CurrentUser.characters.Count;
+            await AchievementManager.UpdateUnitCollectCountAsync(totalUnitCount);
+        }
+
+        return success;
     }
 
     public async UniTask<bool> LevelUpCharacterAsync(string characterId, int addExp)
@@ -516,7 +541,6 @@ public class DatabaseManager : MonoBehaviour
         CurrentUser.characters[characterId].enforceLevel = newLevel;
 
         await SaveCharacterAsync(characterId);
-        Debug.Log($"[DB] 강화레벨 저장 완료: ID={characterId}, enforce={newLevel}");
     }
 
 
@@ -858,6 +882,485 @@ public class DatabaseManager : MonoBehaviour
 
     #endregion
 
+    #region 우편함 관리
+
+    /// <summary>
+    /// 모든 메일 가져오기
+    /// </summary>
+    public List<MailData> GetAllMails()
+    {
+        if (CurrentUser?.mails == null)
+            return new List<MailData>();
+
+        var mails = new List<MailData>(CurrentUser.mails.Values);
+        // 최신순 정렬
+        mails.Sort((a, b) => b.createdAt.CompareTo(a.createdAt));
+        return mails;
+    }
+
+    /// <summary>
+    /// 유효한 메일만 가져오기 (만료되지 않은)
+    /// </summary>
+    public List<MailData> GetValidMails()
+    {
+        var mails = GetAllMails();
+        mails.RemoveAll(m => m.IsExpired());
+        return mails;
+    }
+
+    /// <summary>
+    /// 읽지 않은 메일 개수
+    /// </summary>
+    public int GetUnreadMailCount()
+    {
+        if (CurrentUser?.mails == null) return 0;
+
+        int count = 0;
+        foreach (var mail in CurrentUser.mails.Values)
+        {
+            if (!mail.isRead && !mail.IsExpired())
+                count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// 수령 가능한 메일 개수
+    /// </summary>
+    public int GetClaimableMailCount()
+    {
+        if (CurrentUser?.mails == null) return 0;
+
+        int count = 0;
+        foreach (var mail in CurrentUser.mails.Values)
+        {
+            if (!mail.isClaimed && !mail.IsExpired() && mail.reward != null && mail.reward.HasReward())
+                count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// 메일 읽음 처리
+    /// </summary>
+    public async UniTask<bool> MarkMailAsReadAsync(string mailId)
+    {
+        if (CurrentUser?.mails == null || !CurrentUser.mails.TryGetValue(mailId, out var mail))
+            return false;
+
+        if (mail.isRead) return true;
+
+        mail.isRead = true;
+
+        string path = $"users/{UserId}/mails/{mailId}/isRead";
+        bool success = await database.SetDataAsync(path, true);
+
+        if (success)
+        {
+            PlayData.NotifyMailsChanged();
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 메일 보상 수령
+    /// </summary>
+    public async UniTask<bool> ClaimMailRewardAsync(string mailId)
+    {
+        if (CurrentUser?.mails == null || !CurrentUser.mails.TryGetValue(mailId, out var mail))
+        {
+            Debug.LogWarning($"[Mail] 메일을 찾을 수 없음: {mailId}");
+            return false;
+        }
+
+        if (mail.isClaimed)
+        {
+            Debug.LogWarning($"[Mail] 이미 수령한 메일: {mailId}");
+            return false;
+        }
+
+        if (mail.IsExpired())
+        {
+            Debug.LogWarning($"[Mail] 만료된 메일: {mailId}");
+            return false;
+        }
+
+        var reward = mail.reward;
+        if (reward == null || !reward.HasReward())
+        {
+            Debug.LogWarning($"[Mail] 보상 없는 메일: {mailId}");
+            // 보상이 없어도 수령 처리
+            mail.isClaimed = true;
+            string claimPath = $"users/{UserId}/mails/{mailId}/isClaimed";
+            return await database.SetDataAsync(claimPath, true);
+        }
+
+        // 보상 지급
+        if (reward.gold > 0)
+            await AddGoldAsync(reward.gold);
+
+        if (reward.diamond > 0)
+            await AddDiamondAsync(reward.diamond);
+
+        if (reward.stamina > 0)
+            await AddStaminaAsync(reward.stamina);
+
+        if (reward.enhanceStone > 0)
+            await AddEnhanceStoneAsync(reward.enhanceStone);
+
+        if (reward.items != null && reward.items.Count > 0)
+        {
+            foreach (var item in reward.items)
+            {
+                // 강화석(5201)은 currency.enhanceStone으로 처리
+                if (item.Key == ENHANCE_STONE_ITEM_ID)
+                {
+                    await AddEnhanceStoneAsync(item.Value);
+                }
+                else
+                {
+                    await AddItemAsync(item.Key, item.Value);
+                }
+            }
+        }
+
+        // 수령 완료 표시
+        mail.isClaimed = true;
+        mail.isRead = true;
+
+        string path = $"users/{UserId}/mails/{mailId}";
+        bool success = await database.SetDataAsync(path, mail);
+
+        if (success)
+        {
+            PlayData.NotifyMailsChanged();
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 모든 메일 일괄 수령
+    /// </summary>
+    public async UniTask<int> ClaimAllMailRewardsAsync()
+    {
+        var mails = GetValidMails();
+        int claimedCount = 0;
+
+        foreach (var mail in mails)
+        {
+            if (!mail.isClaimed && mail.reward != null && mail.reward.HasReward())
+            {
+                bool success = await ClaimMailRewardAsync(mail.mailId);
+                if (success) claimedCount++;
+            }
+        }
+
+        return claimedCount;
+    }
+
+    /// <summary>
+    /// 메일 삭제
+    /// </summary>
+    public async UniTask<bool> DeleteMailAsync(string mailId)
+    {
+        if (CurrentUser?.mails == null || !CurrentUser.mails.ContainsKey(mailId))
+            return false;
+
+        CurrentUser.mails.Remove(mailId);
+
+        string path = $"users/{UserId}/mails/{mailId}";
+        bool success = await database.DeleteDataAsync(path);
+
+        if (success)
+        {
+            PlayData.NotifyMailsChanged();
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 수령 완료된 메일 일괄 삭제
+    /// </summary>
+    public async UniTask<int> DeleteClaimedMailsAsync()
+    {
+        if (CurrentUser?.mails == null) return 0;
+
+        var toDelete = new List<string>();
+        foreach (var kvp in CurrentUser.mails)
+        {
+            if (kvp.Value.isClaimed)
+                toDelete.Add(kvp.Key);
+        }
+
+        int deletedCount = 0;
+        foreach (var mailId in toDelete)
+        {
+            bool success = await DeleteMailAsync(mailId);
+            if (success) deletedCount++;
+        }
+
+        return deletedCount;
+    }
+
+    /// <summary>
+    /// 만료된 메일 정리
+    /// </summary>
+    public async UniTask<int> CleanExpiredMailsAsync()
+    {
+        if (CurrentUser?.mails == null) return 0;
+
+        var toDelete = new List<string>();
+        foreach (var kvp in CurrentUser.mails)
+        {
+            if (kvp.Value.IsExpired())
+                toDelete.Add(kvp.Key);
+        }
+
+        int deletedCount = 0;
+        foreach (var mailId in toDelete)
+        {
+            bool success = await DeleteMailAsync(mailId);
+            if (success) deletedCount++;
+        }
+
+        return deletedCount;
+    }
+
+    #endregion
+
+    #region 전역 메일 관리
+
+    // 전역 메일 캐시
+    private Dictionary<string, GlobalMailData> cachedGlobalMails = new Dictionary<string, GlobalMailData>();
+    private bool isGlobalMailsLoaded = false;
+
+    /// <summary>
+    /// 전역 메일 로드 (로그인 시 호출)
+    /// </summary>
+    public async UniTask LoadGlobalMailsAsync()
+    {
+        string path = "globalMails";
+        var (data, success) = await database.GetDataAsync<Dictionary<string, GlobalMailData>>(path);
+
+        if (success && data != null)
+        {
+            cachedGlobalMails = data;
+            Debug.Log($"[GlobalMail] 전역 메일 {cachedGlobalMails.Count}개 로드 완료");
+        }
+        else
+        {
+            cachedGlobalMails = new Dictionary<string, GlobalMailData>();
+            Debug.Log("[GlobalMail] 전역 메일 없음");
+        }
+
+        isGlobalMailsLoaded = true;
+    }
+
+    /// <summary>
+    /// 전역 메일 목록 가져오기 (유효한 것만)
+    /// </summary>
+    public List<GlobalMailData> GetValidGlobalMails()
+    {
+        var mails = new List<GlobalMailData>();
+
+        foreach (var mail in cachedGlobalMails.Values)
+        {
+            if (!mail.IsExpired())
+                mails.Add(mail);
+        }
+
+        // 최신순 정렬
+        mails.Sort((a, b) => b.createdAt.CompareTo(a.createdAt));
+        return mails;
+    }
+
+    /// <summary>
+    /// 전역 메일 수령 여부 확인
+    /// </summary>
+    public bool IsGlobalMailClaimed(string mailId)
+    {
+        if (CurrentUser?.claimedGlobalMails == null) return false;
+        return CurrentUser.claimedGlobalMails.ContainsKey(mailId);
+    }
+
+    /// <summary>
+    /// 수령하지 않은 전역 메일 개수
+    /// </summary>
+    public int GetUnclaimedGlobalMailCount()
+    {
+        int count = 0;
+        foreach (var mail in cachedGlobalMails.Values)
+        {
+            if (!mail.IsExpired() && !IsGlobalMailClaimed(mail.mailId))
+                count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// 전역 메일 보상 수령
+    /// </summary>
+    public async UniTask<bool> ClaimGlobalMailRewardAsync(string mailId)
+    {
+        if (!cachedGlobalMails.TryGetValue(mailId, out var globalMail))
+        {
+            Debug.LogWarning($"[GlobalMail] 메일을 찾을 수 없음: {mailId}");
+            return false;
+        }
+
+        if (IsGlobalMailClaimed(mailId))
+        {
+            Debug.LogWarning($"[GlobalMail] 이미 수령한 메일: {mailId}");
+            return false;
+        }
+
+        if (globalMail.IsExpired())
+        {
+            Debug.LogWarning($"[GlobalMail] 만료된 메일: {mailId}");
+            return false;
+        }
+
+        var reward = globalMail.reward;
+        if (reward != null && reward.HasReward())
+        {
+            // 보상 지급
+            if (reward.gold > 0)
+                await AddGoldAsync(reward.gold);
+
+            if (reward.diamond > 0)
+                await AddDiamondAsync(reward.diamond);
+
+            if (reward.stamina > 0)
+                await AddStaminaAsync(reward.stamina);
+
+            if (reward.enhanceStone > 0)
+                await AddEnhanceStoneAsync(reward.enhanceStone);
+
+            if (reward.items != null && reward.items.Count > 0)
+            {
+                foreach (var item in reward.items)
+                {
+                    // 강화석(5201)은 currency.enhanceStone으로 처리
+                    if (item.Key == ENHANCE_STONE_ITEM_ID)
+                    {
+                        await AddEnhanceStoneAsync(item.Value);
+                    }
+                    else
+                    {
+                        await AddItemAsync(item.Key, item.Value);
+                    }
+                }
+            }
+        }
+
+        // 수령 기록 저장
+        if (CurrentUser.claimedGlobalMails == null)
+            CurrentUser.claimedGlobalMails = new Dictionary<string, bool>();
+
+        CurrentUser.claimedGlobalMails[mailId] = true;
+
+        string path = $"users/{UserId}/claimedGlobalMails/{mailId}";
+        bool success = await database.SetDataAsync(path, true);
+
+        if (success)
+        {
+            Debug.Log($"[GlobalMail] 전역 메일 수령 완료: {mailId}");
+            PlayData.NotifyMailsChanged();
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 모든 전역 메일 일괄 수령
+    /// </summary>
+    public async UniTask<int> ClaimAllGlobalMailRewardsAsync()
+    {
+        int claimedCount = 0;
+
+        foreach (var mail in cachedGlobalMails.Values)
+        {
+            if (!mail.IsExpired() && !IsGlobalMailClaimed(mail.mailId))
+            {
+                bool success = await ClaimGlobalMailRewardAsync(mail.mailId);
+                if (success) claimedCount++;
+            }
+        }
+
+        return claimedCount;
+    }
+
+    /// <summary>
+    /// 전체 메일 가져오기 (개인 + 전역 통합)
+    /// </summary>
+    public List<MailData> GetAllMailsWithGlobal()
+    {
+        var allMails = new List<MailData>();
+
+        // 개인 메일 추가
+        if (CurrentUser?.mails != null)
+        {
+            foreach (var mail in CurrentUser.mails.Values)
+            {
+                if (!mail.IsExpired())
+                    allMails.Add(mail);
+            }
+        }
+
+        // 전역 메일 추가 (MailData 형태로 변환)
+        foreach (var globalMail in cachedGlobalMails.Values)
+        {
+            if (!globalMail.IsExpired())
+            {
+                bool isClaimed = IsGlobalMailClaimed(globalMail.mailId);
+                allMails.Add(globalMail.ToMailData(isClaimed));
+            }
+        }
+
+        // 최신순 정렬
+        allMails.Sort((a, b) => b.createdAt.CompareTo(a.createdAt));
+        return allMails;
+    }
+
+    /// <summary>
+    /// 읽지 않은 메일 개수 (개인 + 전역)
+    /// </summary>
+    public int GetTotalUnreadMailCount()
+    {
+        return GetUnreadMailCount() + GetUnclaimedGlobalMailCount();
+    }
+
+    /// <summary>
+    /// 수령 가능한 메일 개수 (개인 + 전역)
+    /// </summary>
+    public int GetTotalClaimableMailCount()
+    {
+        int personalClaimable = GetClaimableMailCount();
+        int globalClaimable = 0;
+
+        foreach (var mail in cachedGlobalMails.Values)
+        {
+            if (!mail.IsExpired() && !IsGlobalMailClaimed(mail.mailId) &&
+                mail.reward != null && mail.reward.HasReward())
+            {
+                globalClaimable++;
+            }
+        }
+
+        return personalClaimable + globalClaimable;
+    }
+    
+    /// <summary>
+    /// 전역 메일인지 확인
+    /// </summary>
+    public bool IsGlobalMail(string mailId)
+    {
+        return cachedGlobalMails.ContainsKey(mailId);
+    }
+    #endregion
     #region 일일 보상 관리
 
     /// <summary>
@@ -957,6 +1460,92 @@ public class DatabaseManager : MonoBehaviour
     public int GetTotalClaimCount()
     {
         return CurrentUser?.dailyReward?.totalClaimCount ?? 0;
+    }
+
+    #endregion
+
+    #region 업적 관리
+
+    /// <summary>
+    /// 업적 진행도 저장
+    /// </summary>
+    public async UniTask<bool> SaveAchievementProgressAsync(int achievementId, AchievementProgress progress)
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        string key = achievementId.ToString();
+
+        // 로컬 캐시 업데이트
+        if (CurrentUser.achievements == null)
+            CurrentUser.achievements = new Dictionary<string, AchievementProgress>();
+
+        CurrentUser.achievements[key] = progress;
+
+        // Firebase 저장
+        string path = $"users/{UserId}/achievements/{key}";
+        bool success = await database.SetDataAsync(path, progress);
+
+        if (success)
+        {
+            PlayData.NotifyAchievementsChanged();
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 업적 진행도 조회
+    /// </summary>
+    public AchievementProgress GetAchievementProgress(int achievementId)
+    {
+        if (CurrentUser?.achievements == null) return null;
+
+        string key = achievementId.ToString();
+        return CurrentUser.achievements.TryGetValue(key, out var progress) ? progress : null;
+    }
+
+    /// <summary>
+    /// 모든 업적 진행도 조회
+    /// </summary>
+    public List<AchievementProgress> GetAllAchievementProgress()
+    {
+        if (CurrentUser?.achievements == null)
+            return new List<AchievementProgress>();
+
+        return new List<AchievementProgress>(CurrentUser.achievements.Values);
+    }
+
+    /// <summary>
+    /// 수령 가능한 업적 개수
+    /// </summary>
+    public int GetClaimableAchievementCount()
+    {
+        if (CurrentUser?.achievements == null) return 0;
+
+        int count = 0;
+        foreach (var progress in CurrentUser.achievements.Values)
+        {
+            if (progress.isCompleted && !progress.isRewarded)
+                count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// 완료된 업적 개수
+    /// </summary>
+    public int GetCompletedAchievementCount()
+    {
+        if (CurrentUser?.achievements == null) return 0;
+
+        int count = 0;
+        foreach (var progress in CurrentUser.achievements.Values)
+        {
+            if (progress.isCompleted)
+                count++;
+        }
+        return count;
     }
 
     #endregion

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class UnitSkill
 {
@@ -22,8 +22,6 @@ public class UnitSkill
         this.owner = owner;
         this.skillData = skillData;
         this.lastUsedTime = Time.time; // 쿨타임만큼 기다린 후 첫 사용
-
-        Debug.Log($"스킬 추가: {SkillName}");
     }
 
     // 쿨타임이 돌았는지 확인

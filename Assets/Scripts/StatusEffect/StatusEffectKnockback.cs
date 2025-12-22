@@ -29,8 +29,6 @@ public class StatusEffectKnockback : StatusEffect
         knockbackDirection = Vector3.up;
 
         targetPosition = startPosition + knockbackDirection * knockbackDistance;
-
-        Debug.Log($"[Knockback] {target.name} 넉백 시작! {knockbackDistance}m 밀려남!");
         // Todo 벽 공격하고 있으면 해제 하는 코드 추가
 
     }
@@ -52,7 +50,5 @@ public class StatusEffectKnockback : StatusEffect
     {
         
         target.transform.position = targetPosition;
-
-        Debug.Log($"[Knockback] {target.name} 넉백 종료!");
     }
 }

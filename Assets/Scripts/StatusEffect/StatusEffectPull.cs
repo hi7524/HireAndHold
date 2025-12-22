@@ -30,8 +30,6 @@ public class StatusEffectPull : StatusEffect
 
         Vector3 pullOffset = (centerPosition - startPosition).normalized * pullDistance;
         targetPosition = startPosition + pullOffset;
-
-        Debug.Log($"[Pull] {target.name} 끌어당김 시작! {pullDistance}m만큼 {centerPosition} 방향으로 이동!");
         // Todo 벽 공격하고 있으면 해제 하는 코드 추가
     }
 
@@ -50,9 +48,5 @@ public class StatusEffectPull : StatusEffect
 
     public override void OnEndEffect(GameObject target)
     {
-        
-        
-
-        Debug.Log($"[Pull] {target.name} 끌어당김 종료!");
     }
 }

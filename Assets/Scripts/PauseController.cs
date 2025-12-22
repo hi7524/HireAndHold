@@ -148,8 +148,6 @@ public class PauseController : MonoBehaviour
 
     private void RefreshOwnedItems()
     {
-        Debug.Log($"[PauseController] RefreshOwnedItems 시작");
-
         if (stageManager == null || ownedItemsContent == null)
         {
             Debug.LogWarning($"[PauseController] stageManager={stageManager}, ownedItemsContent={ownedItemsContent}");
@@ -157,8 +155,6 @@ public class PauseController : MonoBehaviour
         }
 
         Dictionary<int, int> items = stageManager.GetAccumulatedItems();
-        Debug.Log($"[PauseController] 획득 아이템 수: {items?.Count ?? 0}");
-
         if (items == null) return;
 
         int slotIndex = 0;
@@ -169,8 +165,6 @@ public class PauseController : MonoBehaviour
             int count = kvp.Value;
 
             ItemData itemData = DataTableManager.ItemTable?.Get(itemId);
-            Debug.Log($"[PauseController] itemId={itemId}, itemData={itemData?.ITEM_NAME ?? "NULL"}, ITEM_ICON={itemData?.ITEM_ICON ?? "NULL"}");
-
             if (itemData == null) continue;
 
             // 슬롯 가져오기 또는 생성
@@ -192,8 +186,6 @@ public class PauseController : MonoBehaviour
 
             // 아이템 아이콘 설정
             Transform iconTransform = slot.transform.Find("ItemIcon");
-            Debug.Log($"[PauseController] iconTransform={iconTransform}");
-
             if (iconTransform != null)
             {
                 Image iconImage = iconTransform.GetComponent<Image>();
@@ -202,8 +194,6 @@ public class PauseController : MonoBehaviour
                     if (AddressablePreloader.Instance != null)
                     {
                         Sprite sprite = AddressablePreloader.Instance.GetCachedSprite(itemData.ITEM_ICON);
-                        Debug.Log($"[PauseController] ITEM_ICON={itemData.ITEM_ICON}, sprite={sprite}");
-
                         if (sprite != null)
                             iconImage.sprite = sprite;
                         else

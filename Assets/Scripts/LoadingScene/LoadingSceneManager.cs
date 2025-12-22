@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -55,7 +55,6 @@ public class LoadingSceneManager : MonoBehaviour
         }
         catch (OperationCanceledException)
         {
-            Debug.Log("[LoadingManager] 로딩 취소됨");
         }
         catch (Exception e)
         {
@@ -114,8 +113,6 @@ public class LoadingSceneManager : MonoBehaviour
         }
 
         float currentProgress = 0f;
-        Debug.Log($"[LoadingManager] 총 {request.tasks.Count}개 작업 시작");
-
         // 각 작업 실행
         for (int i = 0; i < request.tasks.Count; i++)
         {
@@ -149,8 +146,6 @@ public class LoadingSceneManager : MonoBehaviour
             {
                 LoadingSceneUI.Instance.UpdateProgress(currentProgress);
             }
-
-            Debug.Log($"[LoadingManager] {task.taskName} 완료 ({currentProgress * 100:F0}%)");
         }
     }
 

@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using GameData;
 using UnityEngine;
 
@@ -72,7 +72,6 @@ public class HeroEnforceSystem
     {
         if (!CanEnforce(unit, out string reason))
         {
-            Debug.Log($"[HeroEnforce] 실패: {reason}");
             return false;
         }
 
@@ -99,7 +98,13 @@ public class HeroEnforceSystem
         var effect = effectTable.Get(row.Hero_Enforce_EffectID);
         ApplyEffectToUnit(unit, effect, nextLv);
 
-        Debug.Log($"[HeroEnforce] 성공! {nextLv} 레벨 도달");
+        // 업적 연동: 영웅 강화 성공
+        await AchievementManager.AddHeroUpgradeSuccessAsync(1);
+
+        // 최대 레벨 달성 시 업적
+        if (nextLv >= MAX_LEVEL)
+            await AchievementManager.CompleteHeroUpgradeMaxAsync();
+
         return true;
     }
 
@@ -142,7 +147,6 @@ public class HeroEnforceSystem
 
         if (!skillMatched)
         {
-            Debug.Log($"[HeroEnforce Lv{level}] 스킬 불일치 → 효과 미적용");
             return;
         }
 
@@ -150,33 +154,26 @@ public class HeroEnforceSystem
         if (effect.Attack_Up > 1f)
         {
             unit.AddHeroAttackMultiplier(effect.Attack_Up);
-            Debug.Log($"[HeroEnforce Lv{level}] AttackUp ×{effect.Attack_Up}");
         }
 
         if (effect.Skill_Damage_Up > 1f)
         {
             unit.AddHeroSkillDamageMultiplier(effect.Skill_Damage_Up);
-            Debug.Log($"[HeroEnforce Lv{level}] SkillDamageUp ×{effect.Skill_Damage_Up}");
         }
 
         if (effect.Duration_Up > 0f)
         {
             unit.AddHeroSkillDuration(effect.Duration_Up);
-            Debug.Log($"[HeroEnforce Lv{level}] Duration +{effect.Duration_Up}");
         }
 
         if (effect.Projectile > 0)
         {
             unit.AddHeroProjectileBonus(effect.Projectile);
-            Debug.Log($"[HeroEnforce Lv{level}] Projectile +{effect.Projectile}");
         }
 
         if (effect.CoolTime_Down > 0f && effect.CoolTime_Down < 1f)
         {
             unit.AddHeroSkillCooltimeMultiplier(effect.CoolTime_Down);
-            Debug.Log($"[HeroEnforce Lv{level}] CoolTime ×{effect.CoolTime_Down}");
         }
-
-        Debug.Log("[HeroEnforce] 유닛 영웅 강화 상태 갱신 완료");
     }
 }

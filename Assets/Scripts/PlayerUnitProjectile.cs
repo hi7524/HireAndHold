@@ -4,6 +4,8 @@ using UnityEngine.AddressableAssets;
 
 public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
 {
+    private const int EFFECT_SORTING_ORDER = 100;
+
     [SerializeField] private float lifeTime = 3f;
     [SerializeField] private float launchSpeed = 5f;
     [SerializeField] private ParticleSystem mainProjectile;
@@ -12,6 +14,7 @@ public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
 
     private ObjectPoolManager poolManager;
     private string poolKey;
+    private bool sortingOrderSet = false;
 
     private float damage;
     private bool isCritical;
@@ -94,6 +97,13 @@ public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
         spawnTime = Time.time;
         hasHit = false;
 
+        // Sorting Order 설정 (최초 1회)
+        if (!sortingOrderSet)
+        {
+            SetEffectSortingOrder();
+            sortingOrderSet = true;
+        }
+
         if (mainProjectile != null)
             mainProjectile.gameObject.SetActive(true);
 
@@ -102,6 +112,15 @@ public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle + rotationOffset);
+    }
+
+    private void SetEffectSortingOrder()
+    {
+        var renderers = GetComponentsInChildren<ParticleSystemRenderer>(true);
+        foreach (var renderer in renderers)
+        {
+            renderer.sortingOrder = EFFECT_SORTING_ORDER;
+        }
     }
 
     private void FixedUpdate()

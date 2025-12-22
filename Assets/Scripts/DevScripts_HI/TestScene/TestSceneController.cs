@@ -49,8 +49,6 @@ public class TestSceneController : MonoBehaviour
 
         // 각 컨트롤러 초기화
         InitializeControllers();
-
-        Debug.Log("[TestSceneController] 테스트 씬 초기화 완료");
     }
 
     private void AutoFindReferences()

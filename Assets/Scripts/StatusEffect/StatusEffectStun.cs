@@ -19,8 +19,6 @@ public class StatusEffectStun : StatusEffect
             // 스턴 상태 활성화
             monster.SetStunned(true);
             startTime = Time.time;
-            
-            Debug.Log($"[StatusEffectStun] {target.name}에게 {effectDuration}초 스턴 효과 시작!");
         }
     }
 
@@ -38,8 +36,6 @@ public class StatusEffectStun : StatusEffect
             // 스턴 상태 해제
             monster.SetStunned(false);
             monster.RestoreOriginalSpeed();
-            
-            Debug.Log($"[StatusEffectStun] {target.name}의 스턴 효과 종료!");
         }
     }
 }

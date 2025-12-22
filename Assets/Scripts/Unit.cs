@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -159,8 +159,6 @@ public class Unit : MonoBehaviour
         BaseCharacterID = ID;
 
         unitData = DataTableManager.UnitTable.Get(ID);
-
-        Debug.Log($"Unit ID changed to: {ID}");
         SetStats();
         SetSkills();
         ApplyEnforceBonus();
@@ -180,8 +178,6 @@ public class Unit : MonoBehaviour
         ApplyEnforceBonus();
 
         SetVisualPrefab();
-
-        Debug.Log($"<color=magenta>[HeroEnforce After Merge]</color> atkMul:{heroAttackMultiplier}, dmgMul:{heroSkillDamageMultiplier}, proj:{heroProjectileBonus}, cool:{heroSkillCooltimeBonus}, dur:{heroSkillDurationBonus}");
     }
 
 
@@ -250,7 +246,6 @@ public class Unit : MonoBehaviour
         // DatabaseManager가 없으면 스킵 
         if (DatabaseManager.Instance == null)
         {
-            Debug.Log($"[Enforce] DatabaseManager가 없어 강화 적용 스킵 (ID:{UnitID})");
             return;
         }
 
@@ -288,7 +283,6 @@ public class Unit : MonoBehaviour
 
         if (heroLv <= 0)
         {
-            Debug.Log("[HeroEnforce] Lv 0 (미강화) → Skip");
             return;
         }
 
@@ -342,7 +336,6 @@ public class Unit : MonoBehaviour
 
             if (!skillMatched)
             {
-                Debug.Log($"[HeroEnforce Lv{lv}] 스킬 불일치 → Skip (Unit:{UnitID}, SK1:{skill1}, SK2:{skill2})");
                 continue;
             }
 
@@ -350,35 +343,28 @@ public class Unit : MonoBehaviour
             if (effect.Attack_Up > 1f)
             {
                 heroAttackMultiplier *= effect.Attack_Up;
-                Debug.Log($"[HeroEnforce Lv{lv}] AttackUp ×{effect.Attack_Up}");
             }
 
             if (effect.Skill_Damage_Up > 1f)
             {
                 heroSkillDamageMultiplier *= effect.Skill_Damage_Up;
-                Debug.Log($"[HeroEnforce Lv{lv}] SkillDamageUp ×{effect.Skill_Damage_Up}");
             }
 
             if (effect.Duration_Up > 0f)
             {
                 heroSkillDurationBonus += effect.Duration_Up;
-                Debug.Log($"[HeroEnforce Lv{lv}] Duration +{effect.Duration_Up}");
             }
 
             if (effect.Projectile > 0)
             {
                 heroProjectileBonus += effect.Projectile;
-                Debug.Log($"[HeroEnforce Lv{lv}] Projectile +{effect.Projectile}");
             }
 
             if (effect.CoolTime_Down > 0f && effect.CoolTime_Down < 1f)
             {
                 heroSkillCooltimeBonus *= effect.CoolTime_Down;
-                Debug.Log($"[HeroEnforce Lv{lv}] CoolTime ×{effect.CoolTime_Down}");
             }
         }
-
-        Debug.Log($"[HeroEnforce Final] atkMul={heroAttackMultiplier}, dmgMul={heroSkillDamageMultiplier}, proj={heroProjectileBonus}, cool={heroSkillCooltimeBonus}");
     }
     // 유닛 데이터에서 스킬 로드 및 추가
     private void SetSkills()

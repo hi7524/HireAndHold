@@ -23,19 +23,15 @@ public class TestWall : MonoBehaviour, IDamagable
         if (isInvincible) return;
         
         currentHp -= damage;
-        Debug.Log($"[TestWall] 데미지: {damage}, 현재 HP: {currentHp}/{maxHp}");
-        
         if (currentHp <= 0)
         {
             currentHp = maxHp; // 테스트용: 죽으면 바로 부활
-            Debug.Log("[TestWall] HP가 0이 되어 자동 회복됨");
         }
     }
     
     public void SetInvincible(bool value)
     {
         isInvincible = value;
-        Debug.Log($"[TestWall] 무적 모드: {isInvincible}");
     }
     
     public void SetMaxHp(float value)
@@ -53,6 +49,5 @@ public class TestWall : MonoBehaviour, IDamagable
     {
         // 테스트용: 죽어도 바로 부활
         currentHp = maxHp;
-        Debug.Log("[TestWall] Die() 호출됨 - 자동 부활");
     }
 }

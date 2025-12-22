@@ -22,8 +22,6 @@ public class StatusEffectDefenseDown : StatusEffect
             originalDefense = monster.Defense;
             monster.Defense = originalDefense * (1 - amount/100f);
         }
-        
-        Debug.Log($"[DefenseDown] {target.name}의 방어력 감소! 적 방어력 {monster.Defense} ({effectDuration}초)");
     }
 
     public override void WhileEffect(GameObject target)
@@ -38,7 +36,5 @@ public class StatusEffectDefenseDown : StatusEffect
         {
             monster.Defense = originalDefense;
         }
-        
-        Debug.Log($"[DefenseDown] {target.name}의 방어력 복구!");
     }
 }

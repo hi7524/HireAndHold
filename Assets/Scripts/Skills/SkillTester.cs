@@ -85,8 +85,6 @@ public void OnSkillBTN2()
         }
 
         Vector3 usePosition = spawnPoint != null ? spawnPoint.position : transform.position;
-
-        Debug.Log($"[SkillTester] {skillName} 테스트 발동! (키: {index + 1})");
         skill.TryUse(usePosition);
     }
 
@@ -94,18 +92,13 @@ public void OnSkillBTN2()
     [ContextMenu("Test All Skills")]
     private void TestAllSkills()
     {
-        Debug.Log("[SkillTester] 모든 스킬 순차 테스트 시작!");
-
         for (int i = 0; i < skills.Length; i++)
         {
             if (skills[i] != null)
             {
                 Vector3 usePosition = spawnPoint != null ? spawnPoint.position : transform.position;
-                Debug.Log($"[SkillTester] {i + 1}번 스킬: {skills[i].GetType().Name}");
                 skills[i].TryUse(usePosition);
             }
         }
-
-        Debug.Log("[SkillTester] 모든 스킬 테스트 완료!");
     }
 }

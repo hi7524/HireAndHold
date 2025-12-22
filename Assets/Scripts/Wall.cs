@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
@@ -75,7 +75,6 @@ public class Wall : MonoBehaviour, IDamagable
 
         if (amount > 0)
         {
-            Debug.Log($"[Wall] 방벽 회복: +{amount:F1} ({previousHp:F0} → {currentHp:F0})");
         }
     }
 

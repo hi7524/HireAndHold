@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
@@ -46,7 +46,6 @@ public class StoreWindow : GenericWindow
         {
             gachaManager.OnGachaComplete += OnGachaComplete;
             gachaManager.OnGachaError += OnGachaError;
-            Debug.Log("[StoreWindow] GachaManager 이벤트 구독 완료");
         }
         
 
@@ -67,7 +66,6 @@ public class StoreWindow : GenericWindow
         }
 
         Time.timeScale = 1f;
-        Debug.Log("[StoreWindow] 초기화 완료");
     }
 
 
@@ -76,7 +74,6 @@ public class StoreWindow : GenericWindow
     {
         if (isPlaying) 
         {
-            Debug.Log("[StoreWindow] 가챠 진행 중이라 버튼 무시");
             return;
         }
         
@@ -85,8 +82,6 @@ public class StoreWindow : GenericWindow
             Debug.LogError("[StoreWindow] GachaManager가 null입니다!");
             return;
         }
-        
-        Debug.Log("[StoreWindow] 일반 단일 가챠 시작");
         gachaManager.ExecuteGacha(GachaType.Normal, 1);
     }
 
@@ -94,7 +89,6 @@ public class StoreWindow : GenericWindow
     {
         if (isPlaying) 
         {
-            Debug.Log("[StoreWindow] 가챠 진행 중이라 버튼 무시");
             return;
         }
         
@@ -103,8 +97,6 @@ public class StoreWindow : GenericWindow
             Debug.LogError("[StoreWindow] GachaManager가 null입니다!");
             return;
         }
-        
-        Debug.Log("[StoreWindow] 일반 10연차 가챠 시작");
         gachaManager.ExecuteGacha(GachaType.Normal, 10);
     }
 
@@ -112,13 +104,8 @@ public class StoreWindow : GenericWindow
     {
         if (isPlaying) 
         {
-            Debug.Log("[StoreWindow] 가챠 진행 중이라 버튼 무시");
             return;
         }
-        
-    
-        
-        Debug.Log("[StoreWindow] 프리미엄 단일 가챠 시작");
         gachaManager.ExecuteGacha(GachaType.Premium, 1);
     }
 
@@ -126,7 +113,6 @@ public class StoreWindow : GenericWindow
     {
         if (isPlaying) 
         {
-            Debug.Log("[StoreWindow] 가챠 진행 중이라 버튼 무시");
             return;
         }
         
@@ -135,8 +121,6 @@ public class StoreWindow : GenericWindow
             Debug.LogError("[StoreWindow] GachaManager가 null입니다!");
             return;
         }
-        
-        Debug.Log("[StoreWindow] 프리미엄 10연차 가챠 시작");
         gachaManager.ExecuteGacha(GachaType.Premium, 10);
     }
 
@@ -151,9 +135,6 @@ public class StoreWindow : GenericWindow
             Debug.LogError("[StoreWindow] GachaResult가 null입니다!");
             return;
         }
-        
-        Debug.Log($"[StoreWindow] 가챠 결과 수신: {result.items.Count}개 아이템");
-        
         cts?.Cancel();
         cts?.Dispose();
         cts = new CancellationTokenSource();
@@ -164,7 +145,6 @@ public class StoreWindow : GenericWindow
         }
         catch (OperationCanceledException)
         {
-            Debug.Log("[StoreWindow] 연출 취소됨");
         }
         catch (System.Exception ex)
         {
@@ -234,7 +214,6 @@ public class StoreWindow : GenericWindow
         {
             isPlayingAnimation = false;
             isPlaying = false;
-            Debug.Log("[StoreWindow] 연출 종료");
         }
     }
 
@@ -256,8 +235,6 @@ public class StoreWindow : GenericWindow
 
             canvasGroup.alpha = 1f;
         }
-
-        Debug.Log("[StoreWindow] 스킵 → 모든 결과 카드 즉시 표시");
     }
 
 
@@ -328,7 +305,6 @@ public class StoreWindow : GenericWindow
 
     // private void PlayLegendaryEffect(GameObject cardObj)
     // {
-    //     Debug.Log("[GachaUI] 전설 획득");
     //     // ParticleSystem, SFX 재생
     // }
 
@@ -345,9 +321,6 @@ public class StoreWindow : GenericWindow
     private void OnClickSkip()
     {
         if (!isPlayingAnimation || isSkipping) return;
-
-        Debug.Log("[StoreWindow] Skip 버튼 클릭 - 연출 스킵");
-
         isSkipping = true;
         cts?.Cancel();
     }
@@ -356,8 +329,6 @@ public class StoreWindow : GenericWindow
 
     private void OnClickClose()
     {
-        Debug.Log("[StoreWindow] Close 버튼 클릭");
-
         cts?.Cancel();
 
         isPlaying = false;
@@ -368,8 +339,6 @@ public class StoreWindow : GenericWindow
             gachaResultPanel.SetActive(false);
 
         ClearResultCards();
-
-        Debug.Log("[StoreWindow] Close 처리 완료, 다시 가챠 가능");
     }
 
 
@@ -378,8 +347,6 @@ public class StoreWindow : GenericWindow
     /// </summary>
     private async void OnClickCheat()
     {
-        Debug.Log("[StoreWindow] 치트 버튼 클릭");
-
         // 일반 뽑기, 프리미엄 뽑기권 지급
         bool normalSuccess = await DatabaseManager.Instance.AddItemAsync(5102, cheatDiceAmount);
         bool premiumSuccess = await DatabaseManager.Instance.AddItemAsync(5103, cheatDiceAmount);
@@ -388,7 +355,6 @@ public class StoreWindow : GenericWindow
         {
             // 캐시 동기화
             PlayData.SyncItemsFromDatabase();
-            Debug.Log($"[StoreWindow] 치트: 일반 뽑기권 {cheatDiceAmount}개, 프리미엄 뽑기권 {cheatDiceAmount}개 지급 완료!");
         }
         else
         {

@@ -34,8 +34,6 @@ public class BossHPBar : MonoBehaviour
         
         bossNameText.text = bossName;
         bossHealthPanel.SetActive(true);
-        
-        Debug.Log($"[BossHealthBar] {bossName} 체력바 표시");
     }
 
     // 보스 체력바 숨김
