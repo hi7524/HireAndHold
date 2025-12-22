@@ -60,8 +60,8 @@ public class MainUISceneManager : MonoBehaviour
     private async UniTask SpawnUnit(int unitId, Vector3 position)
     {
         GameObject wrapper = new GameObject($"Unit_{unitId}");
-        wrapper.transform.position = position;
         wrapper.transform.SetParent(worldUnitRoot);
+        wrapper.transform.localPosition = position;
 
         UnitData data = DataTableManager.UnitTable.Get(unitId);
         GameObject combatPrefab =
@@ -70,29 +70,29 @@ public class MainUISceneManager : MonoBehaviour
         GameObject visual = Instantiate(combatPrefab, wrapper.transform);
         visual.transform.localScale = Vector3.one * 0.4f;
 
+        var wander = wrapper.AddComponent<LobbyUnitWander>();
+        wander.min = new Vector2(-0.8f, -0.4f);
+        wander.max = new Vector2(0.8f, 0.4f);
+        wander.moveSpeed = Random.Range(0.3f, 0.6f);
 
         foreach (var r in visual.GetComponentsInChildren<SpriteRenderer>())
-        {
             r.sortingLayerName = "LobbyWorld";
-        }
 
         var group = visual.GetComponentInChildren<SortingGroup>();
         if (group != null)
-        {
             group.sortingLayerName = "LobbyWorld";
-
-        }
 
         await UniTask.DelayFrame(1);
 
         var character = visual.GetComponentInChildren<
             Assets.HeroEditor.Common.Scripts.CharacterScripts.Character>();
 
-        if (character != null && character.LayerManager != null)
+        if (character?.LayerManager != null)
         {
             character.LayerManager.GetSpritesBySortingOrder();
             character.LayerManager.SetSpritesBySortingOrder();
         }
     }
+
 
 }
