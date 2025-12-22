@@ -9,6 +9,7 @@ public class OreDungeonIntro : MonoBehaviour
 {
     [Header("Managers")]
     [SerializeField] private OreDungeonManager gameManager;
+    [SerializeField] private OreDungeonAssetManager assetManager;
 
     [Header("UnitCard")]
     [SerializeField] private BaseCardUi cardPrf;
@@ -22,13 +23,19 @@ public class OreDungeonIntro : MonoBehaviour
     [SerializeField] private float delayBetweenPopCards = 0.1f; // Pop 카드 간 딜레이
 
     [Header("Slide Animation Settings")]
-    [SerializeField] private float beforeStartSlideAnimDelay = 0.5f; // 슬라이드 애니메이션 시작 전 딜레이 시간 
+    [SerializeField] private float beforeStartSlideAnimDelay = 0.5f; // 슬라이드 애니메이션 시작 전 딜레이 시간
     [SerializeField] private float slideDistance = 100f;             // 슬라이드 거리
     [SerializeField] private float slideAnimDuration = 0.6f;         // 슬라이드 애니메이션 시간
     [SerializeField] private float delayBetweenSlideCards = 0.1f;    // 슬라이드 카드 간 딜레이
 
+    [Header("Roulette Animation Settings")]
+    [SerializeField] private float rouletteDuration = 3f;            // 룰렛 총 지속 시간
+    [SerializeField] private float rouletteMinInterval = 0.03f;      // 최소 간격 (가장 빠를 때)
+    [SerializeField] private float rouletteMaxInterval = 0.3f;       // 최대 간격 (가장 느릴 때)
+
     private List<BaseCardUi> cardList = new List<BaseCardUi>();
     private HorizontalLayoutGroup layoutGroup;
+    private List<int> allUnitIds = new List<int>(); // 룰렛에 사용할 전체 유닛 ID 리스트
 
     private void Start()
     {
@@ -49,25 +56,22 @@ public class OreDungeonIntro : MonoBehaviour
         cardList.Clear();
         List<int> unitIds = gameManager.draftUnitList.ToList();
 
+        // 룰렛에 사용할 전체 유닛 ID 리스트 가져오기
+        if (DataTableManager.UnitTable != null)
+        {
+            allUnitIds = new List<int>(DataTableManager.UnitTable.RawTable.Keys);
+        }
+
         for (int i = 0; i < count; i++)
         {
             BaseCardUi card = Instantiate(cardPrf, prfTrans);
             cardList.Add(card);
 
-            // 유닛 ID로 UnitData 가져오기
+            // 유닛 ID로 미리 로드된 스프라이트 가져오기
             int unitId = unitIds[i];
-            UnitData unitData = DataTableManager.UnitTable.Get(unitId);
-
-            if (unitData != null && !string.IsNullOrEmpty(unitData.UNIT_ICON))
+            if (assetManager.UnitSprites.TryGetValue(unitId, out Sprite sprite))
             {
-                // Addressables로 유닛 아이콘 로드 및 설정
-                Addressables.LoadAssetAsync<Sprite>(unitData.UNIT_ICON).Completed += (op) =>
-                {
-                    if (op.Result != null)
-                    {
-                        card.SetImage(op.Result);
-                    }
-                };
+                card.SetImage(sprite);
             }
 
             // CanvasGroup 미리 설정 및 투명하게 만들기
@@ -111,9 +115,9 @@ public class OreDungeonIntro : MonoBehaviour
             PlaySlideUpAnimation(cardList[cardIndex], i, allPopAnimEndTime);
         }
 
-        // 모든 애니메이션 끝나는 시간 계산
+        // 모든 애니메이션 끝나는 시간 계산 (슬라이드 + 룰렛)
         float slideAnimDuration = (randomCount > 0) ? beforeStartSlideAnimDelay + (randomCount - 1) * delayBetweenSlideCards + this.slideAnimDuration : 0f;
-        float totalAnimTime = allPopAnimEndTime + slideAnimDuration;
+        float totalAnimTime = allPopAnimEndTime + slideAnimDuration + rouletteDuration;
 
         // 모든 애니메이션 끝난 후 LayoutGroup 다시 활성화
         DOTween.Sequence()
@@ -168,13 +172,98 @@ public class OreDungeonIntro : MonoBehaviour
         rectTransform.anchoredPosition = targetPos + Vector3.down * slideDistance;
         canvasGroup.alpha = 0f;
 
+        // 슬라이드 시작 시 이미지를 검은색으로 설정
+        card.SetImageColor(Color.black);
+
         float delay = startDelay + beforeStartSlideAnimDelay + index * delayBetweenSlideCards;
 
-        Sequence sequence = DOTween.Sequence();
-        sequence.AppendInterval(delay);
+        // 슬라이드 애니메이션 시작
+        rectTransform.DOAnchorPos(targetPos, slideAnimDuration).SetEase(Ease.OutCubic).SetDelay(delay);
+        canvasGroup.DOFade(1f, slideAnimDuration).SetEase(Ease.InQuad).SetDelay(delay);
 
-        // 위로 올라오며 페이드 인
-        sequence.Append(rectTransform.DOAnchorPos(targetPos, slideAnimDuration).SetEase(Ease.OutCubic));
-        sequence.Join(canvasGroup.DOFade(1f, slideAnimDuration).SetEase(Ease.InQuad));
+        int capturedSlideIndex = index;
+
+        // 슬라이드 애니메이션 동안 빠르게 이미지 변경
+        int slidePeriodSpinCount = Mathf.FloorToInt(slideAnimDuration / rouletteMinInterval);
+        float currentDelay = delay;
+
+        for (int i = 0; i < slidePeriodSpinCount; i++)
+        {
+            DOVirtual.DelayedCall(currentDelay, () => SetRandomUnitImage(card));
+            currentDelay += rouletteMinInterval;
+        }
+
+        // 슬라이드 끝난 후 점점 느려지면서 진행
+        float rouletteStartDelay = delay + slideAnimDuration;
+        currentDelay = rouletteStartDelay;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < rouletteDuration)
+        {
+            // easeOutQuint 커브로 현재 진행도 계산
+            float t = elapsedTime / rouletteDuration;
+            float easeOutQuint = 1f - Mathf.Pow(1f - t, 5f);
+            float currentInterval = Mathf.Lerp(rouletteMinInterval, rouletteMaxInterval, easeOutQuint);
+
+            // 마지막 룰렛인지 확인
+            bool isLastSpin = elapsedTime + currentInterval >= rouletteDuration;
+
+            if (isLastSpin)
+            {
+                DOVirtual.DelayedCall(currentDelay, () =>
+                {
+                    SetFinalUnitImage(card, capturedSlideIndex);
+
+                    // 이미지를 하얀색으로 복원
+                    card.SetImageColor(Color.white);
+
+                    // 마지막 룰렛에서 살짝 커졌다 작아지는 효과
+                    card.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f);
+                });
+            }
+            else
+            {
+                DOVirtual.DelayedCall(currentDelay, () => SetRandomUnitImage(card));
+            }
+
+            currentDelay += currentInterval;
+            elapsedTime += currentInterval;
+
+            if (isLastSpin) break;
+        }
+    }
+
+    // 슬라이드 카드의 최종 유닛 이미지 설정
+    private void SetFinalUnitImage(BaseCardUi card, int slideCardIndex)
+    {
+        int existingCount = gameManager.ExistingUnitCount;
+        int cardIndex = existingCount + slideCardIndex;
+
+        List<int> unitIds = gameManager.draftUnitList.ToList();
+        if (cardIndex < unitIds.Count)
+        {
+            int unitId = unitIds[cardIndex];
+            if (assetManager.UnitSprites.TryGetValue(unitId, out Sprite sprite))
+            {
+                card.SetImage(sprite);
+            }
+        }
+    }
+
+    // 랜덤 유닛 이미지 설정
+    private void SetRandomUnitImage(BaseCardUi card)
+    {
+        if (allUnitIds == null || allUnitIds.Count == 0)
+            return;
+
+        // 랜덤 유닛 ID 선택
+        int randomIndex = Random.Range(0, allUnitIds.Count);
+        int randomUnitId = allUnitIds[randomIndex];
+
+        // 미리 로드된 스프라이트 가져오기
+        if (assetManager.UnitSprites.TryGetValue(randomUnitId, out Sprite sprite))
+        {
+            card.SetImage(sprite);
+        }
     }
 }

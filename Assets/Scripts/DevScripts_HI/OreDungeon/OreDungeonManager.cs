@@ -102,7 +102,6 @@ public class OreDungeonManager : MonoBehaviour
         if (totalAttackPower <= 0f)
             return 0;
 
-        // Touch_Attrition_Battle / 총 공격력 (내림)
         int touchCount = Mathf.FloorToInt(DungeonData.Touch_Attrition_Battle / totalAttackPower);
         return touchCount;
     }

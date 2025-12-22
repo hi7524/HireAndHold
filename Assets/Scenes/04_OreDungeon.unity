@@ -1865,6 +1865,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameManager: {fileID: 2122810349}
+  assetManager: {fileID: 2065071293}
   cardPrf: {fileID: 4817958035928957819, guid: c2e44abfa187ff34e921a012211cc638, type: 3}
   prfTrans: {fileID: 615854034}
   startScale: 2
@@ -1872,10 +1873,13 @@ MonoBehaviour:
   slowGrowDuration: 0.2
   shrinkDuration: 0.5
   delayBetweenPopCards: 0.3
-  beforeStartSlideAnimDelay: 0.5
+  beforeStartSlideAnimDelay: 0.1
   slideDistance: 100
   slideAnimDuration: 0.6
   delayBetweenSlideCards: 0.7
+  rouletteDuration: 2
+  rouletteMinInterval: 0.05
+  rouletteMaxInterval: 0.3
 --- !u!1 &1614737367
 GameObject:
   m_ObjectHideFlags: 0
@@ -2172,7 +2176,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1860550157
 Transform:
   m_ObjectHideFlags: 0
