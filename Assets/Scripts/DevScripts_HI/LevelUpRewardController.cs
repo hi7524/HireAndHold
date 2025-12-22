@@ -176,19 +176,6 @@ public class LevelUpRewardController : MonoBehaviour
         }
     }
 
-    // 이전 레벨업 보상 유닛들의 인벤토리 배치 허용
-    private void EnableInventoryPlacementForPreviousRewards()
-    {
-        foreach (var unit in currentLevelUpRewardUnits)
-        {
-            if (unit != null)
-            {
-                unit.SetInventoryPlaceable(true);
-            }
-        }
-        currentLevelUpRewardUnits.Clear();
-    }
-
     // 스테이지 시작 전
     public void SelectUnitOnGameStart()
     {
@@ -427,12 +414,7 @@ public class LevelUpRewardController : MonoBehaviour
             playerCredit.AddCredit(defaultGoldReward);
             uiManager.UpdateInfoText($"보상 선택을 패스하고 {defaultGoldReward}크레딧 지급");
         }
-
-        // 스킬은 이미 카드 클릭 시 적용되었으므로 여기서는 처리 안 함
-
-        // 현재 레벨업 보상 유닛들의 인벤토리 배치 허용
-        EnableInventoryPlacementForPreviousRewards();
-
+        
         // 관련 UI 비활성화 및 활성화 (패널을 끄면 자식들도 자동으로 꺼짐)
         uiManager.SetLevelUpRewardPanelActive(false);
         uiManager.SetGameControllBtnsActive(true);
@@ -601,9 +583,6 @@ public class LevelUpRewardController : MonoBehaviour
                 selectedSkillCard.SetFocus(false);
                 selectedSkillCard = null;
             }
-
-            // 현재 레벨업 보상 유닛들의 인벤토리 배치 허용
-            EnableInventoryPlacementForPreviousRewards();
 
             DrawReward(); // DrawReward 내부에서 isSelectedReward = false로 초기화됨
 

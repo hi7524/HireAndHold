@@ -56,11 +56,6 @@ public class GridUnit : MonoBehaviour, IDraggable
         unit.UpdateUnitID(unitId);
     } 
 
-    public void SetInventoryPlaceable(bool value)
-    {
-        canPlaceInInventory = value;
-    }
-
     public void SetBattleUnitManager(BattleUnitManager manager)
     {
         battleUnitManager = manager;
@@ -75,6 +70,9 @@ public class GridUnit : MonoBehaviour, IDraggable
     public void OnDragStartFromProxy(Vector2Int offset)
     {
         touchOffset = offset;
+
+        // Unit에 드래그 시작 알림 (공격 중지)
+        unit?.SetDragging(true);
 
         // GridCell 설정 관련
         previousGridCell = curGridCell;
@@ -112,6 +110,9 @@ public class GridUnit : MonoBehaviour, IDraggable
 
     public void OnDragEnd()
     {
+        // Unit에 드래그 종료 알림 (공격 재개)
+        unit?.SetDragging(false);
+
         SetActiveChildrenObj(false);
 
         // 머지 효과 중지

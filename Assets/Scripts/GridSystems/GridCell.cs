@@ -342,12 +342,6 @@ public class GridCell : MonoBehaviour, IDroppable
             {
                 // 레벨업 보상 유닛인 경우 GridManager를 통해 알림
                 gridManager.NotifyLevelUpRewardUnitSpawned(newGridUnit);
-                newGridUnit.SetInventoryPlaceable(false);
-            }
-            else if (draggableUnitUi.DraggableUnitType == DraggableUnitType.Inventory)
-            {
-                // 인벤토리에서 온 유닛인 경우
-                newGridUnit.SetInventoryPlaceable(true);
             }
 
             // 생성된 GridUnit을 배치

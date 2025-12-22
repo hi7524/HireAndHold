@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -15,9 +16,15 @@ public class OreDungeonManager : MonoBehaviour
     public int RemainTouchCount { get; private set; }
     public int RemainOreCount { get; private set; }
 
-    public event Action OnInitialized; // 초기화 및 데이터 로드 완료 후 실행할 메서드
+    public int UnitCount => UnitCountToUse;
+    public int ExistingUnitCount { get; private set; } // FillUnitsRandomly 호출 전 유닛 수
+
+    public event Action OnInitialized;            // 초기화 및 데이터 로드 완료 후 실행할 메서드
     public event Action<int> OnTouchCountChanged; // 남은 터치 수 변경
-    public event Action<int> OnOreCountChanged; // 남은 광석 수 변경
+    public event Action<int> OnOreCountChanged;   // 남은 광석 수 변경
+
+    private const int UnitCountToUse = 5;
+    public HashSet<int> draftUnitList = new HashSet<int>{11101, 11312}; // TODO: 나중에 실제 편성 덱과 연결
 
 
     private void Awake()
@@ -40,7 +47,7 @@ public class OreDungeonManager : MonoBehaviour
         if (DungeonData != null)
         {
             // 초기 카운트 설정
-            RemainTouchCount = 10; // 임시로 10 정해둠 *TODO: 나중에 공격력과 연관짓기
+            RemainTouchCount = CalculateTotalTouchCount();
             RemainOreCount = DungeonData.Number_Of_Ores + DungeonData.Number_Of_Ores2;
         }
         // 초기화 완료 이벤트 발행
@@ -69,5 +76,66 @@ public class OreDungeonManager : MonoBehaviour
         }
 
         return true;
+    }
+
+    // 총 필요 터치 횟수 계산
+    private int CalculateTotalTouchCount()
+    {
+        if (DungeonData == null)
+            return 0;
+
+        // 부족한 유닛을 랜덤으로 채우기
+        if (draftUnitList.Count < UnitCountToUse)
+            FillUnitsRandomly();
+
+        // 편성된 유닛들의 총 공격력 계산
+        float totalAttackPower = 0f;
+        foreach (int unitId in draftUnitList)
+        {
+            var unitData = DataTableManager.UnitTable.Get(unitId);
+            if (unitData != null)
+            {
+                totalAttackPower += unitData.ATTACK;
+            }
+        }
+
+        if (totalAttackPower <= 0f)
+            return 0;
+
+        int touchCount = Mathf.FloorToInt(DungeonData.Touch_Attrition_Battle / totalAttackPower);
+        return touchCount;
+    }
+
+    // 부족한 유닛을 랜덤으로 채우기
+    private void FillUnitsRandomly()
+    {
+        // FillUnitsRandomly 호출 전 유닛 수 저장
+        ExistingUnitCount = draftUnitList.Count;
+
+        if (DataTableManager.UnitTable == null)
+            return;
+
+        var allUnitIds = new List<int>(DataTableManager.UnitTable.RawTable.Keys);
+        if (allUnitIds.Count == 0)
+            return;
+
+        // 부족한 개수만큼 랜덤으로 추가
+        int missingCount = UnitCountToUse - draftUnitList.Count;
+        for (int i = 0; i < missingCount; i++)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, allUnitIds.Count);
+            int randomUnitId = allUnitIds[randomIndex];
+
+            // 중복 방지를 위해 이미 있는 유닛이면 다시 선택
+            int attempts = 0;
+            while (draftUnitList.Contains(randomUnitId) && attempts < 100)
+            {
+                randomIndex = UnityEngine.Random.Range(0, allUnitIds.Count);
+                randomUnitId = allUnitIds[randomIndex];
+                attempts++;
+            }
+
+            draftUnitList.Add(randomUnitId);
+        }
     }
 }

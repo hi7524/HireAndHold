@@ -12,7 +12,13 @@ public class BaseCardUi : MonoBehaviour
         if (image != null)
             image.sprite = sprite;
     }
-    
+
+    public virtual void SetImageColor(Color color)
+    {
+        if (image != null)
+            image.color = color;
+    }
+
     public virtual void SetTitleText(string msg)
     {
         if (text != null)

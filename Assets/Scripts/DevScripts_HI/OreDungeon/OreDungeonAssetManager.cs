@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 /// <summary>
 /// 광석 던전 에셋 관리
@@ -12,6 +14,7 @@ public class OreDungeonAssetManager : MonoBehaviour
 
     public DataTable_OreDungeon OreDungeonTable { get; private set; }
     public DataTable_Ore OreTable { get; private set; }
+    public Dictionary<int, Sprite> UnitSprites { get; private set; } = new Dictionary<int, Sprite>();
 
     private bool isPreloaded;
 
@@ -44,8 +47,53 @@ public class OreDungeonAssetManager : MonoBehaviour
         }
         else
         {
+            // DataTableManager 초기화 대기 (UnitTable 등 필요)
+            await DataTableManager.InitAsync();
+
             await LoadOreDungeonTableDirectly();
             await LoadOreTableDirectly();
+        }
+
+        // 모든 유닛 스프라이트 미리 로드
+        await LoadAllUnitSprites();
+    }
+
+    // 모든 유닛 스프라이트 미리 로드
+    private async UniTask LoadAllUnitSprites()
+    {
+        if (DataTableManager.UnitTable == null)
+            return;
+
+        UnitSprites.Clear();
+
+        List<UniTask> loadTasks = new List<UniTask>();
+
+        foreach (var unitId in DataTableManager.UnitTable.RawTable.Keys)
+        {
+            UnitData unitData = DataTableManager.UnitTable.Get(unitId);
+            if (unitData != null && !string.IsNullOrEmpty(unitData.UNIT_ICON))
+            {
+                loadTasks.Add(LoadUnitSprite(unitId, unitData.UNIT_ICON));
+            }
+        }
+
+        await UniTask.WhenAll(loadTasks);
+    }
+
+    // 개별 유닛 스프라이트 로드
+    private async UniTask LoadUnitSprite(int unitId, string iconAddress)
+    {
+        try
+        {
+            var sprite = await Addressables.LoadAssetAsync<Sprite>(iconAddress).ToUniTask();
+            if (sprite != null)
+            {
+                UnitSprites[unitId] = sprite;
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"유닛 스프라이트 로드 실패 (ID: {unitId}, Address: {iconAddress}): {e.Message}");
         }
     }
 
