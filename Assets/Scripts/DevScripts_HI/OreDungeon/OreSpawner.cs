@@ -11,6 +11,7 @@ public class OreSpawner : MonoBehaviour
     [SerializeField] private ObjectPoolManager poolManager;
     [SerializeField] private Ore orePrf;
     [SerializeField] private Canvas canvas;
+    [SerializeField] private Transform spawnTrans;
 
     [Header("스폰 설정")]
     [SerializeField] private int maxSpawnOreAmount = 10; // 한 번에 최대 스폰 개수
@@ -180,7 +181,7 @@ public class OreSpawner : MonoBehaviour
 
     private Ore SpawnOre(Vector2 position, int oresID)
     {
-        Ore ore = Instantiate(orePrf, canvas.transform);
+        Ore ore = Instantiate(orePrf, spawnTrans);
 
         // RectTransform 설정
         RectTransform rectTransform = ore.GetComponent<RectTransform>();

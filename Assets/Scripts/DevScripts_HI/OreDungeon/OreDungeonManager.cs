@@ -22,6 +22,7 @@ public class OreDungeonManager : MonoBehaviour
     public event Action OnInitialized;            // 초기화 및 데이터 로드 완료 후 실행할 메서드
     public event Action<int> OnTouchCountChanged; // 남은 터치 수 변경
     public event Action<int> OnOreCountChanged;   // 남은 광석 수 변경
+    public event Action<bool> OnStageEnded;
 
     private const int UnitCountToUse = 5;
     public HashSet<int> draftUnitList = new HashSet<int>{11101, 11312}; // TODO: 나중에 실제 편성 덱과 연결
@@ -58,6 +59,21 @@ public class OreDungeonManager : MonoBehaviour
     {
         RemainTouchCount--;
         OnTouchCountChanged?.Invoke(RemainTouchCount);
+
+        // 터치 횟수가 0 이하일 때
+        if (RemainTouchCount <= 0)
+        {
+            // 강화석이 남아있으면 실패
+            if (RemainOreCount > 0)
+            {
+                OnStageEnded.Invoke(false);
+            }
+            // 없으면 성공
+            else
+            {
+                OnStageEnded.Invoke(true);
+            }
+        }
     }
 
     public void OnOreDestroyed()
