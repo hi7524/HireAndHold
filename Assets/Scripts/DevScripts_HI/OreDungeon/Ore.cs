@@ -33,6 +33,7 @@ public class Ore : MonoBehaviour
     public void OnClick()
     {
         touchCount--;
+        manager.AddOreCount(1);
         manager?.OnOreTouched();
         CheckDestroy();
     }
