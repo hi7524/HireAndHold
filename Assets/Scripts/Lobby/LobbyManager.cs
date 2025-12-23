@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using GameData;
+using Tutorial;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -16,6 +17,18 @@ public class LobbyManager : MonoBehaviour
 
         // 업적 시스템 테스트 로그
         TestAchievementSystem();
+
+        // 튜토리얼 체크 및 시작
+        CheckTutorialAsync().Forget();
+    }
+
+    private async UniTaskVoid CheckTutorialAsync()
+    {
+        // TutorialManager가 있으면 로비 진입 튜토리얼 체크
+        if (TutorialManager.Instance != null)
+        {
+            await TutorialManager.Instance.CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
+        }
     }
 
     private void TestMailSystem()

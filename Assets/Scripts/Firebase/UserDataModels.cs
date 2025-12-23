@@ -21,6 +21,7 @@ namespace GameData
         public int activePresetIndex;
         public UserSettings settings;
         public DailyRewardData dailyReward;
+        public TutorialProgressData tutorial; // 튜토리얼 진행 상황
 
         public UserData()
         {
@@ -33,6 +34,7 @@ namespace GameData
             claimedGlobalMails = new Dictionary<string, bool>();
             achievements = new Dictionary<string, AchievementProgress>();
             dailyReward = new DailyRewardData();
+            tutorial = new TutorialProgressData();
         }
     }
 
@@ -375,6 +377,56 @@ namespace GameData
             isRewarded = false;
             completedAt = 0;
             rewardedAt = 0;
+        }
+    }
+
+    #endregion
+
+    #region 튜토리얼
+
+    [Serializable]
+    public class TutorialProgressData
+    {
+        /// <summary>
+        /// 전체 튜토리얼 완료 여부
+        /// </summary>
+        public bool isCompleted;
+
+        /// <summary>
+        /// 완료한 시퀀스 ID 목록
+        /// </summary>
+        public List<string> completedSequences;
+
+        /// <summary>
+        /// 현재 진행 중인 시퀀스 ID
+        /// </summary>
+        public string currentSequenceId;
+
+        /// <summary>
+        /// 현재 시퀀스에서 진행 중인 스텝 인덱스
+        /// </summary>
+        public int currentStepIndex;
+
+        /// <summary>
+        /// 마지막 체크포인트 인덱스
+        /// </summary>
+        public int lastCheckpointIndex;
+
+        public TutorialProgressData()
+        {
+            isCompleted = false;
+            completedSequences = new List<string>();
+            currentSequenceId = null;
+            currentStepIndex = 0;
+            lastCheckpointIndex = 0;
+        }
+
+        /// <summary>
+        /// 특정 시퀀스가 완료되었는지 확인
+        /// </summary>
+        public bool IsSequenceCompleted(string sequenceId)
+        {
+            return completedSequences != null && completedSequences.Contains(sequenceId);
         }
     }
 

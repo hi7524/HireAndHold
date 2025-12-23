@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using Tutorial;
 
 public class StageManager : MonoBehaviour
 {
@@ -82,6 +84,8 @@ public class StageManager : MonoBehaviour
         OnStageStart?.Invoke(stageId);
         waveManager.InitializeWaves(stageId);
 
+        // 스테이지 시작 튜토리얼 체크
+        CheckStageStartTutorialAsync().Forget();
     }
 
     private void LoadStageMap(string mapKey)
@@ -195,6 +199,9 @@ public class StageManager : MonoBehaviour
     {
         int stars = CalculateStars();
 
+        // 스테이지 클리어 튜토리얼 체크
+        CheckStageClearTutorialAsync().Forget();
+
         // 기본 보상 + 누적 보상 + 별 보상
         int totalGold = CurrentStageData.STAGE_C_GOLD + (int)accumulatedGold;
         int totalExp = CurrentStageData.STAGE_C_EXP + (int)accumulatedAccountExp;
@@ -290,4 +297,36 @@ public class StageManager : MonoBehaviour
         // DropItem 이벤트 해제
         DropItem.OnItemCollected -= OnItemCollected;
     }
+
+    #region 튜토리얼
+
+    /// <summary>
+    /// 스테이지 시작 튜토리얼 체크
+    /// </summary>
+    private async UniTaskVoid CheckStageStartTutorialAsync()
+    {
+        if (TutorialManager.Instance != null)
+        {
+            await TutorialManager.Instance.CheckAndStartTutorialAsync(
+                TutorialTriggerType.OnStageStart,
+                CurrentStageId
+            );
+        }
+    }
+
+    /// <summary>
+    /// 스테이지 클리어 튜토리얼 체크
+    /// </summary>
+    private async UniTaskVoid CheckStageClearTutorialAsync()
+    {
+        if (TutorialManager.Instance != null)
+        {
+            await TutorialManager.Instance.CheckAndStartTutorialAsync(
+                TutorialTriggerType.OnStageClear,
+                CurrentStageId
+            );
+        }
+    }
+
+    #endregion
 }

@@ -22,6 +22,7 @@ public static class DataTableIds
     public static readonly string DungeonSetting = "DungeonSettingTable";
     public static readonly string Achievement = "AchievementsTable";
     public static readonly string DailyReward = "DailyRewardTable";
+    public static readonly string Tutorial = "TutorialTable";
 }
 
 public static class Tags
