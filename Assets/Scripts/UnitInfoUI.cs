@@ -38,7 +38,17 @@ public class UnitInfoUI : MonoBehaviour
             return;
 
         currentStar = star;
-        RefreshByStar();
+
+        // 별이 변경되면 해당 별의 유닛으로 previewUnit 재생성
+        var unitData = FindUnitDataByStar(baseUnitId, currentStar);
+        if (unitData != null)
+        {
+            CreatePreviewUnit(unitData.UNIT_ID);
+        }
+        else
+        {
+            RefreshByStar();
+        }
     }
 
     private void InitializeSubComponents()
@@ -110,6 +120,8 @@ public class UnitInfoUI : MonoBehaviour
 
     private void RefreshByStar()
     {
+        Debug.Log($"[UnitInfoUI] RefreshByStar 호출 - baseUnitId: {baseUnitId}, currentStar: {currentStar}");
+
         if (!DataTableManager.IsInitialized)
         {
             Debug.LogWarning("[UnitInfoUI] 테이블이 아직 로딩되지 않았습니다.");
@@ -129,14 +141,22 @@ public class UnitInfoUI : MonoBehaviour
             return;
         }
 
+        Debug.Log($"[UnitInfoUI] UnitData 발견 - UNIT_ID: {unitData.UNIT_ID}, LEVEL: {unitData.LEVEL}, SKILL1: {unitData.UNIT_SKILL1}, SKILL2: {unitData.UNIT_SKILL2}");
+
         int displayUnitId = unitData.UNIT_ID;
 
-        OwnedCharacter character = null;
-        if (currentStar == 1)
-            character = DatabaseManager.Instance.GetCharacter(baseUnitId.ToString());
+        // 강화/장착은 항상 1성(baseUnitId) 기준으로 동작
+        OwnedCharacter character = DatabaseManager.Instance.GetCharacter(baseUnitId.ToString());
 
         if (infoDisplay != null)
+        {
+            Debug.Log($"[UnitInfoUI] infoDisplay.UpdateDisplay 호출 - displayUnitId: {displayUnitId}");
             infoDisplay.UpdateDisplay(displayUnitId, unitData, character, previewUnit);
+        }
+        else
+        {
+            Debug.LogWarning("[UnitInfoUI] infoDisplay가 null입니다!");
+        }
 
         if (enforceUI != null)
             enforceUI.UpdateButtons(character);
@@ -160,6 +180,9 @@ public class UnitInfoUI : MonoBehaviour
         var data = FindUnitDataByStar(baseUnitId, currentStar);
         return data != null ? data.UNIT_ID : -1;
     }
+
+    // 강화/장착용으로 항상 1성(baseUnitId) 반환
+    public int GetBaseUnitIdForEnforce() => baseUnitId;
 
     public async UniTask WaitUntilReady()
     {

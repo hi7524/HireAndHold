@@ -26,12 +26,12 @@ public class UnitStarSelector : MonoBehaviour
             if (starButtons[i] == null)
                 continue;
 
-            int star = i + 1;
+            int starIndex = i + 1; 
 
-            starButtons[i].interactable = (star <= maxStar);
+            starButtons[i].interactable = (starIndex <= maxStar);
 
             starButtons[i].onClick.RemoveAllListeners();
-            starButtons[i].onClick.AddListener(() => SelectStar(star));
+            starButtons[i].onClick.AddListener(() => SelectStar(starIndex));
         }
 
         SelectStar(1);
@@ -39,6 +39,9 @@ public class UnitStarSelector : MonoBehaviour
 
     private void SelectStar(int star)
     {
+        if (star < 1 || star > maxStar)
+            return;
+
         currentStar = star;
 
         if (starHighlights != null)
@@ -50,6 +53,7 @@ public class UnitStarSelector : MonoBehaviour
             }
         }
 
+        Debug.Log($"[UnitStarSelector] Star selected: {star}");
         OnStarChanged?.Invoke(star);
     }
 }

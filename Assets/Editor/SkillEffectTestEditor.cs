@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,19 +7,16 @@ using UnityEngine;
 
 public class SkillEffectTestEditor : EditorWindow
 {
-    // CSV 데이터
     private List<UnitDataEntry> unitDataList = new List<UnitDataEntry>();
     private List<SkillDataEntry> skillDataList = new List<SkillDataEntry>();
     private Dictionary<int, string> stringTable = new Dictionary<int, string>();
 
-    // 선택 상태
     private int selectedUnitIndex = 0;
     private int selectedSkillIndex = 0;
     private string[] unitNames = new string[0];
     private string[] skillNames = new string[0];
     private List<SkillDataEntry> currentUnitSkills = new List<SkillDataEntry>();
 
-    // 프리팹 & 프리뷰
     private GameObject loadedPrefab;
     private GameObject previewInstance;
     private Vector3 effectScale = Vector3.one;
@@ -27,7 +24,6 @@ public class SkillEffectTestEditor : EditorWindow
     private float uniformScale = 1f;
     private bool useUniformScale = true;
 
-    // 자식 파티클 스케일
     private bool scaleChildParticles = true;
     private List<ChildParticleInfo> childParticles = new List<ChildParticleInfo>();
     private bool showChildParticlesFoldout = true;
@@ -49,17 +45,14 @@ public class SkillEffectTestEditor : EditorWindow
     // 스크롤
     private Vector2 scrollPosition;
 
-    // Range 시각화
     private bool showRangeGizmo = true;
     private float currentSkillRange = 1f;
 
-    // CSV 편집용
     private float editedSkillRange = 1f;
     private bool skillRangeModified = false;
     private List<string[]> skillTableRawData = new List<string[]>();
     private const int SKILL_RANGE_COLUMN_INDEX = 16;
 
-    // 씬 테스트용
     private Vector3 testSpawnPosition = new Vector3(0, 0, 0);
 
     [MenuItem("Tools/Skill Effect Test Editor")]
