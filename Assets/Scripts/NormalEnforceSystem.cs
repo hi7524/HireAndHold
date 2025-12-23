@@ -10,7 +10,7 @@ public class NormalEnforceSystem
     private readonly DataTable_Unit unitTable;
     public static DataTable_NormalEnforce SharedTable;
 
-    public NormalEnforceSystem(BattleUnitManager battleUnitManager, DataTable_NormalEnforce enforceTable,DataTable_Unit unitTable)
+    public NormalEnforceSystem(BattleUnitManager battleUnitManager, DataTable_NormalEnforce enforceTable, DataTable_Unit unitTable)
     {
         this.battleUnitManager = battleUnitManager;
         this.enforceTable = enforceTable;
@@ -40,7 +40,6 @@ public class NormalEnforceSystem
         return character != null ? character.enforceLevel : 0;
     }
 
-
     private int GetUnitRank(Unit unit)
     {
         UnitData data = unitTable.Get(unit.UnitID);
@@ -56,16 +55,18 @@ public class NormalEnforceSystem
         }
 
         int currentLevel = GetUnitEnforceLevel(unit);
-        int nextLevel = currentLevel + 1;
 
-        if (nextLevel > MAX_ENFORCE_LEVEL)
+        // 레벨 0부터 시작하므로 최대 레벨은 20 (0~20)
+        if (currentLevel >= MAX_ENFORCE_LEVEL)
         {
             reason = "최대 레벨 도달";
             return false;
         }
 
+        int nextLevel = currentLevel + 1;
         int rank = GetUnitRank(unit);
 
+        // 다음 레벨의 강화 데이터를 찾음 (레벨 1부터 강화 시작)
         if (!TryGetEnforceData(rank, nextLevel, out var data))
         {
             reason = $"강화 데이터 없음: Rank {rank}, LV {nextLevel}";
@@ -110,7 +111,6 @@ public class NormalEnforceSystem
         await DatabaseManager.Instance.AddGoldAsync(-data.Gold_Cost);
         await DatabaseManager.Instance.AddEnhanceStoneAsync(-data.IngredientNum);
 
-
         // 유닛에 강화 적용
         ApplyEnforceToUnit(unit, data);
         await SaveUnitEnforceLevel(unit, nextLevel);
@@ -150,8 +150,8 @@ public class NormalEnforceSystem
 
         if (character != null)
         {
-            character.enforceLevel = newLevel; 
-            await DatabaseManager.Instance.SaveCharacterAsync(characterId); 
+            character.enforceLevel = newLevel;
+            await DatabaseManager.Instance.SaveCharacterAsync(characterId);
         }
     }
 
@@ -160,10 +160,10 @@ public class NormalEnforceSystem
         if (unit == null) return (0, 0);
 
         int currentLevel = GetUnitEnforceLevel(unit);
+
+        if (currentLevel >= MAX_ENFORCE_LEVEL) return (0, 0);
+
         int nextLevel = currentLevel + 1;
-
-        if (nextLevel > MAX_ENFORCE_LEVEL) return (0, 0);
-
         int rank = GetUnitRank(unit);
 
         if (!TryGetEnforceData(rank, nextLevel, out var data))
@@ -221,8 +221,4 @@ public class NormalEnforceSystem
         // 현재 공격력 + 다음 강화 효과
         return currAtk + nextAtkUp;
     }
-    
-
-
-
 }

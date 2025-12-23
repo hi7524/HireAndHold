@@ -45,9 +45,26 @@ public class HeroEnforcePopup : MonoBehaviour
 
     private void Start()
     {
-        popupRoot.SetActive(false);
-        closeButton.onClick.AddListener(() => popupRoot.SetActive(false));
-        confirmButton.onClick.AddListener(() => OnConfirmClicked().Forget());
+        SetupPopup();
+    }
+
+    private void SetupPopup()
+    {
+        // 이미 활성화되어 있으면 끄지 않음 (Open이 먼저 호출된 경우)
+        if (popupRoot != null && !popupRoot.activeSelf)
+            popupRoot.SetActive(false);
+
+        if (closeButton != null)
+        {
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(() => popupRoot.SetActive(false));
+        }
+
+        if (confirmButton != null)
+        {
+            confirmButton.onClick.RemoveAllListeners();
+            confirmButton.onClick.AddListener(OnConfirmClicked);
+        }
     }
 
     public void SetPopupManager(UIPopupManager manager)
@@ -68,10 +85,15 @@ public class HeroEnforcePopup : MonoBehaviour
         effectTable = eTable;
         mainUI = ui;
     }
+
     public void Open(int unitId, Unit previewUnit)
     {
-        popupRoot.SetActive(true);
+        // 혹시 Start가 안 불렸을 경우를 대비
+        if (closeButton != null && closeButton.onClick.GetPersistentEventCount() == 0)
+            SetupPopup();
 
+        if (popupRoot != null)
+            popupRoot.SetActive(true);
 
         currentUnitId = unitId;
         currentPreviewUnit = previewUnit;
@@ -96,22 +118,46 @@ public class HeroEnforcePopup : MonoBehaviour
             return;
         }
 
+        LoadUnitIconAsync().Forget();
         RefreshUI();
-        LoadUnitIcon().Forget();
     }
 
+    private async UniTaskVoid LoadUnitIconAsync()
+    {
+        if (unitImage == null || unitTable == null)
+            return;
+
+        var data = unitTable.Get(currentUnitId);
+        if (data == null)
+            return;
+
+        try
+        {
+            var sprite = await Addressables.LoadAssetAsync<Sprite>(data.UNIT_ICON).Task;
+            if (unitImage != null)
+                unitImage.sprite = sprite;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[HeroEnforcePopup] Icon load failed: {ex}");
+        }
+    }
 
     private void RefreshUI()
     {
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
-        if (character == null) return;
+        if (character == null)
+            return;
 
         int heroLv = character.heroEnforceLevel;
         int nextLv = heroLv + 1;
         var next = nextLv <= HERO_MAX ? heroTable.Get(currentUnitId, nextLv) : null;
 
-        levelCurrent.text = $"★{heroLv}";
-        levelNext.text = heroLv < HERO_MAX ? $"★{nextLv}" : "MAX";
+        if (levelCurrent != null)
+            levelCurrent.text = $"★{heroLv}";
+
+        if (levelNext != null)
+            levelNext.text = heroLv < HERO_MAX ? $"★{nextLv}" : "MAX";
 
         var unitData = unitTable.Get(currentUnitId);
         int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
@@ -119,19 +165,31 @@ public class HeroEnforcePopup : MonoBehaviour
         int havePieces = PlayData.GetItemCount(fragmentItemId);
         int needPieces = (int)(next?.IngredientNum ?? 0);
 
-        pieceHave.text = havePieces.ToString();
-        pieceNeed.text = needPieces.ToString();
+        if (pieceHave != null)
+            pieceHave.text = havePieces.ToString();
 
-        goldHave.text = PlayData.Gold.ToString();
-        goldNeed.text = (next?.Gold_Cost ?? 0).ToString();
+        if (pieceNeed != null)
+            pieceNeed.text = needPieces.ToString();
+
+        if (goldHave != null)
+            goldHave.text = PlayData.Gold.ToString();
+
+        if (goldNeed != null)
+            goldNeed.text = (next?.Gold_Cost ?? 0).ToString();
 
         RefreshEffectList(heroLv);
     }
 
     private void RefreshEffectList(int heroLv)
     {
+        if (effectListParent == null)
+            return;
+
         foreach (Transform t in effectListParent)
             Destroy(t.gameObject);
+
+        if (heroTable == null || effectTable == null || effectItemPrefab == null)
+            return;
 
         for (int lv = 1; lv <= HERO_MAX; lv++)
         {
@@ -143,14 +201,22 @@ public class HeroEnforcePopup : MonoBehaviour
 
             var go = Instantiate(effectItemPrefab, effectListParent);
             var txt = go.GetComponentInChildren<TextMeshProUGUI>();
-            string desc = effectTable.FormatEffect(eff);
 
-            string status = lv <= heroLv ? "[활성]" : "[잠김]";
-            txt.text = $"{status} LV {lv}: {desc}";
+            if (txt != null)
+            {
+                string desc = effectTable.FormatEffect(eff);
+                string status = lv <= heroLv ? "[활성]" : "[잠김]";
+                txt.text = $"{status} LV {lv}: {desc}";
+            }
         }
     }
 
-    private async UniTaskVoid OnConfirmClicked()
+    private void OnConfirmClicked()
+    {
+        TryEnforce().Forget();
+    }
+
+    private async UniTaskVoid TryEnforce()
     {
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
         if (character == null)
@@ -159,53 +225,76 @@ public class HeroEnforcePopup : MonoBehaviour
             return;
         }
 
-        int beforeLv = character.heroEnforceLevel;
-
-        bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
-        if (!ok)
+        if (currentPreviewUnit == null)
         {
-            popupManager?.ShowAlert("재료 부족!");
+            popupManager?.ShowAlert("유닛 데이터를 불러올 수 없습니다.");
             return;
         }
 
-        await DatabaseManager.Instance.LoadUserDataAsync();
-        PlayData.SyncFromDatabase();
+        int beforeLv = character.heroEnforceLevel;
 
-        int afterLv = character.heroEnforceLevel;
+        try
+        {
+            bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
+            if (!ok)
+            {
+                popupManager?.ShowAlert("재료 부족!");
+                return;
+            }
 
-        var ef = heroTable.Get(currentUnitId, afterLv);
-        var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
-        var desc = effectTable.FormatEffect(effData);
+            await DatabaseManager.Instance.LoadUserDataAsync();
+            PlayData.SyncFromDatabase();
 
-        popupManager?.ShowSuccess(
-            "영웅 강화 성공!",
-            $"★{beforeLv} → ★{afterLv}\n효과: {desc}"
-        );
+            int afterLv = character.heroEnforceLevel;
 
-        mainUI?.RefreshUI();
-        RefreshUI();
+            var ef = heroTable.Get(currentUnitId, afterLv);
+            var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
+            var desc = effectTable.FormatEffect(effData);
+
+            popupManager?.ShowSuccess(
+                "영웅 강화 성공!",
+                $"★{beforeLv} → ★{afterLv}\n효과: {desc}"
+            );
+
+            mainUI?.RefreshUI();
+            RefreshUI();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[HeroEnforcePopup] 강화 실패: {ex}");
+            popupManager?.ShowAlert("강화 중 오류가 발생했습니다.");
+        }
     }
 
     private void RefreshCostUI()
     {
-        if (!popupRoot.activeSelf) return;
-        if (currentPreviewUnit == null) return;
+        if (popupRoot == null || !popupRoot.activeSelf)
+            return;
 
-        goldHave.text = PlayData.Gold.ToString();
+        if (currentPreviewUnit == null)
+            return;
+
+        if (goldHave != null)
+            goldHave.text = PlayData.Gold.ToString();
 
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
-        if (character == null) return;
+        if (character == null)
+            return;
 
         int heroLv = character.heroEnforceLevel;
         var next = heroTable.Get(currentUnitId, heroLv + 1);
 
-        goldNeed.text = (next?.Gold_Cost ?? 0).ToString();
+        if (goldNeed != null)
+            goldNeed.text = (next?.Gold_Cost ?? 0).ToString();
 
         var unitData = unitTable.Get(currentUnitId);
         int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
 
-        pieceHave.text = PlayData.GetItemCount(fragmentItemId).ToString();
-        pieceNeed.text = ((int)(next?.IngredientNum ?? 0)).ToString();
+        if (pieceHave != null)
+            pieceHave.text = PlayData.GetItemCount(fragmentItemId).ToString();
+
+        if (pieceNeed != null)
+            pieceNeed.text = ((int)(next?.IngredientNum ?? 0)).ToString();
     }
 
     private void OnEnable()
@@ -217,28 +306,4 @@ public class HeroEnforcePopup : MonoBehaviour
     {
         PlayData.OnCurrencyChanged -= RefreshCostUI;
     }
-
-    private async UniTaskVoid LoadUnitIcon()
-    {
-        if (unitImage == null || unitTable == null)
-            return;
-
-        var data = unitTable.Get(currentUnitId);
-        if (data == null)
-            return;
-
-        try
-        {
-            var sprite = await Addressables
-                .LoadAssetAsync<Sprite>(data.UNIT_ICON)
-                .Task;
-
-            unitImage.sprite = sprite;
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[HeroEnforcePopup] Icon load failed: {e}");
-        }
-    }
-
 }

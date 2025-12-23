@@ -12,54 +12,48 @@ public class UnitInfoUI : MonoBehaviour
     [SerializeField] private UnitEnforceUI enforceUI;
     [SerializeField] private UnitEquipUI equipUI;
     [SerializeField] private UIPopupManager popupManager;
+    [Header("Star Selector")]
+    [SerializeField] private UnitStarSelector starSelector;
 
-    private int currentUnitId = -1;
+    private int baseUnitId = -1;
+    private int currentStar = 1;
     private Unit previewUnit;
-
-    private bool isTableReady = false;
-
-
-    private DataTable_Unit unitTable;
-    private UniTask tablesLoadTask;
+    private bool isPreviewUnitReady = false;
 
     private void Awake()
     {
-        tablesLoadTask = InitializeTablesAsync();
         InitializeSubComponents();
+
+        if (starSelector != null)
+        {
+            starSelector.OnStarChanged += OnStarChangedFromSelector;
+        }
+
         mainRoot.SetActive(false);
+    }
+
+    private void OnStarChangedFromSelector(int star)
+    {
+        if (currentStar == star)
+            return;
+
+        currentStar = star;
+        RefreshByStar();
     }
 
     private void InitializeSubComponents()
     {
-        if (enforceUI != null) enforceUI.SetPopupManager(popupManager);
-        if (equipUI != null) equipUI.SetPopupManager(popupManager);
+        if (enforceUI != null)
+            enforceUI.SetPopupManager(popupManager);
+
+        if (equipUI != null)
+            equipUI.SetPopupManager(popupManager);
     }
-
-    private async UniTask InitializeTablesAsync()
-    {
-        unitTable = new DataTable_Unit();
-        await unitTable.LoadAsync("UnitTable");
-        isTableReady = true;
-    }
-    public async UniTask EnsureReady()
-    {
-        if (!isTableReady)
-            await UniTask.WaitUntil(() => isTableReady);
-
-        if (currentUnitId < 0)
-            await UniTask.WaitUntil(() => currentUnitId >= 0);
-
-        if (previewUnit == null)
-            await UniTask.WaitUntil(() => previewUnit != null);
-        await UniTask.WaitUntil(() => previewUnit.IsInitialized);
-    }
-
-
 
     public void SetUnitManager(BattleUnitManager manager)
     {
         if (enforceUI != null)
-            enforceUI.SetUnitManager(manager); 
+            enforceUI.SetUnitManager(manager);
     }
 
     public void SetDeckControl(DeckControl control)
@@ -68,66 +62,166 @@ public class UnitInfoUI : MonoBehaviour
             equipUI.SetDeckControl(control);
     }
 
-    public void SetUnit(int id)
+    public void SetUnit(int unitId)
     {
-        OpenAndRefreshAsync(id).Forget();
+        Open(unitId);
     }
 
-    private async UniTaskVoid OpenAndRefreshAsync(int id)
+    private void Open(int unitId)
     {
-        currentUnitId = id;
-
-        mainRoot.SetActive(true);
-
-        await tablesLoadTask;
-
-        await CreatePreviewAsync();
-
-        await RefreshAsync();
-    }
-
-    private async UniTask RefreshAsync()
-    {
-        if (currentUnitId < 0) return;
-
-        var data = unitTable.Get(currentUnitId);
-        if (data == null)
+        if (!DataTableManager.IsInitialized)
         {
-            Debug.LogError("[UnitInfoUI] UnitData 없음: " + currentUnitId);
+            Debug.LogWarning("[UnitInfoUI] 테이블이 아직 로딩되지 않았습니다.");
             return;
         }
 
-        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        baseUnitId = unitId;
+        currentStar = 1;
+        mainRoot.SetActive(true);
+
+        CreatePreviewUnit(baseUnitId);
+
+        int maxStar = GetMaxStarForBaseUnit(baseUnitId);
+        if (starSelector != null)
+            starSelector.Initialize(maxStar);
+    }
+
+    private void CreatePreviewUnit(int unitId)
+    {
+        if (previewUnit != null)
+            Destroy(previewUnit.gameObject);
+
+        isPreviewUnitReady = false;
+
+        var go = new GameObject($"PreviewUnit_{unitId}");
+        previewUnit = go.AddComponent<Unit>();
+        previewUnit.IsPreview = true;
+        previewUnit.SetUnitID(unitId);
+
+        WaitForPreviewUnitAndRefresh().Forget();
+    }
+
+    private async UniTaskVoid WaitForPreviewUnitAndRefresh()
+    {
+        await UniTask.WaitUntil(() => previewUnit != null && previewUnit.IsInitialized);
+        isPreviewUnitReady = true;
+        RefreshByStar();
+    }
+
+    private void RefreshByStar()
+    {
+        if (!DataTableManager.IsInitialized)
+        {
+            Debug.LogWarning("[UnitInfoUI] 테이블이 아직 로딩되지 않았습니다.");
+            return;
+        }
+
+        if (!isPreviewUnitReady)
+        {
+            Debug.LogWarning("[UnitInfoUI] PreviewUnit이 아직 준비되지 않았습니다.");
+            return;
+        }
+
+        var unitData = FindUnitDataByStar(baseUnitId, currentStar);
+        if (unitData == null)
+        {
+            Debug.LogError($"[UnitInfoUI] UnitData 없음: base={baseUnitId}, star={currentStar}");
+            return;
+        }
+
+        int displayUnitId = unitData.UNIT_ID;
+
+        OwnedCharacter character = null;
+        if (currentStar == 1)
+            character = DatabaseManager.Instance.GetCharacter(baseUnitId.ToString());
 
         if (infoDisplay != null)
-            await infoDisplay.UpdateDisplay(currentUnitId, data, character, previewUnit);
+            infoDisplay.UpdateDisplay(displayUnitId, unitData, character, previewUnit);
 
         if (enforceUI != null)
             enforceUI.UpdateButtons(character);
 
         if (equipUI != null)
-            equipUI.SetCurrentUnit(currentUnitId, data);
-    }
-
-    private async UniTask CreatePreviewAsync()
-    {
-        if (previewUnit != null)
-            Destroy(previewUnit.gameObject);
-
-        var go = new GameObject("PreviewUnit_" + currentUnitId);
-        previewUnit = go.AddComponent<Unit>();
-        previewUnit.SetUnitID(currentUnitId);
-
-        await UniTask.WaitUntil(() => previewUnit.IsInitialized);
+            equipUI.SetCurrentUnit(displayUnitId, unitData);
     }
 
     public Unit GetPreviewUnit() => previewUnit;
-    public int GetCurrentUnitId() => currentUnitId;
+    public int GetBaseUnitId() => baseUnitId;
+    public int GetCurrentStar() => currentStar;
 
     public void RefreshUI()
     {
-        if (currentUnitId >= 0)
-            OpenAndRefreshAsync(currentUnitId).Forget();
+        if (baseUnitId >= 0 && isPreviewUnitReady)
+            RefreshByStar();
     }
 
+    public int GetCurrentUnitId()
+    {
+        var data = FindUnitDataByStar(baseUnitId, currentStar);
+        return data != null ? data.UNIT_ID : -1;
+    }
+
+    public async UniTask WaitUntilReady()
+    {
+        if (!DataTableManager.IsInitialized)
+            await UniTask.WaitUntil(() => DataTableManager.IsInitialized);
+
+        if (baseUnitId < 0)
+            await UniTask.WaitUntil(() => baseUnitId >= 0);
+
+        if (!isPreviewUnitReady)
+            await UniTask.WaitUntil(() => isPreviewUnitReady);
+    }
+
+    private UnitData FindUnitDataByStar(int baseUnitId, int star)
+    {
+        var unitTable = DataTableManager.UnitTable;
+        if (unitTable == null)
+            return null;
+
+        var baseData = unitTable.Get(baseUnitId);
+        if (baseData == null)
+            return null;
+
+        string groupKey = baseData.GRID_DATA;
+
+        foreach (var data in unitTable.GetAll())
+        {
+            if (data.GRID_DATA == groupKey && data.LEVEL == star)
+                return data;
+        }
+
+        return null;
+    }
+
+    private int GetMaxStarForBaseUnit(int baseUnitId)
+    {
+        var unitTable = DataTableManager.UnitTable;
+        if (unitTable == null)
+            return 1;
+
+        var baseData = unitTable.Get(baseUnitId);
+        if (baseData == null)
+            return 1;
+
+        string groupKey = baseData.GRID_DATA;
+        int maxStar = 1;
+
+        foreach (var data in unitTable.GetAll())
+        {
+            if (data.GRID_DATA == groupKey)
+                maxStar = Mathf.Max(maxStar, data.LEVEL);
+        }
+
+        return maxStar;
+    }
+
+    private void OnDestroy()
+    {
+        if (starSelector != null)
+            starSelector.OnStarChanged -= OnStarChangedFromSelector;
+
+        if (previewUnit != null)
+            Destroy(previewUnit.gameObject);
+    }
 }

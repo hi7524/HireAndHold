@@ -1,5 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using GameData;
+﻿using GameData;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,23 +15,27 @@ public class UnitEnforceUI : MonoBehaviour
     private BattleUnitManager battleUnitManager;
     private NormalEnforceSystem normalSystem;
     private HeroEnforceSystem heroSystem;
-
     private UnitInfoUI mainUI;
     private UIPopupManager popupManager;
 
-    private DataTable_Unit unitTable;
-    private DataTable_NormalEnforce normalTable;
-    private DataTable_HeroEnforce heroTable;
-    private DataTable_HeroEnforceEffect effectTable;
-
-
     private const int HERO_MAX = 4;
-    private bool isTablesLoaded = false;
+    private bool isInitialized = false;
 
     private void Start()
     {
-        InitializeTables().Forget();
-        SetupButtons();
+        if (normalEnforceButton != null)
+        {
+            normalEnforceButton.onClick.RemoveAllListeners();
+            normalEnforceButton.onClick.AddListener(OnNormalEnforceClicked);
+        }
+
+        if (heroEnforceButton != null)
+        {
+            heroEnforceButton.onClick.RemoveAllListeners();
+            heroEnforceButton.onClick.AddListener(OnHeroEnforceClicked);
+        }
+
+        mainUI = GetComponentInParent<UnitInfoUI>();
     }
 
     public void SetPopupManager(UIPopupManager manager)
@@ -40,38 +43,17 @@ public class UnitEnforceUI : MonoBehaviour
         popupManager = manager;
     }
 
-    private async UniTaskVoid InitializeTables()
+    public void SetUnitManager(BattleUnitManager manager)
     {
-        unitTable = new DataTable_Unit();
-        normalTable = new DataTable_NormalEnforce();
-        heroTable = new DataTable_HeroEnforce();
-        effectTable = new DataTable_HeroEnforceEffect();
+        if (!DataTableManager.IsInitialized)
+            return;
 
-        await unitTable.LoadAsync("UnitTable");
-        await normalTable.LoadAsync("NormalEnforceTable");
-        await heroTable.LoadAsync("HeroEnforceTable");
-        await effectTable.LoadAsync("HeroEnforceEffectTable");
-
-        isTablesLoaded = true;
-    }
-
-    private void SetupButtons()
-    {
-        normalEnforceButton.onClick.AddListener(OnNormalEnforceClicked);
-        heroEnforceButton.onClick.AddListener(OnHeroEnforceClicked);
-
-        mainUI = GetComponentInParent<UnitInfoUI>();
-    }
-
-    public async void SetUnitManager(BattleUnitManager manager)
-    {
         battleUnitManager = manager;
 
-        // 테이블 로드 대기
-        if (!isTablesLoaded)
-        {
-            await UniTask.WaitUntil(() => isTablesLoaded);
-        }
+        var unitTable = DataTableManager.UnitTable;
+        var normalTable = DataTableManager.NormalEnforceTable;
+        var heroTable = DataTableManager.heroEnforceTable;
+        var effectTable = DataTableManager.heroEnforceEffectTable;
 
         normalSystem = new NormalEnforceSystem(manager, normalTable, unitTable);
         heroSystem = new HeroEnforceSystem(manager, heroTable, effectTable);
@@ -87,31 +69,63 @@ public class UnitEnforceUI : MonoBehaviour
             heroPopup.SetEnforceSystem(heroSystem, unitTable, heroTable, effectTable, mainUI);
             heroPopup.SetPopupManager(popupManager);
         }
+
+        isInitialized = true;
     }
 
     public void UpdateButtons(OwnedCharacter character)
     {
+        // 초기화되지 않았으면 여기서 초기화 시도
+        if (!isInitialized && DataTableManager.IsInitialized)
+        {
+            if (battleUnitManager == null)
+                battleUnitManager = FindObjectOfType<BattleUnitManager>();
+
+            if (battleUnitManager != null)
+                SetUnitManager(battleUnitManager);
+        }
+
         bool owned = character != null;
         int heroLv = owned ? character.heroEnforceLevel : 0;
 
-        normalEnforceButton.interactable = owned;
-        heroEnforceButton.interactable = owned && heroLv < HERO_MAX;
+        if (normalEnforceButton != null)
+            normalEnforceButton.interactable = owned;
+
+        if (heroEnforceButton != null)
+            heroEnforceButton.interactable = owned && heroLv < HERO_MAX;
     }
 
     private void OnNormalEnforceClicked()
     {
-        _ = OnNormalEnforceClickedAsync();
-    }
+        if (mainUI == null)
+            mainUI = GetComponentInParent<UnitInfoUI>();
 
-    private async UniTaskVoid OnNormalEnforceClickedAsync()
-    {
         if (mainUI == null)
         {
             popupManager?.ShowAlert("UI 초기화가 필요합니다.");
             return;
         }
 
-        await mainUI.EnsureReady(); 
+        if (!DataTableManager.IsInitialized)
+        {
+            popupManager?.ShowAlert("데이터 로딩 중입니다.");
+            return;
+        }
+
+        if (!isInitialized)
+        {
+            if (battleUnitManager == null)
+                battleUnitManager = FindObjectOfType<BattleUnitManager>();
+
+            if (battleUnitManager != null)
+                SetUnitManager(battleUnitManager);
+        }
+
+        if (normalSystem == null)
+        {
+            popupManager?.ShowAlert("강화 시스템을 초기화할 수 없습니다.");
+            return;
+        }
 
         int unitId = mainUI.GetCurrentUnitId();
         if (unitId < 0)
@@ -121,31 +135,47 @@ public class UnitEnforceUI : MonoBehaviour
         }
 
         var preview = mainUI.GetPreviewUnit();
-        if (preview == null)
+        if (preview == null || !preview.IsInitialized)
         {
-            await UniTask.WaitUntil(() => mainUI.GetPreviewUnit() != null);
-            preview = mainUI.GetPreviewUnit();
+            popupManager?.ShowAlert("유닛 데이터 로딩 중입니다.");
+            return;
         }
 
-        normalPopup?.Open(unitId, preview);
+        if (normalPopup != null)
+            normalPopup.Open(unitId, preview);
     }
-
-
 
     private void OnHeroEnforceClicked()
     {
-        _ = OnHeroEnforceClickedAsync();
-    }
+        if (mainUI == null)
+            mainUI = GetComponentInParent<UnitInfoUI>();
 
-    private async UniTaskVoid OnHeroEnforceClickedAsync()
-    {
         if (mainUI == null)
         {
             popupManager?.ShowAlert("UI 초기화가 필요합니다.");
             return;
         }
 
-        await mainUI.EnsureReady();
+        if (!DataTableManager.IsInitialized)
+        {
+            popupManager?.ShowAlert("데이터 로딩 중입니다.");
+            return;
+        }
+
+        if (!isInitialized)
+        {
+            if (battleUnitManager == null)
+                battleUnitManager = FindObjectOfType<BattleUnitManager>();
+
+            if (battleUnitManager != null)
+                SetUnitManager(battleUnitManager);
+        }
+
+        if (heroSystem == null)
+        {
+            popupManager?.ShowAlert("강화 시스템을 초기화할 수 없습니다.");
+            return;
+        }
 
         int unitId = mainUI.GetCurrentUnitId();
         if (unitId < 0)
@@ -155,12 +185,13 @@ public class UnitEnforceUI : MonoBehaviour
         }
 
         var preview = mainUI.GetPreviewUnit();
-        if (preview == null)
+        if (preview == null || !preview.IsInitialized)
         {
-            await UniTask.WaitUntil(() => mainUI.GetPreviewUnit() != null);
-            preview = mainUI.GetPreviewUnit();
+            popupManager?.ShowAlert("유닛 데이터 로딩 중입니다.");
+            return;
         }
 
-        heroPopup?.Open(unitId, preview);
+        if (heroPopup != null)
+            heroPopup.Open(unitId, preview);
     }
 }

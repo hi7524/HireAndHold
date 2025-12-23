@@ -13,143 +13,182 @@ public class UnitInfoDisplay : MonoBehaviour
     [SerializeField] private TextMeshProUGUI classText;
     [SerializeField] private TextMeshProUGUI powerText;
     [SerializeField] private TextMeshProUGUI levelText;
+
+    [Header("Hero Enforce")]
     [SerializeField] private TextMeshProUGUI heroStarText;
-    [SerializeField] private TextMeshProUGUI heroProgressText;
-
-    [Header("Owned Resource UI")]
-    [SerializeField] private TextMeshProUGUI playerStoneText;
-    [SerializeField] private TextMeshProUGUI playerPieceText;
-
-    [Header("Hero Effect List")]
     [SerializeField] private Transform heroEffectListParent;
-    [SerializeField] private GameObject heroEffectItemPrefab;
-    [SerializeField] private Color heroEffectUnlockedColor = Color.white;
-    [SerializeField] private Color heroEffectLockedColor = Color.gray;
 
-    private DataTable_Unit unitTable;
-    private DataTable_HeroEnforce heroTable;
-    private DataTable_HeroEnforceEffect effectTable;
+    [Header("Hero Effect Prefabs")]
+    [SerializeField] private GameObject heroEffectLockedPrefab;
+    [SerializeField] private GameObject heroEffectUnlockedPrefab;
+
+    [Header("Skill UI")]
+    [SerializeField] private Transform skillListParent;
+    [SerializeField] private GameObject skillItemPrefab;
 
     private const int NORMAL_MAX = 20;
     private const int HERO_MAX = 4;
 
-    private bool isTablesLoaded = false;
-
-    private void Start()
+    public void UpdateDisplay(
+        int unitId,
+        UnitData unitData,
+        OwnedCharacter character,
+        Unit previewUnit)
     {
-        InitializeTables().Forget();
-        RefreshResources();
-    }
-
-    private async UniTaskVoid InitializeTables()
-    {
-        unitTable = new DataTable_Unit();
-        heroTable = new DataTable_HeroEnforce();
-        effectTable = new DataTable_HeroEnforceEffect();
-
-        await unitTable.LoadAsync("UnitTable");
-        await heroTable.LoadAsync("HeroEnforceTable");
-        await effectTable.LoadAsync("HeroEnforceEffectTable");
-
-        isTablesLoaded = true;
-    }
-
-    public async UniTask UpdateDisplay(int unitId, UnitData data, OwnedCharacter character, Unit previewUnit)
-    {
-        // 테이블 로드 대기
-        if (!isTablesLoaded)
+        if (!DataTableManager.IsInitialized)
         {
-            await UniTask.WaitUntil(() => isTablesLoaded);
+            Debug.LogWarning("[UnitInfoDisplay] 테이블이 아직 로딩되지 않았습니다.");
+            return;
         }
 
         bool owned = character != null;
 
-        Debug.Log($"[UnitInfoDisplay] UpdateDisplay - unitId: {unitId}, owned: {owned}");
-        if (owned)
+        if (unitNameText != null)
+            unitNameText.text = unitData.StringName;
+
+        if (classText != null)
+            classText.text = $"등급 {unitData.RANK}";
+
+        if (powerText != null && previewUnit != null)
+            powerText.text = previewUnit.GetAttackDamageStat().Value.ToString();
+
+        if (levelText != null)
         {
-            Debug.Log($"[UnitInfoDisplay] Character info - enforceLevel: {character.enforceLevel}, heroEnforceLevel: {character.heroEnforceLevel}");
+            levelText.text = owned
+                ? $"{character.enforceLevel}/{NORMAL_MAX}"
+                : $"-/{NORMAL_MAX}";
         }
 
-        unitNameText.text = data.StringName;
-        classText.text = $"등급: {data.RANK}";
-
-        float attack = previewUnit.GetAttackDamageStat().Value;
-        powerText.text = attack.ToString();
-
-        levelText.text = owned
-           ? $"{character.enforceLevel}/{NORMAL_MAX}"
-           : $"-/{NORMAL_MAX}";
-
-        await LoadSprite(data.UNIT_ICON);
-
-        RefreshResources();
+        LoadUnitIconAsync(unitData.UNIT_ICON).Forget();
 
         int heroLv = owned ? character.heroEnforceLevel : 0;
-        heroStarText.text = $"영웅강화 등급: ★{heroLv}";
-        heroProgressText.text = $"{heroLv}/{HERO_MAX}";
+        if (heroStarText != null)
+            heroStarText.text = $"★ {heroLv}/{HERO_MAX}";
 
         RefreshHeroEffectList(unitId, heroLv);
+        RefreshSkillList(unitData);
     }
 
-    private async UniTask LoadSprite(string key)
+    private async UniTaskVoid LoadUnitIconAsync(string key)
     {
+        if (unitImage == null || string.IsNullOrEmpty(key))
+            return;
+
         try
         {
             var sprite = await Addressables.LoadAssetAsync<Sprite>(key).Task;
-            unitImage.sprite = sprite;
+            if (unitImage != null)
+                unitImage.sprite = sprite;
         }
-        catch { }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[UnitInfoDisplay] 유닛 아이콘 로드 실패: {key}, {ex.Message}");
+        }
+    }
+
+    private void RefreshSkillList(UnitData unitData)
+    {
+        if (skillListParent == null || skillItemPrefab == null)
+            return;
+
+        for (int i = skillListParent.childCount - 1; i >= 0; i--)
+        {
+            var child = skillListParent.GetChild(i);
+            if (child != null)
+                Destroy(child.gameObject);
+        }
+
+        var skillTable = DataTableManager.SkillTable;
+        if (skillTable == null)
+            return;
+
+        if (unitData.UNIT_SKILL1 > 0)
+            CreateSkillItem(unitData.UNIT_SKILL1, skillTable);
+
+        if (unitData.UNIT_SKILL2 > 0)
+            CreateSkillItem(unitData.UNIT_SKILL2, skillTable);
+    }
+
+    private void CreateSkillItem(int skillId, DataTable_Skill skillTable)
+    {
+        if (skillItemPrefab == null || skillListParent == null)
+            return;
+
+        SkillData skill = skillTable.Get(skillId);
+        if (skill == null)
+        {
+            Debug.LogWarning($"[UnitInfoDisplay] SkillData 없음: {skillId}");
+            return;
+        }
+
+        var go = Instantiate(skillItemPrefab, skillListParent);
+        if (go == null)
+            return;
+
+        var icon = go.transform.Find("Icon")?.GetComponent<Image>();
+        var nameText = go.transform.Find("SkillName")?.GetComponent<TextMeshProUGUI>();
+        var descText = go.transform.Find("SkillDesc")?.GetComponent<TextMeshProUGUI>();
+
+        if (nameText != null)
+            nameText.text = skill.SKILL_NAME;
+
+        if (descText != null)
+            descText.text = skill.SKILL_DESCRIPTION;
+
+        if (icon != null && !string.IsNullOrEmpty(skill.SKILL_ICON))
+            LoadSkillIconAsync(icon, skill.SKILL_ICON).Forget();
+    }
+
+    private async UniTaskVoid LoadSkillIconAsync(Image icon, string iconKey)
+    {
+        try
+        {
+            var sprite = await Addressables.LoadAssetAsync<Sprite>(iconKey).Task;
+            if (icon != null)
+                icon.sprite = sprite;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[UnitInfoDisplay] 스킬 아이콘 로드 실패: {iconKey}, {ex.Message}");
+        }
     }
 
     private void RefreshHeroEffectList(int unitId, int heroLv)
     {
-        if (!isTablesLoaded || heroTable == null || effectTable == null)
-        {
-            Debug.LogWarning("[UnitInfoDisplay] 테이블이 아직 로드되지 않았습니다.");
+        if (heroEffectListParent == null)
             return;
-        }
 
-        foreach (Transform t in heroEffectListParent)
-        {
-            Destroy(t.gameObject);
-        }
+        foreach (Transform child in heroEffectListParent)
+            Destroy(child.gameObject);
+
+        var heroTable = DataTableManager.heroEnforceTable;
+        var effectTable = DataTableManager.heroEnforceEffectTable;
+
+        if (heroTable == null || effectTable == null)
+            return;
 
         for (int lv = 1; lv <= HERO_MAX; lv++)
         {
             var enforce = heroTable.Get(unitId, lv);
             if (enforce == null) continue;
 
-            var eff = effectTable.Get(enforce.Hero_Enforce_EffectID);
-            if (eff == null) continue;
+            var effect = effectTable.Get(enforce.Hero_Enforce_EffectID);
+            if (effect == null) continue;
 
-            string desc = effectTable.FormatEffect(eff);
+            string desc = effectTable.FormatEffect(effect);
 
-            var go = Instantiate(heroEffectItemPrefab, heroEffectListParent);
+            bool unlocked = lv <= heroLv;
+            GameObject prefab = unlocked
+                ? heroEffectUnlockedPrefab
+                : heroEffectLockedPrefab;
+
+            if (prefab == null) continue;
+
+            var go = Instantiate(prefab, heroEffectListParent);
             var txt = go.GetComponentInChildren<TextMeshProUGUI>();
 
-            if (txt == null)
-            {
-                Debug.LogError("heroEffectItemPrefab 안에 TMP Text 없음!");
-                continue;
-            }
-
-            txt.text = $"LV {lv}: {desc}";
-            txt.color = lv <= heroLv ? heroEffectUnlockedColor : heroEffectLockedColor;
+            if (txt != null)
+                txt.text = $"LV {lv}. {desc}";
         }
-    }
-
-    private void RefreshResources()
-    {
-        playerStoneText.text = PlayData.EnhanceStone.ToString();
-    }
-
-    private void OnEnable()
-    {
-        PlayData.OnCurrencyChanged += RefreshResources;
-    }
-
-    private void OnDisable()
-    {
-        PlayData.OnCurrencyChanged -= RefreshResources;
     }
 }
