@@ -167,18 +167,27 @@ public class StageClearPanelController : MonoBehaviour
     // 획득 아이템 DB 저장
     private async UniTask SaveAccumulatedItemsAsync()
     {
-        if (currentItems == null || currentItems.Count == 0)
-            return;
+        Debug.Log($"[StageClear] SaveAccumulatedItemsAsync 시작 - 보유 강화석: {PlayData.EnhanceStone}");
 
+        if (currentItems == null || currentItems.Count == 0)
+        {
+            Debug.Log("[StageClear] currentItems가 비어있음");
+            return;
+        }
+
+        Debug.Log($"[StageClear] 저장할 아이템 수: {currentItems.Count}");
         foreach (var item in currentItems)
         {
             int itemId = item.Key;
             int count = item.Value;
+            Debug.Log($"[StageClear] 아이템: {itemId} x{count}");
 
             // 강화석(5201)은 currency.enhanceStone으로 처리
             if (itemId == ENHANCE_STONE_ITEM_ID)
             {
+                Debug.Log($"[StageClear] 강화석 저장 시도: {count}개");
                 bool success = await DatabaseManager.Instance.AddEnhanceStoneAsync(count);
+                Debug.Log($"[StageClear] 강화석 저장 결과: {success}, 저장 후 보유량: {PlayData.EnhanceStone}");
                 if (!success)
                 {
                     Debug.LogWarning($"  - 강화석 저장 실패: {count}개");

@@ -79,15 +79,13 @@ public class HeroEnforceSystem
         int nextLv = ch.heroEnforceLevel + 1;
         var row = table.Get(unit.BaseCharacterID, nextLv);
 
-        // 재화 차감
-        await DatabaseManager.Instance.AddGoldAsync(-row.Gold_Cost);
-
         var unitData = unit.GetUnitData();
         int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
 
-        await DatabaseManager.Instance.AddItemAsync(
-            fragmentItemId,
-            -row.IngredientNum
+        // 재화 차감 병렬 실행
+        await UniTask.WhenAll(
+            DatabaseManager.Instance.AddGoldAsync(-row.Gold_Cost),
+            DatabaseManager.Instance.AddItemAsync(fragmentItemId, -row.IngredientNum)
         );
 
         // DB 저장
@@ -98,12 +96,12 @@ public class HeroEnforceSystem
         var effect = effectTable.Get(row.Hero_Enforce_EffectID);
         ApplyEffectToUnit(unit, effect, nextLv);
 
-        // 업적 연동: 영웅 강화 성공
-        await AchievementManager.AddHeroUpgradeSuccessAsync(1);
+        // 업적 연동 (백그라운드 처리)
+        AchievementManager.AddHeroUpgradeSuccessAsync(1).Forget();
 
         // 최대 레벨 달성 시 업적
         if (nextLv >= MAX_LEVEL)
-            await AchievementManager.CompleteHeroUpgradeMaxAsync();
+            AchievementManager.CompleteHeroUpgradeMaxAsync().Forget();
 
         return true;
     }

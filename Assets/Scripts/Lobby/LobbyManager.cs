@@ -114,9 +114,9 @@ public class LobbyManager : MonoBehaviour
         AchievementManager.DebugPrintAllAchievements();
 
         // 테스트: 튜토리얼 완료 업적 진행 (조건키로 테스트)
-        TestAchievementProgressAsync().Forget();
+        // TestAchievementProgressAsync().Forget();
 
-        Debug.Log("========== [Achievement Test] 업적 시스템 테스트 완료 ==========");
+        // Debug.Log("========== [Achievement Test] 업적 시스템 테스트 완료 ==========");
     }
 
     private async UniTaskVoid TestAchievementProgressAsync()
