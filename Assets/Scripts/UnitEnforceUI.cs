@@ -75,14 +75,16 @@ public class UnitEnforceUI : MonoBehaviour
 
     public void UpdateButtons(OwnedCharacter character)
     {
-        // 초기화되지 않았으면 여기서 초기화 시도
-        if (!isInitialized && DataTableManager.IsInitialized)
+        // 초기화되지 않았으면 버튼만 비활성화
+        if (!isInitialized)
         {
-            if (battleUnitManager == null)
-                battleUnitManager = FindObjectOfType<BattleUnitManager>();
+            if (normalEnforceButton != null)
+                normalEnforceButton.interactable = false;
 
-            if (battleUnitManager != null)
-                SetUnitManager(battleUnitManager);
+            if (heroEnforceButton != null)
+                heroEnforceButton.interactable = false;
+
+            return;
         }
 
         bool owned = character != null;
@@ -112,23 +114,15 @@ public class UnitEnforceUI : MonoBehaviour
             return;
         }
 
-        if (!isInitialized)
-        {
-            if (battleUnitManager == null)
-                battleUnitManager = FindObjectOfType<BattleUnitManager>();
-
-            if (battleUnitManager != null)
-                SetUnitManager(battleUnitManager);
-        }
-
-        if (normalSystem == null)
+        if (!isInitialized || normalSystem == null)
         {
             popupManager?.ShowAlert("강화 시스템을 초기화할 수 없습니다.");
             return;
         }
 
-        int unitId = mainUI.GetCurrentUnitId();
-        if (unitId < 0)
+        // 항상 1성(baseUnitId) 기준으로 강화
+        int baseUnitId = mainUI.GetBaseUnitIdForEnforce();
+        if (baseUnitId < 0)
         {
             popupManager?.ShowAlert("유닛 정보를 불러오지 못했습니다.");
             return;
@@ -142,7 +136,7 @@ public class UnitEnforceUI : MonoBehaviour
         }
 
         if (normalPopup != null)
-            normalPopup.Open(unitId, preview);
+            normalPopup.Open(baseUnitId, preview);
     }
 
     private void OnHeroEnforceClicked()
@@ -162,23 +156,15 @@ public class UnitEnforceUI : MonoBehaviour
             return;
         }
 
-        if (!isInitialized)
-        {
-            if (battleUnitManager == null)
-                battleUnitManager = FindObjectOfType<BattleUnitManager>();
-
-            if (battleUnitManager != null)
-                SetUnitManager(battleUnitManager);
-        }
-
-        if (heroSystem == null)
+        if (!isInitialized || heroSystem == null)
         {
             popupManager?.ShowAlert("강화 시스템을 초기화할 수 없습니다.");
             return;
         }
 
-        int unitId = mainUI.GetCurrentUnitId();
-        if (unitId < 0)
+        // 항상 1성(baseUnitId) 기준으로 강화
+        int baseUnitId = mainUI.GetBaseUnitIdForEnforce();
+        if (baseUnitId < 0)
         {
             popupManager?.ShowAlert("유닛 정보를 불러오지 못했습니다.");
             return;
@@ -192,6 +178,6 @@ public class UnitEnforceUI : MonoBehaviour
         }
 
         if (heroPopup != null)
-            heroPopup.Open(unitId, preview);
+            heroPopup.Open(baseUnitId, preview);
     }
 }

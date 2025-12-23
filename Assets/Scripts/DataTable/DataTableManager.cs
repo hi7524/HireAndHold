@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -110,5 +110,33 @@ public static class DataTableManager
             return null;
         }
         return tables[id] as T;
+    }
+
+    public static string GetString(int stringId)
+    {
+        var stringTable = StringTable;
+        if (stringTable == null)
+            return null;
+
+        var result = stringTable.Get(stringId);
+
+        if (result == "존재하지 않는 키")
+            return null;
+
+        return result;
+    }
+
+
+    public static string GetString(string stringId)
+    {
+        if (string.IsNullOrEmpty(stringId))
+            return null;
+
+        if (int.TryParse(stringId, out int id))
+        {
+            return GetString(id);
+        }
+
+        return null;
     }
 }

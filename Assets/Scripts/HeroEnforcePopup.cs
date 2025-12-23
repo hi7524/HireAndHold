@@ -50,7 +50,6 @@ public class HeroEnforcePopup : MonoBehaviour
 
     private void SetupPopup()
     {
-        // 이미 활성화되어 있으면 끄지 않음 (Open이 먼저 호출된 경우)
         if (popupRoot != null && !popupRoot.activeSelf)
             popupRoot.SetActive(false);
 
@@ -88,7 +87,6 @@ public class HeroEnforcePopup : MonoBehaviour
 
     public void Open(int unitId, Unit previewUnit)
     {
-        // 혹시 Start가 안 불렸을 경우를 대비
         if (closeButton != null && closeButton.onClick.GetPersistentEventCount() == 0)
             SetupPopup();
 
