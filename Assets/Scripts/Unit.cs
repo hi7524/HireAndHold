@@ -23,6 +23,8 @@ public class Unit : MonoBehaviour
     public Enemy AttackTarget { get; private set; }
     public ObjectPoolManager GetPoolManager() => poolManager;
     public Animator GetAnimator() => visualAnimator;
+    public bool IsInitialized { get; private set; }
+    public bool IsPreview { get; set; }
 
     // 유닛 데이터
     private UnitData unitData;
@@ -130,6 +132,9 @@ public class Unit : MonoBehaviour
 
     private void Update()
     {
+        if (IsPreview || !IsInitialized)
+            return;
+
         AttackTarget = FindNearestTarget();
 
         // 드래그 중에는 공격하지 않음
@@ -141,6 +146,7 @@ public class Unit : MonoBehaviour
 
         HandleAutoSkills();
     }
+
 
     private void OnDestroy()
     {
@@ -156,16 +162,31 @@ public class Unit : MonoBehaviour
     // 유닛 ID 설정 및 데이터 로드
     public void SetUnitID(int ID)
     {
-        UnitID = ID;
+        IsInitialized = false;  
 
+        UnitID = ID;
         BaseCharacterID = ID;
 
         unitData = DataTableManager.UnitTable.Get(ID);
+
+        if (unitData == null)
+        {
+            Debug.LogError($"[Unit] unitData null : {ID}");
+            return;
+        }
+
+        SetStats();             
+        SetSkills();         
+        ApplyEnforceBonus();    
+        SetVisualPrefab();    
+
+        IsInitialized = true;
         SetStats();
         SetSkills();
         ApplyEnforceBonus();
         SetVisualPrefab();
     }
+
 
     // 유닛 ID 업데이트 (합성 시 Stat 모디파이어 보존)
     public void UpdateUnitID(int ID)
