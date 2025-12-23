@@ -13,6 +13,7 @@ public class OreDungeonUI : MonoBehaviour
 
     [Header("패널")]
     [SerializeField] private GameObject defaultPanel;
+    [SerializeField] private GameObject resultPanel;
 
     [Header("애니메이션 설정")]
     [SerializeField] private float punchScale = 0.5f; // 펀치 스케일 크기
@@ -29,6 +30,7 @@ public class OreDungeonUI : MonoBehaviour
         gameManager.OnInitialized += OnInitialized;
         gameManager.OnTouchCountChanged += UpdateTouchCount;
         gameManager.OnOreCountChanged += UpdateOreCount;
+        gameManager.OnStageEnded += UpdateResultPanel;
     }
 
     private void OnDisable()
@@ -36,6 +38,7 @@ public class OreDungeonUI : MonoBehaviour
         gameManager.OnInitialized -= OnInitialized;
         gameManager.OnTouchCountChanged -= UpdateTouchCount;
         gameManager.OnOreCountChanged -= UpdateOreCount;
+        gameManager.OnStageEnded -= UpdateResultPanel;
     }
 
     private void OnInitialized()
@@ -43,6 +46,20 @@ public class OreDungeonUI : MonoBehaviour
         // 초기 UI 설정
         UpdateTouchCount(gameManager.RemainTouchCount);
         UpdateOreCount(gameManager.RemainOreCount);
+    }
+
+    private void UpdateResultPanel(bool value)
+    {
+        if (value)
+        {
+            
+        }
+        else
+        {
+            
+        }
+
+        resultPanel.SetActive(true);
     }
 
     private void UpdateTouchCount(int count)
@@ -67,6 +84,16 @@ public class OreDungeonUI : MonoBehaviour
             oreCountText.transform.DOKill();
             oreCountText.transform.DOPunchScale(Vector3.one * punchScale, punchDuration, 1, 0.5f);
         }
+    }
+
+    public void SetActiveDefaultPanel(bool value)
+    {
+        defaultPanel.SetActive(value);
+    }
+
+    public void SetActiveResultPanel(bool value)
+    {
+        resultPanel.SetActive(value);
     }
 
     private bool ValidateReferences()

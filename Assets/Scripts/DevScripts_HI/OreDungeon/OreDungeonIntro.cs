@@ -10,6 +10,7 @@ public class OreDungeonIntro : MonoBehaviour
     [Header("Managers")]
     [SerializeField] private OreDungeonManager gameManager;
     [SerializeField] private OreDungeonAssetManager assetManager;
+    [SerializeField] private OreDungeonUI oreDungeonUI;
 
     [Header("UnitCard")]
     [SerializeField] private BaseCardUi cardPrf;
@@ -409,6 +410,10 @@ public class OreDungeonIntro : MonoBehaviour
         // prfTrans의 현재 Y 위치 저장
         float containerY = prfRectTransform.anchoredPosition.y;
 
+        // 마지막 카드의 애니메이션 종료 시간 계산
+        float lastCardDelay = (cardList.Count - 1) * delayBetweenCardSlideDown;
+        float totalAnimTime = lastCardDelay + cardSlideDownDuration;
+
         // 각 카드를 순차적으로 아래로 내리기
         for (int i = 0; i < cardList.Count; i++)
         {
@@ -424,6 +429,22 @@ public class OreDungeonIntro : MonoBehaviour
 
             // 아래로 내려가기
             sequence.Append(cardRect.DOAnchorPosY(originalY - containerY + cardHeight, cardSlideDownDuration).SetEase(Ease.InBack));
+        }
+
+        // 모든 애니메이션 끝난 후 실행
+        DOVirtual.DelayedCall(totalAnimTime, () =>
+        {
+            OnIntroComplete();
+        });
+    }
+
+    // 인트로 완료 후 호출
+    private void OnIntroComplete()
+    {
+        // defaultPanel 활성화
+        if (oreDungeonUI != null)
+        {
+            oreDungeonUI.SetActiveDefaultPanel(true);
         }
     }
 }
