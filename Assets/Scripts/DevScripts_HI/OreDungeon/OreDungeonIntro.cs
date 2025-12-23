@@ -4,6 +4,7 @@ using DG.Tweening;
 using System.Collections.Generic;
 using UnityEngine.AddressableAssets;
 using System.Linq;
+using TMPro;
 
 public class OreDungeonIntro : MonoBehaviour
 {
@@ -14,6 +15,11 @@ public class OreDungeonIntro : MonoBehaviour
     [Header("UnitCard")]
     [SerializeField] private BaseCardUi cardPrf;
     [SerializeField] private Transform prfTrans;
+
+    [Header("AttackPowerText")]
+    [SerializeField] private TextMeshProUGUI attackPowerText;
+    [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private CanvasGroup attackPowerTextCG;
 
     [Header("Pop Animation Settings")]
     [SerializeField] private float startScale = 2.0f;
@@ -36,6 +42,16 @@ public class OreDungeonIntro : MonoBehaviour
     private List<BaseCardUi> cardList = new List<BaseCardUi>();
     private HorizontalLayoutGroup layoutGroup;
     private List<int> allUnitIds = new List<int>(); // 룰렛에 사용할 전체 유닛 ID 리스트
+    private CanvasGroup canvasGroup;
+
+
+    private void Awake()
+    {
+        if (!TryGetComponent<CanvasGroup>(out canvasGroup))
+        {
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+    }
 
     private void Start()
     {
@@ -74,12 +90,8 @@ public class OreDungeonIntro : MonoBehaviour
                 card.SetImage(sprite);
             }
 
-            // CanvasGroup 미리 설정 및 투명하게 만들기
-            if (!card.TryGetComponent<CanvasGroup>(out var canvasGroup))
-            {
-                canvasGroup = card.gameObject.AddComponent<CanvasGroup>();
-            }
-            canvasGroup.alpha = 0f; // 모든 카드를 투명하게
+            // 모든 카드를 투명하게 설정
+            card.CanvasGroup.alpha = 0f;
         }
 
         // 프레임 대기 후 애니메이션 시작 (레이아웃 정리)
@@ -119,16 +131,60 @@ public class OreDungeonIntro : MonoBehaviour
         float slideAnimDuration = (randomCount > 0) ? beforeStartSlideAnimDelay + (randomCount - 1) * delayBetweenSlideCards + this.slideAnimDuration : 0f;
         float totalAnimTime = allPopAnimEndTime + slideAnimDuration + rouletteDuration;
 
-        // 모든 애니메이션 끝난 후 LayoutGroup 다시 활성화
-        DOTween.Sequence()
-            .AppendInterval(totalAnimTime)
+        // 모든 애니메이션 끝난 후 LayoutGroup 다시 활성화 및 공격력 텍스트 애니메이션
+        Sequence finalSequence = DOTween.Sequence();
+        finalSequence.AppendInterval(totalAnimTime)
             .AppendCallback(() =>
             {
                 if (layoutGroup != null)
                 {
                     layoutGroup.enabled = true;
                 }
+
+                // 총 공격력 계산 및 표시
+                int totalAttack = CalculateTotalAttack();
+                attackPowerText.text = totalAttack.ToString();
+
+                // attackPowerTextCG 페이드 인
+                attackPowerTextCG.alpha = 0f;
+            })
+            .Append(attackPowerTextCG.DOFade(1f, 0.5f).SetEase(Ease.InQuad))
+            .AppendInterval(0.6f)
+            .AppendCallback(() =>
+            {
+                // 터치 회수로 변경하면서 살짝 커지는 효과
+                titleText.text = "총 터치 가능 횟수";
+                attackPowerText.text = gameManager.RemainTouchCount.ToString();
+                attackPowerText.color = Color.yellow;
+            })
+            .Append(attackPowerText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f))
+            .AppendInterval(1f) // 딜레이
+            .AppendCallback(() =>
+            {
+                // canvasGroup 페이드 아웃 후 비활성화
+                canvasGroup.DOFade(0f, 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
+                {
+                    canvasGroup.gameObject.SetActive(false);
+                });
             });
+    }
+
+    // 총 공격력 계산
+    private int CalculateTotalAttack()
+    {
+        int totalAttack = 0;
+        List<int> unitIds = gameManager.draftUnitList.ToList();
+
+        foreach (int unitId in unitIds)
+        {
+            UnitData unitData = DataTableManager.UnitTable?.Get(unitId);
+            if (unitData != null)
+            {
+                totalAttack += unitData.ATTACK;
+            }
+        }
+
+        return totalAttack;
     }
 
     // 랜덤으로 뽑은 유닛 수 구하기
@@ -144,10 +200,8 @@ public class OreDungeonIntro : MonoBehaviour
     // 크기 애니메이션 (편성 유닛 애니메이션)
     private void PlayScalePunchAnimation(BaseCardUi card, int index)
     {
-        card.TryGetComponent<CanvasGroup>(out var canvasGroup);
-
         card.transform.localScale = Vector3.one * startScale;
-        canvasGroup.alpha = 0f;
+        card.CanvasGroup.alpha = 0f;
 
         Sequence sequence = DOTween.Sequence();
 
@@ -158,28 +212,57 @@ public class OreDungeonIntro : MonoBehaviour
 
         // 정상 크기로 축소하며 페이드 인
         sequence.Append(card.transform.DOScale(1f, shrinkDuration).SetEase(Ease.InCubic));
-        sequence.Join(canvasGroup.DOFade(1f, shrinkDuration));
+        sequence.Join(card.CanvasGroup.DOFade(1f, shrinkDuration));
+
+        // 애니메이션 끝난 후 텍스트 애니메이션 적용
+        sequence.OnComplete(() =>
+        {
+            // 유닛 데미지 설정
+            List<int> unitIds = gameManager.draftUnitList.ToList();
+            if (index < unitIds.Count)
+            {
+                int unitId = unitIds[index];
+                UnitData unitData = DataTableManager.UnitTable?.Get(unitId);
+                if (unitData != null)
+                {
+                    card.SetTitleText(unitData.ATTACK.ToString());
+                }
+            }
+
+            if (card.Text != null)
+            {
+                UnitDamageTextAnimation(card.Text);
+            }
+        });
     }
 
     // 슬라이드 애니메이션 (랜덤 유닛 애니메이션)
     private void PlaySlideUpAnimation(BaseCardUi card, int index, float startDelay)
     {
         RectTransform rectTransform = card.GetComponent<RectTransform>();
-        card.TryGetComponent<CanvasGroup>(out var canvasGroup);
 
         Vector3 targetPos = rectTransform.anchoredPosition;
 
         rectTransform.anchoredPosition = targetPos + Vector3.down * slideDistance;
-        canvasGroup.alpha = 0f;
+        card.CanvasGroup.alpha = 0f;
 
         // 슬라이드 시작 시 이미지를 검은색으로 설정
         card.SetImageColor(Color.black);
 
         float delay = startDelay + beforeStartSlideAnimDelay + index * delayBetweenSlideCards;
 
+        // 슬라이드 애니메이션 시작 시 텍스트 페이드 인
+        DOVirtual.DelayedCall(delay, () =>
+        {
+            if (card.Text != null)
+            {
+                UnitDamageTextAnimation(card.Text);
+            }
+        });
+
         // 슬라이드 애니메이션 시작
         rectTransform.DOAnchorPos(targetPos, slideAnimDuration).SetEase(Ease.OutCubic).SetDelay(delay);
-        canvasGroup.DOFade(1f, slideAnimDuration).SetEase(Ease.InQuad).SetDelay(delay);
+        card.CanvasGroup.DOFade(1f, slideAnimDuration).SetEase(Ease.InQuad).SetDelay(delay);
 
         int capturedSlideIndex = index;
 
@@ -218,7 +301,23 @@ public class OreDungeonIntro : MonoBehaviour
                     card.SetImageColor(Color.white);
 
                     // 마지막 룰렛에서 살짝 커졌다 작아지는 효과
-                    card.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f);
+                    card.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f)
+                        .OnComplete(() =>
+                        {
+                            // 펀치 애니메이션 끝난 후 유닛 공격력으로 텍스트 변경
+                            int existingCount = gameManager.ExistingUnitCount;
+                            int cardIndex = existingCount + capturedSlideIndex;
+                            List<int> unitIds = gameManager.draftUnitList.ToList();
+                            if (cardIndex < unitIds.Count)
+                            {
+                                int unitId = unitIds[cardIndex];
+                                UnitData unitData = DataTableManager.UnitTable?.Get(unitId);
+                                if (unitData != null)
+                                {
+                                    card.SetTitleText(unitData.ATTACK.ToString());
+                                }
+                            }
+                        });
                 });
             }
             else
@@ -265,5 +364,16 @@ public class OreDungeonIntro : MonoBehaviour
         {
             card.SetImage(sprite);
         }
+    }
+
+    // 유닛 공격력 텍스트의 애니메이션
+    // 페이드 인 적용
+    private void UnitDamageTextAnimation(TextMeshProUGUI tmp)
+    {
+        // 초기 투명도 설정
+        tmp.alpha = 0f;
+
+        // 페이드 인 애니메이션
+        tmp.DOFade(1f, 0.5f).SetEase(Ease.InQuad);
     }
 }

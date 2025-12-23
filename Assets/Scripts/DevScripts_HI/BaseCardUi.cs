@@ -6,6 +6,21 @@ public class BaseCardUi : MonoBehaviour
 {
     [SerializeField] protected Image image;
     [SerializeField] protected TextMeshProUGUI text;
+    [SerializeField] protected CanvasGroup canvasGroup;
+
+    public CanvasGroup CanvasGroup => canvasGroup;
+    public TextMeshProUGUI Text => text;
+
+    protected virtual void Awake()
+    {
+        if (canvasGroup == null)
+        {
+            if (!TryGetComponent<CanvasGroup>(out canvasGroup))
+            {
+                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+    }
 
     public virtual void SetImage(Sprite sprite)
     {
@@ -24,11 +39,4 @@ public class BaseCardUi : MonoBehaviour
         if (text != null)
             text.text = msg;
     }
-
-    // public virtual void SetDescriptionText(string msg)
-    // {   
-    //     if (descriptionText != null)
-    //         descriptionText.text = msg;
-    // }
-
 }
