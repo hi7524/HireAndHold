@@ -2004,8 +2004,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2083670874}
-  - {fileID: 908923258}
   - {fileID: 1586622348}
+  - {fileID: 908923258}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -2028,6 +2028,7 @@ MonoBehaviour:
   gameManager: {fileID: 2122810349}
   touchCountText: {fileID: 7753837003317614004}
   oreCountText: {fileID: 615645624}
+  defaultPanel: {fileID: 0}
   punchScale: 0.6
   punchDuration: 0.3
 --- !u!1 &1445209040
@@ -2170,9 +2171,13 @@ MonoBehaviour:
   slideDistance: 100
   slideAnimDuration: 0.6
   delayBetweenSlideCards: 0.7
+  cardSlideUpDistance: 10
+  cardSlideUpDuration: 0.5
+  cardSlideDownDuration: 0.8
+  delayBetweenCardSlideDown: 0.1
   rouletteDuration: 2
   rouletteMinInterval: 0.05
-  rouletteMaxInterval: 0.3
+  rouletteMaxInterval: 1
 --- !u!225 &1586622352
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2887,7 +2892,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2083670874
 RectTransform:
   m_ObjectHideFlags: 0

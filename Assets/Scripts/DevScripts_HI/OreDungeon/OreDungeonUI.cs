@@ -11,6 +11,9 @@ public class OreDungeonUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI touchCountText;
     [SerializeField] private TextMeshProUGUI oreCountText;
 
+    [Header("패널")]
+    [SerializeField] private GameObject defaultPanel;
+
     [Header("애니메이션 설정")]
     [SerializeField] private float punchScale = 0.5f; // 펀치 스케일 크기
     [SerializeField] private float punchDuration = 0.3f; // 애니메이션 시간

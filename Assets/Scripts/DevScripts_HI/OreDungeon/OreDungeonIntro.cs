@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using System.Collections.Generic;
-using UnityEngine.AddressableAssets;
 using System.Linq;
 using TMPro;
 
@@ -34,6 +33,12 @@ public class OreDungeonIntro : MonoBehaviour
     [SerializeField] private float slideAnimDuration = 0.6f;         // 슬라이드 애니메이션 시간
     [SerializeField] private float delayBetweenSlideCards = 0.1f;    // 슬라이드 카드 간 딜레이
 
+    [Header("Card Slide Down Settings")]
+    [SerializeField] private float cardSlideUpDistance = 50f;        // 위로 올라가는 거리
+    [SerializeField] private float cardSlideUpDuration = 0.3f;       // 위로 올라가는 시간
+    [SerializeField] private float cardSlideDownDuration = 0.5f;     // 아래로 내려가는 시간
+    [SerializeField] private float delayBetweenCardSlideDown = 0.1f; // 카드별 슬라이드 다운 딜레이
+
     [Header("Roulette Animation Settings")]
     [SerializeField] private float rouletteDuration = 3f;            // 룰렛 총 지속 시간
     [SerializeField] private float rouletteMinInterval = 0.03f;      // 최소 간격 (가장 빠를 때)
@@ -43,6 +48,7 @@ public class OreDungeonIntro : MonoBehaviour
     private HorizontalLayoutGroup layoutGroup;
     private List<int> allUnitIds = new List<int>(); // 룰렛에 사용할 전체 유닛 ID 리스트
     private CanvasGroup canvasGroup;
+    private RectTransform prfRectTransform; // prfTrans의 RectTransform
 
 
     private void Awake()
@@ -56,6 +62,7 @@ public class OreDungeonIntro : MonoBehaviour
     private void Start()
     {
         layoutGroup = prfTrans.GetComponent<HorizontalLayoutGroup>();
+        prfRectTransform = prfTrans.GetComponent<RectTransform>();
         gameManager.OnInitialized += Initialize;
     }
 
@@ -161,6 +168,9 @@ public class OreDungeonIntro : MonoBehaviour
             .AppendInterval(1f) // 딜레이
             .AppendCallback(() =>
             {
+                // 카드 슬라이드 다운 애니메이션 시작
+                PlayCardSlideDownAnimation();
+
                 // canvasGroup 페이드 아웃 후 비활성화
                 canvasGroup.DOFade(0f, 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
                 {
@@ -295,13 +305,17 @@ public class OreDungeonIntro : MonoBehaviour
             {
                 DOVirtual.DelayedCall(currentDelay, () =>
                 {
+                    // 검은색 상태에서 실제 유닛 이미지 먼저 적용
                     SetFinalUnitImage(card, capturedSlideIndex);
 
-                    // 이미지를 하얀색으로 복원
-                    card.SetImageColor(Color.white);
-
-                    // 마지막 룰렛에서 살짝 커졌다 작아지는 효과
+                    // 몇 초 후 팝 이펙트 발생
                     card.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f)
+                        .SetDelay(0.2f) // 이미지 적용 후 0.2초 딜레이
+                        .OnStart(() =>
+                        {
+                            // 팝 이펙트 시작 시 이미지를 하얀색으로 변경
+                            card.SetImageColor(Color.white);
+                        })
                         .OnComplete(() =>
                         {
                             // 펀치 애니메이션 끝난 후 유닛 공격력으로 텍스트 변경
@@ -375,5 +389,41 @@ public class OreDungeonIntro : MonoBehaviour
 
         // 페이드 인 애니메이션
         tmp.DOFade(1f, 0.5f).SetEase(Ease.InQuad);
+    }
+
+    // 카드들이 순차적으로 위로 올라갔다가 아래로 내려가는 애니메이션
+    private void PlayCardSlideDownAnimation()
+    {
+        // prfTrans를 canvasGroup 밖으로 분리
+        Vector3 worldPos = prfRectTransform.position;
+        prfRectTransform.SetParent(canvasGroup.transform.parent, false);
+        prfRectTransform.position = worldPos;
+
+        // 앵커를 화면 맨 아래로 변경 (가로는 stretch 유지, 세로만 아래로)
+        Vector3 currentWorldPos = prfRectTransform.position;
+        prfRectTransform.anchorMin = new Vector2(0f, 0f);
+        prfRectTransform.anchorMax = new Vector2(1f, 0f);
+        prfRectTransform.pivot = new Vector2(0.5f, 0f);
+        prfRectTransform.position = currentWorldPos;
+
+        // prfTrans의 현재 Y 위치 저장
+        float containerY = prfRectTransform.anchoredPosition.y;
+
+        // 각 카드를 순차적으로 아래로 내리기
+        for (int i = 0; i < cardList.Count; i++)
+        {
+            BaseCardUi card = cardList[i];
+            RectTransform cardRect = card.GetComponent<RectTransform>();
+            float originalY = cardRect.anchoredPosition.y;
+            float cardHeight = cardRect.rect.height;
+
+            Sequence sequence = DOTween.Sequence();
+
+            // 카드별 딜레이
+            sequence.AppendInterval(i * delayBetweenCardSlideDown);
+
+            // 아래로 내려가기
+            sequence.Append(cardRect.DOAnchorPosY(originalY - containerY + cardHeight, cardSlideDownDuration).SetEase(Ease.InBack));
+        }
     }
 }
