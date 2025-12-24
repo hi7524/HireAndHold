@@ -205,8 +205,14 @@ namespace Tutorial
             OnSequenceComplete?.Invoke(currentSequence);
 
             // UI 정리
-            tutorialUI?.Hide();
-            tutorialBlocker?.Unblock();
+            if (tutorialUI != null)
+            {
+                tutorialUI.Hide();
+            }
+            if (tutorialBlocker != null)
+            {
+                tutorialBlocker.Unblock();
+            }
 
             // 게임 재개
             ResumeGame();
@@ -491,8 +497,11 @@ namespace Tutorial
             OnStepComplete?.Invoke(step);
 
             // UI 숨기기
-            tutorialUI?.HideHighlight();
-            tutorialUI?.HideHandGuide();
+            if (tutorialUI != null)
+            {
+                tutorialUI.HideHighlight();
+                tutorialUI.HideHandGuide();
+            }
 
             // 다음 스텝으로
             currentStepIndex++;

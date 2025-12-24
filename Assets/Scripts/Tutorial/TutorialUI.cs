@@ -164,7 +164,10 @@ namespace Tutorial
         /// </summary>
         public void HideDialog()
         {
-            dialogPanel?.SetActive(false);
+            if (dialogPanel != null)
+            {
+                dialogPanel.SetActive(false);
+            }
         }
 
         #endregion
@@ -281,7 +284,11 @@ namespace Tutorial
         /// </summary>
         public void HideHighlight()
         {
-            highlightObject?.SetActive(false);
+            // Unity 오브젝트는 destroyed 상태일 수 있으므로 명시적 null 체크
+            if (highlightObject != null)
+            {
+                highlightObject.SetActive(false);
+            }
 
             // TutorialBlocker 구멍 제거
             var blocker = FindAnyObjectByType<TutorialBlocker>(FindObjectsInactive.Include);
@@ -323,7 +330,10 @@ namespace Tutorial
         /// </summary>
         public void HideHandGuide()
         {
-            handGuideObject?.SetActive(false);
+            if (handGuideObject != null)
+            {
+                handGuideObject.SetActive(false);
+            }
         }
 
         #endregion
