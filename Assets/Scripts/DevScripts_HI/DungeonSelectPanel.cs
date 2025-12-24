@@ -14,6 +14,7 @@ public class DungeonSelectPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI curStageText;
     [SerializeField] private Image requireResourcesIcon;
     [SerializeField] private TextMeshProUGUI requireResourcesText;
+    [SerializeField] private GameObject LockPanelObj;
 
     [SerializeField] private Button prevBtn;
     [SerializeField] private Button nextBtn;
@@ -94,8 +95,9 @@ public class DungeonSelectPanel : MonoBehaviour
 
         curSelectedStage++;
         UpdateCurStageText(curSelectedStage);
-        UpdateButtonStates();
         UpdateSelectedDungeonId();
+        UpdateButtonStates();
+        UpdateRequireResourcesText();
     }
 
     public void MinusCurStage()
@@ -105,8 +107,9 @@ public class DungeonSelectPanel : MonoBehaviour
 
         curSelectedStage--;
         UpdateCurStageText(curSelectedStage);
-        UpdateButtonStates();
         UpdateSelectedDungeonId();
+        UpdateButtonStates();
+        UpdateRequireResourcesText();
     }
 
     private void UpdateButtonStates()
@@ -114,20 +117,58 @@ public class DungeonSelectPanel : MonoBehaviour
         prevBtn.interactable = curSelectedStage > 1;
         nextBtn.interactable = curSelectedStage < maxStage;
 
-        // 입장권이 부족하면 입장 버튼 비활성화
+        // 입장 버튼 상태 업데이트
         UpdateEnterButtonState();
+
+        // 잠금 패널 업데이트
+        UpdateLockPanel();
     }
 
     private void UpdateEnterButtonState()
     {
-        if (enterButton != null)
+        if (enterButton == null)
+            return;
+
+        // 현재 스테이지가 해금되어 있는지 확인
+        bool isUnlocked = DatabaseManager.Instance.IsDungeonStageUnlocked(curSelectedStage);
+        int highestStage = DatabaseManager.Instance.GetHighestDungeonStage();
+
+        Debug.Log($"[DungeonSelectPanel] 스테이지 {curSelectedStage} 체크 - 최고 스테이지: {highestStage}, 해금 여부: {isUnlocked}");
+
+        // 입장권이 충분한지 확인
+        bool hasEnoughEntries = false;
+
+        // 현재 선택된 스테이지의 던전 ID 가져오기
+        if (stageToIdMap.TryGetValue(curSelectedStage, out int currentDungeonId))
         {
-            var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungoenSettingID);
-            if (dungeonSetting != null)
+            // OreDungeon 테이블에서 Dungeon_SettingID 가져오기
+            var oreDungeon = DataTableManager.OreDungeonTable?.Get(currentDungeonId);
+            if (oreDungeon != null)
             {
-                int currentEntries = PlayData.GetItemCount(dungeonSetting.Conditions_Of_Entry_ItemID);
-                enterButton.interactable = currentEntries >= requireAmount;
+                int dungeonSettingId = oreDungeon.Dungeon_SettingID;
+                var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungeonSettingId);
+                if (dungeonSetting != null)
+                {
+                    int currentEntries = PlayData.GetItemCount(dungeonSetting.Conditions_Of_Entry_ItemID);
+                    hasEnoughEntries = currentEntries >= requireAmount;
+                    Debug.Log($"[DungeonSelectPanel] 던전 ID: {currentDungeonId}, 설정 ID: {dungeonSettingId}, 입장권 아이템 ID: {dungeonSetting.Conditions_Of_Entry_ItemID}, 보유 입장권: {currentEntries}, 필요: {requireAmount}, 충분: {hasEnoughEntries}");
+                }
             }
+        }
+
+        // 잠금되어 있거나 입장권이 부족하면 비활성화
+        bool finalState = isUnlocked && hasEnoughEntries;
+        Debug.Log($"[DungeonSelectPanel] 입장 버튼 최종 상태: {finalState} (해금: {isUnlocked}, 입장권: {hasEnoughEntries})");
+        enterButton.interactable = finalState;
+    }
+
+    private void UpdateLockPanel()
+    {
+        if (LockPanelObj != null)
+        {
+            // 현재 스테이지가 해금되어 있지 않으면 잠금 패널 표시
+            bool isUnlocked = DatabaseManager.Instance.IsDungeonStageUnlocked(curSelectedStage);
+            LockPanelObj.SetActive(!isUnlocked);
         }
     }
 
@@ -141,12 +182,21 @@ public class DungeonSelectPanel : MonoBehaviour
     {
         if (requireResourcesText != null)
         {
-            // 현재 선택된 던전의 입장권 개수 표시 (보유량/필요량)
-            var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungoenSettingID);
-            if (dungeonSetting != null)
+            // 현재 선택된 스테이지의 던전 ID 가져오기
+            if (stageToIdMap.TryGetValue(curSelectedStage, out int currentDungeonId))
             {
-                int currentEntries = PlayData.GetItemCount(dungeonSetting.Conditions_Of_Entry_ItemID);
-                requireResourcesText.text = $"{currentEntries}/{requireAmount}";
+                // OreDungeon 테이블에서 Dungeon_SettingID 가져오기
+                var oreDungeon = DataTableManager.OreDungeonTable?.Get(currentDungeonId);
+                if (oreDungeon != null)
+                {
+                    int dungeonSettingId = oreDungeon.Dungeon_SettingID;
+                    var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungeonSettingId);
+                    if (dungeonSetting != null)
+                    {
+                        int currentEntries = PlayData.GetItemCount(dungeonSetting.Conditions_Of_Entry_ItemID);
+                        requireResourcesText.text = $"{currentEntries}/{requireAmount}";
+                    }
+                }
             }
         }
 
@@ -157,8 +207,33 @@ public class DungeonSelectPanel : MonoBehaviour
     // 던전 입장권 자정 체크 및 리셋
     private async UniTask CheckAndResetDungeonEntries()
     {
-        // 현재 던전의 입장권 체크 및 리셋
-        await DatabaseManager.Instance.CheckAndResetDungeonEntriesAsync(dungoenSettingID);
+        // OreDungeon 테이블에서 각 던전의 Dungeon_SettingID를 가져와 입장권 체크
+        HashSet<int> processedSettingIds = new HashSet<int>();
+
+        foreach (var kvp in stageToIdMap)
+        {
+            int dungeonId = kvp.Value;
+
+            // OreDungeon 테이블에서 Dungeon_SettingID 가져오기
+            var oreDungeon = DataTableManager.OreDungeonTable?.Get(dungeonId);
+            if (oreDungeon == null)
+            {
+                Debug.LogWarning($"[DungeonSelectPanel] 던전 {dungeonId}를 OreDungeonTable에서 찾을 수 없습니다.");
+                continue;
+            }
+
+            int dungeonSettingId = oreDungeon.Dungeon_SettingID;
+
+            // 이미 처리한 Dungeon_SettingID는 스킵 (여러 스테이지가 같은 설정을 공유할 수 있음)
+            if (processedSettingIds.Contains(dungeonSettingId))
+                continue;
+
+            processedSettingIds.Add(dungeonSettingId);
+
+            // Dungeon_SettingID로 입장권 체크
+            await DatabaseManager.Instance.CheckAndResetDungeonEntriesAsync(dungeonSettingId);
+            Debug.Log($"[DungeonSelectPanel] 던전 설정 {dungeonSettingId} 입장권 체크 완료");
+        }
 
         // PlayData의 던전 입장권 캐시 동기화
         PlayData.SyncDungeonEntriesFromDatabase();
@@ -166,7 +241,7 @@ public class DungeonSelectPanel : MonoBehaviour
         // 아이템 캐시도 동기화
         PlayData.SyncItemsFromDatabase();
 
-        Debug.Log($"[DungeonSelectPanel] 던전 입장권 체크 완료 - 던전 ID: {dungoenSettingID}");
+        Debug.Log($"[DungeonSelectPanel] 모든 던전 입장권 체크 완료");
     }
 
     // 현재 선택된 스테이지에 해당하는 던전 ID를 PlayData에 설정
@@ -187,7 +262,7 @@ public class DungeonSelectPanel : MonoBehaviour
     public async void OnEnterDungeonButtonClick()
     {
         // 선택된 던전 ID가 유효한지 확인
-        if (!stageToIdMap.ContainsKey(curSelectedStage))
+        if (!stageToIdMap.TryGetValue(curSelectedStage, out int currentDungeonId))
         {
             Debug.LogError("[DungeonSelectPanel] 유효하지 않은 던전 스테이지입니다.");
             return;
@@ -196,11 +271,21 @@ public class DungeonSelectPanel : MonoBehaviour
         // PlayData에 던전 ID 설정 (이미 UpdateSelectedDungeonId에서 설정되었지만 한 번 더 확인)
         UpdateSelectedDungeonId();
 
+        // OreDungeon 테이블에서 Dungeon_SettingID 가져오기
+        var oreDungeon = DataTableManager.OreDungeonTable?.Get(currentDungeonId);
+        if (oreDungeon == null)
+        {
+            Debug.LogError($"[DungeonSelectPanel] 던전 데이터를 찾을 수 없음: {currentDungeonId}");
+            return;
+        }
+
+        int dungeonSettingId = oreDungeon.Dungeon_SettingID;
+
         // 던전 설정 가져오기
-        var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungoenSettingID);
+        var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungeonSettingId);
         if (dungeonSetting == null)
         {
-            Debug.LogError($"[DungeonSelectPanel] 던전 설정을 찾을 수 없음: {dungoenSettingID}");
+            Debug.LogError($"[DungeonSelectPanel] 던전 설정을 찾을 수 없음: {dungeonSettingId}");
             return;
         }
 
@@ -213,7 +298,7 @@ public class DungeonSelectPanel : MonoBehaviour
         }
 
         // 입장권 소모
-        bool success = await DatabaseManager.Instance.ConsumeDungeonEntryAsync(dungoenSettingID);
+        bool success = await DatabaseManager.Instance.ConsumeDungeonEntryAsync(dungeonSettingId);
         if (!success)
         {
             Debug.LogError("[DungeonSelectPanel] 입장권 소모 실패");
@@ -225,7 +310,7 @@ public class DungeonSelectPanel : MonoBehaviour
         PlayData.SyncItemsFromDatabase();
         UpdateRequireResourcesText();
 
-        Debug.Log($"[DungeonSelectPanel] 던전 입장 시작 - 스테이지: {curSelectedStage}, 던전 ID: {PlayData.OreDungeonID}");
+        Debug.Log($"[DungeonSelectPanel] 던전 입장 시작 - 스테이지: {curSelectedStage}, 던전 ID: {PlayData.OreDungeonID}, 설정 ID: {dungeonSettingId}");
 
         await EnterDungeonAsync();
     }

@@ -1656,6 +1656,61 @@ public class DatabaseManager : MonoBehaviour
 
     #endregion
 
+    #region 던전 스테이지 해금
+
+    /// <summary>
+    /// 최고 클리어 던전 스테이지 조회
+    /// </summary>
+    public int GetHighestDungeonStage()
+    {
+        return CurrentUser?.profile?.highestDungeonStage ?? 0;
+    }
+
+    /// <summary>
+    /// 던전 스테이지가 해금되었는지 확인
+    /// </summary>
+    public bool IsDungeonStageUnlocked(int stage)
+    {
+        // 스테이지 1은 항상 해금
+        if (stage <= 1)
+            return true;
+
+        // 최고 클리어 스테이지 + 1까지 해금
+        int highestStage = GetHighestDungeonStage();
+        return stage <= highestStage + 1;
+    }
+
+    /// <summary>
+    /// 던전 스테이지 클리어 시 최고 스테이지 업데이트
+    /// </summary>
+    public async UniTask<bool> UpdateHighestDungeonStageAsync(int clearedStage)
+    {
+        if (CurrentUser?.profile == null)
+            return false;
+
+        int currentHighest = CurrentUser.profile.highestDungeonStage;
+
+        // 현재 최고 기록보다 높으면 업데이트
+        if (clearedStage > currentHighest)
+        {
+            CurrentUser.profile.highestDungeonStage = clearedStage;
+
+            string path = $"users/{UserId}/profile/highestDungeonStage";
+            bool success = await database.SetDataAsync(path, clearedStage);
+
+            if (success)
+            {
+                Debug.Log($"[DB] 최고 던전 스테이지 업데이트: {currentHighest} -> {clearedStage}");
+            }
+
+            return success;
+        }
+
+        return true; // 업데이트 필요 없음
+    }
+
+    #endregion
+
     #region 업적 관리
 
     /// <summary>

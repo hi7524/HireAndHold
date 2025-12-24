@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using DG.Tweening;
+using Cysharp.Threading.Tasks;
 
 /// <summary>
 /// 광석 던전 UI 관리
@@ -48,10 +49,46 @@ public class OreDungeonUI : MonoBehaviour
         UpdateOreCount(gameManager.RemainOreCount);
     }
 
-    private void UpdateResultPanel(bool value)
+    private async void UpdateResultPanel(bool isSuccess)
     {
-        resultPanel.SetResultPanel(value, gameManager.GetOreAmount);
+        resultPanel.SetResultPanel(isSuccess, gameManager.GetOreAmount);
         resultPanel.gameObject.SetActive(true);
+
+        // 던전 클리어 성공 시 스테이지 해금
+        if (isSuccess)
+        {
+            await UpdateDungeonStageProgressAsync();
+        }
+    }
+
+    private async UniTask UpdateDungeonStageProgressAsync()
+    {
+        // 현재 선택된 던전 ID로부터 스테이지 번호 찾기
+        int currentDungeonId = PlayData.OreDungeonID;
+
+        var oreDungeonTable = DataTableManager.OreDungeonTable;
+        if (oreDungeonTable == null)
+        {
+            Debug.LogError("[OreDungeonUI] OreDungeonTable을 찾을 수 없습니다.");
+            return;
+        }
+
+        var dungeonData = oreDungeonTable.Get(currentDungeonId);
+        if (dungeonData == null)
+        {
+            Debug.LogError($"[OreDungeonUI] 던전 데이터를 찾을 수 없습니다. DungeonID: {currentDungeonId}");
+            return;
+        }
+
+        int clearedStage = dungeonData.Stage;
+
+        // 최고 스테이지 업데이트
+        bool success = await DatabaseManager.Instance.UpdateHighestDungeonStageAsync(clearedStage);
+
+        if (success)
+        {
+            Debug.Log($"[OreDungeonUI] 던전 스테이지 {clearedStage} 클리어 기록 저장 완료");
+        }
     }
 
     private void UpdateTouchCount(int count)

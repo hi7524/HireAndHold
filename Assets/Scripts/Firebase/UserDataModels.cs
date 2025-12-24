@@ -56,6 +56,7 @@ namespace GameData
         public int totalPlayTime;
         public int highestStage;
         public int totalPower;          // 총 전투력
+        public int highestDungeonStage; // 최고 클리어 던전 스테이지
 
         public string profileIconAddress;
     }
