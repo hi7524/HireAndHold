@@ -230,6 +230,16 @@ public static class PlayData
         cachedEnhanceStone = value;
     }
 
+    public static void SetDiamondImmediate(int value)
+    {
+        cachedDiamond = value;
+    }
+
+    public static void SetStaminaImmediate(int value)
+    {
+        cachedStamina = value;
+    }
+
     // 재화 체크
     public static bool HasEnoughGold(long amount)
     {

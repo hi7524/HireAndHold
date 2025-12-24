@@ -350,6 +350,7 @@ public class DatabaseManager : MonoBehaviour
             {
                 CurrentUser.currency.gold += amount;
                 PlayData.SetGoldImmediate(CurrentUser.currency.gold);
+                PlayData.NotifyCurrencyChanged();
             }
 
             var (value, ok) = await database.GetDataAsync<object>(path);
@@ -375,6 +376,8 @@ public class DatabaseManager : MonoBehaviour
         if (success)
         {
             CurrentUser.currency.diamond += amount;
+            PlayData.SetDiamondImmediate(CurrentUser.currency.diamond);
+            PlayData.NotifyCurrencyChanged();
         }
 
         return success;
@@ -413,7 +416,13 @@ public class DatabaseManager : MonoBehaviour
         CurrentUser.currency.stamina = newValue;
         CurrentUser.currency.lastStaminaTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        return await SaveCurrencyAsync();
+        bool success = await SaveCurrencyAsync();
+        if (success)
+        {
+            PlayData.SetStaminaImmediate(newValue);
+            PlayData.NotifyCurrencyChanged();
+        }
+        return success;
     }
 
     /// <summary>
