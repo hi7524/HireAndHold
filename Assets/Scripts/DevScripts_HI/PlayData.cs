@@ -49,6 +49,9 @@ public static class PlayData
     // 아이템 캐시
     private static Dictionary<int, int> cachedItems = new Dictionary<int, int>();
 
+    // 던전 입장권 캐시
+    private static Dictionary<int, int> cachedDungeonEntries = new Dictionary<int, int>();
+
     //초기화 플래그
     private static bool isInitialized = false;
 
@@ -263,6 +266,45 @@ public static class PlayData
         else
         {
             cachedItems[itemId] = count;
+        }
+    }
+
+    // 던전 입장권 관련
+    public static void SyncDungeonEntriesFromDatabase()
+    {
+        cachedDungeonEntries.Clear();
+
+        var user = DatabaseManager.Instance.CurrentUser;
+        if (user?.dungeonEntries == null) return;
+
+        foreach (var kvp in user.dungeonEntries)
+        {
+            if (int.TryParse(kvp.Key, out int dungeonId))
+            {
+                cachedDungeonEntries[dungeonId] = kvp.Value.currentEntries;
+            }
+        }
+    }
+
+    public static int GetDungeonEntries(int dungeonId)
+    {
+        return cachedDungeonEntries.TryGetValue(dungeonId, out int count) ? count : 0;
+    }
+
+    public static bool HasEnoughDungeonEntries(int dungeonId, int amount = 1)
+    {
+        return GetDungeonEntries(dungeonId) >= amount;
+    }
+
+    public static void SetDungeonEntriesImmediate(int dungeonId, int count)
+    {
+        if (count <= 0)
+        {
+            cachedDungeonEntries.Remove(dungeonId);
+        }
+        else
+        {
+            cachedDungeonEntries[dungeonId] = count;
         }
     }
 

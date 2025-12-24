@@ -7,6 +7,7 @@ public class DungeonSettingData
 {
     public int Dungeon_SettingID { get; set; }
     public int Dungeon_Name { get; set; }
+    public int Dungeon_Description { get; set; }
     public int Dungeon_Type { get; set; }
     public int Total_Stage { get; set; }
     public int Conditions_Of_Entry_ItemID { get; set; }
@@ -14,6 +15,7 @@ public class DungeonSettingData
 
     // StringTable 연동
     public string StringName => DataTableManager.StringTable?.Get(Dungeon_Name);
+    public string StringDescription => DataTableManager.StringTable?.Get(Dungeon_Description);
 }
 
 public class DataTable_DungeonSetting : DataTable

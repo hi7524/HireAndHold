@@ -22,6 +22,7 @@ namespace GameData
         public UserSettings settings;
         public DailyRewardData dailyReward;
         public TutorialProgressData tutorial; // 튜토리얼 진행 상황
+        public Dictionary<string, DungeonEntryData> dungeonEntries; // 던전 입장권
 
         public UserData()
         {
@@ -35,6 +36,7 @@ namespace GameData
             achievements = new Dictionary<string, AchievementProgress>();
             dailyReward = new DailyRewardData();
             tutorial = new TutorialProgressData();
+            dungeonEntries = new Dictionary<string, DungeonEntryData>();
         }
     }
 
@@ -377,6 +379,31 @@ namespace GameData
             isRewarded = false;
             completedAt = 0;
             rewardedAt = 0;
+        }
+    }
+
+    #endregion
+
+    #region 던전 입장권
+
+    /// <summary>
+    /// 던전 입장권 데이터
+    /// Firebase 경로: users/{userId}/dungeonEntries/{dungeonId}
+    /// </summary>
+    [Serializable]
+    public class DungeonEntryData
+    {
+        public int dungeonId;               // 던전 ID
+        public int currentEntries;          // 현재 남은 입장권 개수
+        public string lastResetDate;        // 마지막 리셋 날짜 (yyyy-MM-dd)
+
+        public DungeonEntryData() { }
+
+        public DungeonEntryData(int dungeonId, int maxEntries)
+        {
+            this.dungeonId = dungeonId;
+            this.currentEntries = maxEntries;
+            this.lastResetDate = DateTime.Now.ToString("yyyy-MM-dd");
         }
     }
 
