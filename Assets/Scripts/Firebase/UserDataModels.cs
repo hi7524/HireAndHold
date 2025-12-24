@@ -411,6 +411,9 @@ namespace GameData
             completedAt = 0;
             rewardedAt = 0;
             lastResetTime = 0;
+        }
+    }
+    #endregion
     #region 던전 입장권
 
     /// <summary>
