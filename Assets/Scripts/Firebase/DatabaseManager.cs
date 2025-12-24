@@ -1549,4 +1549,138 @@ public class DatabaseManager : MonoBehaviour
     }
 
     #endregion
+
+    #region 튜토리얼 관리
+
+    /// <summary>
+    /// 튜토리얼 진행 상황 저장
+    /// </summary>
+    public async UniTask<bool> SaveTutorialProgressAsync()
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        if (CurrentUser.tutorial == null)
+            CurrentUser.tutorial = new TutorialProgressData();
+
+        string path = $"users/{UserId}/tutorial";
+        bool success = await database.SetDataAsync(path, CurrentUser.tutorial);
+
+        return success;
+    }
+
+    /// <summary>
+    /// 튜토리얼 시퀀스 시작
+    /// </summary>
+    public async UniTask<bool> StartTutorialSequenceAsync(string sequenceId)
+    {
+        if (CurrentUser?.tutorial == null)
+            CurrentUser.tutorial = new TutorialProgressData();
+
+        CurrentUser.tutorial.currentSequenceId = sequenceId;
+        CurrentUser.tutorial.currentStepIndex = 0;
+        CurrentUser.tutorial.lastCheckpointIndex = 0;
+
+        return await SaveTutorialProgressAsync();
+    }
+
+    /// <summary>
+    /// 튜토리얼 스텝 진행 (체크포인트일 때만 저장)
+    /// </summary>
+    public async UniTask<bool> UpdateTutorialStepAsync(int stepIndex, bool isCheckpoint)
+    {
+        if (CurrentUser?.tutorial == null)
+            return false;
+
+        CurrentUser.tutorial.currentStepIndex = stepIndex;
+
+        if (isCheckpoint)
+        {
+            CurrentUser.tutorial.lastCheckpointIndex = stepIndex;
+            return await SaveTutorialProgressAsync();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 튜토리얼 시퀀스 완료
+    /// </summary>
+    public async UniTask<bool> CompleteTutorialSequenceAsync(string sequenceId)
+    {
+        if (CurrentUser?.tutorial == null)
+            CurrentUser.tutorial = new TutorialProgressData();
+
+        if (CurrentUser.tutorial.completedSequences == null)
+            CurrentUser.tutorial.completedSequences = new List<string>();
+
+        if (!CurrentUser.tutorial.completedSequences.Contains(sequenceId))
+        {
+            CurrentUser.tutorial.completedSequences.Add(sequenceId);
+        }
+
+        // 현재 진행 중인 시퀀스 초기화
+        CurrentUser.tutorial.currentSequenceId = null;
+        CurrentUser.tutorial.currentStepIndex = 0;
+        CurrentUser.tutorial.lastCheckpointIndex = 0;
+
+        return await SaveTutorialProgressAsync();
+    }
+
+    /// <summary>
+    /// 전체 튜토리얼 완료 처리
+    /// </summary>
+    public async UniTask<bool> CompleteTutorialAsync()
+    {
+        if (CurrentUser?.tutorial == null)
+            CurrentUser.tutorial = new TutorialProgressData();
+
+        CurrentUser.tutorial.isCompleted = true;
+
+        // 업적 연동
+        await AchievementManager.CompleteTutorialAsync();
+
+        return await SaveTutorialProgressAsync();
+    }
+
+    /// <summary>
+    /// 튜토리얼 진행 상황 가져오기
+    /// </summary>
+    public TutorialProgressData GetTutorialProgress()
+    {
+        if (CurrentUser?.tutorial == null)
+            CurrentUser.tutorial = new TutorialProgressData();
+
+        return CurrentUser.tutorial;
+    }
+
+    /// <summary>
+    /// 특정 시퀀스가 완료되었는지 확인
+    /// </summary>
+    public bool IsTutorialSequenceCompleted(string sequenceId)
+    {
+        return CurrentUser?.tutorial?.IsSequenceCompleted(sequenceId) ?? false;
+    }
+
+    /// <summary>
+    /// 전체 튜토리얼이 완료되었는지 확인
+    /// </summary>
+    public bool IsTutorialCompleted()
+    {
+        return CurrentUser?.tutorial?.isCompleted ?? false;
+    }
+
+    /// <summary>
+    /// 튜토리얼 진행 상황 초기화 (디버그용)
+    /// </summary>
+    public async UniTask<bool> ResetTutorialProgressAsync()
+    {
+        if (CurrentUser == null)
+            return false;
+
+        CurrentUser.tutorial = new TutorialProgressData();
+        return await SaveTutorialProgressAsync();
+    }
+
+    #endregion
 }
