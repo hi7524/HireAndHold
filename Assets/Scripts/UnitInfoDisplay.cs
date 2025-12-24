@@ -60,10 +60,16 @@ public class UnitInfoDisplay : MonoBehaviour
             unitNameText.text = unitData.StringName;
 
         if (classText != null)
-            classText.text = $"등급 {unitData.RANK}";
+        {
+            string rankName = GetRankName(unitData.RANK);
+            classText.text = rankName;
+        }
 
         if (powerText != null && previewUnit != null)
-            powerText.text = previewUnit.GetAttackDamageStat().Value.ToString();
+        {
+            int power = Mathf.RoundToInt(previewUnit.GetAttackDamageStat().Value);
+            powerText.text = power.ToString();
+        }
 
         if (levelText != null)
         {
@@ -80,6 +86,28 @@ public class UnitInfoDisplay : MonoBehaviour
 
         RefreshHeroEffectList(unitId, heroLv);
         RefreshSkillList(unitData);
+    }
+
+    /// <summary>
+    /// 등급 숫자를 이름으로 변환
+    /// </summary>
+    private string GetRankName(int rank)
+    {
+        switch (rank)
+        {
+            case 1:
+                return "노멀";
+            case 2:
+                return "레어";
+            case 3:
+                return "유니크";
+            case 4:
+                return "레전드";
+            case 5:
+                return "에픽";
+            default:
+                return $"등급 {rank}";
+        }
     }
 
     private async UniTaskVoid LoadUnitIconAsync(string key)
@@ -281,6 +309,7 @@ public class UnitInfoDisplay : MonoBehaviour
         if (heroEffectListParent == null)
             return;
 
+        // 기존 자식 제거
         foreach (Transform child in heroEffectListParent)
             Destroy(child.gameObject);
 
@@ -290,6 +319,7 @@ public class UnitInfoDisplay : MonoBehaviour
         if (heroTable == null || effectTable == null)
             return;
 
+        // 1부터 4까지 순서대로 생성 (위에서 아래로)
         for (int lv = 1; lv <= HERO_MAX; lv++)
         {
             var enforce = heroTable.Get(unitId, lv);
@@ -308,6 +338,10 @@ public class UnitInfoDisplay : MonoBehaviour
             if (prefab == null) continue;
 
             var go = Instantiate(prefab, heroEffectListParent);
+
+            // 명시적으로 순서 지정 (lv-1 = 0, 1, 2, 3 순서)
+            go.transform.SetSiblingIndex(lv - 1);
+
             var txt = go.GetComponentInChildren<TextMeshProUGUI>();
 
             if (txt != null)

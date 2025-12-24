@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using GameData;
 using UnityEngine;
 
@@ -21,12 +21,41 @@ public class HeroEnforceSystem
 
     private OwnedCharacter GetCharacter(Unit unit)
     {
+        if (unit == null)
+        {
+            Debug.LogError("[HeroEnforceSystem] GetCharacter: unit is null");
+            return null;
+        }
+
+        if (DatabaseManager.Instance == null)
+        {
+            Debug.LogError("[HeroEnforceSystem] GetCharacter: DatabaseManager.Instance is null");
+            return null;
+        }
+
         return DatabaseManager.Instance.GetCharacter(unit.BaseCharacterID.ToString());
     }
 
     public bool CanEnforce(Unit unit, out string reason)
     {
+        // Unit null 체크
+        if (unit == null)
+        {
+            reason = "유닛이 null입니다";
+            Debug.LogError("[HeroEnforceSystem] CanEnforce: unit is null");
+            return false;
+        }
+
         var ch = GetCharacter(unit);
+
+        // Character null 체크
+        if (ch == null)
+        {
+            reason = "캐릭터 데이터 없음";
+            Debug.LogWarning($"[HeroEnforceSystem] CanEnforce: character is null for unit {unit.BaseCharacterID}");
+            return false;
+        }
+
         int next = ch.heroEnforceLevel + 1;
 
         if (next > MAX_LEVEL)
@@ -35,10 +64,19 @@ public class HeroEnforceSystem
             return false;
         }
 
+        // table null 체크
+        if (table == null)
+        {
+            reason = "강화 테이블이 null입니다";
+            Debug.LogError("[HeroEnforceSystem] CanEnforce: table is null");
+            return false;
+        }
+
         var row = table.Get(unit.BaseCharacterID, next);
         if (row == null)
         {
             reason = "데이터 없음";
+            Debug.LogWarning($"[HeroEnforceSystem] CanEnforce: row is null for BaseCharacterID {unit.BaseCharacterID}, level {next}");
             return false;
         }
 
@@ -49,6 +87,15 @@ public class HeroEnforceSystem
         }
 
         var unitData = unit.GetUnitData();
+
+        // unitData null 체크
+        if (unitData == null)
+        {
+            reason = "유닛 데이터가 null입니다";
+            Debug.LogError($"[HeroEnforceSystem] CanEnforce: unitData is null for unit {unit.BaseCharacterID}");
+            return false;
+        }
+
         int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
 
         if (fragmentItemId <= 0)
@@ -63,7 +110,6 @@ public class HeroEnforceSystem
             return false;
         }
 
-
         reason = "";
         return true;
     }
@@ -72,51 +118,93 @@ public class HeroEnforceSystem
     {
         if (!CanEnforce(unit, out string reason))
         {
+            Debug.LogWarning($"[HeroEnforceSystem] TryEnforceAsync failed: {reason}");
             return false;
         }
 
         var ch = GetCharacter(unit);
+        if (ch == null)
+        {
+            Debug.LogError("[HeroEnforceSystem] TryEnforceAsync: character is null");
+            return false;
+        }
+
         int nextLv = ch.heroEnforceLevel + 1;
+
+        if (table == null)
+        {
+            Debug.LogError("[HeroEnforceSystem] TryEnforceAsync: table is null");
+            return false;
+        }
+
         var row = table.Get(unit.BaseCharacterID, nextLv);
+        if (row == null)
+        {
+            Debug.LogError($"[HeroEnforceSystem] TryEnforceAsync: row is null for BaseCharacterID {unit.BaseCharacterID}, level {nextLv}");
+            return false;
+        }
 
         var unitData = unit.GetUnitData();
+        if (unitData == null)
+        {
+            Debug.LogError($"[HeroEnforceSystem] TryEnforceAsync: unitData is null");
+            return false;
+        }
+
         int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
 
-        // 재화 차감 병렬 실행
+
         await UniTask.WhenAll(
             DatabaseManager.Instance.AddGoldAsync(-row.Gold_Cost),
             DatabaseManager.Instance.AddItemAsync(fragmentItemId, -row.IngredientNum)
         );
 
-        // DB 저장
         ch.heroEnforceLevel = nextLv;
         await DatabaseManager.Instance.SaveCharacterAsync(ch.id);
 
-        // 인게임 유닛에 적용 단일 레벨만 추가 적용
-        var effect = effectTable.Get(row.Hero_Enforce_EffectID);
-        ApplyEffectToUnit(unit, effect, nextLv);
+        if (effectTable != null)
+        {
+            var effect = effectTable.Get(row.Hero_Enforce_EffectID);
+            ApplyEffectToUnit(unit, effect, nextLv);
+        }
+        else
+        {
+            Debug.LogWarning("[HeroEnforceSystem] TryEnforceAsync: effectTable is null");
+        }
 
-        // 업적 연동 (백그라운드 처리)
         AchievementManager.AddHeroUpgradeSuccessAsync(1).Forget();
 
-        // 최대 레벨 달성 시 업적
         if (nextLv >= MAX_LEVEL)
             AchievementManager.CompleteHeroUpgradeMaxAsync().Forget();
 
+        Debug.Log($"[HeroEnforceSystem] 영웅 강화 성공: {unit.BaseCharacterID} LV {nextLv}");
         return true;
     }
 
     private void ApplyEffectToUnit(Unit unit, DataTable_HeroEnforceEffect.HeroEnforceEffectData effect, int level)
     {
+        if (unit == null)
+        {
+            Debug.LogError("[HeroEnforceSystem] ApplyEffectToUnit: unit is null");
+            return;
+        }
+
         if (effect == null)
         {
-            Debug.LogError($"[HeroEnforce] effect is null");
+            Debug.LogError($"[HeroEnforceSystem] ApplyEffectToUnit: effect is null");
+            return;
+        }
+
+        var unitData = unit.GetUnitData();
+        if (unitData == null)
+        {
+            Debug.LogError($"[HeroEnforceSystem] ApplyEffectToUnit: unitData is null");
             return;
         }
 
         // 스킬 매칭 검사
-        int skill1 = unit.GetUnitData().UNIT_SKILL1;
-        int skill2 = unit.GetUnitData().UNIT_SKILL2;
+        int skill1 = unitData.UNIT_SKILL1;
+        int skill2 = unitData.UNIT_SKILL2;
 
         bool skillMatched = false;
 

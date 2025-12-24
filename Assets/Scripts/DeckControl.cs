@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using GameData;
 using System.Collections.Generic;
 using UnityEngine;
@@ -29,7 +29,7 @@ public class DeckControl : MonoBehaviour
 
     [Header("External References")]
     public StageDeck stageDeck;
-    public BattleUnitManager battleUnitManager; 
+    public BattleUnitManager battleUnitManager;
 
     // Data
     private DataTable_Unit unitTable;
@@ -110,7 +110,7 @@ public class DeckControl : MonoBehaviour
 
         await CreateNewUnitCards();
 
-  
+
         DatabaseManager.Instance.SyncPresetsToPlayData();
 
         LoadPresets();
@@ -202,16 +202,33 @@ public class DeckControl : MonoBehaviour
         DatabaseManager.Instance.SyncPresetsToPlayData();
         LoadPresets();
 
-
-        bool activePresetEmpty = PlayData.IsPresetCompletelyEmpty(activePresetIndex);
-
-        if (activePresetEmpty)
+        bool isFirstTime = true;
+        for (int i = 0; i < 5; i++)
         {
-            Debug.LogWarning($"[DeckControl] 활성 프리셋({activePresetIndex})이 비어있음 → 자동 편성 시작");
-            await AutoFillPresetIfEmpty(activePresetIndex);
+            if (!PlayData.IsPresetCompletelyEmpty(i))
+            {
+                isFirstTime = false;
+                break;
+            }
+        }
+
+        if (isFirstTime)
+        {
+            Debug.Log("[DeckControl] 첫 시작 감지 → 모든 프리셋을 기본 유닛으로 채웁니다");
+            for (int i = 0; i < 5; i++)
+            {
+                await AutoFillPresetIfEmpty(i);
+            }
         }
         else
         {
+            bool activePresetEmpty = PlayData.IsPresetCompletelyEmpty(activePresetIndex);
+
+            if (activePresetEmpty)
+            {
+                Debug.LogWarning($"[DeckControl] 활성 프리셋({activePresetIndex})이 비어있음 → 자동 편성 시작");
+                await AutoFillPresetIfEmpty(activePresetIndex);
+            }
         }
 
         LoadPreset(activePresetIndex);
@@ -241,7 +258,7 @@ public class DeckControl : MonoBehaviour
                 iconAddress = data.UNIT_ICON,
                 rawData = data,
 
-                enforceLevel = enforceLevel 
+                enforceLevel = enforceLevel
             };
 
             var loadTask = Addressables.LoadAssetAsync<Sprite>(model.iconAddress).Task.AsUniTask()
@@ -306,7 +323,7 @@ public class DeckControl : MonoBehaviour
 
             DeckUnitModel model = unitModelMap[unitId];
 
- 
+
             if (string.IsNullOrEmpty(model.iconAddress))
             {
                 Debug.LogWarning($"[DeckControl] {unitId} 아이콘 주소 누락 - 보정 시도");
@@ -322,8 +339,8 @@ public class DeckControl : MonoBehaviour
 
         if (filledCount > 0)
         {
-
             bool saved = await DatabaseManager.Instance.SavePresetFromPlayDataAsync(presetIndex);
+            Debug.Log($"[DeckControl] 프리셋 {presetIndex} 자동 편성 완료 - {filledCount}개 유닛 배치");
         }
         else
         {
@@ -337,6 +354,17 @@ public class DeckControl : MonoBehaviour
         PlayData.currentSelectedPreset = index;
 
         await DatabaseManager.Instance.SetActivePresetAsync(index);
+
+        // 선택한 프리셋이 비어있으면 자동으로 채움
+        if (PlayData.IsPresetCompletelyEmpty(index))
+        {
+            Debug.LogWarning($"[DeckControl] 프리셋 {index}가 비어있음 → 자동 편성");
+            await AutoFillPresetIfEmpty(index);
+
+            // 자동 편성 후 데이터 다시 로드
+            DatabaseManager.Instance.SyncPresetsToPlayData();
+            LoadPresets();
+        }
 
         LoadPreset(index);
         UpdatePresetButtonsStates();
@@ -392,7 +420,7 @@ public class DeckControl : MonoBehaviour
                         preset.units[i] = unitModelMap[id];
                     else
                     {
-         
+
                         preset.units[i] = new DeckUnitModel
                         {
                             unitId = id,
@@ -787,4 +815,3 @@ public class DeckControl : MonoBehaviour
 
 
 }
-

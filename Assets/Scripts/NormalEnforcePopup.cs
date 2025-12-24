@@ -132,14 +132,14 @@ public class NormalEnforcePopup : MonoBehaviour
         float currAtk = currentPreviewUnit.GetAttackDamageStat().Value;
 
         if (powerCurrent != null)
-            powerCurrent.text = currAtk.ToString("F1");
+            powerCurrent.text = currAtk.ToString();
 
         // 다음 공격력 계산
         if (lv < NORMAL_MAX)
         {
             float nextAtk = enforceSystem.GetNextAttack(currentPreviewUnit);
             if (powerNext != null)
-                powerNext.text = nextAtk.ToString("F1");
+                powerNext.text = nextAtk.ToString();
         }
         else
         {
