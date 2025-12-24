@@ -1,7 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using TMPro;
+using System.Text.RegularExpressions;
 
 public class LoginUI : MonoBehaviour
 {
@@ -23,34 +24,206 @@ public class LoginUI : MonoBehaviour
     [SerializeField] private Button signupButton;
     [SerializeField] private Button backToLoginButton;
 
+    [Header("Validation Messages")]
+    [SerializeField] private TextMeshProUGUI signupEmailValidationText;
+    [SerializeField] private TextMeshProUGUI signupPasswordValidationText;
+    [SerializeField] private TextMeshProUGUI signupPasswordConfirmValidationText;
+
     [Header("Feedback")]
     [SerializeField] private TextMeshProUGUI feedbackText;
     [SerializeField] private GameObject loadingIndicator;
 
+    [Header("Validation Settings")]
+    [SerializeField] private float messageFadeDuration = 3f;
+    [SerializeField] private float fadeOutDuration = 0.5f;
 
-    [SerializeField]private GameInitializer gameInitializer;
+    [SerializeField] private GameInitializer gameInitializer;
 
     private void Start()
     {
         if (loginButton != null)
             loginButton.onClick.AddListener(() => OnLoginButtonClick().Forget());
-        
+
         if (goToSignupButton != null)
             goToSignupButton.onClick.AddListener(ShowSignupPanel);
-        
+
         if (guestLoginButton != null)
             guestLoginButton.onClick.AddListener(() => OnGuestLoginButtonClick().Forget());
-        
+
         if (signupButton != null)
             signupButton.onClick.AddListener(() => OnSignupButtonClick().Forget());
-        
+
         if (backToLoginButton != null)
             backToLoginButton.onClick.AddListener(ShowLoginPanel);
+
+        // 회원가입 입력 필드에 실시간 검증 리스너 추가
+        if (signupEmailInput != null)
+            signupEmailInput.onValueChanged.AddListener(OnSignupEmailChanged);
+
+        if (signupPasswordInput != null)
+            signupPasswordInput.onValueChanged.AddListener(OnSignupPasswordChanged);
+
+        if (signupPasswordConfirmInput != null)
+            signupPasswordConfirmInput.onValueChanged.AddListener(OnSignupPasswordConfirmChanged);
+
+        // 검증 메시지 초기화
+        HideValidationMessage(signupEmailValidationText);
+        HideValidationMessage(signupPasswordValidationText);
+        HideValidationMessage(signupPasswordConfirmValidationText);
 
         ShowLoginPanel();
     }
 
-   
+    #region Validation Methods
+
+    /// <summary>
+    /// 이메일 입력 검증
+    /// </summary>
+    private void OnSignupEmailChanged(string email)
+    {
+        if (string.IsNullOrEmpty(email))
+        {
+            HideValidationMessage(signupEmailValidationText);
+            return;
+        }
+
+        if (!IsValidEmail(email))
+        {
+            ShowValidationMessage(signupEmailValidationText, "이메일 형식으로 입력");
+        }
+        else
+        {
+            HideValidationMessage(signupEmailValidationText);
+        }
+    }
+
+    /// <summary>
+    /// 비밀번호 입력 검증
+    /// </summary>
+    private void OnSignupPasswordChanged(string password)
+    {
+        if (string.IsNullOrEmpty(password))
+        {
+            HideValidationMessage(signupPasswordValidationText);
+            return;
+        }
+
+        if (password.Length < 6)
+        {
+            ShowValidationMessage(signupPasswordValidationText, "비밀번호는 6글자 이상");
+        }
+        else
+        {
+            HideValidationMessage(signupPasswordValidationText);
+        }
+
+        // 비밀번호 확인 필드도 함께 검증
+        if (signupPasswordConfirmInput != null && !string.IsNullOrEmpty(signupPasswordConfirmInput.text))
+        {
+            OnSignupPasswordConfirmChanged(signupPasswordConfirmInput.text);
+        }
+    }
+
+    /// <summary>
+    /// 비밀번호 확인 입력 검증
+    /// </summary>
+    private void OnSignupPasswordConfirmChanged(string passwordConfirm)
+    {
+        if (string.IsNullOrEmpty(passwordConfirm))
+        {
+            HideValidationMessage(signupPasswordConfirmValidationText);
+            return;
+        }
+
+        if (signupPasswordInput != null && passwordConfirm != signupPasswordInput.text)
+        {
+            ShowValidationMessage(signupPasswordConfirmValidationText, "비밀번호가 일치하지 않습니다");
+        }
+        else
+        {
+            HideValidationMessage(signupPasswordConfirmValidationText);
+        }
+    }
+
+    /// <summary>
+    /// 이메일 형식 검증
+    /// </summary>
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        try
+        {
+            // 간단한 이메일 정규식 패턴
+            string pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+            return Regex.IsMatch(email, pattern);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 검증 메시지 표시 및 자동 페이드아웃
+    /// </summary>
+    private void ShowValidationMessage(TextMeshProUGUI validationText, string message)
+    {
+        if (validationText == null) return;
+
+        validationText.text = message;
+        validationText.color = new Color(1f, 0f, 0f, 1f); // 빨간색
+        validationText.gameObject.SetActive(true);
+
+        // 기존 페이드 작업 취소 및 새로운 페이드 시작
+        FadeOutValidationMessage(validationText).Forget();
+    }
+
+    /// <summary>
+    /// 검증 메시지 즉시 숨김
+    /// </summary>
+    private void HideValidationMessage(TextMeshProUGUI validationText)
+    {
+        if (validationText == null) return;
+        validationText.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 검증 메시지 페이드아웃 애니메이션
+    /// </summary>
+    private async UniTaskVoid FadeOutValidationMessage(TextMeshProUGUI validationText)
+    {
+        if (validationText == null) return;
+
+        // 메시지가 표시된 상태로 대기
+        await UniTask.Delay((int)(messageFadeDuration * 1000));
+
+        // 페이드아웃
+        float elapsedTime = 0f;
+        Color startColor = validationText.color;
+
+        while (elapsedTime < fadeOutDuration)
+        {
+            if (validationText == null) return;
+
+            elapsedTime += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / fadeOutDuration);
+            validationText.color = new Color(startColor.r, startColor.g, startColor.b, alpha);
+            await UniTask.Yield();
+        }
+
+        // 완전히 숨김
+        if (validationText != null)
+        {
+            validationText.gameObject.SetActive(false);
+        }
+    }
+
+    #endregion
+
+    #region Login/Signup Methods
+
     private async UniTaskVoid OnLoginButtonClick()
     {
         string email = loginEmailInput.text.Trim();
@@ -73,8 +246,7 @@ public class LoginUI : MonoBehaviour
         if (success)
         {
             ShowFeedback("로그인 성공!", true);
-            
-            // 로그인 성공 - GameInitializer에 알림
+
             if (gameInitializer != null)
             {
                 gameInitializer.OnLoginSuccess();
@@ -95,21 +267,28 @@ public class LoginUI : MonoBehaviour
         string password = signupPasswordInput.text;
         string passwordConfirm = signupPasswordConfirmInput.text;
 
+        // 최종 검증
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
             ShowFeedback("이메일과 비밀번호를 입력해주세요.", false);
             return;
         }
 
-        if (password != passwordConfirm)
+        if (!IsValidEmail(email))
         {
-            ShowFeedback("비밀번호가 일치하지 않습니다.", false);
+            ShowFeedback("유효한 이메일 형식이 아닙니다.", false);
             return;
         }
 
         if (password.Length < 6)
         {
             ShowFeedback("비밀번호는 6자 이상이어야 합니다.", false);
+            return;
+        }
+
+        if (password != passwordConfirm)
+        {
+            ShowFeedback("비밀번호가 일치하지 않습니다.", false);
             return;
         }
 
@@ -124,8 +303,7 @@ public class LoginUI : MonoBehaviour
         if (success)
         {
             ShowFeedback("회원가입 성공!", true);
-            
-            // 회원가입 성공 후 자동 로그인
+
             if (gameInitializer != null)
             {
                 gameInitializer.OnLoginSuccess();
@@ -137,7 +315,6 @@ public class LoginUI : MonoBehaviour
         }
     }
 
-   
     private async UniTaskVoid OnGuestLoginButtonClick()
     {
         SetUIInteractable(false);
@@ -166,11 +343,15 @@ public class LoginUI : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region UI Panel Methods
+
     private void ShowLoginPanel()
     {
         if (loginPanel != null)
             loginPanel.SetActive(true);
-        
+
         if (signupPanel != null)
             signupPanel.SetActive(false);
 
@@ -185,12 +366,17 @@ public class LoginUI : MonoBehaviour
     {
         if (loginPanel != null)
             loginPanel.SetActive(false);
-        
+
         if (signupPanel != null)
             signupPanel.SetActive(true);
 
         ClearInputFields();
         ShowFeedback("", true);
+
+        // 검증 메시지 초기화
+        HideValidationMessage(signupEmailValidationText);
+        HideValidationMessage(signupPasswordValidationText);
+        HideValidationMessage(signupPasswordConfirmValidationText);
     }
 
     /// <summary>
@@ -204,6 +390,10 @@ public class LoginUI : MonoBehaviour
         if (signupPasswordInput != null) signupPasswordInput.text = "";
         if (signupPasswordConfirmInput != null) signupPasswordConfirmInput.text = "";
     }
+
+    #endregion
+
+    #region Feedback Methods
 
     /// <summary>
     /// 피드백 메시지 표시
@@ -258,23 +448,24 @@ public class LoginUI : MonoBehaviour
 
         if (lowerError.Contains("email") && lowerError.Contains("already"))
             return "이미 사용 중인 이메일입니다.";
-        
+
         if (lowerError.Contains("invalid") && lowerError.Contains("email"))
             return "유효하지 않은 이메일 형식입니다.";
-        
+
         if (lowerError.Contains("weak") && lowerError.Contains("password"))
             return "비밀번호가 너무 약합니다. (최소 6자 이상)";
-        
+
         if (lowerError.Contains("wrong") && lowerError.Contains("password"))
             return "잘못된 비밀번호입니다.";
-        
+
         if (lowerError.Contains("user") && lowerError.Contains("not") && lowerError.Contains("found"))
             return "등록되지 않은 사용자입니다.";
-        
+
         if (lowerError.Contains("network"))
             return "네트워크 연결을 확인해주세요.";
 
-        // 기본 에러 메시지
         return $"오류: {error}";
     }
+
+    #endregion
 }
