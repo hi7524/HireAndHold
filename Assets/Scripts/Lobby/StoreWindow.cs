@@ -14,12 +14,12 @@ public class StoreWindow : GenericWindow
     [SerializeField] private GachaManager gachaManager;
 
     [Header("UI Panels")]
-       [SerializeField] private GameObject gachaResultPanel;
+    [SerializeField] private GameObject gachaResultPanel;
 
     [Header("Result UI")]
     [SerializeField] private Transform resultContainer;
     [SerializeField] private GameObject gachaResultCardPrefab;
-    
+
     [Header("Buttons")]
     [SerializeField] private UnityEngine.UI.Button skipButton;
     [SerializeField] private UnityEngine.UI.Button closeButton;
@@ -35,11 +35,12 @@ public class StoreWindow : GenericWindow
     private int currentGachaCount = 0;
 
     [Header("Door Animation")]
-    [SerializeField] private GameObject doorPanel;
-    [SerializeField] private Image doorImage;
-    [SerializeField] private GameObject swipeHintText; 
     [SerializeField] private float doorFadeDuration = 0.5f;
-    [SerializeField] private float swipeThreshold = 100f; 
+    [SerializeField] private float swipeThreshold = 100f;
+    [SerializeField] private GameObject doorPanel;
+    [SerializeField] private UISpriteFrameAnimation doorAnimation;
+    [SerializeField] private GameObject swipeHintText;
+    private bool hasShownSwipeHint = false;
 
     private bool isDoorActive = false;
     private bool isWaitingForSwipe = false;
@@ -48,28 +49,26 @@ public class StoreWindow : GenericWindow
     private bool isPlaying = false;
     private CancellationTokenSource cts;
 
-    private bool isPlayingAnimation = false; 
+    private bool isPlayingAnimation = false;
     private bool isSkipping = false;
+
+    private GachaResult pendingResult = null;
 
     private void Start()
     {
-        // 초기 상태 설정
         isPlaying = false;
-        
-        // 이벤트 구독
+
         if (gachaManager != null)
         {
             gachaManager.OnGachaComplete += OnGachaComplete;
             gachaManager.OnGachaError += OnGachaError;
         }
-        
 
-        // 버튼 이벤트
         if (skipButton != null)
         {
             skipButton.onClick.AddListener(OnClickSkip);
         }
-        
+
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(OnClickClose);
@@ -90,6 +89,14 @@ public class StoreWindow : GenericWindow
         if (isPlaying) return;
 
         currentGachaCount = 1;
+        isPlaying = true;
+
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = new CancellationTokenSource();
+
+        ShowDoorImmediately(cts.Token).Forget();
+
         gachaManager.ExecuteGacha(GachaType.Normal, 1);
     }
 
@@ -99,6 +106,14 @@ public class StoreWindow : GenericWindow
         if (isPlaying) return;
 
         currentGachaCount = 10;
+        isPlaying = true;
+
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = new CancellationTokenSource();
+
+        ShowDoorImmediately(cts.Token).Forget();
+
         gachaManager.ExecuteGacha(GachaType.Normal, 10);
     }
 
@@ -108,6 +123,14 @@ public class StoreWindow : GenericWindow
         if (isPlaying) return;
 
         currentGachaCount = 1;
+        isPlaying = true;
+
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = new CancellationTokenSource();
+
+        ShowDoorImmediately(cts.Token).Forget();
+
         gachaManager.ExecuteGacha(GachaType.Premium, 1);
     }
 
@@ -116,55 +139,88 @@ public class StoreWindow : GenericWindow
         if (isPlaying) return;
 
         currentGachaCount = 10;
-        gachaManager.ExecuteGacha(GachaType.Premium, 10);
-    }
-
-
-
-    /// <summary>
-    /// 가챠 완료 이벤트 핸들러
-    /// </summary>
-    private async void OnGachaComplete(GachaResult result)
-    {
-        if (result == null)
-        {
-            Debug.LogError("[StoreWindow] GachaResult가 null입니다!");
-            return;
-        }
+        isPlaying = true;
         cts?.Cancel();
         cts?.Dispose();
         cts = new CancellationTokenSource();
-        
+
+        ShowDoorImmediately(cts.Token).Forget();
+
+        gachaManager.ExecuteGacha(GachaType.Premium, 10);
+    }
+
+    /// <summary>
+    /// 버튼 클릭 즉시 문 연출 시작
+    /// </summary>
+    private async UniTaskVoid ShowDoorImmediately(CancellationToken ct)
+    {
         try
         {
-            await PlayResultAnimationAsync(result, cts.Token);
+            await ShowDoorAsync(ct);
+            var waitResultTask = WaitForGachaResultAsync(ct);
+            await WaitForSwipeAsync(ct);
+
+            await waitResultTask;
+
+            if (pendingResult != null)
+            {
+                await ShowResultCardsAsync(pendingResult, ct);
+                pendingResult = null;
+            }
         }
         catch (OperationCanceledException)
         {
+            Debug.Log("[StoreWindow] 문 연출 취소됨");
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
-            Debug.LogError($"[StoreWindow] 가챠 결과 처리 중 오류: {ex.Message}");
-            // 오류 발생 시에도 상태 리셋
+            Debug.LogError($"[StoreWindow] 문 연출 중 오류: {ex.Message}");
             isPlaying = false;
         }
     }
 
     /// <summary>
-    /// 가챠 에러 핸들러
+    /// 가챠 결과 대기
     /// </summary>
-    private void OnGachaError(string errorMessage)
+    private async UniTask WaitForGachaResultAsync(CancellationToken ct)
     {
-        Debug.LogWarning($"[GachaUI] {errorMessage}");
-        
+        float waitTime = 0f;
+        float maxWaitTime = 5f;
+
+        while (pendingResult == null && waitTime < maxWaitTime)
+        {
+            ct.ThrowIfCancellationRequested();
+            await UniTask.Delay(100, cancellationToken: ct);
+            waitTime += 0.1f;
+        }
+
+        if (pendingResult == null)
+        {
+            Debug.LogWarning("[StoreWindow] 가챠 결과를 받지 못했습니다");
+            isPlaying = false;
+        }
     }
 
     /// <summary>
-    /// 결과 애니메이션 재생
+    /// 가챠 완료 이벤트 핸들러
     /// </summary>
-    private async UniTask PlayResultAnimationAsync(GachaResult result, CancellationToken ct)
+    private void OnGachaComplete(GachaResult result)
     {
-        isPlaying = true;
+        if (result == null)
+        {
+            Debug.LogError("[StoreWindow] GachaResult가 null입니다!");
+            isPlaying = false;
+            return;
+        }
+
+        pendingResult = result;
+    }
+
+    /// <summary>
+    /// 결과 카드 표시
+    /// </summary>
+    private async UniTask ShowResultCardsAsync(GachaResult result, CancellationToken ct)
+    {
         isPlayingAnimation = true;
         isSkipping = false;
 
@@ -173,10 +229,6 @@ public class StoreWindow : GenericWindow
 
         try
         {
-            // 문 → 슬라이드 → 결과 연출
-            await ShowDoorAsync(ct);
-            await WaitForSwipeAsync(ct);
-
             if (gachaResultPanel != null)
                 gachaResultPanel.SetActive(true);
 
@@ -209,6 +261,15 @@ public class StoreWindow : GenericWindow
         }
     }
 
+    /// <summary>
+    /// 가챠 에러 핸들러
+    /// </summary>
+    private void OnGachaError(string errorMessage)
+    {
+        Debug.LogWarning($"[GachaUI] {errorMessage}");
+        isPlaying = false;
+        pendingResult = null;
+    }
 
     private void ShowAllRemainingCards(GachaResult result, int startIndex)
     {
@@ -229,12 +290,9 @@ public class StoreWindow : GenericWindow
             canvasGroup.alpha = 1f;
         }
     }
-
-
-
-    // <summary>
-    // 결과 카드 표시
-    // </summary>
+    /// <summary>
+    /// 결과 카드 표시
+    /// </summary>
     private async UniTask ShowResultCardAsync(GachaItem item, int index, CancellationToken ct)
     {
         if (gachaResultCardPrefab == null || resultContainer == null)
@@ -245,7 +303,7 @@ public class StoreWindow : GenericWindow
         // 카드 생성
         GameObject cardObj = Instantiate(gachaResultCardPrefab, resultContainer);
         var card = cardObj.GetComponent<GachaResultCard>();
-        
+
         if (card != null)
         {
             card.Setup(item);
@@ -254,7 +312,7 @@ public class StoreWindow : GenericWindow
         // 애니메이션
         RectTransform rectTransform = cardObj.GetComponent<RectTransform>();
         CanvasGroup canvasGroup = cardObj.GetComponent<CanvasGroup>();
-        
+
         if (canvasGroup == null)
         {
             canvasGroup = cardObj.AddComponent<CanvasGroup>();
@@ -271,7 +329,7 @@ public class StoreWindow : GenericWindow
 
             elapsed += Time.unscaledDeltaTime;
             float t = elapsed / cardAnimationDuration;
-            
+
             float scale = Mathf.Lerp(0f, 1f, EaseOutBack(t));
             rectTransform.localScale = Vector3.one * scale;
             canvasGroup.alpha = t;
@@ -281,12 +339,6 @@ public class StoreWindow : GenericWindow
 
         rectTransform.localScale = Vector3.one;
         canvasGroup.alpha = 1f;
-
-        // // 특수 효과
-        // if (item.rarity == GachaRarity.Legendary)
-        // {
-        //     PlayLegendaryEffect(cardObj);
-        // }
     }
 
     private float EaseOutBack(float t)
@@ -295,11 +347,6 @@ public class StoreWindow : GenericWindow
         float c3 = c1 + 1f;
         return 1f + c3 * Mathf.Pow(t - 1f, 3f) + c1 * Mathf.Pow(t - 1f, 2f);
     }
-
-    // private void PlayLegendaryEffect(GameObject cardObj)
-    // {
-    //     // ParticleSystem, SFX 재생
-    // }
 
     private void ClearResultCards()
     {
@@ -310,6 +357,7 @@ public class StoreWindow : GenericWindow
             Destroy(child.gameObject);
         }
     }
+
     private void OnClickSkip()
     {
         if (isDoorActive && isWaitingForSwipe)
@@ -331,6 +379,22 @@ public class StoreWindow : GenericWindow
             Debug.Log("[StoreWindow] Skip 버튼 클릭 - 연출 스킵");
             isSkipping = true;
         }
+
+        if (isDoorActive && isWaitingForSwipe)
+        {
+            isWaitingForSwipe = false;
+
+            doorAnimation?.ShowLastFrame();
+
+            if (swipeHintText != null)
+                swipeHintText.SetActive(false);
+
+            if (doorPanel != null)
+                doorPanel.SetActive(false);
+
+            isDoorActive = false;
+        }
+
     }
 
 
@@ -341,9 +405,13 @@ public class StoreWindow : GenericWindow
         isPlaying = false;
         isPlayingAnimation = false;
         isSkipping = false;
+        pendingResult = null;
 
         if (gachaResultPanel != null)
             gachaResultPanel.SetActive(false);
+
+        if (doorPanel != null)
+            doorPanel.SetActive(false);
 
         ClearResultCards();
     }
@@ -389,31 +457,11 @@ public class StoreWindow : GenericWindow
         if (doorPanel != null)
             doorPanel.SetActive(true);
 
-        if (doorImage != null)
+        if (doorAnimation != null)
         {
-            var color = doorImage.color;
-            color.a = 0f;
-            doorImage.color = color;
-
-            // 페이드 인
-            float elapsed = 0f;
-            while (elapsed < doorFadeDuration)
-            {
-                ct.ThrowIfCancellationRequested();
-                elapsed += Time.unscaledDeltaTime;
-                float t = elapsed / doorFadeDuration;
-
-                color.a = t;
-                doorImage.color = color;
-
-                await UniTask.Yield(PlayerLoopTiming.Update, ct);
-            }
-
-            color.a = 1f;
-            doorImage.color = color;
+            await doorAnimation.PlayOnceAsync(ct);
         }
 
-        // "슬라이드하세요" 텍스트 표시
         if (swipeHintText != null)
             swipeHintText.SetActive(true);
 
@@ -428,51 +476,57 @@ public class StoreWindow : GenericWindow
     /// </summary>
     private async UniTask WaitForSwipeAsync(CancellationToken ct)
     {
+        hasShownSwipeHint = false;
+
         while (isWaitingForSwipe)
         {
             ct.ThrowIfCancellationRequested();
 
+            Vector2 currentPos = Vector2.zero;
+            bool isPressed = false;
+            bool isReleased = false;
+
             // PC
             if (Mouse.current != null)
             {
-                if (Mouse.current.leftButton.wasPressedThisFrame)
-                    swipeStartPos = Mouse.current.position.ReadValue();
-
-                else if (Mouse.current.leftButton.wasReleasedThisFrame)
-                {
-                    Vector2 delta = Mouse.current.position.ReadValue() - swipeStartPos;
-
-                    if (delta.x > swipeThreshold)
-                    {
-                        isWaitingForSwipe = false;
-
-                        FadeOutDoorAsync(ct).Forget();
-
-                        break;
-                    }
-                }
+                isPressed = Mouse.current.leftButton.isPressed;
+                isReleased = Mouse.current.leftButton.wasReleasedThisFrame;
+                currentPos = Mouse.current.position.ReadValue();
             }
 
             // Mobile
             if (Touchscreen.current != null)
             {
                 var touch = Touchscreen.current.primaryTouch;
+                isPressed = touch.press.isPressed;
+                isReleased = touch.press.wasReleasedThisFrame;
+                currentPos = touch.position.ReadValue();
+            }
 
-                if (touch.press.wasPressedThisFrame)
-                    swipeStartPos = touch.position.ReadValue();
+            if (isPressed && !hasShownSwipeHint)
+            {
+                Vector2 delta = currentPos - swipeStartPos;
 
-                else if (touch.press.wasReleasedThisFrame)
+                if (Mathf.Abs(delta.x) > 10f) // 살짝만 움직여도
                 {
-                    Vector2 delta = touch.position.ReadValue() - swipeStartPos;
+                    hasShownSwipeHint = true;
 
-                    if (delta.x > swipeThreshold)
-                    {
-                        isWaitingForSwipe = false;
+                    if (swipeHintText != null)
+                        swipeHintText.SetActive(true);
 
-                        FadeOutDoorAsync(ct).Forget();
+                    PlaySwipeHintPulseAsync(ct).Forget();
+                }
+            }
 
-                        break;
-                    }
+            if (isReleased)
+            {
+                Vector2 delta = currentPos - swipeStartPos;
+
+                if (delta.x > swipeThreshold)
+                {
+                    isWaitingForSwipe = false;
+                    FadeOutDoorAsync(ct).Forget();
+                    break;
                 }
             }
 
@@ -480,44 +534,18 @@ public class StoreWindow : GenericWindow
         }
     }
 
+
     private async UniTask FadeOutDoorAsync(CancellationToken ct)
     {
         if (swipeHintText != null)
             swipeHintText.SetActive(false);
-
-        if (doorImage == null) return;
-
-        float duration = 0.6f;
-        float elapsed = 0f;
-
-        Color startColor = doorImage.color;
-
-        while (elapsed < duration)
-        {
-            ct.ThrowIfCancellationRequested();
-            elapsed += Time.unscaledDeltaTime;
-
-            float t = elapsed / duration;
-
-            // Ease Out
-            float smooth = 1f - Mathf.Pow(1f - t, 3f);
-
-            // 알파 감소
-            Color c = startColor;
-            c.a = Mathf.Lerp(1f, 0f, smooth);
-            doorImage.color = c;
-
-            await UniTask.Yield(PlayerLoopTiming.Update, ct);
-        }
-
-        // 완전 제거
-        doorImage.color = new Color(startColor.r, startColor.g, startColor.b, 0f);
 
         if (doorPanel != null)
             doorPanel.SetActive(false);
 
         isDoorActive = false;
     }
+
 
     private async UniTask PlaySwipeHintPulseAsync(CancellationToken ct)
     {
@@ -540,7 +568,4 @@ public class StoreWindow : GenericWindow
 
         rect.localScale = baseScale;
     }
-
-
-
 }

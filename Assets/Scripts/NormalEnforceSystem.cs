@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class NormalEnforceSystem
@@ -182,40 +182,97 @@ public class NormalEnforceSystem
 
     public float GetNextAttack(Unit unit)
     {
+        // Unit null 체크
+        if (unit == null)
+        {
+            Debug.LogWarning("[NormalEnforceSystem] GetNextAttack: unit is null");
+            return 0;
+        }
+
         var unitData = unit.GetUnitData();
-        if (unitData == null) return 0;
+        if (unitData == null)
+        {
+            Debug.LogWarning($"[NormalEnforceSystem] GetNextAttack: unitData is null for unit {unit.UnitID}");
+            return 0;
+        }
+
+        // DatabaseManager null 체크
+        if (DatabaseManager.Instance == null)
+        {
+            Debug.LogError("[NormalEnforceSystem] GetNextAttack: DatabaseManager.Instance is null");
+            return unitData.ATTACK;
+        }
 
         // 기본 공격력
         float baseAtk = unitData.ATTACK;
 
         // 현재 강화 레벨
         var character = DatabaseManager.Instance.GetCharacter(unit.UnitID.ToString());
-        int currLv = character.enforceLevel;
 
+        // Character null 체크
+        if (character == null)
+        {
+            Debug.LogWarning($"[NormalEnforceSystem] GetNextAttack: character is null for unit {unit.UnitID}");
+            return baseAtk;
+        }
+
+        int currLv = character.enforceLevel;
         int rank = unitData.RANK;
+
+        // SharedTable null 체크
+        if (SharedTable == null)
+        {
+            Debug.LogError("[NormalEnforceSystem] GetNextAttack: SharedTable is null");
+            return baseAtk;
+        }
+
+        if (SharedTable.All == null)
+        {
+            Debug.LogError("[NormalEnforceSystem] GetNextAttack: SharedTable.All is null");
+            return baseAtk;
+        }
 
         float totalAtkUp = 0f;
 
         // 1 ~ 현재 강화 레벨까지 누적 공격력
-        foreach (var kv in SharedTable.All)
+        try
         {
-            var d = kv.Value;
-            if (d.Class == rank && d.Normal_Enforce_LV <= currLv)
-                totalAtkUp += d.AttackUp;
+            foreach (var kv in SharedTable.All)
+            {
+                if (kv.Value == null) continue;
+
+                var d = kv.Value;
+                if (d.Class == rank && d.Normal_Enforce_LV <= currLv)
+                    totalAtkUp += d.AttackUp;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[NormalEnforceSystem] GetNextAttack: Error calculating totalAtkUp - {ex.Message}");
+            return baseAtk;
         }
 
         float currAtk = baseAtk + totalAtkUp;
 
         // 다음 레벨 강화 데이터 찾기
         float nextAtkUp = 0f;
-        foreach (var kv in SharedTable.All)
+        try
         {
-            var d = kv.Value;
-            if (d.Class == rank && d.Normal_Enforce_LV == currLv + 1)
+            foreach (var kv in SharedTable.All)
             {
-                nextAtkUp = d.AttackUp;
-                break;
+                if (kv.Value == null) continue;
+
+                var d = kv.Value;
+                if (d.Class == rank && d.Normal_Enforce_LV == currLv + 1)
+                {
+                    nextAtkUp = d.AttackUp;
+                    break;
+                }
             }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[NormalEnforceSystem] GetNextAttack: Error calculating nextAtkUp - {ex.Message}");
         }
 
         // 현재 공격력 + 다음 강화 효과
