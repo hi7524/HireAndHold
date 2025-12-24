@@ -87,6 +87,9 @@ public class DatabaseManager : MonoBehaviour
         {
             CurrentUser = CreateNewUserData();
             bool saveResult = await SaveAllAsync();
+
+            // 신규 가입: 1일차 로그인 업적 달성
+            await AchievementManager.UpdateLoginDaysAsync(1);
         }
 
         SyncPresetsToPlayData();
