@@ -1464,6 +1464,253 @@ public class DatabaseManager : MonoBehaviour
 
     #endregion
 
+    #region 던전 입장권 관리
+
+    /// <summary>
+    /// 던전 입장권 자정 체크 및 리셋
+    /// </summary>
+    public async UniTask CheckAndResetDungeonEntriesAsync(int dungeonId)
+    {
+        if (CurrentUser?.dungeonEntries == null)
+            return;
+
+        string dungeonKey = dungeonId.ToString();
+        string today = DateTime.Now.ToString("yyyy-MM-dd");
+
+        // 던전 설정 테이블에서 최대 입장권 개수 가져오기
+        var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungeonId);
+        if (dungeonSetting == null)
+        {
+            Debug.LogError($"[DB] 던전 설정을 찾을 수 없음: {dungeonId}");
+            return;
+        }
+
+        int maxEntries = dungeonSetting.Basic_Num_Of_Entries;
+        int entryItemId = dungeonSetting.Conditions_Of_Entry_ItemID;
+
+        // 던전 입장권 데이터가 없으면 새로 생성
+        if (!CurrentUser.dungeonEntries.ContainsKey(dungeonKey))
+        {
+            Debug.Log($"[DB] 던전 {dungeonId} 입장권 데이터 최초 생성 - 최대 입장권: {maxEntries}");
+
+            CurrentUser.dungeonEntries[dungeonKey] = new DungeonEntryData(dungeonId, maxEntries);
+            await SaveDungeonEntryAsync(dungeonId);
+
+            // 최초 생성 시 입장권 아이템도 최대치로 지급
+            if (entryItemId > 0)
+            {
+                await SetItemCountAsync(entryItemId, maxEntries);
+                Debug.Log($"[DB] 던전 입장권 아이템 {entryItemId} 최초 지급: {maxEntries}개");
+            }
+            return;
+        }
+
+        var entryData = CurrentUser.dungeonEntries[dungeonKey];
+
+        // 날짜가 바뀌었으면 입장권을 최대치로 리셋
+        if (entryData.lastResetDate != today)
+        {
+            Debug.Log($"[DB] 던전 {dungeonId} 입장권 리셋: {entryData.lastResetDate} -> {today}");
+
+            entryData.currentEntries = maxEntries;
+            entryData.lastResetDate = today;
+
+            await SaveDungeonEntryAsync(dungeonId);
+
+            // 입장권 아이템도 최대치로 설정
+            if (entryItemId > 0)
+            {
+                // 현재 아이템 개수 확인
+                int currentItemCount = GetItemCount(entryItemId);
+
+                // 최대치보다 적으면 최대치로 설정
+                if (currentItemCount < maxEntries)
+                {
+                    await SetItemCountAsync(entryItemId, maxEntries);
+                    Debug.Log($"[DB] 던전 입장권 아이템 {entryItemId} 리셋: {currentItemCount} -> {maxEntries}");
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 던전 입장권 개수 조회
+    /// </summary>
+    public int GetDungeonEntries(int dungeonId)
+    {
+        if (CurrentUser?.dungeonEntries == null)
+            return 0;
+
+        string dungeonKey = dungeonId.ToString();
+
+        if (!CurrentUser.dungeonEntries.ContainsKey(dungeonKey))
+        {
+            // 던전 설정에서 기본 입장권 개수 가져오기
+            var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungeonId);
+            if (dungeonSetting == null)
+                return 0;
+
+            return dungeonSetting.Basic_Num_Of_Entries;
+        }
+
+        return CurrentUser.dungeonEntries[dungeonKey].currentEntries;
+    }
+
+    /// <summary>
+    /// 던전 입장권 충분한지 확인
+    /// </summary>
+    public bool HasEnoughDungeonEntries(int dungeonId, int amount = 1)
+    {
+        return GetDungeonEntries(dungeonId) >= amount;
+    }
+
+    /// <summary>
+    /// 던전 입장권 소모
+    /// </summary>
+    public async UniTask<bool> ConsumeDungeonEntryAsync(int dungeonId, int amount = 1)
+    {
+        // 자정 체크 및 리셋
+        await CheckAndResetDungeonEntriesAsync(dungeonId);
+
+        if (!HasEnoughDungeonEntries(dungeonId, amount))
+        {
+            Debug.LogWarning($"[DB] 던전 입장권 부족: {dungeonId}");
+            return false;
+        }
+
+        string dungeonKey = dungeonId.ToString();
+        var entryData = CurrentUser.dungeonEntries[dungeonKey];
+
+        entryData.currentEntries -= amount;
+
+        // Firebase에 저장
+        bool saved = await SaveDungeonEntryAsync(dungeonId);
+
+        if (saved)
+        {
+            Debug.Log($"[DB] 던전 {dungeonId} 입장권 소모: {amount}개, 남은 개수: {entryData.currentEntries}");
+
+            // 던전 설정에서 입장권 아이템 ID 가져오기
+            var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungeonId);
+            if (dungeonSetting != null && dungeonSetting.Conditions_Of_Entry_ItemID > 0)
+            {
+                // 입장권 아이템도 함께 소모
+                await ConsumeItemAsync(dungeonSetting.Conditions_Of_Entry_ItemID, amount);
+            }
+        }
+
+        return saved;
+    }
+
+    /// <summary>
+    /// 던전 입장권 데이터 저장
+    /// </summary>
+    private async UniTask<bool> SaveDungeonEntryAsync(int dungeonId)
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        string dungeonKey = dungeonId.ToString();
+        if (!CurrentUser.dungeonEntries.ContainsKey(dungeonKey))
+            return false;
+
+        string path = $"users/{UserId}/dungeonEntries/{dungeonKey}";
+        return await database.SetDataAsync(path, CurrentUser.dungeonEntries[dungeonKey]);
+    }
+
+    /// <summary>
+    /// 아이템 개수 설정 (덮어쓰기)
+    /// </summary>
+    private async UniTask<bool> SetItemCountAsync(int itemId, int count)
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        string itemKey = itemId.ToString();
+        CurrentUser.items[itemKey] = count;
+
+        string path = $"users/{UserId}/items/{itemKey}";
+        return await database.SetDataAsync(path, count);
+    }
+
+    /// <summary>
+    /// 아이템 소모
+    /// </summary>
+    private async UniTask<bool> ConsumeItemAsync(int itemId, int amount)
+    {
+        if (!HasEnoughItem(itemId, amount))
+        {
+            Debug.LogWarning($"[DB] 아이템 부족: {itemId}, 필요: {amount}");
+            return false;
+        }
+
+        string itemKey = itemId.ToString();
+        int currentCount = GetItemCount(itemId);
+        int newCount = currentCount - amount;
+
+        CurrentUser.items[itemKey] = newCount;
+
+        string path = $"users/{UserId}/items/{itemKey}";
+        return await database.SetDataAsync(path, newCount);
+    }
+
+    #endregion
+
+    #region 던전 스테이지 해금
+
+    /// <summary>
+    /// 최고 클리어 던전 스테이지 조회
+    /// </summary>
+    public int GetHighestDungeonStage()
+    {
+        return CurrentUser?.profile?.highestDungeonStage ?? 0;
+    }
+
+    /// <summary>
+    /// 던전 스테이지가 해금되었는지 확인
+    /// </summary>
+    public bool IsDungeonStageUnlocked(int stage)
+    {
+        // 스테이지 1은 항상 해금
+        if (stage <= 1)
+            return true;
+
+        // 최고 클리어 스테이지 + 1까지 해금
+        int highestStage = GetHighestDungeonStage();
+        return stage <= highestStage + 1;
+    }
+
+    /// <summary>
+    /// 던전 스테이지 클리어 시 최고 스테이지 업데이트
+    /// </summary>
+    public async UniTask<bool> UpdateHighestDungeonStageAsync(int clearedStage)
+    {
+        if (CurrentUser?.profile == null)
+            return false;
+
+        int currentHighest = CurrentUser.profile.highestDungeonStage;
+
+        // 현재 최고 기록보다 높으면 업데이트
+        if (clearedStage > currentHighest)
+        {
+            CurrentUser.profile.highestDungeonStage = clearedStage;
+
+            string path = $"users/{UserId}/profile/highestDungeonStage";
+            bool success = await database.SetDataAsync(path, clearedStage);
+
+            if (success)
+            {
+                Debug.Log($"[DB] 최고 던전 스테이지 업데이트: {currentHighest} -> {clearedStage}");
+            }
+
+            return success;
+        }
+
+        return true; // 업데이트 필요 없음
+    }
+
+    #endregion
+
     #region 업적 관리
 
     /// <summary>
