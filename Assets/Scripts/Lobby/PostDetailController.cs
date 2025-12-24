@@ -210,7 +210,6 @@ public class PostDetailController : MonoBehaviour
 
         if (success)
         {
-            Debug.Log($"[PostDetail] 메일 보상 수령 완료: {currentMail.mailId}");
             currentMail.isClaimed = true;
             UpdateClaimButton();
             onRewardClaimed?.Invoke();

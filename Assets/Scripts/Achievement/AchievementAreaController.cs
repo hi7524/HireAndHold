@@ -182,7 +182,6 @@ public class AchievementAreaController : MonoBehaviour
         bool success = await AchievementManager.ClaimRewardAsync(achievementId);
         if (success)
         {
-            Debug.Log($"[Achievement] 보상 수령 완료: {achievementId}");
             RefreshAchievementList();
         }
     }
@@ -204,11 +203,6 @@ public class AchievementAreaController : MonoBehaviour
         {
             bool success = await AchievementManager.ClaimRewardAsync(achievement.Achievements_ID);
             if (success) claimedCount++;
-        }
-
-        if (claimedCount > 0)
-        {
-            Debug.Log($"[Achievement] {claimedCount}개 업적 보상 일괄 수령 완료");
         }
 
         await UniTask.Yield();

@@ -70,16 +70,15 @@ public class DatabaseManager : MonoBehaviour
         {
             CurrentUser = data;
 
-            // 로그인 일수 계산 및 업적 연동
-            long lastLogin = CurrentUser.profile.lastLoginTime;
-            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            long createdAt = CurrentUser.profile.createdAt;
-
-            // 계정 생성 후 경과 일수 (1일차부터 시작)
-            int daysSinceCreated = (int)((now - createdAt) / 86400) + 1;
-            await AchievementManager.UpdateLoginDaysAsync(daysSinceCreated);
+            // 실제 출석 일수 기반 업적 연동 (totalClaimCount 사용)
+            int loginDays = CurrentUser.dailyReward?.totalClaimCount ?? 0;
+            if (loginDays > 0)
+            {
+                await AchievementManager.UpdateLoginDaysAsync(loginDays);
+            }
 
             // 마지막 로그인 시간 갱신
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             CurrentUser.profile.lastLoginTime = now;
             await SaveProfileAsync();
         }
@@ -87,9 +86,8 @@ public class DatabaseManager : MonoBehaviour
         {
             CurrentUser = CreateNewUserData();
             bool saveResult = await SaveAllAsync();
-
-            // 신규 가입: 1일차 로그인 업적 달성
-            await AchievementManager.UpdateLoginDaysAsync(1);
+            // 신규 가입은 아직 출석 체크 전이므로 업적 갱신하지 않음
+            // 출석 체크(ClaimDailyRewardAsync) 시 업적이 갱신됨
         }
 
         SyncPresetsToPlayData();
@@ -1454,7 +1452,15 @@ public class DatabaseManager : MonoBehaviour
         CurrentUser.dailyReward.currentMonth = thisMonth;
         CurrentUser.dailyReward.totalClaimCount++;
 
-        return await SaveDailyRewardAsync();
+        bool saved = await SaveDailyRewardAsync();
+
+        // 출석 체크 성공 시 로그인 업적 갱신
+        if (saved)
+        {
+            await AchievementManager.UpdateLoginDaysAsync(CurrentUser.dailyReward.totalClaimCount);
+        }
+
+        return saved;
     }
 
     /// <summary>

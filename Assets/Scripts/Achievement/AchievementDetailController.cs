@@ -196,8 +196,6 @@ public class AchievementDetailController : MonoBehaviour
 
         if (success)
         {
-            Debug.Log($"[AchievementDetail] 보상 수령 완료: {currentAchievement.Achievements_ID}");
-
             if (currentProgress == null)
                 currentProgress = new AchievementProgress(currentAchievement.Achievements_ID);
 

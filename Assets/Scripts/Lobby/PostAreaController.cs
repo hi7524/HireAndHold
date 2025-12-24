@@ -146,12 +146,6 @@ public class PostAreaController : MonoBehaviour
         // 전역 메일 일괄 수령
         int globalClaimedCount = await DatabaseManager.Instance.ClaimAllGlobalMailRewardsAsync();
 
-        int totalClaimed = personalClaimedCount + globalClaimedCount;
-        if (totalClaimed > 0)
-        {
-            Debug.Log($"[PostArea] {totalClaimed}개 메일 보상 수령 완료 (개인:{personalClaimedCount}, 전역:{globalClaimedCount})");
-        }
-
         // 다음 프레임까지 대기 후 UI 갱신
         await UniTask.Yield();
         RefreshMailList();
