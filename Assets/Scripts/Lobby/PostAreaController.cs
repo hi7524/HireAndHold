@@ -36,6 +36,11 @@ public class PostAreaController : MonoBehaviour
     private void OnEnable()
     {
         PlayData.OnMailsChanged += RefreshMailList;
+
+        // 패널 활성화
+        if (postAreaPanel != null)
+            postAreaPanel.SetActive(true);
+
         RefreshMailList();
     }
 
@@ -54,11 +59,11 @@ public class PostAreaController : MonoBehaviour
 
     public void Close()
     {
-        if (postAreaPanel != null)
-            postAreaPanel.SetActive(false);
-
         if (postDetailController != null)
             postDetailController.Close();
+
+        // PostArea 자체를 비활성화 (버튼에서 SetActive로 열기 때문)
+        gameObject.SetActive(false);
     }
 
     public void RefreshMailList()
@@ -102,8 +107,8 @@ public class PostAreaController : MonoBehaviour
     {
         foreach (var element in postElements)
         {
-            if (element != null)
-                Destroy(element.gameObject);
+            if (element != null && element.gameObject != null)
+                DestroyImmediate(element.gameObject);
         }
         postElements.Clear();
     }
@@ -141,12 +146,8 @@ public class PostAreaController : MonoBehaviour
         // 전역 메일 일괄 수령
         int globalClaimedCount = await DatabaseManager.Instance.ClaimAllGlobalMailRewardsAsync();
 
-        int totalClaimed = personalClaimedCount + globalClaimedCount;
-        if (totalClaimed > 0)
-        {
-            Debug.Log($"[PostArea] {totalClaimed}개 메일 보상 수령 완료 (개인:{personalClaimedCount}, 전역:{globalClaimedCount})");
-        }
-
+        // 다음 프레임까지 대기 후 UI 갱신
+        await UniTask.Yield();
         RefreshMailList();
 
         if (claimAllButton != null)

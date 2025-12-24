@@ -73,8 +73,6 @@ public static class AchievementManager
 
             // 이벤트 발생
             OnAchievementCompleted?.Invoke(achievementId);
-
-            Debug.Log($"[Achievement] 완료! ID:{achievementId}, 조건:{achievementData.Condition_Key}");
         }
         else
         {
@@ -83,8 +81,6 @@ public static class AchievementManager
 
             // 진행도 변경 이벤트
             OnAchievementProgressChanged?.Invoke(achievementId, progress.currentValue);
-
-            Debug.Log($"[Achievement] 진행도 업데이트: ID:{achievementId}, {progress.currentValue}/{achievementData.Condition_Value}");
         }
     }
 

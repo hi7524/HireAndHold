@@ -81,6 +81,7 @@ public static class PlayData
     public static event Action OnCurrencyChanged;
     public static event Action OnMailsChanged;
     public static event Action OnAchievementsChanged;
+    public static event Action OnQuestsChanged;
 
 
     public static int LastClearedStageId { get; private set; }
@@ -228,6 +229,16 @@ public static class PlayData
     public static void SetEnhanceStoneImmediate(int value)
     {
         cachedEnhanceStone = value;
+    }
+
+    public static void SetDiamondImmediate(int value)
+    {
+        cachedDiamond = value;
+    }
+
+    public static void SetStaminaImmediate(int value)
+    {
+        cachedStamina = value;
     }
 
     // 재화 체크
@@ -428,5 +439,21 @@ public static class PlayData
     public static int GetCompletedAchievementCount()
     {
         return DatabaseManager.Instance?.GetCompletedAchievementCount() ?? 0;
+    }
+
+    // 퀘스트 관련
+    public static void NotifyQuestsChanged()
+    {
+        OnQuestsChanged?.Invoke();
+    }
+
+    public static int GetClaimableQuestCount()
+    {
+        return DatabaseManager.Instance?.GetClaimableQuestCount() ?? 0;
+    }
+
+    public static int GetCompletedQuestCount()
+    {
+        return DatabaseManager.Instance?.GetCompletedQuestCount() ?? 0;
     }
 }

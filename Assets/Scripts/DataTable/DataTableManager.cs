@@ -65,6 +65,8 @@ public static class DataTableManager
             LoadTableAsync<DataTable_DailyReward>(DataTableIds.DailyReward),
             // 튜토리얼
             LoadTableAsync<DataTable_Tutorial>(DataTableIds.Tutorial),
+            // 퀘스트
+            LoadTableAsync<DataTable_Quest>(DataTableIds.Quest),
         };
 
         await UniTask.WhenAll(loadTasks);
@@ -104,6 +106,7 @@ public static class DataTableManager
     public static DataTable_Achievement AchievementTable => Get<DataTable_Achievement>(DataTableIds.Achievement);
     public static DataTable_DailyReward DailyRewardTable => Get<DataTable_DailyReward>(DataTableIds.DailyReward);
     public static DataTable_Tutorial TutorialTable => Get<DataTable_Tutorial>(DataTableIds.Tutorial);
+    public static DataTable_Quest QuestTable => Get<DataTable_Quest>(DataTableIds.Quest);
 
     public static T Get<T>(string id) where T : DataTable
     {

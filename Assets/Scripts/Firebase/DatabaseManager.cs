@@ -70,16 +70,15 @@ public class DatabaseManager : MonoBehaviour
         {
             CurrentUser = data;
 
-            // 로그인 일수 계산 및 업적 연동
-            long lastLogin = CurrentUser.profile.lastLoginTime;
-            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            long createdAt = CurrentUser.profile.createdAt;
-
-            // 계정 생성 후 경과 일수 (1일차부터 시작)
-            int daysSinceCreated = (int)((now - createdAt) / 86400) + 1;
-            await AchievementManager.UpdateLoginDaysAsync(daysSinceCreated);
+            // 실제 출석 일수 기반 업적 연동 (totalClaimCount 사용)
+            int loginDays = CurrentUser.dailyReward?.totalClaimCount ?? 0;
+            if (loginDays > 0)
+            {
+                await AchievementManager.UpdateLoginDaysAsync(loginDays);
+            }
 
             // 마지막 로그인 시간 갱신
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             CurrentUser.profile.lastLoginTime = now;
             await SaveProfileAsync();
         }
@@ -87,6 +86,8 @@ public class DatabaseManager : MonoBehaviour
         {
             CurrentUser = CreateNewUserData();
             bool saveResult = await SaveAllAsync();
+            // 신규 가입은 아직 출석 체크 전이므로 업적 갱신하지 않음
+            // 출석 체크(ClaimDailyRewardAsync) 시 업적이 갱신됨
         }
 
         SyncPresetsToPlayData();
@@ -350,6 +351,7 @@ public class DatabaseManager : MonoBehaviour
             {
                 CurrentUser.currency.gold += amount;
                 PlayData.SetGoldImmediate(CurrentUser.currency.gold);
+                PlayData.NotifyCurrencyChanged();
             }
 
             var (value, ok) = await database.GetDataAsync<object>(path);
@@ -375,6 +377,8 @@ public class DatabaseManager : MonoBehaviour
         if (success)
         {
             CurrentUser.currency.diamond += amount;
+            PlayData.SetDiamondImmediate(CurrentUser.currency.diamond);
+            PlayData.NotifyCurrencyChanged();
         }
 
         return success;
@@ -413,7 +417,13 @@ public class DatabaseManager : MonoBehaviour
         CurrentUser.currency.stamina = newValue;
         CurrentUser.currency.lastStaminaTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        return await SaveCurrencyAsync();
+        bool success = await SaveCurrencyAsync();
+        if (success)
+        {
+            PlayData.SetStaminaImmediate(newValue);
+            PlayData.NotifyCurrencyChanged();
+        }
+        return success;
     }
 
     /// <summary>
@@ -1442,7 +1452,15 @@ public class DatabaseManager : MonoBehaviour
         CurrentUser.dailyReward.currentMonth = thisMonth;
         CurrentUser.dailyReward.totalClaimCount++;
 
-        return await SaveDailyRewardAsync();
+        bool saved = await SaveDailyRewardAsync();
+
+        // 출석 체크 성공 시 로그인 업적 갱신
+        if (saved)
+        {
+            await AchievementManager.UpdateLoginDaysAsync(CurrentUser.dailyReward.totalClaimCount);
+        }
+
+        return saved;
     }
 
     /// <summary>
@@ -1788,6 +1806,92 @@ public class DatabaseManager : MonoBehaviour
 
         int count = 0;
         foreach (var progress in CurrentUser.achievements.Values)
+        {
+            if (progress.isCompleted)
+                count++;
+        }
+        return count;
+    }
+
+    #endregion
+
+    #region 퀘스트 관리
+
+    /// <summary>
+    /// 퀘스트 진행도 저장
+    /// </summary>
+    public async UniTask<bool> SaveQuestProgressAsync(int questId, QuestProgress progress)
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        string key = questId.ToString();
+
+        // 로컬 캐시 업데이트
+        if (CurrentUser.quests == null)
+            CurrentUser.quests = new Dictionary<string, QuestProgress>();
+
+        CurrentUser.quests[key] = progress;
+
+        // Firebase 저장
+        string path = $"users/{UserId}/quests/{key}";
+        bool success = await database.SetDataAsync(path, progress);
+
+        if (success)
+        {
+            PlayData.NotifyQuestsChanged();
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 퀘스트 진행도 조회
+    /// </summary>
+    public QuestProgress GetQuestProgress(int questId)
+    {
+        if (CurrentUser?.quests == null) return null;
+
+        string key = questId.ToString();
+        return CurrentUser.quests.TryGetValue(key, out var progress) ? progress : null;
+    }
+
+    /// <summary>
+    /// 모든 퀘스트 진행도 조회
+    /// </summary>
+    public List<QuestProgress> GetAllQuestProgress()
+    {
+        if (CurrentUser?.quests == null)
+            return new List<QuestProgress>();
+
+        return new List<QuestProgress>(CurrentUser.quests.Values);
+    }
+
+    /// <summary>
+    /// 수령 가능한 퀘스트 개수
+    /// </summary>
+    public int GetClaimableQuestCount()
+    {
+        if (CurrentUser?.quests == null) return 0;
+
+        int count = 0;
+        foreach (var progress in CurrentUser.quests.Values)
+        {
+            if (progress.isCompleted && !progress.isRewarded)
+                count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// 완료된 퀘스트 개수
+    /// </summary>
+    public int GetCompletedQuestCount()
+    {
+        if (CurrentUser?.quests == null) return 0;
+
+        int count = 0;
+        foreach (var progress in CurrentUser.quests.Values)
         {
             if (progress.isCompleted)
                 count++;
