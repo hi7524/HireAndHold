@@ -62,6 +62,9 @@ public class OreDungeonIntro : MonoBehaviour
 
     private void Start()
     {
+        // 씬 전환 후 timeScale 초기화 확인
+        Time.timeScale = 1f;
+
         layoutGroup = prfTrans.GetComponent<HorizontalLayoutGroup>();
         prfRectTransform = prfTrans.GetComponent<RectTransform>();
         gameManager.OnInitialized += Initialize;
@@ -103,9 +106,20 @@ public class OreDungeonIntro : MonoBehaviour
         }
 
         // 프레임 대기 후 애니메이션 시작 (레이아웃 정리)
+        // 씬 전환 직후이므로 충분한 시간 대기
         DOTween.Sequence()
-            .AppendInterval(0.05f)
-            .AppendCallback(() => StartAnimations(count, randomCount));
+            .AppendInterval(0.2f) // 0.05f에서 0.2f로 증가
+            .AppendCallback(() =>
+            {
+                // 레이아웃 강제 재계산
+                Canvas.ForceUpdateCanvases();
+                if (layoutGroup != null)
+                {
+                    layoutGroup.SetLayoutHorizontal();
+                    layoutGroup.SetLayoutVertical();
+                }
+                StartAnimations(count, randomCount);
+            });
     }
 
     private void StartAnimations(int count, int randomCount)

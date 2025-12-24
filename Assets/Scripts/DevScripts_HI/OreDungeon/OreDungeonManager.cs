@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 /// <summary>
 /// 광석 던전 시스템 관리자
@@ -15,6 +16,7 @@ public class OreDungeonManager : MonoBehaviour
     public OreDungeonData DungeonData { get; private set; }
     public int RemainTouchCount { get; private set; }
     public int RemainOreCount { get; private set; }
+    public int GetOreAmount { get; private set; }
 
     public int UnitCount => UnitCountToUse;
     public int ExistingUnitCount { get; private set; } // FillUnitsRandomly 호출 전 유닛 수
@@ -25,7 +27,7 @@ public class OreDungeonManager : MonoBehaviour
     public event Action<bool> OnStageEnded;
 
     private const int UnitCountToUse = 5;
-    public HashSet<int> draftUnitList = new HashSet<int>{11101, 11312}; // TODO: 나중에 실제 편성 덱과 연결
+    public HashSet<int> draftUnitList = new HashSet<int> { 11101, 11312 }; // TODO: 나중에 실제 편성 덱과 연결
 
 
     private void Awake()
@@ -60,19 +62,12 @@ public class OreDungeonManager : MonoBehaviour
         RemainTouchCount--;
         OnTouchCountChanged?.Invoke(RemainTouchCount);
 
-        // 터치 횟수가 0 이하일 때
+        Debug.Log($"Touch! RemainTouchCount: {RemainTouchCount}");
+
+        // 터치 횟수가 0 이하일 때만 체크
         if (RemainTouchCount <= 0)
         {
-            // 강화석이 남아있으면 실패
-            if (RemainOreCount > 0)
-            {
-                OnStageEnded.Invoke(false);
-            }
-            // 없으면 성공
-            else
-            {
-                OnStageEnded.Invoke(true);
-            }
+            CheckStageEnd();
         }
     }
 
@@ -80,6 +75,31 @@ public class OreDungeonManager : MonoBehaviour
     {
         RemainOreCount--;
         OnOreCountChanged?.Invoke(RemainOreCount);
+
+
+        // 광석이 모두 파괴되었을 때만 체크
+        if (RemainOreCount <= 0)
+        {
+            CheckStageEnd();
+        }
+    }
+
+    private void CheckStageEnd()
+    {
+        // 터치도 남고 광석도 남음 → 계속 진행
+        if (RemainTouchCount > 0 && RemainOreCount > 0)
+            return;
+
+        // 광석을 모두 파괴했고 터치가 남음 → 성공
+        if (RemainOreCount <= 0 && RemainTouchCount >= 0)
+        {
+            OnStageEnded?.Invoke(true);
+        }
+        // 터치를 모두 소진했는데 광석이 남음 → 실패
+        else if (RemainTouchCount <= 0 && RemainOreCount > 0)
+        {
+            OnStageEnded?.Invoke(false);
+        }
     }
 
     // 참조 누락 확인
@@ -152,6 +172,72 @@ public class OreDungeonManager : MonoBehaviour
             }
 
             draftUnitList.Add(randomUnitId);
+        }
+    }
+
+    public void AddOreCount(int addAmount = 1)
+    {
+        GetOreAmount += addAmount;
+    }
+
+    /// <summary>
+    /// 로비 씬으로 돌아가기
+    /// </summary>
+    public async void ReturnToLobby()
+    {
+        Debug.Log($"[OreDungeonManager] 로비 복귀 시작 - IsPreloaded: {IsPreloaded}, GetOreAmount: {GetOreAmount}");
+
+        // 강화석 저장 (성공 시)
+        if (IsPreloaded && GetOreAmount > 0)
+        {
+            await SaveRewardsAsync();
+        }
+        else
+        {
+            Debug.LogWarning($"[OreDungeonManager] 강화석 저장 건너뜀 - IsPreloaded: {IsPreloaded}, GetOreAmount: {GetOreAmount}");
+        }
+
+        LoadingRequest request = new("Lobby");
+
+        request.AddTask("로비 이동 준비", async (ct) =>
+        {
+            await UniTask.Delay(300, cancellationToken: ct);
+        }, weight: 1.0f);
+
+        request.onLoadingComplete = () =>
+        {
+            Debug.Log("로비로 이동 완료");
+        };
+
+        await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
+    }
+
+    /// <summary>
+    /// 보상 저장 및 사용자 데이터 동기화
+    /// </summary>
+    private async UniTask SaveRewardsAsync()
+    {
+        if (DatabaseManager.Instance == null || !DatabaseManager.Instance.IsInitialized)
+        {
+            Debug.LogWarning("[OreDungeonManager] DatabaseManager가 초기화되지 않아 보상을 저장할 수 없습니다.");
+            return;
+        }
+
+        try
+        {
+            // 강화석 저장
+            await DatabaseManager.Instance.AddEnhanceStoneAsync(GetOreAmount);
+            Debug.Log($"[OreDungeonManager] 강화석 {GetOreAmount}개 저장 완료");
+
+            // 사용자 데이터 다시 로드하여 PlayData 동기화
+            await DatabaseManager.Instance.LoadUserDataAsync();
+            PlayData.SyncFromDatabase();
+
+            Debug.Log("[OreDungeonManager] 사용자 데이터 동기화 완료");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[OreDungeonManager] 보상 저장 실패: {e.Message}");
         }
     }
 }

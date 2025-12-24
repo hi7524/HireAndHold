@@ -11,9 +11,16 @@ public class MainUISceneManager : MonoBehaviour
 
     private async void Start()
     {
+        // DatabaseManager가 초기화되지 않았으면 리턴
+        if (DatabaseManager.Instance == null || !DatabaseManager.Instance.IsInitialized)
+        {
+            Debug.LogWarning("[MainUISceneManager] DatabaseManager가 초기화되지 않았습니다.");
+            return;
+        }
+
         var owned = DatabaseManager.Instance.GetAllCharacters();
         if (owned.Count < 2)
-        { 
+        {
             return;
             }
 
