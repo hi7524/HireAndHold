@@ -18,6 +18,7 @@ namespace GameData
         public Dictionary<string, MailData> mails;
         public Dictionary<string, bool> claimedGlobalMails; // 수령한 전역 메일 ID
         public Dictionary<string, AchievementProgress> achievements; // 업적 진행도
+        public Dictionary<string, QuestProgress> quests; // 퀘스트 진행도
         public int activePresetIndex;
         public UserSettings settings;
         public DailyRewardData dailyReward;
@@ -34,6 +35,7 @@ namespace GameData
             mails = new Dictionary<string, MailData>();
             claimedGlobalMails = new Dictionary<string, bool>();
             achievements = new Dictionary<string, AchievementProgress>();
+            quests = new Dictionary<string, QuestProgress>();
             dailyReward = new DailyRewardData();
             tutorial = new TutorialProgressData();
             dungeonEntries = new Dictionary<string, DungeonEntryData>();
@@ -385,6 +387,30 @@ namespace GameData
 
     #endregion
 
+    #region 퀘스트
+
+    [Serializable]
+    public class QuestProgress
+    {
+        public int questId;
+        public int currentValue;        // 현재 진행값 (누적형인 경우)
+        public bool isCompleted;        // 완료 여부
+        public bool isRewarded;         // 보상 수령 여부
+        public long completedAt;        // 완료 시간
+        public long rewardedAt;         // 보상 수령 시간
+        public long lastResetTime;      // 마지막 리셋 시간 (일일/주간 퀘스트용)
+
+        public QuestProgress() { }
+
+        public QuestProgress(int id)
+        {
+            questId = id;
+            currentValue = 0;
+            isCompleted = false;
+            isRewarded = false;
+            completedAt = 0;
+            rewardedAt = 0;
+            lastResetTime = 0;
     #region 던전 입장권
 
     /// <summary>

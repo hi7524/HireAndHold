@@ -1815,6 +1815,92 @@ public class DatabaseManager : MonoBehaviour
 
     #endregion
 
+    #region 퀘스트 관리
+
+    /// <summary>
+    /// 퀘스트 진행도 저장
+    /// </summary>
+    public async UniTask<bool> SaveQuestProgressAsync(int questId, QuestProgress progress)
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        string key = questId.ToString();
+
+        // 로컬 캐시 업데이트
+        if (CurrentUser.quests == null)
+            CurrentUser.quests = new Dictionary<string, QuestProgress>();
+
+        CurrentUser.quests[key] = progress;
+
+        // Firebase 저장
+        string path = $"users/{UserId}/quests/{key}";
+        bool success = await database.SetDataAsync(path, progress);
+
+        if (success)
+        {
+            PlayData.NotifyQuestsChanged();
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 퀘스트 진행도 조회
+    /// </summary>
+    public QuestProgress GetQuestProgress(int questId)
+    {
+        if (CurrentUser?.quests == null) return null;
+
+        string key = questId.ToString();
+        return CurrentUser.quests.TryGetValue(key, out var progress) ? progress : null;
+    }
+
+    /// <summary>
+    /// 모든 퀘스트 진행도 조회
+    /// </summary>
+    public List<QuestProgress> GetAllQuestProgress()
+    {
+        if (CurrentUser?.quests == null)
+            return new List<QuestProgress>();
+
+        return new List<QuestProgress>(CurrentUser.quests.Values);
+    }
+
+    /// <summary>
+    /// 수령 가능한 퀘스트 개수
+    /// </summary>
+    public int GetClaimableQuestCount()
+    {
+        if (CurrentUser?.quests == null) return 0;
+
+        int count = 0;
+        foreach (var progress in CurrentUser.quests.Values)
+        {
+            if (progress.isCompleted && !progress.isRewarded)
+                count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// 완료된 퀘스트 개수
+    /// </summary>
+    public int GetCompletedQuestCount()
+    {
+        if (CurrentUser?.quests == null) return 0;
+
+        int count = 0;
+        foreach (var progress in CurrentUser.quests.Values)
+        {
+            if (progress.isCompleted)
+                count++;
+        }
+        return count;
+    }
+
+    #endregion
+
     #region 튜토리얼 관리
 
     /// <summary>
