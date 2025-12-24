@@ -7,6 +7,21 @@ using Tutorial;
 public class LobbyManager : MonoBehaviour
 {
     [SerializeField] private WindowManager windowManager;
+    [SerializeField] private GameObject stageButton;
+
+    private void Awake()
+    {
+        // 튜토리얼 타겟 등록
+        if (stageButton != null)
+        {
+            TutorialTargetRegistry.Register("StageButton", stageButton);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        TutorialTargetRegistry.Unregister("StageButton");
+    }
 
     private void Start()
     {
@@ -177,6 +192,9 @@ public class LobbyManager : MonoBehaviour
     }
     public void OnClickedStageButton()
     {
+        // 튜토리얼에 버튼 터치 알림
+        TutorialManager.Instance?.NotifyButtonTouched("StageButton");
+
         windowManager.Open(Windows.Stage);
     }
 

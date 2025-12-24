@@ -178,8 +178,11 @@ namespace Tutorial
         /// </summary>
         public void NotifyButtonTouched(string buttonName)
         {
+            Debug.Log($"[TutorialBlocker] NotifyButtonTouched: {buttonName}, 대기중인 타겟: {targetButtonName}");
+
             if (buttonName == targetButtonName)
             {
+                Debug.Log($"[TutorialBlocker] 타겟 일치! 다음 스텝으로 진행");
                 targetTouchSource?.TrySetResult();
             }
         }

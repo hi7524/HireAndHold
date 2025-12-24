@@ -1,10 +1,25 @@
 using Cysharp.Threading.Tasks;
+using Tutorial;
 using UnityEngine;
 
 public class LobbyToGameLoader : MonoBehaviour
 {
+    private void Awake()
+    {
+        // 튜토리얼 타겟으로 등록 (StartButton으로)
+        TutorialTargetRegistry.Register("StartButton", gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        TutorialTargetRegistry.Unregister("StartButton");
+    }
+
     public void OnStartGameButtonClicked()
     {
+        // 튜토리얼에 버튼 터치 알림
+        TutorialManager.Instance?.NotifyButtonTouched("StartButton");
+
         LoadGameScene();
     }
 
