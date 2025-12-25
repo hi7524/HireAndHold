@@ -34,6 +34,7 @@ public class AddressablePreloader : MonoBehaviour
     private Dictionary<string, GridLayoutData> cachedGridLayouts = new Dictionary<string, GridLayoutData>();
     private Dictionary<string, AudioClip> cachedAudioClips = new Dictionary<string, AudioClip>();
     private Dictionary<string, Sprite> cachedGridIcons = new Dictionary<string, Sprite>(); // 유닛 그리드 아이콘
+    private Dictionary<string, AudioClip> cachedVoices = new Dictionary<string, AudioClip>(); // 유닛 보이스
     private List<AsyncOperationHandle> handles = new List<AsyncOperationHandle>();
 
     public bool IsLoaded { get; private set; } = false;
@@ -183,6 +184,12 @@ public class AddressablePreloader : MonoBehaviour
 
         // 7. 유닛 그리드 아이콘 Label로 일괄 로드
         await LoadUnitGridIconsByLabel(ct);
+
+        // 8. 유닛 보이스 Label로 일괄 로드
+        await LoadUnitVoicesByLabel(ct);
+
+        // 9. Clips Label로 일괄 로드
+        await LoadClipsByLabel(ct);
 
         int total = prefabKeys.Count + gridDataKeys.Count + spriteKeys.Count + mapKeys.Count + gridLayoutKeys.Count + audioClipKeys.Count;
         int completed = 0;
@@ -404,6 +411,87 @@ public class AddressablePreloader : MonoBehaviour
             else
             {
                 Debug.LogWarning($"[AddressablePreloader] UnitGridIcons Label 로드 실패: {e.GetType().Name} - {e.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// UnitVoices Group의 모든 오디오 클립을 일괄 로드
+    /// </summary>
+    private async UniTask LoadUnitVoicesByLabel(CancellationToken ct)
+    {
+        const string label = "UnitVoices";
+
+        try
+        {
+            // Label로 로드 시 AssetLabelReference 사용
+            var labelRef = new AssetLabelReference { labelString = label };
+            var handle = Addressables.LoadAssetsAsync<AudioClip>(labelRef, audioClip =>
+            {
+                if (audioClip != null && !cachedVoices.ContainsKey(audioClip.name))
+                {
+                    cachedVoices[audioClip.name] = audioClip;
+                }
+            });
+            handles.Add(handle);
+            await handle.ToUniTask(cancellationToken: ct);
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 정상적인 상황
+        }
+        catch (Exception e)
+        {
+            // Label이 없거나 로드 실패한 경우 - 경고만 출력하고 계속 진행
+            if (e is InvalidKeyException || e.GetType().Name == "InvalidKeyException")
+            {
+                Debug.LogWarning($"[AddressablePreloader] '{label}' Label을 가진 에셋이 없습니다. UnitVoices 그룹을 생성하고 보이스 파일들을 추가해주세요.");
+            }
+            else
+            {
+                Debug.LogWarning($"[AddressablePreloader] UnitVoices Label 로드 실패: {e.GetType().Name} - {e.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Clips Group의 모든 오디오 클립을 일괄 로드
+    /// </summary>
+    private async UniTask LoadClipsByLabel(CancellationToken ct)
+    {
+        const string label = "Clips";
+
+        try
+        {
+            // Label로 로드 시 AssetLabelReference 사용
+            var labelRef = new AssetLabelReference { labelString = label };
+            var handle = Addressables.LoadAssetsAsync<AudioClip>(labelRef, audioClip =>
+            {
+                if (audioClip != null && !cachedAudioClips.ContainsKey(audioClip.name))
+                {
+                    cachedAudioClips[audioClip.name] = audioClip;
+                    Debug.Log($"[AddressablePreloader] Loaded AudioClip: {audioClip.name}");
+                }
+            });
+            handles.Add(handle);
+            await handle.ToUniTask(cancellationToken: ct);
+
+            Debug.Log($"[AddressablePreloader] Total AudioClips loaded from Clips label: {cachedAudioClips.Count}");
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 정상적인 상황
+        }
+        catch (Exception e)
+        {
+            // Label이 없거나 로드 실패한 경우 - 경고만 출력하고 계속 진행
+            if (e is InvalidKeyException || e.GetType().Name == "InvalidKeyException")
+            {
+                Debug.LogWarning($"[AddressablePreloader] '{label}' Label을 가진 에셋이 없습니다. Clips 그룹을 생성하고 오디오 클립들을 추가해주세요.");
+            }
+            else
+            {
+                Debug.LogWarning($"[AddressablePreloader] Clips Label 로드 실패: {e.GetType().Name} - {e.Message}");
             }
         }
     }
@@ -719,6 +807,28 @@ public class AddressablePreloader : MonoBehaviour
     }
 
     /// <summary>
+    /// 캐싱된 유닛 보이스 가져오기
+    /// </summary>
+    public AudioClip GetCachedVoice(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return null;
+
+        return cachedVoices.TryGetValue(key, out var voice) ? voice : null;
+    }
+
+    /// <summary>
+    /// 유닛 보이스가 캐싱되어 있는지 확인
+    /// </summary>
+    public bool HasCachedVoice(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return false;
+
+        return cachedVoices.ContainsKey(key);
+    }
+
+    /// <summary>
     /// 유효한 Addressable 키인지 확인 (폴더 경로나 플레이스홀더 텍스트 필터링)
     /// </summary>
     private bool IsValidAddressableKey(string key)
@@ -762,6 +872,7 @@ public class AddressablePreloader : MonoBehaviour
         cachedGridLayouts.Clear();
         cachedAudioClips.Clear();
         cachedGridIcons.Clear();
+        cachedVoices.Clear();
 
         if (instance == this)
         {

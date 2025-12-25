@@ -27,8 +27,37 @@ public class LobbyManager : MonoBehaviour
     {
         Time.timeScale = 1f;
 
+        // 로비 BGM 재생
+        PlayLobbyBGM();
+
         // 튜토리얼 체크 및 시작
         CheckTutorialAsync().Forget();
+    }
+
+    private void PlayLobbyBGM()
+    {
+        if (SoundManager.Instance == null)
+        {
+            Debug.LogWarning("[LobbyManager] SoundManager.Instance is null");
+            return;
+        }
+
+        if (AddressablePreloader.Instance == null)
+        {
+            Debug.LogWarning("[LobbyManager] AddressablePreloader.Instance is null");
+            return;
+        }
+
+        var lobbyBGM = AddressablePreloader.Instance.GetCachedAudioClip("LobbyBGM");
+        if (lobbyBGM != null)
+        {
+            Debug.Log("[LobbyManager] Playing LobbyBGM");
+            SoundManager.Instance.PlayBGMWithFadeIn(lobbyBGM, 1f);
+        }
+        else
+        {
+            Debug.LogWarning("[LobbyManager] LobbyBGM AudioClip not found in cache");
+        }
     }
 
     private async UniTaskVoid CheckTutorialAsync()

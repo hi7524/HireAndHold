@@ -215,9 +215,6 @@ public class DragManager : MonoBehaviour
         int originalSiblingIndex = dragState.OriginalSiblingIndex;
         Vector3 originalPosition = dragState.OriginalPosition;
 
-        // 먼저 상태를 리셋하여 빠른 재입력 시 충돌 방지
-        dragState.Reset();
-
         Vector2 pointerPosition = GetPointerPosition();
         IDroppable dropTarget = DetectDropTarget(pointerPosition);
 
@@ -234,12 +231,6 @@ public class DragManager : MonoBehaviour
             // GridUnit 같은 경우는 OnDropFailed()에서 자체적으로 올바른 위치로 복원함
             draggingTarget.GameObject.transform.position = originalPosition;
 
-            if (!wasUI)
-            {
-                // 드래그 중에는 Physics2D.OverlapPoint가 실패하므로 SyncTransforms 필수
-                Physics2D.SyncTransforms();
-            }
-
             draggingTarget.OnDropFailed();
         }
 
@@ -253,6 +244,15 @@ public class DragManager : MonoBehaviour
         currentDropTarget = null;
 
         draggingTarget.OnDragEnd();
+
+        // Physics2D 동기화를 드래그 종료 직전에 수행 (빠른 재터치 대응)
+        if (!wasUI)
+        {
+            Physics2D.SyncTransforms();
+        }
+
+        // 상태 리셋은 모든 처리 후 마지막에 수행
+        dragState.Reset();
 
         // 드래그 종료 이벤트 발생
         OnDragEnded?.Invoke();

@@ -168,6 +168,32 @@ public class GridManager : MonoBehaviour
 
         if (buffManager != null)
             buffManager.CheckAllBuffConditions();
+
+        // 그리드가 꽉 찼는지 체크하고 사운드 재생
+        CheckAndPlayFullGridSound();
+    }
+
+    private bool wasGridFullLastCheck = false;
+
+    // 그리드가 꽉 찼을 때 사운드 재생
+    private void CheckAndPlayFullGridSound()
+    {
+        bool isCurrentlyFull = IsGridFull();
+
+        // 이전에 비어있다가 지금 꽉 찬 경우에만 사운드 재생
+        if (isCurrentlyFull && !wasGridFullLastCheck)
+        {
+            if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+            {
+                var fullGridSound = AddressablePreloader.Instance.GetCachedAudioClip("FullGridBuffSound");
+                if (fullGridSound != null)
+                {
+                    SoundManager.Instance.PlaySFX(fullGridSound);
+                }
+            }
+        }
+
+        wasGridFullLastCheck = isCurrentlyFull;
     }
 
     // GridVisualizer의 자식 오브젝트들을 순회하며 GridCell 컴포넌트 수집 및 등록

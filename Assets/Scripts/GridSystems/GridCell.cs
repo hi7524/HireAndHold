@@ -296,6 +296,9 @@ public class GridCell : MonoBehaviour, IDroppable
             // 성급에 따라 그리드 아이콘 설정
             gridManager.SetGridIcons(anchorPosition, occupiedCells, gridUnit.UnitId, gridUnit.StarLevel);
 
+            // 유닛 배치 사운드 재생
+            PlayPutGridSound();
+
             // GridUnit 배치 성공
             draggable.OnDropSuccess();
         }
@@ -370,6 +373,9 @@ public class GridCell : MonoBehaviour, IDroppable
 
             // 유닛이 그리드에 배치되었음을 알림
             gridManager.IncrementUnitCount();
+
+            // 유닛 배치 사운드 재생
+            PlayPutGridSound();
 
             // DraggableGridUnitUi 배치 성공
             draggable.OnDropSuccess();
@@ -470,6 +476,16 @@ public class GridCell : MonoBehaviour, IDroppable
         int newStarLevel = existingUnit.StarLevel + 1;
         int newUnitId = CalculateUpgradedUnitId(existingUnit.UnitId);
 
+        // 머지 사운드 재생
+        if (SoundManager.Instance != null)
+        {
+            var mergeSound = AddressablePreloader.Instance?.GetCachedAudioClip("UnitMergeSound");
+            if (mergeSound != null)
+            {
+                SoundManager.Instance.PlaySFX(mergeSound);
+            }
+        }
+
         // 머지 이펙트 재생 - 파티클
         gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
 
@@ -500,6 +516,14 @@ public class GridCell : MonoBehaviour, IDroppable
         }
         Destroy(draggingUnit.gameObject);
         gridManager.DecrementUnitCount();
+
+        // 3성이 되었을 때 MergeUI 표시
+        if (newStarLevel == 3)
+        {
+            var stageUiManager = FindObjectOfType<StageUiManager>();
+            if (stageUiManager != null)
+                stageUiManager.ShowMergeUi(newUnitId);
+        }
 
         // 업적 연동: 합성
         UpdateCombineAchievementsAsync(newStarLevel).Forget();
@@ -535,6 +559,16 @@ public class GridCell : MonoBehaviour, IDroppable
         int newStarLevel = existingUnit.StarLevel + 1;
         int newUnitId = CalculateUpgradedUnitId(existingUnit.UnitId);
 
+        // 머지 사운드 재생
+        if (SoundManager.Instance != null)
+        {
+            var mergeSound = AddressablePreloader.Instance?.GetCachedAudioClip("UnitMergeSound");
+            if (mergeSound != null)
+            {
+                SoundManager.Instance.PlaySFX(mergeSound);
+            }
+        }
+
         // 머지 이펙트 재생 - 파티클
         gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
 
@@ -556,6 +590,14 @@ public class GridCell : MonoBehaviour, IDroppable
         // 그리드 아이콘 업데이트 (성급이 올라갔으므로)
         var occupiedCells = existingUnit.GridData.GetOccupiedCells();
         gridManager.SetGridIcons(GridPosition, occupiedCells, newUnitId, newStarLevel);
+
+        // 3성이 되었을 때 MergeUI 표시
+        if (newStarLevel == 3)
+        {
+            var stageUiManager = FindObjectOfType<StageUiManager>();
+            if (stageUiManager != null)
+                stageUiManager.ShowMergeUi(newUnitId);
+        }
 
         // 업적 연동: 합성
         UpdateCombineAchievementsAsync(newStarLevel).Forget();
@@ -589,6 +631,19 @@ public class GridCell : MonoBehaviour, IDroppable
         if (unit != null)
         {
             unit.SetSortingOrder(-GridPosition.y);
+        }
+    }
+
+    // 유닛 배치 사운드 재생
+    private void PlayPutGridSound()
+    {
+        if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+        {
+            var putGridSound = AddressablePreloader.Instance.GetCachedAudioClip("PutGridSound");
+            if (putGridSound != null)
+            {
+                SoundManager.Instance.PlaySFX(putGridSound);
+            }
         }
     }
 }

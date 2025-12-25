@@ -234,6 +234,12 @@ public class WaveManager : MonoBehaviour
 
         gameManager.IsBoss = true;
 
+        // 보스 BGM 재생
+        if (stageManager != null)
+        {
+            stageManager.PlayBossBGM();
+        }
+
         int bossId = wave.SPAWN_MON1_ID;
         if (bossId <= 0)
         {
@@ -260,6 +266,12 @@ public class WaveManager : MonoBehaviour
 
         gameManager.IsBoss = false;
         stageUiManager.HideBossHealthBar();
+
+        // 보스 처치 후 스테이지 BGM으로 복귀
+        if (stageManager != null)
+        {
+            stageManager.RestoreStageBGM();
+        }
 
         if (isFinalBoss)
         {

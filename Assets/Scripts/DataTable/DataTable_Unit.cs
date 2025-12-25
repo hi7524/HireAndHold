@@ -28,10 +28,13 @@ public class UnitData
     public int FRAGMENT_ITEM_ID { get; set; }   // 유닛 조각 아이템 ID
     public string GRID_ICON_01 { get; set; }
     public string GRID_ICON_02 { get; set; }
+    public string VOICE { get; set; }
+    public int VOICE_TEXT { get; set; }
 
     // StringTable 연동
     public string StringName => DataTableManager.StringTable?.Get(NAME);
     public string StringDescription => DataTableManager.StringTable?.Get(UNIT_DESCRIPTION);
+    public string StringVoiceText => DataTableManager.StringTable?.Get(VOICE_TEXT);
 }
 
 public class DataTable_Unit : DataTable
