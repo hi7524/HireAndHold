@@ -93,6 +93,9 @@ public class MonsterSpawner : MonoBehaviour
 
             // 업적 연동: 몬스터 처치
             AchievementManager.AddMonsterKillAsync(1).Forget();
+
+            // 퀘스트 연동: 몬스터 처치
+            QuestManager.AddMonsterKillAsync(1).Forget();
         }
     }
     // 모든 활성 몬스터 즉시 제거

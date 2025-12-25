@@ -126,6 +126,9 @@ public class StageClearPanelController : MonoBehaviour
                 if (stars == 3)
                     await AchievementManager.CompleteBarrierNoDamageAsync();
 
+                // 퀘스트 연동: 스테이지 클리어
+                await QuestManager.AddStageClearAsync(1);
+
                 // highestStage 갱신 (스테이지 ID로 저장)
                 var currentUser = DatabaseManager.Instance.CurrentUser;
 

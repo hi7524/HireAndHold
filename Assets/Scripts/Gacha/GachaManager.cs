@@ -487,13 +487,16 @@ public class GachaManager : MonoBehaviour
         // 총 가챠 횟수 업적
         await AchievementManager.AddGachaTotalAsync(count);
 
-        // 타입별 업적
+        // 타입별 업적 및 퀘스트
         if (type == GachaType.Normal)
         {
             if (count == 1)
                 await AchievementManager.CompleteGachaNormalAsync();
             else if (count == 10)
                 await AchievementManager.CompleteGachaNormal10Async();
+
+            // 퀘스트 연동: 일반 가챠
+            await QuestManager.AddGachaNormalAsync(count);
         }
         else if (type == GachaType.Premium)
         {
@@ -501,6 +504,9 @@ public class GachaManager : MonoBehaviour
                 await AchievementManager.CompleteGachaPremiumAsync();
             else if (count == 10)
                 await AchievementManager.CompleteGachaPremium10Async();
+
+            // 퀘스트 연동: 프리미엄 가챠
+            await QuestManager.AddGachaPremiumAsync(count);
         }
 
         // 레어리티별 업적 (에픽, 레전더리, 유니크 획득)

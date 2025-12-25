@@ -229,6 +229,9 @@ public class OreDungeonManager : MonoBehaviour
             await DatabaseManager.Instance.AddEnhanceStoneAsync(GetOreAmount);
             Debug.Log($"[OreDungeonManager] 강화석 {GetOreAmount}개 저장 완료");
 
+            // 퀘스트 연동: 강화석 던전 클리어
+            await QuestManager.AddStoneDungeonClearAsync(1);
+
             // 사용자 데이터 다시 로드하여 PlayData 동기화
             await DatabaseManager.Instance.LoadUserDataAsync();
             PlayData.SyncFromDatabase();

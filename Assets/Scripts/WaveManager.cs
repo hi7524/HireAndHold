@@ -263,6 +263,8 @@ public class WaveManager : MonoBehaviour
     {
         string bossType = isFinalBoss ? "최종보스" : "중간보스";
 
+        // 퀘스트 연동: 보스 몬스터 처치
+        QuestManager.AddBossMonsterKillAsync(1).Forget();
 
         gameManager.IsBoss = false;
         stageUiManager.HideBossHealthBar();
