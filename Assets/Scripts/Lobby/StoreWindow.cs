@@ -188,7 +188,7 @@ public class StoreWindow : GenericWindow
         while (pendingResult == null && waitTime < maxWaitTime)
         {
             ct.ThrowIfCancellationRequested();
-            await UniTask.Delay(50, cancellationToken: ct); // 100ms → 50ms로 더 자주 체크
+            await UniTask.Delay(50, cancellationToken: ct); 
             waitTime += 0.05f;
         }
 

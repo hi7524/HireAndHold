@@ -24,6 +24,9 @@ public class DeckControl : MonoBehaviour
     public List<Button> presetButtons;
     public UnitInfoUI unitInfoUI;
 
+    [Header("Loading")]
+    public GameObject loadingPanel;
+
     [Header("Prefabs")]
     public UnitCard cardPrefab;
 
@@ -32,15 +35,13 @@ public class DeckControl : MonoBehaviour
     public BattleUnitManager battleUnitManager;
 
     [Header("Unlock Alert Panel")]
-    public GameObject unlockAlertPanel;         
+    public GameObject unlockAlertPanel;           
     public TMPro.TextMeshProUGUI alertMessageText; 
-    public TMPro.TextMeshProUGUI alertCostText;   
-    public Button alertBuyButton;              
-    public Button alertCancelButton;              
+    public TMPro.TextMeshProUGUI alertCostText;    
+    public Button alertBuyButton;
+    public Button alertCancelButton;            
 
-
-    // 슬롯별 비용 (임시)
-    private const long SLOT_2_GOLD_COST = 100;
+    private const long SLOT_2_GOLD_COST = 10000;
     private const int SLOT_3_DIAMOND_COST = 100;
     private const int SLOT_4_DIAMOND_COST = 500;
 
@@ -61,6 +62,13 @@ public class DeckControl : MonoBehaviour
         InitializeButtons();
         InitializePresets();
         InitializeUnlockAlert();
+
+        HideAllSlots();
+
+        if (loadingPanel != null)
+        {
+            loadingPanel.SetActive(true);
+        }
     }
 
     void InitializeSlots()
@@ -115,18 +123,49 @@ public class DeckControl : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 모든 슬롯 숨기기
+    /// </summary>
+    void HideAllSlots()
+    {
+        foreach (var slot in slots)
+        {
+            slot.gameObject.SetActive(false);
+        }
+    }
+
+    /// <summary>
+    /// 모든 슬롯 표시
+    /// </summary>
+    void ShowAllSlots()
+    {
+        foreach (var slot in slots)
+        {
+            slot.gameObject.SetActive(true);
+        }
+    }
+
     private bool isInitialized = false;
 
     async void Start()
     {
+        await DatabaseManager.Instance.WaitForInitializationAsync();
         await InitializeData();
+
+        UpdateAllSlotLockStates();
         await CreateUnitCards();
+
         await LoadAndSetupPresets();
 
         ApplyPresetToSelectedUnitIds();
 
         UpdateAllUI();
-        UpdateAllSlotLockStates();
+        ShowAllSlots();
+
+        if (loadingPanel != null)
+        {
+            loadingPanel.SetActive(false);
+        }
 
         unitInfoUI.SetUnitManager(battleUnitManager);
         unitInfoUI.SetDeckControl(this);
