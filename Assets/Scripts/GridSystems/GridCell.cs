@@ -470,6 +470,16 @@ public class GridCell : MonoBehaviour, IDroppable
         int newStarLevel = existingUnit.StarLevel + 1;
         int newUnitId = CalculateUpgradedUnitId(existingUnit.UnitId);
 
+        // 머지 사운드 재생
+        if (SoundManager.Instance != null)
+        {
+            var mergeSound = AddressablePreloader.Instance?.GetCachedAudioClip("UnitMergeSound");
+            if (mergeSound != null)
+            {
+                SoundManager.Instance.PlaySFX(mergeSound);
+            }
+        }
+
         // 머지 이펙트 재생 - 파티클
         gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);
 
@@ -542,6 +552,16 @@ public class GridCell : MonoBehaviour, IDroppable
         // 합성 처리: 성급 업그레이드
         int newStarLevel = existingUnit.StarLevel + 1;
         int newUnitId = CalculateUpgradedUnitId(existingUnit.UnitId);
+
+        // 머지 사운드 재생
+        if (SoundManager.Instance != null)
+        {
+            var mergeSound = AddressablePreloader.Instance?.GetCachedAudioClip("UnitMergeSound");
+            if (mergeSound != null)
+            {
+                SoundManager.Instance.PlaySFX(mergeSound);
+            }
+        }
 
         // 머지 이펙트 재생 - 파티클
         gridManager.PlayMergeEffect(existingUnit.transform.position, newStarLevel);

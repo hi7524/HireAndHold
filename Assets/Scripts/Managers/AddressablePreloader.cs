@@ -188,6 +188,9 @@ public class AddressablePreloader : MonoBehaviour
         // 8. 유닛 보이스 Label로 일괄 로드
         await LoadUnitVoicesByLabel(ct);
 
+        // 9. Clips Label로 일괄 로드
+        await LoadClipsByLabel(ct);
+
         int total = prefabKeys.Count + gridDataKeys.Count + spriteKeys.Count + mapKeys.Count + gridLayoutKeys.Count + audioClipKeys.Count;
         int completed = 0;
 
@@ -447,6 +450,45 @@ public class AddressablePreloader : MonoBehaviour
             else
             {
                 Debug.LogWarning($"[AddressablePreloader] UnitVoices Label 로드 실패: {e.GetType().Name} - {e.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Clips Group의 모든 오디오 클립을 일괄 로드
+    /// </summary>
+    private async UniTask LoadClipsByLabel(CancellationToken ct)
+    {
+        const string label = "Clips";
+
+        try
+        {
+            // Label로 로드 시 AssetLabelReference 사용
+            var labelRef = new AssetLabelReference { labelString = label };
+            var handle = Addressables.LoadAssetsAsync<AudioClip>(labelRef, audioClip =>
+            {
+                if (audioClip != null && !cachedAudioClips.ContainsKey(audioClip.name))
+                {
+                    cachedAudioClips[audioClip.name] = audioClip;
+                }
+            });
+            handles.Add(handle);
+            await handle.ToUniTask(cancellationToken: ct);
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 정상적인 상황
+        }
+        catch (Exception e)
+        {
+            // Label이 없거나 로드 실패한 경우 - 경고만 출력하고 계속 진행
+            if (e is InvalidKeyException || e.GetType().Name == "InvalidKeyException")
+            {
+                Debug.LogWarning($"[AddressablePreloader] '{label}' Label을 가진 에셋이 없습니다. Clips 그룹을 생성하고 오디오 클립들을 추가해주세요.");
+            }
+            else
+            {
+                Debug.LogWarning($"[AddressablePreloader] Clips Label 로드 실패: {e.GetType().Name} - {e.Message}");
             }
         }
     }
