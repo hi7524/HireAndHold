@@ -16,7 +16,8 @@ public class StageUiManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI infoText;
     [SerializeField] private BossHPBar bossHealthBar;
     [SerializeField] private GameOverPanelController gameOverPanelController;
-     [Header("Panels")]
+    [SerializeField] private MergePanel mergeUi;
+    [Header("Panels")]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject warningPanel;
     [SerializeField] private GameObject skillSelectPanel;
@@ -163,5 +164,11 @@ public class StageUiManager : MonoBehaviour
         {
             infoText.gameObject.SetActive(true);
         }
+    }
+
+    public void ShowMergeUi(int unitId)
+    {
+        mergeUi.Init(unitId);
+        mergeUi.gameObject.SetActive(true);
     }
 }
