@@ -501,6 +501,14 @@ public class GridCell : MonoBehaviour, IDroppable
         Destroy(draggingUnit.gameObject);
         gridManager.DecrementUnitCount();
 
+        // 3성이 되었을 때 MergeUI 표시
+        if (newStarLevel == 3)
+        {
+            var stageUiManager = FindObjectOfType<StageUiManager>();
+            if (stageUiManager != null)
+                stageUiManager.ShowMergeUi(newUnitId);
+        }
+
         // 업적 연동: 합성
         UpdateCombineAchievementsAsync(newStarLevel).Forget();
 
@@ -556,6 +564,14 @@ public class GridCell : MonoBehaviour, IDroppable
         // 그리드 아이콘 업데이트 (성급이 올라갔으므로)
         var occupiedCells = existingUnit.GridData.GetOccupiedCells();
         gridManager.SetGridIcons(GridPosition, occupiedCells, newUnitId, newStarLevel);
+
+        // 3성이 되었을 때 MergeUI 표시
+        if (newStarLevel == 3)
+        {
+            var stageUiManager = FindObjectOfType<StageUiManager>();
+            if (stageUiManager != null)
+                stageUiManager.ShowMergeUi(newUnitId);
+        }
 
         // 업적 연동: 합성
         UpdateCombineAchievementsAsync(newStarLevel).Forget();

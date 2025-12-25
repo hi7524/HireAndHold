@@ -64,15 +64,24 @@ public class MergePanel : MonoBehaviour
         }
 
         // 유닛 설명 설정
-        if (!string.IsNullOrEmpty(unitData.StringDescription))
+        if (!string.IsNullOrEmpty(unitData.StringVoiceText))
         {
-            dialogueText.text = unitData.StringDescription;
+            dialogueText.text = unitData.StringVoiceText;
         }
 
-        // 별 표시 (RANK에 따라)
-        for (int i = 0; i < stars.Length; i++)
+        // 보이스 재생
+        if (!string.IsNullOrEmpty(unitData.VOICE) && unitData.VOICE != "0")
         {
-            stars[i].SetActive(i < unitData.RANK);
+            var voiceClip = AddressablePreloader.Instance.GetCachedVoice(unitData.VOICE);
+            if (voiceClip != null && SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX(voiceClip);
+                Debug.Log($"[MergePanel] 보이스 재생: {unitData.VOICE}");
+            }
+            else if (voiceClip == null)
+            {
+                Debug.LogWarning($"[MergePanel] {unitData.VOICE} 보이스가 캐시에 없습니다. Addressable의 UnitVoices 그룹을 확인하세요.");
+            }
         }
     }
 
