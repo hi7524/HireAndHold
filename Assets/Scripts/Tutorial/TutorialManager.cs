@@ -309,10 +309,25 @@ namespace Tutorial
                 {
                     await tutorialUI.ShowDialogAsync(text, step.dialogAnchor, step.dialogPosition, step.showCharacter);
 
-                    // 보이스 재생
-                    if (step.voiceClip != null)
+                    // 보이스 재생 (Addressable 캐시에서 로드)
+                    // voiceKey가 없으면 TutorialTable에서 stringId로 자동 조회
+                    string voiceKey = step.voiceKey;
+                    if (string.IsNullOrEmpty(voiceKey))
                     {
-                        SoundManager.Instance?.PlaySFX(step.voiceClip);
+                        voiceKey = DataTableManager.TutorialTable?.GetVoiceKey(step.stringId);
+                    }
+
+                    if (!string.IsNullOrEmpty(voiceKey))
+                    {
+                        var voiceClip = AddressablePreloader.Instance?.GetCachedTutorialVoice(voiceKey);
+                        if (voiceClip != null)
+                        {
+                            SoundManager.Instance?.PlaySFX(voiceClip);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[Tutorial] 튜토리얼 보이스 클립을 찾을 수 없음: {voiceKey}");
+                        }
                     }
                 }
                 else
