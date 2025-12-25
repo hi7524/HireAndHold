@@ -32,6 +32,7 @@ public class OreDungeonManager : MonoBehaviour
 
     private void Awake()
     {
+        draftUnitList = PlayData.selectedUnitIds;
         // 참조 누락 확인
         if (!ValidateReferences())
             return;

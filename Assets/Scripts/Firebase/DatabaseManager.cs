@@ -473,7 +473,7 @@ public class DatabaseManager : MonoBehaviour
 
             await SaveProfileAsync();
 
-   
+
             PlayData.SetProfileImmediate(
                 CurrentUser.profile.level,
                 CurrentUser.profile.exp
@@ -1363,7 +1363,7 @@ public class DatabaseManager : MonoBehaviour
 
         return personalClaimable + globalClaimable;
     }
-    
+
     /// <summary>
     /// 전역 메일인지 확인
     /// </summary>
@@ -2042,6 +2042,37 @@ public class DatabaseManager : MonoBehaviour
     /// 슬롯 잠금 해제 데이터 저장
     /// </summary>
     public async UniTask<bool> SaveSlotUnlocksAsync()
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        if (CurrentUser.presetSlotUnlocks == null)
+            CurrentUser.presetSlotUnlocks = new PresetSlotUnlockData();
+
+        string path = $"users/{UserId}/presetSlotUnlocks";
+        bool success = await database.SetDataAsync(path, CurrentUser.presetSlotUnlocks);
+
+        if (success)
+        {
+            Debug.Log("[DB] 슬롯 잠금 해제 데이터 저장 완료");
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 특정 슬롯이 해제되었는지 확인
+    /// </summary>
+    public bool IsSlotUnlocked(int presetIndex, int slotIndex)
+    {
+        if (CurrentUser?.presetSlotUnlocks == null)
+            return slotIndex < 2; // 0, 1번 슬롯은 항상 해제
+
+        return CurrentUser.presetSlotUnlocks.IsSlotUnlocked(presetIndex, slotIndex);
+    }
+
+    #endregion
+
     #region 상점 구매 기록 관리
 
     /// <summary>
@@ -2168,15 +2199,6 @@ public class DatabaseManager : MonoBehaviour
         if (success)
         {
             Debug.Log($"[DB] 구매 기록 저장: {sellingId}, 전체: {record.totalCount}, 오늘: {record.dailyCount}, 주간: {record.weeklyCount}, 월간: {record.monthlyCount}");
-        if (CurrentUser.presetSlotUnlocks == null)
-            CurrentUser.presetSlotUnlocks = new PresetSlotUnlockData();
-
-        string path = $"users/{UserId}/presetSlotUnlocks";
-        bool success = await database.SetDataAsync(path, CurrentUser.presetSlotUnlocks);
-
-        if (success)
-        {
-            Debug.Log("[DB] 슬롯 잠금 해제 데이터 저장 완료");
         }
 
         return success;
@@ -2190,14 +2212,6 @@ public class DatabaseManager : MonoBehaviour
         int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
         DateTime monday = date.AddDays(-diff).Date;
         return monday.ToString("yyyy-MM-dd");
-    /// 특정 슬롯이 해제되었는지 확인
-    /// </summary>
-    public bool IsSlotUnlocked(int presetIndex, int slotIndex)
-    {
-        if (CurrentUser?.presetSlotUnlocks == null)
-            return slotIndex < 2; // 0, 1번 슬롯은 항상 해제
-
-        return CurrentUser.presetSlotUnlocks.IsSlotUnlocked(presetIndex, slotIndex);
     }
 
     #endregion
