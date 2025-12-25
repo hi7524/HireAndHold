@@ -296,6 +296,9 @@ public class GridCell : MonoBehaviour, IDroppable
             // 성급에 따라 그리드 아이콘 설정
             gridManager.SetGridIcons(anchorPosition, occupiedCells, gridUnit.UnitId, gridUnit.StarLevel);
 
+            // 유닛 배치 사운드 재생
+            PlayPutGridSound();
+
             // GridUnit 배치 성공
             draggable.OnDropSuccess();
         }
@@ -370,6 +373,9 @@ public class GridCell : MonoBehaviour, IDroppable
 
             // 유닛이 그리드에 배치되었음을 알림
             gridManager.IncrementUnitCount();
+
+            // 유닛 배치 사운드 재생
+            PlayPutGridSound();
 
             // DraggableGridUnitUi 배치 성공
             draggable.OnDropSuccess();
@@ -625,6 +631,19 @@ public class GridCell : MonoBehaviour, IDroppable
         if (unit != null)
         {
             unit.SetSortingOrder(-GridPosition.y);
+        }
+    }
+
+    // 유닛 배치 사운드 재생
+    private void PlayPutGridSound()
+    {
+        if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+        {
+            var putGridSound = AddressablePreloader.Instance.GetCachedAudioClip("PutGridSound");
+            if (putGridSound != null)
+            {
+                SoundManager.Instance.PlaySFX(putGridSound);
+            }
         }
     }
 }

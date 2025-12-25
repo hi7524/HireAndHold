@@ -56,6 +56,101 @@ public class StageManager : MonoBehaviour
 
         // DropItem 이벤트 구독
         DropItem.OnItemCollected += OnItemCollected;
+
+        // 스테이지 BGM 재생
+        PlayStageBGM();
+    }
+
+    private void PlayStageBGM()
+    {
+        if (SoundManager.Instance == null)
+        {
+            Debug.LogWarning("[StageManager] SoundManager.Instance is null");
+            return;
+        }
+
+        if (AddressablePreloader.Instance == null)
+        {
+            Debug.LogWarning("[StageManager] AddressablePreloader.Instance is null");
+            return;
+        }
+
+        var stageBGM = AddressablePreloader.Instance.GetCachedAudioClip("StageBGM");
+        if (stageBGM != null)
+        {
+            Debug.Log("[StageManager] Playing StageBGM");
+            SoundManager.Instance.PlayBGMWithFadeIn(stageBGM, 1f);
+        }
+        else
+        {
+            Debug.LogWarning("[StageManager] StageBGM AudioClip not found in cache");
+        }
+    }
+
+    /// <summary>
+    /// 보스 등장 시 BGM을 BossBGM으로 전환
+    /// </summary>
+    public void PlayBossBGM()
+    {
+        if (SoundManager.Instance == null)
+        {
+            Debug.LogWarning("[StageManager] SoundManager.Instance is null (PlayBossBGM)");
+            return;
+        }
+
+        if (AddressablePreloader.Instance == null)
+        {
+            Debug.LogWarning("[StageManager] AddressablePreloader.Instance is null (PlayBossBGM)");
+            return;
+        }
+
+        var bossBGM = AddressablePreloader.Instance.GetCachedAudioClip("BossBGM");
+        if (bossBGM != null)
+        {
+            Debug.Log("[StageManager] Playing BossBGM");
+            SoundManager.Instance.StopBGMwithFadeOut(1f);
+            // 페이드 아웃 후 보스 BGM 재생
+            WaitAndPlayBossBGM(bossBGM).Forget();
+        }
+        else
+        {
+            Debug.LogWarning("[StageManager] BossBGM AudioClip not found in cache");
+        }
+    }
+
+    private async UniTaskVoid WaitAndPlayBossBGM(AudioClip bossBGM)
+    {
+        await UniTask.Delay(1000); // 1초 페이드 아웃 대기
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayBGMWithFadeIn(bossBGM, 1f);
+        }
+    }
+
+    /// <summary>
+    /// 보스 처치 후 BGM을 StageBGM으로 복귀
+    /// </summary>
+    public void RestoreStageBGM()
+    {
+        if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+        {
+            var stageBGM = AddressablePreloader.Instance.GetCachedAudioClip("StageBGM");
+            if (stageBGM != null)
+            {
+                SoundManager.Instance.StopBGMwithFadeOut(1f);
+                // 페이드 아웃 후 스테이지 BGM 재생
+                WaitAndPlayStageBGM(stageBGM).Forget();
+            }
+        }
+    }
+
+    private async UniTaskVoid WaitAndPlayStageBGM(AudioClip stageBGM)
+    {
+        await UniTask.Delay(1000); // 1초 페이드 아웃 대기
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayBGMWithFadeIn(stageBGM, 1f);
+        }
     }
 
 

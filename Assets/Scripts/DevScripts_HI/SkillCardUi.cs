@@ -243,6 +243,12 @@ public class SkillCardUi : BaseCardUi
         int nextStarIndex = currentFilledStars;
         if (nextStarIndex < starIcons.Length)
         {
+            // 별 등급 (1성, 2성, 3성)
+            int starLevel = nextStarIndex + 1;
+
+            // 별 사운드 재생
+            PlayStarSound(starLevel);
+
             // 별 색칠 애니메이션
             starIcons[nextStarIndex].transform.DOKill();
 
@@ -282,6 +288,48 @@ public class SkillCardUi : BaseCardUi
         return false;
     }
 
+    // 별 등급에 따른 사운드 재생
+    private void PlayStarSound(int starLevel)
+    {
+        Debug.Log($"[SkillCardUi] PlayStarSound called with starLevel: {starLevel}");
+
+        if (SoundManager.Instance == null)
+        {
+            Debug.LogWarning("[SkillCardUi] SoundManager.Instance is null");
+            return;
+        }
+
+        if (AddressablePreloader.Instance == null)
+        {
+            Debug.LogWarning("[SkillCardUi] AddressablePreloader.Instance is null");
+            return;
+        }
+
+        string soundName = starLevel switch
+        {
+            1 => "Star1",
+            2 => "Star2",
+            3 => "Star3",
+            _ => null
+        };
+
+        Debug.Log($"[SkillCardUi] Looking for sound: {soundName}");
+
+        if (!string.IsNullOrEmpty(soundName))
+        {
+            var starSound = AddressablePreloader.Instance.GetCachedAudioClip(soundName);
+            if (starSound != null)
+            {
+                Debug.Log($"[SkillCardUi] Playing {soundName}");
+                SoundManager.Instance.PlaySFX(starSound);
+            }
+            else
+            {
+                Debug.LogWarning($"[SkillCardUi] {soundName} AudioClip not found in cache");
+            }
+        }
+    }
+
     public void SetLevelUpRewardController(LevelUpRewardController levelUpRewardController)
     {
         this.levelUpRewardController = levelUpRewardController;
@@ -296,6 +344,9 @@ public class SkillCardUi : BaseCardUi
             // 이미 선택 중이면 무시
             if (!levelUpRewardController.CanSelectSkillCard())
                 return;
+
+            // 패시브 스킬 선택 사운드 재생
+            PlaySelectPassiveSkillSound();
 
             // 테두리 활성화
             SetFocus(true);
@@ -320,6 +371,19 @@ public class SkillCardUi : BaseCardUi
         else if (OnCardClickedCallback != null)
         {
             OnCardClickedCallback.Invoke();
+        }
+    }
+
+    // 패시브 스킬 선택 사운드 재생
+    private void PlaySelectPassiveSkillSound()
+    {
+        if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+        {
+            var selectSound = AddressablePreloader.Instance.GetCachedAudioClip("SelectPassiveSkill");
+            if (selectSound != null)
+            {
+                SoundManager.Instance.PlaySFX(selectSound);
+            }
         }
     }
 

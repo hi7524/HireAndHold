@@ -470,10 +470,13 @@ public class AddressablePreloader : MonoBehaviour
                 if (audioClip != null && !cachedAudioClips.ContainsKey(audioClip.name))
                 {
                     cachedAudioClips[audioClip.name] = audioClip;
+                    Debug.Log($"[AddressablePreloader] Loaded AudioClip: {audioClip.name}");
                 }
             });
             handles.Add(handle);
             await handle.ToUniTask(cancellationToken: ct);
+
+            Debug.Log($"[AddressablePreloader] Total AudioClips loaded from Clips label: {cachedAudioClips.Count}");
         }
         catch (OperationCanceledException)
         {
