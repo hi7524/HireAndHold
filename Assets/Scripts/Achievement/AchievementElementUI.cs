@@ -43,7 +43,13 @@ public class AchievementElementUI : MonoBehaviour
     private AchievementProgress progressData;
     private Action<AchievementData> onClickCallback;
 
+    // 퀘스트용
+    private QuestData questData;
+    private QuestProgress questProgressData;
+    private Action<QuestData> onQuestClickCallback;
+
     public int AchievementId => achievementData?.Achievements_ID ?? 0;
+    public int QuestId => questData?.Quest_ID ?? 0;
 
     private void Awake()
     {
@@ -57,11 +63,44 @@ public class AchievementElementUI : MonoBehaviour
         progressData = progress;
         onClickCallback = onClick;
 
+        // 퀘스트 데이터 초기화
+        questData = null;
+        questProgressData = null;
+        onQuestClickCallback = null;
+
         UpdateUI();
+    }
+
+    /// <summary>
+    /// 퀘스트용 Setup
+    /// </summary>
+    public void Setup(QuestData data, QuestProgress progress, Action<QuestData> onClick)
+    {
+        questData = data;
+        questProgressData = progress;
+        onQuestClickCallback = onClick;
+
+        // 업적 데이터 초기화
+        achievementData = null;
+        progressData = null;
+        onClickCallback = null;
+
+        UpdateQuestUI();
     }
 
     public void UpdateProgress(int currentValue)
     {
+        // 퀘스트인 경우
+        if (questData != null)
+        {
+            if (questProgressData == null)
+                questProgressData = new QuestProgress(questData.Quest_ID);
+            questProgressData.currentValue = currentValue;
+            UpdateQuestUI();
+            return;
+        }
+
+        // 업적인 경우
         if (progressData == null)
             progressData = new AchievementProgress(achievementData.Achievements_ID);
 
@@ -193,7 +232,107 @@ public class AchievementElementUI : MonoBehaviour
 
     private void OnClicked()
     {
-        onClickCallback?.Invoke(achievementData);
+        if (questData != null)
+            onQuestClickCallback?.Invoke(questData);
+        else
+            onClickCallback?.Invoke(achievementData);
+    }
+
+    /// <summary>
+    /// 퀘스트 UI 업데이트
+    /// </summary>
+    private void UpdateQuestUI()
+    {
+        if (questData == null) return;
+
+        int currentValue = questProgressData?.currentValue ?? 0;
+        int targetValue = questData.Condition_Value;
+        bool isCompleted = questProgressData?.isCompleted ?? false;
+        bool isRewarded = questProgressData?.isRewarded ?? false;
+
+        // 제목
+        if (titleText != null)
+            titleText.text = questData.Quest_Name;
+
+        // 설명
+        if (descriptionText != null)
+            descriptionText.text = questData.Quest_Desc;
+
+        // 진행도 텍스트
+        if (progressText != null)
+            progressText.text = $"{currentValue} / {targetValue}";
+
+        // 진행도 슬라이더
+        if (progressSlider != null)
+        {
+            progressSlider.maxValue = targetValue;
+            progressSlider.value = Mathf.Min(currentValue, targetValue);
+        }
+
+        // 수령 가능 표시
+        if (claimableIndicator != null)
+            claimableIndicator.SetActive(isCompleted && !isRewarded);
+
+        // 완료(수령됨) 표시
+        if (completedIndicator != null)
+            completedIndicator.SetActive(isRewarded);
+
+        // 보상 아이콘
+        UpdateQuestRewardDisplay();
+
+        // 배경색
+        if (backgroundImage != null)
+        {
+            if (isRewarded)
+                backgroundImage.color = completedColor;
+            else if (isCompleted)
+                backgroundImage.color = claimableColor;
+            else
+                backgroundImage.color = normalColor;
+        }
+
+        // 버튼 상호작용
+        if (button != null)
+            button.interactable = !isRewarded;
+    }
+
+    private void UpdateQuestRewardDisplay()
+    {
+        if (rewardIconImage == null || questData == null) return;
+
+        Sprite icon = defaultIcon;
+
+        if (questData.Reward_Type == 1)
+        {
+            icon = goldIcon;
+        }
+        else if (questData.Reward_Type == 2)
+        {
+            switch (questData.Reward_ID)
+            {
+                case 5102:
+                    icon = diamondIcon;
+                    break;
+                case 5103:
+                    icon = ticketIcon;
+                    break;
+                case 5201:
+                    icon = enhanceStoneIcon;
+                    break;
+                default:
+                    icon = defaultIcon;
+                    break;
+            }
+        }
+
+        if (icon != null)
+            rewardIconImage.sprite = icon;
+
+        if (rewardAmountText != null)
+            rewardAmountText.text = FormatNumber(questData.Reward_Value);
+
+        if (rewardIcon != null)
+            rewardIcon.SetActive(!(questProgressData?.isRewarded ?? false));
     }
 
     private void OnDestroy()

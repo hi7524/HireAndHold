@@ -7,6 +7,7 @@ public class TutorialData
 {
     public int StringID { get; set; }
     public string TutoText { get; set; }
+    public string Voice { get; set; }
 }
 
 public class DataTable_Tutorial : DataTable
@@ -59,6 +60,18 @@ public class DataTable_Tutorial : DataTable
             return data.TutoText;
         }
         return $"[{stringId}]";
+    }
+
+    /// <summary>
+    /// ID로 튜토리얼 보이스 키 가져오기
+    /// </summary>
+    public string GetVoiceKey(int stringId)
+    {
+        if (dictionary.TryGetValue(stringId, out var data))
+        {
+            return data.Voice;
+        }
+        return null;
     }
 
     /// <summary>

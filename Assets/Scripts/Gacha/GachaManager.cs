@@ -28,7 +28,7 @@ public class GachaManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 가챠 아이콘 미리 로드 (백그라운드)
+    /// 가챠 아이콘 미리 로드 (백그라운드) - 일반 아이콘만
     /// </summary>
     private async UniTaskVoid PreloadGachaIconsAsync()
     {
@@ -36,63 +36,34 @@ public class GachaManager : MonoBehaviour
 
         HashSet<string> iconAddresses = new HashSet<string>();
 
-        // 일반 가챠 아이콘 수집
+        // 일반 가챠 아이콘 수집 (일반 아이콘만)
         foreach (var item in basicGachaItems)
         {
             var unitData = DataTableManager.UnitTable?.Get(item.unitId);
             if (unitData != null && !string.IsNullOrEmpty(unitData.UNIT_ICON))
             {
                 iconAddresses.Add(unitData.UNIT_ICON);
-
-                // 조각 아이콘도 미리 로드
-                string fragmentIcon = GetFragmentIconAddress(unitData);
-                if (!string.IsNullOrEmpty(fragmentIcon))
-                {
-                    iconAddresses.Add(fragmentIcon);
-                }
+                // Fragment 아이콘은 필요할 때만 로드
             }
         }
 
-        // 프리미엄 가챠 아이콘 수집
+        // 프리미엄 가챠 아이콘 수집 (일반 아이콘만)
         foreach (var item in premiumGachaItems)
         {
             var unitData = DataTableManager.UnitTable?.Get(item.unitId);
             if (unitData != null && !string.IsNullOrEmpty(unitData.UNIT_ICON))
             {
                 iconAddresses.Add(unitData.UNIT_ICON);
-
-                // 조각 아이콘도 미리 로드
-                string fragmentIcon = GetFragmentIconAddress(unitData);
-                if (!string.IsNullOrEmpty(fragmentIcon))
-                {
-                    iconAddresses.Add(fragmentIcon);
-                }
+                // Fragment 아이콘은 필요할 때만 로드
             }
         }
 
-        Debug.Log($"[GachaManager] 프리로드 시작: {iconAddresses.Count}개 아이콘");
+        Debug.Log($"[GachaManager] 프리로드 시작: {iconAddresses.Count}개 아이콘 (일반 아이콘만)");
 
-        // 배치로 나눠서 로드 (한 번에 5개씩)
-        List<string> addressList = new List<string>(iconAddresses);
-        int batchSize = 5;
+        // SpriteCache 사용 (내부에서 예외 처리됨)
+        await SpriteCache.Instance.PreloadSpritesAsync(iconAddresses);
 
-        for (int i = 0; i < addressList.Count; i += batchSize)
-        {
-            List<UniTask> loadTasks = new List<UniTask>();
-
-            for (int j = i; j < Mathf.Min(i + batchSize, addressList.Count); j++)
-            {
-                string address = addressList[j];
-                loadTasks.Add(SpriteCache.Instance.LoadSpriteAsync(address).AsUniTask());
-            }
-
-            await UniTask.WhenAll(loadTasks);
-
-            // CPU 부하 분산을 위해 프레임 대기
-            await UniTask.Yield();
-        }
-
-        Debug.Log($"[GachaManager] 프리로드 완료: {iconAddresses.Count}개 아이콘");
+        Debug.Log($"[GachaManager] 프리로드 완료: 성공 {SpriteCache.Instance.CachedCount}개 / 실패 {SpriteCache.Instance.FailedCount}개");
     }
 
     /// <summary>
@@ -333,7 +304,8 @@ public class GachaManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 결과 아이콘 미리 로드
+    /// 결과 아이콘 미리 로드 (일반 아이콘만)
+    /// Fragment 아이콘은 GachaResultCard에서 필요할 때 로드
     /// </summary>
     private async UniTask PreloadResultIconsAsync(List<GachaItem> results)
     {
@@ -344,21 +316,14 @@ public class GachaManager : MonoBehaviour
             var unitData = DataTableManager.UnitTable?.Get(item.unitId);
             if (unitData != null)
             {
-                // 유닛 아이콘 로드
+                // 유닛 아이콘만 로드 (일반 아이콘)
                 if (!string.IsNullOrEmpty(unitData.UNIT_ICON))
                 {
                     loadTasks.Add(SpriteCache.Instance.LoadSpriteAsync(unitData.UNIT_ICON).AsUniTask());
                 }
 
-                // 중복이면 조각 아이콘도 로드
-                if (item.isDuplicate)
-                {
-                    string fragmentIcon = GetFragmentIconAddress(unitData);
-                    if (!string.IsNullOrEmpty(fragmentIcon))
-                    {
-                        loadTasks.Add(SpriteCache.Instance.LoadSpriteAsync(fragmentIcon).AsUniTask());
-                    }
-                }
+                // Fragment 아이콘은 GachaResultCard에서 필요할 때 로드
+                // 프리로드하지 않음
             }
         }
 
@@ -366,7 +331,7 @@ public class GachaManager : MonoBehaviour
         if (loadTasks.Count > 0)
         {
             await UniTask.WhenAll(loadTasks);
-            Debug.Log($"[GachaManager] 결과 아이콘 {loadTasks.Count}개 프리로드 완료");
+            Debug.Log($"[GachaManager] 결과 아이콘 {loadTasks.Count}개 프리로드 완료 (일반 아이콘만)");
         }
     }
 

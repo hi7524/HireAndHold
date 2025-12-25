@@ -174,6 +174,9 @@ public class HeroEnforceSystem
 
         AchievementManager.AddHeroUpgradeSuccessAsync(1).Forget();
 
+        // 퀘스트 연동: 영웅 강화 성공
+        QuestManager.AddHeroUpgradeSuccessAsync(1).Forget();
+
         if (nextLv >= MAX_LEVEL)
             AchievementManager.CompleteHeroUpgradeMaxAsync().Forget();
 

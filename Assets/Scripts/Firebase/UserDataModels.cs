@@ -25,6 +25,7 @@ namespace GameData
         public TutorialProgressData tutorial; // 튜토리얼 진행 상황
         public Dictionary<string, DungeonEntryData> dungeonEntries; // 던전 입장권
         public PresetSlotUnlockData presetSlotUnlocks;
+        public Dictionary<string, PurchaseRecordData> purchaseRecords; // 상점 구매 기록
 
         public UserData()
         {
@@ -40,6 +41,7 @@ namespace GameData
             dailyReward = new DailyRewardData();
             tutorial = new TutorialProgressData();
             dungeonEntries = new Dictionary<string, DungeonEntryData>();
+            purchaseRecords = new Dictionary<string, PurchaseRecordData>();
         }
     }
 
@@ -435,6 +437,41 @@ namespace GameData
             this.dungeonId = dungeonId;
             this.currentEntries = maxEntries;
             this.lastResetDate = DateTime.Now.ToString("yyyy-MM-dd");
+        }
+    }
+
+    #endregion
+
+    #region 상점 구매 기록
+
+    /// <summary>
+    /// 상품 구매 기록 데이터
+    /// Firebase 경로: users/{userId}/purchaseRecords/{sellingId}
+    /// </summary>
+    [Serializable]
+    public class PurchaseRecordData
+    {
+        public int sellingId;               // 상품 ID
+        public int totalCount;              // 전체 구매 횟수
+        public string lastPurchaseDate;     // 마지막 구매 날짜 (yyyy-MM-dd)
+        public int dailyCount;              // 오늘 구매 횟수
+        public string weekStartDate;        // 주간 시작 날짜 (yyyy-MM-dd, 월요일)
+        public int weeklyCount;             // 이번 주 구매 횟수
+        public string monthKey;             // 월 키 (yyyy-MM)
+        public int monthlyCount;            // 이번 달 구매 횟수
+
+        public PurchaseRecordData() { }
+
+        public PurchaseRecordData(int sellingId)
+        {
+            this.sellingId = sellingId;
+            this.totalCount = 0;
+            this.lastPurchaseDate = null;
+            this.dailyCount = 0;
+            this.weekStartDate = null;
+            this.weeklyCount = 0;
+            this.monthKey = null;
+            this.monthlyCount = 0;
         }
     }
 

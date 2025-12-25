@@ -144,7 +144,7 @@ MonoBehaviour:
   m_text: X50
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
-  m_sharedMaterial: {fileID: 927587171870459129, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
+  m_sharedMaterial: {fileID: -2522021900909612901, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -300,6 +300,7 @@ GameObject:
   - component: {fileID: 1843613100312558749}
   - component: {fileID: 4414189512938628188}
   - component: {fileID: 3825783466906347221}
+  - component: {fileID: 299728810117188939}
   m_Layer: 5
   m_Name: DiamondButton
   m_TagString: Untagged
@@ -424,6 +425,30 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
+--- !u!114 &299728810117188939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871260462341346921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72f6c0ec1d23d174baa12bf7b53ac8b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sellingId: 0
+  productIcon: {fileID: 0}
+  amountText: {fileID: 5225502894999619825}
+  priceText: {fileID: 4950275908178159216}
+  limitText: {fileID: 0}
+  buyButton: {fileID: 3825783466906347221}
+  soldOutOverlay: {fileID: 0}
+  limitBadge: {fileID: 0}
+  goldIcon: {fileID: 0}
+  diamondIcon: {fileID: 0}
+  cashIcon: {fileID: 0}
+  priceIcon: {fileID: 0}
 --- !u!1 &2238739020443582265
 GameObject:
   m_ObjectHideFlags: 0
@@ -492,7 +517,7 @@ MonoBehaviour:
   m_text: "\uAC00\uACA9"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
-  m_sharedMaterial: {fileID: 927587171870459129, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
+  m_sharedMaterial: {fileID: -2522021900909612901, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -703,7 +728,7 @@ MonoBehaviour:
   m_text: "\uCCAB \uAD6C\uB9E4 +50"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
-  m_sharedMaterial: {fileID: 927587171870459129, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
+  m_sharedMaterial: {fileID: -2522021900909612901, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

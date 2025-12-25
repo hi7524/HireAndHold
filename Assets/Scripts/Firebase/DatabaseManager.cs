@@ -473,7 +473,7 @@ public class DatabaseManager : MonoBehaviour
 
             await SaveProfileAsync();
 
-   
+
             PlayData.SetProfileImmediate(
                 CurrentUser.profile.level,
                 CurrentUser.profile.exp
@@ -1363,7 +1363,7 @@ public class DatabaseManager : MonoBehaviour
 
         return personalClaimable + globalClaimable;
     }
-    
+
     /// <summary>
     /// 전역 메일인지 확인
     /// </summary>
@@ -2069,6 +2069,149 @@ public class DatabaseManager : MonoBehaviour
             return slotIndex < 2; // 0, 1번 슬롯은 항상 해제
 
         return CurrentUser.presetSlotUnlocks.IsSlotUnlocked(presetIndex, slotIndex);
+    }
+
+    #endregion
+
+    #region 상점 구매 기록 관리
+
+    /// <summary>
+    /// 구매 기록 가져오기 (없으면 생성)
+    /// </summary>
+    public PurchaseRecordData GetPurchaseRecord(int sellingId)
+    {
+        if (CurrentUser?.purchaseRecords == null)
+            CurrentUser.purchaseRecords = new Dictionary<string, PurchaseRecordData>();
+
+        string key = sellingId.ToString();
+        if (!CurrentUser.purchaseRecords.TryGetValue(key, out var record))
+        {
+            record = new PurchaseRecordData(sellingId);
+            CurrentUser.purchaseRecords[key] = record;
+        }
+
+        return record;
+    }
+
+    /// <summary>
+    /// 전체 구매 횟수 조회
+    /// </summary>
+    public int GetTotalPurchaseCount(int sellingId)
+    {
+        var record = GetPurchaseRecord(sellingId);
+        return record.totalCount;
+    }
+
+    /// <summary>
+    /// 오늘 구매 횟수 조회
+    /// </summary>
+    public int GetTodayPurchaseCount(int sellingId)
+    {
+        var record = GetPurchaseRecord(sellingId);
+        string today = DateTime.Now.ToString("yyyy-MM-dd");
+
+        // 날짜가 바뀌었으면 리셋
+        if (record.lastPurchaseDate != today)
+        {
+            record.dailyCount = 0;
+        }
+
+        return record.dailyCount;
+    }
+
+    /// <summary>
+    /// 이번 주 구매 횟수 조회
+    /// </summary>
+    public int GetWeeklyPurchaseCount(int sellingId)
+    {
+        var record = GetPurchaseRecord(sellingId);
+        string currentWeekStart = GetWeekStartDate(DateTime.Now);
+
+        // 주가 바뀌었으면 리셋
+        if (record.weekStartDate != currentWeekStart)
+        {
+            record.weeklyCount = 0;
+            record.weekStartDate = currentWeekStart;
+        }
+
+        return record.weeklyCount;
+    }
+
+    /// <summary>
+    /// 이번 달 구매 횟수 조회
+    /// </summary>
+    public int GetMonthlyPurchaseCount(int sellingId)
+    {
+        var record = GetPurchaseRecord(sellingId);
+        string currentMonth = DateTime.Now.ToString("yyyy-MM");
+
+        // 월이 바뀌었으면 리셋
+        if (record.monthKey != currentMonth)
+        {
+            record.monthlyCount = 0;
+            record.monthKey = currentMonth;
+        }
+
+        return record.monthlyCount;
+    }
+
+    /// <summary>
+    /// 구매 기록 추가
+    /// </summary>
+    public async UniTask<bool> AddPurchaseRecordAsync(int sellingId)
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        var record = GetPurchaseRecord(sellingId);
+        string today = DateTime.Now.ToString("yyyy-MM-dd");
+        string currentWeekStart = GetWeekStartDate(DateTime.Now);
+        string currentMonth = DateTime.Now.ToString("yyyy-MM");
+
+        // 날짜 변경 체크 및 리셋
+        if (record.lastPurchaseDate != today)
+        {
+            record.dailyCount = 0;
+        }
+        if (record.weekStartDate != currentWeekStart)
+        {
+            record.weeklyCount = 0;
+            record.weekStartDate = currentWeekStart;
+        }
+        if (record.monthKey != currentMonth)
+        {
+            record.monthlyCount = 0;
+            record.monthKey = currentMonth;
+        }
+
+        // 카운트 증가
+        record.totalCount++;
+        record.dailyCount++;
+        record.weeklyCount++;
+        record.monthlyCount++;
+        record.lastPurchaseDate = today;
+
+        // Firebase 저장
+        string key = sellingId.ToString();
+        string path = $"users/{UserId}/purchaseRecords/{key}";
+        bool success = await database.SetDataAsync(path, record);
+
+        if (success)
+        {
+            Debug.Log($"[DB] 구매 기록 저장: {sellingId}, 전체: {record.totalCount}, 오늘: {record.dailyCount}, 주간: {record.weeklyCount}, 월간: {record.monthlyCount}");
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 주의 시작 날짜 계산 (월요일 기준)
+    /// </summary>
+    private string GetWeekStartDate(DateTime date)
+    {
+        int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
+        DateTime monday = date.AddDays(-diff).Date;
+        return monday.ToString("yyyy-MM-dd");
     }
 
     #endregion

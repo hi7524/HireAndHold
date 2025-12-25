@@ -61,8 +61,8 @@ namespace Tutorial
         [Tooltip("StringTable에서 텍스트를 가져올 ID (103101~103147)")]
         public int stringId;
 
-        [Tooltip("이 스텝에서 재생할 보이스 클립")]
-        public AudioClip voiceClip;
+        [Tooltip("이 스텝에서 재생할 보이스 키 (AddressablePreloader에서 로드)")]
+        public string voiceKey;
 
         [Tooltip("스텝 완료 시 지급할 보상")]
         public TutorialReward reward;

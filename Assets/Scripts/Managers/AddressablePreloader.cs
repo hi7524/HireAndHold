@@ -35,6 +35,7 @@ public class AddressablePreloader : MonoBehaviour
     private Dictionary<string, AudioClip> cachedAudioClips = new Dictionary<string, AudioClip>();
     private Dictionary<string, Sprite> cachedGridIcons = new Dictionary<string, Sprite>(); // 유닛 그리드 아이콘
     private Dictionary<string, AudioClip> cachedVoices = new Dictionary<string, AudioClip>(); // 유닛 보이스
+    private Dictionary<string, AudioClip> cachedTutorialVoices = new Dictionary<string, AudioClip>(); // 튜토리얼 보이스
     private List<AsyncOperationHandle> handles = new List<AsyncOperationHandle>();
 
     public bool IsLoaded { get; private set; } = false;
@@ -188,7 +189,10 @@ public class AddressablePreloader : MonoBehaviour
         // 8. 유닛 보이스 Label로 일괄 로드
         await LoadUnitVoicesByLabel(ct);
 
-        // 9. Clips Label로 일괄 로드
+        // 9. 튜토리얼 보이스 Label로 일괄 로드
+        await LoadTutorialVoicesByLabel(ct);
+
+        // 10. Clips Label로 일괄 로드
         await LoadClipsByLabel(ct);
 
         int total = prefabKeys.Count + gridDataKeys.Count + spriteKeys.Count + mapKeys.Count + gridLayoutKeys.Count + audioClipKeys.Count;
@@ -450,6 +454,63 @@ public class AddressablePreloader : MonoBehaviour
             else
             {
                 Debug.LogWarning($"[AddressablePreloader] UnitVoices Label 로드 실패: {e.GetType().Name} - {e.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// TutVoice Label이 붙은 모든 튜토리얼 보이스를 일괄 로드
+    /// Address 값을 키로 사용하여 캐싱
+    /// </summary>
+    private async UniTask LoadTutorialVoicesByLabel(CancellationToken ct)
+    {
+        const string label = "TutVoice";
+
+        try
+        {
+            // 먼저 Label로 리소스 위치 목록을 가져옴
+            var locationsHandle = Addressables.LoadResourceLocationsAsync(label, typeof(AudioClip));
+            var locations = await locationsHandle.ToUniTask(cancellationToken: ct);
+
+            foreach (var location in locations)
+            {
+                try
+                {
+                    var loadHandle = Addressables.LoadAssetAsync<AudioClip>(location);
+                    handles.Add(loadHandle);
+                    var audioClip = await loadHandle.ToUniTask(cancellationToken: ct);
+
+                    if (audioClip != null)
+                    {
+                        // Address(PrimaryKey)를 키로 사용
+                        string address = location.PrimaryKey;
+                        if (!cachedTutorialVoices.ContainsKey(address))
+                        {
+                            cachedTutorialVoices[address] = audioClip;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[AddressablePreloader] 튜토리얼 보이스 로드 실패: {location.PrimaryKey}, {e.Message}");
+                }
+            }
+
+            Addressables.Release(locationsHandle);
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 정상적인 상황
+        }
+        catch (Exception e)
+        {
+            if (e is InvalidKeyException || e.GetType().Name == "InvalidKeyException")
+            {
+                Debug.LogWarning($"[AddressablePreloader] '{label}' Label을 가진 에셋이 없습니다. TutVoice 라벨을 가진 튜토리얼 보이스 파일들을 추가해주세요.");
+            }
+            else
+            {
+                Debug.LogWarning($"[AddressablePreloader] TutVoice Label 로드 실패: {e.GetType().Name} - {e.Message}");
             }
         }
     }
@@ -829,6 +890,28 @@ public class AddressablePreloader : MonoBehaviour
     }
 
     /// <summary>
+    /// 캐싱된 튜토리얼 보이스 가져오기
+    /// </summary>
+    public AudioClip GetCachedTutorialVoice(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return null;
+
+        return cachedTutorialVoices.TryGetValue(key, out var voice) ? voice : null;
+    }
+
+    /// <summary>
+    /// 튜토리얼 보이스가 캐싱되어 있는지 확인
+    /// </summary>
+    public bool HasCachedTutorialVoice(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return false;
+
+        return cachedTutorialVoices.ContainsKey(key);
+    }
+
+    /// <summary>
     /// 유효한 Addressable 키인지 확인 (폴더 경로나 플레이스홀더 텍스트 필터링)
     /// </summary>
     private bool IsValidAddressableKey(string key)
@@ -873,6 +956,7 @@ public class AddressablePreloader : MonoBehaviour
         cachedAudioClips.Clear();
         cachedGridIcons.Clear();
         cachedVoices.Clear();
+        cachedTutorialVoices.Clear();
 
         if (instance == this)
         {

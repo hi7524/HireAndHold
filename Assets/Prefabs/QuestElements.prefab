@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5237214125420861325}
   - component: {fileID: 1520196343198129256}
   - component: {fileID: 3146760053252243807}
-  - component: {fileID: 5522016567759253103}
+  - component: {fileID: -1931317891699594395}
   m_Layer: 5
   m_Name: QuestElements
   m_TagString: Untagged
@@ -173,7 +173,7 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: 1
   m_LayoutPriority: 1
---- !u!114 &5522016567759253103
+--- !u!114 &-1931317891699594395
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -182,7 +182,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2737028994516726825}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 880491cb3585e264d90aec098e69ac7e, type: 3}
+  m_Script: {fileID: 11500000, guid: 2d9d3a3bd30489644af60d68e50897bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   titleText: {fileID: 238429715977814448}
@@ -190,10 +190,12 @@ MonoBehaviour:
   progressText: {fileID: 0}
   progressSlider: {fileID: 9220207795292891619}
   button: {fileID: 5237214125420861325}
-  backgroundImage: {fileID: 7897009492415577122}
+  backgroundImage: {fileID: 9220207795292891616}
   claimableIndicator: {fileID: 0}
   completedIndicator: {fileID: 0}
   rewardIcon: {fileID: 0}
+  dailyBadge: {fileID: 0}
+  weeklyBadge: {fileID: 0}
   rewardIconImage: {fileID: 0}
   rewardAmountText: {fileID: 0}
   normalColor: {r: 0.84, g: 0.62, b: 0.37, a: 1}
@@ -544,6 +546,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b7c8b7084c27b4c38a38ad76e6c21682, type: 3}
+--- !u!114 &9220207795292891616 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4061057545336249521, guid: b7c8b7084c27b4c38a38ad76e6c21682, type: 3}
+  m_PrefabInstance: {fileID: 5165352183873910097}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &9220207795292891618 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4061057545336249523, guid: b7c8b7084c27b4c38a38ad76e6c21682, type: 3}

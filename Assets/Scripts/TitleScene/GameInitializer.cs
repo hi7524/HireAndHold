@@ -122,6 +122,9 @@ public class GameInitializer : MonoBehaviour
         {
             await DatabaseManager.Instance.WaitForInitializationAsync();
             await DatabaseManager.Instance.LoadUserDataAsync();
+
+            // 퀘스트 연동: 로그인 (일일 출석)
+            await QuestManager.UpdateLoginDaysAsync(1);
         }, weight: 0.2f);
 
         // 3. 게임 리소스 프리로드

@@ -30,8 +30,12 @@ public class QuestAreaController : MonoBehaviour
     [Header("Tab Buttons")]
     [SerializeField] private Button dailyTabButton;
     [SerializeField] private Button weeklyTabButton;
-    [SerializeField] private GameObject dailyTabSelected;
-    [SerializeField] private GameObject weeklyTabSelected;
+    [SerializeField] private Image dailyTabImage;
+    [SerializeField] private Image weeklyTabImage;
+
+    [Header("Tab Colors")]
+    [SerializeField] private Color tabSelectedColor = new Color(1f, 0.8f, 0.4f, 1f);
+    [SerializeField] private Color tabNormalColor = new Color(0.7f, 0.7f, 0.7f, 1f);
 
 
     [Header("Badge")]
@@ -71,6 +75,10 @@ public class QuestAreaController : MonoBehaviour
 
         if (questAreaPanel != null)
             questAreaPanel.SetActive(true);
+
+        // 일일 탭으로 초기화
+        showingDaily = true;
+        UpdateTabUI();
 
         // 초기화 및 리셋 체크
         InitializeAsync().Forget();
@@ -123,10 +131,11 @@ public class QuestAreaController : MonoBehaviour
 
     private void UpdateTabUI()
     {
-        if (dailyTabSelected != null)
-            dailyTabSelected.SetActive(showingDaily);
-        if (weeklyTabSelected != null)
-            weeklyTabSelected.SetActive(!showingDaily);
+        // 탭 버튼 색상 변경
+        if (dailyTabImage != null)
+            dailyTabImage.color = showingDaily ? tabSelectedColor : tabNormalColor;
+        if (weeklyTabImage != null)
+            weeklyTabImage.color = showingDaily ? tabNormalColor : tabSelectedColor;
 
         // 패널 전환
         if (dailyQuestPanel != null)

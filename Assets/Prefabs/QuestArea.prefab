@@ -202,6 +202,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4011846682327835324}
+  - {fileID: 31625345706434669}
+  - {fileID: 5691469308158371356}
   m_Father: {fileID: 8619462685110048146}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -242,7 +244,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3766767245667309614}
-  - {fileID: 31625345706434669}
   m_Father: {fileID: 2685745956079494261}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -430,7 +431,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8588518135226515616}
-  - {fileID: 5691469308158371356}
   m_Father: {fileID: 2685745956079494261}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -914,7 +914,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4888564130677923751}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -978,7 +978,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   questAreaPanel: {fileID: 4888564130677923751}
-  questElementPrefab: {fileID: 2737028994516726825, guid: 4a18d95a59d92aa488f375ab9343acca, type: 3}
+  questElementPrefab: {fileID: 2737028994516726825, guid: cadc2ac745cee104eacadaf57897526d, type: 3}
   closeButton: {fileID: 8163378648412280339}
   claimAllButton: {fileID: 4011846682327835326}
   claimAllButtonText: {fileID: 4011846683072752304}
@@ -988,8 +988,10 @@ MonoBehaviour:
   weeklyQuestContent: {fileID: 5811383986537523590}
   dailyTabButton: {fileID: 3082238465876900069}
   weeklyTabButton: {fileID: 8915738856837453371}
-  dailyTabSelected: {fileID: 5617185744893835922}
-  weeklyTabSelected: {fileID: 8357777259550137234}
+  dailyTabImage: {fileID: 3735128084079980908}
+  weeklyTabImage: {fileID: 3256167028045666452}
+  tabSelectedColor: {r: 1, g: 0.8, b: 0.4, a: 1}
+  tabNormalColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
   claimableBadge: {fileID: 0}
   claimableCountText: {fileID: 0}
   dailyBadge: {fileID: 0}
@@ -1240,11 +1242,11 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8161787635595871297}
-  m_Father: {fileID: 5001303266330073798}
+  m_Father: {fileID: 5069297647735113871}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 46, y: 14.700104}
+  m_AnchoredPosition: {x: 46, y: 450.0001}
   m_SizeDelta: {x: 87, y: 36.2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8585517811680381674
@@ -1669,11 +1671,11 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6813981343239834186}
-  m_Father: {fileID: 6653893214389125490}
+  m_Father: {fileID: 5069297647735113871}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 128.8, y: 14.700104}
+  m_AnchoredPosition: {x: 128.8, y: 450.0001}
   m_SizeDelta: {x: 82.1, y: 36.2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5722134204941784714

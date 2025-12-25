@@ -124,6 +124,9 @@ public class NormalEnforceSystem
         // 업적 연동: 일반 강화 성공
         await AchievementManager.AddNormalUpgradeSuccessAsync(1);
 
+        // 퀘스트 연동: 일반 강화 성공
+        await QuestManager.AddNormalUpgradeSuccessAsync(1);
+
         // 최대 레벨 달성 시 업적
         if (nextLevel >= MAX_ENFORCE_LEVEL)
             await AchievementManager.CompleteNormalUpgradeMaxAsync();
