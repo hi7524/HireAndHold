@@ -8,6 +8,7 @@ public class SellingData
 {
     public int SELLING_ID { get; set; }
     public string SELLING_NAME { get; set; }
+    public int SELLING_ITEM { get; set; }
     public int SELLING_AMOUNT { get; set; }
     public int SELLING_MONEY { get; set; }
     public int SELLING_PRICE { get; set; }
