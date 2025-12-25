@@ -1,8 +1,9 @@
+﻿using Cysharp.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Cysharp.Threading.Tasks;
-using System;
-using TMPro;
 
 public class GameInitializer : MonoBehaviour
 {
@@ -110,30 +111,99 @@ public class GameInitializer : MonoBehaviour
     {
         LoadingRequest request = new LoadingRequest("Lobby");
 
-        // 데이터 테이블 로드
+        // 1. 데이터 테이블 로드
         request.AddTask("데이터 테이블 로드", async (ct) =>
         {
             await DataTableManager.InitAsync();
         }, weight: 0.2f);
 
-        // 유저 데이터 로드
+        // 2. 유저 데이터 로드
         request.AddTask("유저 데이터 로드", async (ct) =>
         {
             await DatabaseManager.Instance.WaitForInitializationAsync();
             await DatabaseManager.Instance.LoadUserDataAsync();
         }, weight: 0.2f);
 
-        // 게임 리소스 프리로드 (몬스터/유닛 비주얼, GridData 등)
+        // 3. 게임 리소스 프리로드
         request.AddTask("게임 리소스 로드", async (ct, progress) =>
         {
             await AddressablePreloader.Instance.PreloadAllAsync(ct, progress);
-        }, weight: 0.6f);
+        }, weight: 0.5f);
+
+        // 4. 스프라이트 캐싱 (데이터 테이블 로드 후)
+        request.AddTask("UI 아이콘 캐싱", async (ct) =>
+        {
+            await PreloadSpritesAsync();
+        }, weight: 0.1f);
 
         request.onLoadingComplete = () =>
         {
         };
 
         await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
+    }
+
+    private async UniTask PreloadSpritesAsync()
+    {
+        // DataTableManager 초기화 대기
+        if (!DataTableManager.IsInitialized)
+        {
+            Debug.LogWarning("[GameInitializer] DataTableManager가 초기화되지 않았습니다. 스프라이트 프리로드를 건너뜁니다.");
+            return;
+        }
+
+        var addresses = new HashSet<string>();
+
+        // 보유한 모든 유닛 아이콘
+        var characters = DatabaseManager.Instance.GetAllCharacters();
+        var unitTable = DataTableManager.UnitTable;
+
+        if (unitTable == null)
+        {
+            Debug.LogWarning("[GameInitializer] UnitTable이 null입니다. 스프라이트 프리로드를 건너뜁니다.");
+            return;
+        }
+
+        foreach (var character in characters)
+        {
+            if (int.TryParse(character.id, out int unitId))
+            {
+                var unitData = unitTable.Get(unitId);
+                if (unitData != null && !string.IsNullOrEmpty(unitData.UNIT_ICON))
+                {
+                    addresses.Add(unitData.UNIT_ICON);
+
+                    // 조각 아이콘도 프리로드
+                    string icon = unitData.UNIT_ICON;
+                    icon = System.Text.RegularExpressions.Regex.Replace(icon, @"\d+$", "");
+                    addresses.Add($"unit/fragment/{icon}");
+                }
+            }
+        }
+
+        // 스킬 아이콘 프리로드
+        var skillTable = DataTableManager.SkillTable;
+        if (skillTable != null)
+        {
+            foreach (var skill in skillTable.GetAll())
+            {
+                if (!string.IsNullOrEmpty(skill.SKILL_ICON))
+                {
+                    addresses.Add(skill.SKILL_ICON);
+                }
+            }
+        }
+
+        if (addresses.Count > 0)
+        {
+            Debug.Log($"[GameInitializer] {addresses.Count}개 스프라이트 프리로드 시작");
+            await SpriteCache.Instance.PreloadSpritesAsync(addresses);
+            Debug.Log($"[GameInitializer] 프리로드 완료! 캐시된 스프라이트: {SpriteCache.Instance.CachedCount}개");
+        }
+        else
+        {
+            Debug.LogWarning("[GameInitializer] 프리로드할 스프라이트가 없습니다.");
+        }
     }
 
     private void ShowLoginScreen()

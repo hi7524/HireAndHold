@@ -2,7 +2,6 @@
 using GameData;
 using TMPro;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
 public class HeroEnforcePopup : MonoBehaviour
@@ -27,6 +26,10 @@ public class HeroEnforcePopup : MonoBehaviour
     [SerializeField] private Transform effectListParent;
     [SerializeField] private GameObject effectItemPrefab;
 
+    [Header("Effect Colors")]
+    [SerializeField] private Color activeEffectColor = new Color(1f, 1f, 1f, 1f);      // 활성화: 흰색
+    [SerializeField] private Color inactiveEffectColor = new Color(0.5f, 0.5f, 0.5f, 0.5f); // 비활성화: 회색 반투명
+
     [Header("Buttons")]
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button closeButton;
@@ -46,6 +49,13 @@ public class HeroEnforcePopup : MonoBehaviour
     private void Start()
     {
         SetupPopup();
+
+        // 색상이 설정되지 않았다면 기본값 설정
+        if (activeEffectColor == default)
+            activeEffectColor = new Color(1f, 1f, 1f, 1f);
+
+        if (inactiveEffectColor == default)
+            inactiveEffectColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
     }
 
     private void SetupPopup()
@@ -129,16 +139,9 @@ public class HeroEnforcePopup : MonoBehaviour
         if (data == null)
             return;
 
-        try
-        {
-            var sprite = await Addressables.LoadAssetAsync<Sprite>(data.UNIT_ICON).Task;
-            if (unitImage != null)
-                unitImage.sprite = sprite;
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[HeroEnforcePopup] Icon load failed: {ex}");
-        }
+        var sprite = await SpriteCache.Instance.LoadSpriteAsync(data.UNIT_ICON);
+        if (unitImage != null && sprite != null)
+            unitImage.sprite = sprite;
     }
 
     private void RefreshUI()
@@ -183,6 +186,7 @@ public class HeroEnforcePopup : MonoBehaviour
         if (effectListParent == null)
             return;
 
+        // 기존 아이템 제거
         foreach (Transform t in effectListParent)
             Destroy(t.gameObject);
 
@@ -198,14 +202,34 @@ public class HeroEnforcePopup : MonoBehaviour
             if (eff == null) continue;
 
             var go = Instantiate(effectItemPrefab, effectListParent);
-            var txt = go.GetComponentInChildren<TextMeshProUGUI>();
 
+            // 활성화 여부
+            bool isActive = lv <= heroLv;
+
+            // 텍스트 설정
+            var txt = go.GetComponentInChildren<TextMeshProUGUI>();
             if (txt != null)
             {
                 string desc = effectTable.FormatEffect(eff);
-                string status = lv <= heroLv ? "[활성]" : "[잠김]";
-                txt.text = $"{status} LV {lv}: {desc}";
+                txt.text = $"LV {lv}: {desc}";
+
+                // 색상 적용
+                txt.color = isActive ? activeEffectColor : inactiveEffectColor;
             }
+
+            var img = go.GetComponent<Image>();
+            if (img != null)
+            {
+                Color imgColor = img.color;
+                imgColor.a = isActive ? 1f : 0.5f;
+                img.color = imgColor;
+            }
+
+            var canvasGroup = go.GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+                canvasGroup = go.AddComponent<CanvasGroup>();
+
+            canvasGroup.alpha = isActive ? 1f : 0.6f;
         }
     }
 
@@ -231,38 +255,39 @@ public class HeroEnforcePopup : MonoBehaviour
 
         int beforeLv = character.heroEnforceLevel;
 
-        try
+        bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
+
+        PlayData.SyncCharactersFromDatabase();
+        PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
+
+        if (!ok)
         {
-            bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
-            if (!ok)
-            {
-                popupManager?.ShowAlert("재료 부족!");
-                return;
-            }
-
-            await DatabaseManager.Instance.LoadUserDataAsync();
-            PlayData.SyncFromDatabase();
-
-            int afterLv = character.heroEnforceLevel;
-
-            var ef = heroTable.Get(currentUnitId, afterLv);
-            var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
-            var desc = effectTable.FormatEffect(effData);
-
-            popupManager?.ShowSuccess(
-                "영웅 강화 성공!",
-                $"★{beforeLv} → ★{afterLv}\n효과: {desc}"
-            );
-
-            mainUI?.RefreshUI();
-            RefreshUI();
+            popupManager?.ShowAlert("재료 부족!");
+            return;
         }
-        catch (System.Exception ex)
+
+        PlayData.SyncCharactersFromDatabase();
+
+        if (mainUI != null)
         {
-            Debug.LogError($"[HeroEnforcePopup] 강화 실패: {ex}");
-            popupManager?.ShowAlert("강화 중 오류가 발생했습니다.");
+            mainUI.RefreshUI();
         }
+
+        RefreshUI();
+
+        var updatedChar = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+        int afterLv = updatedChar.heroEnforceLevel;
+
+        var ef = heroTable.Get(currentUnitId, afterLv);
+        var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
+        var desc = effectTable.FormatEffect(effData);
+
+        popupManager?.ShowSuccess(
+            "영웅 강화 성공!",
+            $"★{beforeLv} → ★{afterLv}\n효과: {desc}"
+        );
     }
+
 
     private void RefreshCostUI()
     {

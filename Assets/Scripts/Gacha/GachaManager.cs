@@ -19,15 +19,97 @@ public class GachaManager : MonoBehaviour
     private bool isExecuting = false;
     public bool IsExecuting => isExecuting;
 
-    private  void Start()
+    private void Start()
     {
-       
         InitializeTables();
+
+        // 게임 시작 시 가챠 아이콘 미리 로드
+        PreloadGachaIconsAsync().Forget();
+    }
+
+    /// <summary>
+    /// 가챠 아이콘 미리 로드 (백그라운드)
+    /// </summary>
+    private async UniTaskVoid PreloadGachaIconsAsync()
+    {
+        await UniTask.Delay(1000); // 게임 시작 후 1초 뒤 시작
+
+        HashSet<string> iconAddresses = new HashSet<string>();
+
+        // 일반 가챠 아이콘 수집
+        foreach (var item in basicGachaItems)
+        {
+            var unitData = DataTableManager.UnitTable?.Get(item.unitId);
+            if (unitData != null && !string.IsNullOrEmpty(unitData.UNIT_ICON))
+            {
+                iconAddresses.Add(unitData.UNIT_ICON);
+
+                // 조각 아이콘도 미리 로드
+                string fragmentIcon = GetFragmentIconAddress(unitData);
+                if (!string.IsNullOrEmpty(fragmentIcon))
+                {
+                    iconAddresses.Add(fragmentIcon);
+                }
+            }
+        }
+
+        // 프리미엄 가챠 아이콘 수집
+        foreach (var item in premiumGachaItems)
+        {
+            var unitData = DataTableManager.UnitTable?.Get(item.unitId);
+            if (unitData != null && !string.IsNullOrEmpty(unitData.UNIT_ICON))
+            {
+                iconAddresses.Add(unitData.UNIT_ICON);
+
+                // 조각 아이콘도 미리 로드
+                string fragmentIcon = GetFragmentIconAddress(unitData);
+                if (!string.IsNullOrEmpty(fragmentIcon))
+                {
+                    iconAddresses.Add(fragmentIcon);
+                }
+            }
+        }
+
+        Debug.Log($"[GachaManager] 프리로드 시작: {iconAddresses.Count}개 아이콘");
+
+        // 배치로 나눠서 로드 (한 번에 5개씩)
+        List<string> addressList = new List<string>(iconAddresses);
+        int batchSize = 5;
+
+        for (int i = 0; i < addressList.Count; i += batchSize)
+        {
+            List<UniTask> loadTasks = new List<UniTask>();
+
+            for (int j = i; j < Mathf.Min(i + batchSize, addressList.Count); j++)
+            {
+                string address = addressList[j];
+                loadTasks.Add(SpriteCache.Instance.LoadSpriteAsync(address).AsUniTask());
+            }
+
+            await UniTask.WhenAll(loadTasks);
+
+            // CPU 부하 분산을 위해 프레임 대기
+            await UniTask.Yield();
+        }
+
+        Debug.Log($"[GachaManager] 프리로드 완료: {iconAddresses.Count}개 아이콘");
+    }
+
+    /// <summary>
+    /// 조각 아이콘 주소 생성
+    /// </summary>
+    private string GetFragmentIconAddress(UnitData unitData)
+    {
+        if (unitData == null || string.IsNullOrEmpty(unitData.UNIT_ICON))
+            return null;
+
+        string icon = unitData.UNIT_ICON;
+        icon = System.Text.RegularExpressions.Regex.Replace(icon, @"\d+$", "");
+        return $"unit/fragment/{icon}";
     }
 
     private void InitializeTables()
     {
-        
         var normalGacha = GetGachaData(GachaType.Normal);
         var premiumGacha = GetGachaData(GachaType.Premium);
         if (normalGacha != null)
@@ -130,7 +212,7 @@ public class GachaManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 안전한 가챠 실행 (비동기, DB 연동)
+    /// 안전한 가챠 실행 (비동기, DB 연동) - 최적화 버전
     /// </summary>
     public async UniTask<GachaResult> ExecuteGachaAsync(GachaType type, int count)
     {
@@ -165,10 +247,9 @@ public class GachaManager : MonoBehaviour
             {
                 return null;
             }
-            // 뽑기 실행
+
+            // 뽑기 실행 (동기 처리 - 빠름)
             List<GachaItem> results = new List<GachaItem>();
-            var gachaItems = GetGachaItemsByType(type);
-            var totalWeight = GetTotalWeightByType(type);
             for (int i = 0; i < count; i++)
             {
                 var gachaResult = GachaSingle(type);
@@ -187,9 +268,12 @@ public class GachaManager : MonoBehaviour
                 return null;
             }
 
-            // 획득한 캐릭터 DB 저장
-            List<string> failedCharacters = new List<string>();
+            // 아이콘 미리 로드 (결과 표시 전에)
+            await PreloadResultIconsAsync(results);
+
+            // 획득한 캐릭터 DB 저장 (병렬 처리)
             HashSet<int> processedUnitsThisGacha = new HashSet<int>();
+            List<UniTask> saveTasks = new List<UniTask>();
 
             foreach (var item in results)
             {
@@ -201,12 +285,11 @@ public class GachaManager : MonoBehaviour
 
                 if (!alreadyOwnedInDB && !alreadyProcessedInThisGacha)
                 {
-                    //신규 유닛
+                    // 신규 유닛
                     item.isDuplicate = false;
-                    item.isNew = true; 
+                    item.isNew = true;
 
-                    await DatabaseManager.Instance.AddCharacterAsync(characterId, 1);
-
+                    saveTasks.Add(DatabaseManager.Instance.AddCharacterAsync(characterId, 1));
                     processedUnitsThisGacha.Add(unitId);
                 }
                 else
@@ -218,27 +301,19 @@ public class GachaManager : MonoBehaviour
                     var unitData = DataTableManager.UnitTable.Get(unitId);
                     if (unitData != null && unitData.FRAGMENT_ITEM_ID > 0)
                     {
-                        await DatabaseManager.Instance.AddItemAsync(
-                            unitData.FRAGMENT_ITEM_ID, 1
-                        );
+                        saveTasks.Add(DatabaseManager.Instance.AddItemAsync(unitData.FRAGMENT_ITEM_ID, 1));
                     }
                 }
-
             }
 
-
-
-            // 저장 실패한 캐릭터가 있으면 로그 기록
-            if (failedCharacters.Count > 0)
-            {
-                Debug.LogError($"[GachaManager] {failedCharacters.Count}개 캐릭터 저장 실패");
-            }
+            // 모든 DB 저장 작업 병렬 실행
+            await UniTask.WhenAll(saveTasks);
 
             // PlayData 캐릭터 캐시 동기화
             PlayData.SyncCharactersFromDatabase();
 
-            // 업적 연동
-            await UpdateGachaAchievementsAsync(type, count, results);
+            // 업적 연동 (백그라운드)
+            UpdateGachaAchievementsAsync(type, count, results).Forget();
 
             // 결과 생성 및 이벤트 발생
             GachaResult result = new GachaResult(results, type);
@@ -255,7 +330,44 @@ public class GachaManager : MonoBehaviour
         {
             isExecuting = false;
         }
+    }
 
+    /// <summary>
+    /// 결과 아이콘 미리 로드
+    /// </summary>
+    private async UniTask PreloadResultIconsAsync(List<GachaItem> results)
+    {
+        List<UniTask> loadTasks = new List<UniTask>();
+
+        foreach (var item in results)
+        {
+            var unitData = DataTableManager.UnitTable?.Get(item.unitId);
+            if (unitData != null)
+            {
+                // 유닛 아이콘 로드
+                if (!string.IsNullOrEmpty(unitData.UNIT_ICON))
+                {
+                    loadTasks.Add(SpriteCache.Instance.LoadSpriteAsync(unitData.UNIT_ICON).AsUniTask());
+                }
+
+                // 중복이면 조각 아이콘도 로드
+                if (item.isDuplicate)
+                {
+                    string fragmentIcon = GetFragmentIconAddress(unitData);
+                    if (!string.IsNullOrEmpty(fragmentIcon))
+                    {
+                        loadTasks.Add(SpriteCache.Instance.LoadSpriteAsync(fragmentIcon).AsUniTask());
+                    }
+                }
+            }
+        }
+
+        // 모든 아이콘 병렬 로드
+        if (loadTasks.Count > 0)
+        {
+            await UniTask.WhenAll(loadTasks);
+            Debug.Log($"[GachaManager] 결과 아이콘 {loadTasks.Count}개 프리로드 완료");
+        }
     }
 
     /// <summary>
@@ -326,7 +438,6 @@ public class GachaManager : MonoBehaviour
             isNew = false
         };
     }
-
 
     private GachaItem GetItemByWeight(int randomWeight, List<GachaItem> gachaItems)
     {

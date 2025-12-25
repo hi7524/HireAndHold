@@ -56,7 +56,6 @@ public class NormalEnforceSystem
 
         int currentLevel = GetUnitEnforceLevel(unit);
 
-        // 레벨 0부터 시작하므로 최대 레벨은 20 (0~20)
         if (currentLevel >= MAX_ENFORCE_LEVEL)
         {
             reason = "최대 레벨 도달";
@@ -66,14 +65,13 @@ public class NormalEnforceSystem
         int nextLevel = currentLevel + 1;
         int rank = GetUnitRank(unit);
 
-        // 다음 레벨의 강화 데이터를 찾음 (레벨 1부터 강화 시작)
+        // 다음 레벨의 강화 데이터를 찾음 
         if (!TryGetEnforceData(rank, nextLevel, out var data))
         {
             reason = $"강화 데이터 없음: Rank {rank}, LV {nextLevel}";
             return false;
         }
 
-        // PlayData 캐시에서 즉시 체크 (빠름!)
         if (!PlayData.HasEnoughGold(data.Gold_Cost))
         {
             reason = $"골드 부족 (필요: {data.Gold_Cost}, 보유: {PlayData.Gold})";
@@ -95,6 +93,7 @@ public class NormalEnforceSystem
     {
         if (!CanEnforce(unit, out string reason))
         {
+            Debug.LogWarning($"[NormalEnforceSystem] TryEnforceAsync failed: {reason}");
             return false;
         }
 
@@ -104,16 +103,23 @@ public class NormalEnforceSystem
 
         if (!TryGetEnforceData(rank, nextLevel, out var data))
         {
+            Debug.LogError($"[NormalEnforceSystem] TryEnforceAsync: No data found");
             return false;
         }
+
+        Debug.Log($"[NormalEnforceSystem] 강화 시도: Level {currentLevel} → {nextLevel}, 골드 차감: {data.Gold_Cost}, 강화석 차감: {data.IngredientNum}");
 
         // PlayData를 통한 재화 차감 (내부에서 DB 동기화)
         await DatabaseManager.Instance.AddGoldAsync(-data.Gold_Cost);
         await DatabaseManager.Instance.AddEnhanceStoneAsync(-data.IngredientNum);
 
+        Debug.Log($"[NormalEnforceSystem] 재화 차감 완료 - 남은 골드: {PlayData.Gold}, 남은 강화석: {PlayData.EnhanceStone}");
+
         // 유닛에 강화 적용
         ApplyEnforceToUnit(unit, data);
         await SaveUnitEnforceLevel(unit, nextLevel);
+
+        Debug.Log($"[NormalEnforceSystem] 강화 완료: {unit.UnitID} Level {nextLevel}");
 
         // 업적 연동: 일반 강화 성공
         await AchievementManager.AddNormalUpgradeSuccessAsync(1);
@@ -157,20 +163,30 @@ public class NormalEnforceSystem
 
     public (long gold, int stone) GetNextEnforceCost(Unit unit)
     {
-        if (unit == null) return (0, 0);
+        if (unit == null)
+        {
+            Debug.LogWarning("[NormalEnforceSystem] GetNextEnforceCost: unit is null");
+            return (0, 0);
+        }
 
         int currentLevel = GetUnitEnforceLevel(unit);
 
-        if (currentLevel >= MAX_ENFORCE_LEVEL) return (0, 0);
+        if (currentLevel >= MAX_ENFORCE_LEVEL)
+        {
+            Debug.Log($"[NormalEnforceSystem] GetNextEnforceCost: Max level reached ({currentLevel})");
+            return (0, 0);
+        }
 
         int nextLevel = currentLevel + 1;
         int rank = GetUnitRank(unit);
 
         if (!TryGetEnforceData(rank, nextLevel, out var data))
         {
+            Debug.LogError($"[NormalEnforceSystem] GetNextEnforceCost: No data found for rank {rank}, level {nextLevel}");
             return (0, 0);
         }
 
+        Debug.Log($"[NormalEnforceSystem] GetNextEnforceCost: rank={rank}, currentLv={currentLevel}, nextLv={nextLevel}, gold={data.Gold_Cost}, stone={data.IngredientNum}");
         return (data.Gold_Cost, Mathf.RoundToInt(data.IngredientNum));
     }
 

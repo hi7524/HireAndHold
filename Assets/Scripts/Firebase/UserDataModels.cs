@@ -24,6 +24,7 @@ namespace GameData
         public DailyRewardData dailyReward;
         public TutorialProgressData tutorial; // 튜토리얼 진행 상황
         public Dictionary<string, DungeonEntryData> dungeonEntries; // 던전 입장권
+        public PresetSlotUnlockData presetSlotUnlocks;
 
         public UserData()
         {

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
@@ -123,6 +123,7 @@ public class DatabaseManager : MonoBehaviour
 
         var userData = new UserData
         {
+            presetSlotUnlocks = new PresetSlotUnlockData(),
             profile = new UserProfile
             {
                 oderId = UserId,
@@ -2031,6 +2032,43 @@ public class DatabaseManager : MonoBehaviour
 
         CurrentUser.tutorial = new TutorialProgressData();
         return await SaveTutorialProgressAsync();
+    }
+
+    #endregion
+
+    #region 프리셋 슬롯 잠금 관리
+
+    /// <summary>
+    /// 슬롯 잠금 해제 데이터 저장
+    /// </summary>
+    public async UniTask<bool> SaveSlotUnlocksAsync()
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        if (CurrentUser.presetSlotUnlocks == null)
+            CurrentUser.presetSlotUnlocks = new PresetSlotUnlockData();
+
+        string path = $"users/{UserId}/presetSlotUnlocks";
+        bool success = await database.SetDataAsync(path, CurrentUser.presetSlotUnlocks);
+
+        if (success)
+        {
+            Debug.Log("[DB] 슬롯 잠금 해제 데이터 저장 완료");
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 특정 슬롯이 해제되었는지 확인
+    /// </summary>
+    public bool IsSlotUnlocked(int presetIndex, int slotIndex)
+    {
+        if (CurrentUser?.presetSlotUnlocks == null)
+            return slotIndex < 2; // 0, 1번 슬롯은 항상 해제
+
+        return CurrentUser.presetSlotUnlocks.IsSlotUnlocked(presetIndex, slotIndex);
     }
 
     #endregion

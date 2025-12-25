@@ -97,6 +97,6 @@ public class LobbyUnitWander : MonoBehaviour
     {
         if (animator == null) return;
 
-        animator.SetFloat("Speed", walking ? 1f : 0f);
+        //animator.SetFloat("Speed", walking ? 1f : 0f);
     }
 }

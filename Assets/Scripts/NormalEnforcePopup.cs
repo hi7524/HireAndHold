@@ -46,7 +46,6 @@ public class NormalEnforcePopup : MonoBehaviour
 
     private void SetupPopup()
     {
-        // 이미 활성화되어 있으면 끄지 않음 (Open이 먼저 호출된 경우)
         if (popupRoot != null && !popupRoot.activeSelf)
             popupRoot.SetActive(false);
 
@@ -90,6 +89,8 @@ public class NormalEnforcePopup : MonoBehaviour
         currentUnitId = unitId;
         currentPreviewUnit = previewUnit;
 
+        Debug.Log($"[NormalEnforcePopup] Open: unitId={unitId}, 현재 골드={PlayData.Gold}, 현재 강화석={PlayData.EnhanceStone}");
+
         LoadUnitIconAsync().Forget();
         RefreshUI();
     }
@@ -103,25 +104,21 @@ public class NormalEnforcePopup : MonoBehaviour
         if (data == null)
             return;
 
-        try
-        {
-            var sprite = await Addressables.LoadAssetAsync<Sprite>(data.UNIT_ICON).Task;
-            if (unitImage != null)
-                unitImage.sprite = sprite;
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[NormalEnforcePopup] Icon load failed: {ex}");
-        }
+        var sprite = await SpriteCache.Instance.LoadSpriteAsync(data.UNIT_ICON);
+        if (unitImage != null && sprite != null)
+            unitImage.sprite = sprite;
     }
 
     private void RefreshUI()
     {
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
         if (character == null || currentPreviewUnit == null)
+        {
+            Debug.LogWarning($"[NormalEnforcePopup] RefreshUI: character or previewUnit is null");
             return;
+        }
 
-        int lv = character.enforceLevel; // 0부터 시작
+        int lv = character.enforceLevel; 
 
         if (levelCurrent != null)
             levelCurrent.text = lv.ToString();
@@ -149,18 +146,25 @@ public class NormalEnforcePopup : MonoBehaviour
 
         var (goldCost, stoneCost) = enforceSystem.GetNextEnforceCost(currentPreviewUnit);
 
+        // PlayData에서 직접 가져오기
+        long currentGold = PlayData.Gold;
+        int currentStone = PlayData.EnhanceStone;
+
+        Debug.Log($"[NormalEnforcePopup] RefreshUI: 보유 골드={currentGold}, 필요 골드={goldCost}, 보유 강화석={currentStone}, 필요 강화석={stoneCost}");
+
         if (stoneHave != null)
-            stoneHave.text = PlayData.EnhanceStone.ToString();
+            stoneHave.text = currentStone.ToString();
 
         if (stoneNeed != null)
             stoneNeed.text = stoneCost.ToString();
 
         if (goldHave != null)
-            goldHave.text = PlayData.Gold.ToString();
+            goldHave.text = currentGold.ToString();
 
         if (goldNeed != null)
             goldNeed.text = goldCost.ToString();
     }
+
 
     private void OnConfirmClicked()
     {
@@ -183,7 +187,9 @@ public class NormalEnforcePopup : MonoBehaviour
         }
 
         int beforeLv = character.enforceLevel;
-        float beforeAtk = currentPreviewUnit.GetAttackDamageStat().Value;
+        int beforeAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
+
+        Debug.Log($"[NormalEnforcePopup] 강화 시도: 강화 전 레벨={beforeLv}, 공격력={beforeAtk}");
 
         try
         {
@@ -195,15 +201,29 @@ public class NormalEnforcePopup : MonoBehaviour
                 return;
             }
 
+            // DB에서 최신 데이터 다시 로드
+            character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+
+            // PlayData 동기화
+            PlayData.SyncCharactersFromDatabase();
+            PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
+
             int afterLv = character.enforceLevel;
-            float afterAtk = currentPreviewUnit.GetAttackDamageStat().Value;
+            int afterAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
+
+            Debug.Log($"[NormalEnforcePopup] 강화 성공: 강화 후 레벨={afterLv}, 공격력={afterAtk}, 남은 골드={PlayData.Gold}, 남은 강화석={PlayData.EnhanceStone}");
 
             popupManager?.ShowSuccess(
                 "강화 성공",
                 $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}"
             );
 
-            mainUI?.RefreshUI();
+            // UI 갱신
+            if (mainUI != null)
+            {
+                mainUI.RefreshUI();
+            }
+
             RefreshUI();
         }
         catch (System.Exception ex)
@@ -223,14 +243,20 @@ public class NormalEnforcePopup : MonoBehaviour
 
         var (goldCost, stoneCost) = enforceSystem.GetNextEnforceCost(currentPreviewUnit);
 
+        // PlayData에서 직접 가져오기
+        long currentGold = PlayData.Gold;
+        int currentStone = PlayData.EnhanceStone;
+
+        Debug.Log($"[NormalEnforcePopup] RefreshCostUI: 보유 골드={currentGold}, 필요 골드={goldCost}, 보유 강화석={currentStone}, 필요 강화석={stoneCost}");
+
         if (goldHave != null)
-            goldHave.text = PlayData.Gold.ToString();
+            goldHave.text = currentGold.ToString();
 
         if (goldNeed != null)
             goldNeed.text = goldCost.ToString();
 
         if (stoneHave != null)
-            stoneHave.text = PlayData.EnhanceStone.ToString();
+            stoneHave.text = currentStone.ToString();
 
         if (stoneNeed != null)
             stoneNeed.text = stoneCost.ToString();
@@ -239,10 +265,12 @@ public class NormalEnforcePopup : MonoBehaviour
     private void OnEnable()
     {
         PlayData.OnCurrencyChanged += RefreshCostUI;
+        Debug.Log("[NormalEnforcePopup] OnEnable: 재화 변경 이벤트 구독");
     }
 
     private void OnDisable()
     {
         PlayData.OnCurrencyChanged -= RefreshCostUI;
+        Debug.Log("[NormalEnforcePopup] OnDisable: 재화 변경 이벤트 구독 해제");
     }
 }

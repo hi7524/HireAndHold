@@ -1,6 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class UIPopupManager : MonoBehaviour
 {
@@ -15,57 +16,40 @@ public class UIPopupManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI successDetail;
     [SerializeField] private Button successOk;
 
-    private UnitInfoUI mainUI;
-    private bool isInitialized = false;
+    [Header("Confirm Popup")]
+    [SerializeField] private GameObject confirmRoot;
+    [SerializeField] private TextMeshProUGUI confirmTitle;
+    [SerializeField] private TextMeshProUGUI confirmMessage;
+    [SerializeField] private Button confirmYes;
+    [SerializeField] private Button confirmNo;
 
-    private static bool globalInitialized = false;
+    private bool isInitialized = false;
+    private Action currentAlertCallback;
+    private Action currentConfirmCallback;
 
     private void Awake()
     {
-        if (globalInitialized)
-        {
-            return;
-        }
-
         Initialize();
-        globalInitialized = true;
     }
 
     private void Initialize()
     {
         if (isInitialized)
-        {
             return;
-        }
 
-
-        if (alertRoot != null && !alertRoot.activeSelf)
-        {
-            Debug.Log(" alertRoot 비활성화 ");
-        }
-        else if (alertRoot != null)
-        {
+        // Alert 초기화
+        if (alertRoot != null)
             alertRoot.SetActive(false);
-        }
-
-        if (successRoot != null && !successRoot.activeSelf)
-        {
-            Debug.Log(" successRoot 비활성화 )");
-        }
-        else if (successRoot != null)
-        {
-            successRoot.SetActive(false);
-        }
 
         if (alertOk != null)
         {
             alertOk.onClick.RemoveAllListeners();
-            alertOk.onClick.AddListener(() =>
-            {
-                if (alertRoot != null)
-                    alertRoot.SetActive(false);
-            });
+            alertOk.onClick.AddListener(OnAlertOkClicked);
         }
+
+        // Success 초기화
+        if (successRoot != null)
+            successRoot.SetActive(false);
 
         if (successOk != null)
         {
@@ -74,68 +58,60 @@ public class UIPopupManager : MonoBehaviour
             {
                 if (successRoot != null)
                     successRoot.SetActive(false);
-                mainUI?.RefreshUI();
             });
         }
 
-        mainUI = GetComponentInParent<UnitInfoUI>();
+        // Confirm 초기화
+        if (confirmRoot != null)
+            confirmRoot.SetActive(false);
+
+        if (confirmYes != null)
+        {
+            confirmYes.onClick.RemoveAllListeners();
+            confirmYes.onClick.AddListener(OnConfirmYesClicked);
+        }
+
+        if (confirmNo != null)
+        {
+            confirmNo.onClick.RemoveAllListeners();
+            confirmNo.onClick.AddListener(OnConfirmNoClicked);
+        }
+
         isInitialized = true;
     }
 
+    /// <summary>
+    /// 기본 알림 팝업 (콜백 없음)
+    /// </summary>
     public void ShowAlert(string message)
     {
-
-        // 초기화 안됐으면 지금 초기화
-        if (!isInitialized)
-        {
-
-            Initialize();
-        }
-
-        if (alertMessage != null)
-        {
-            alertMessage.text = message;
-        }
-        else
-        {
-            Debug.LogError("[UIPopupManager] alertMessage가 null!");
-        }
-
-        if (alertRoot != null)
-        {
-            Transform parent = alertRoot.transform.parent;
-
-
-            // UnitInfoUI의 mainRoot 찾기
-            UnitInfoUI unitInfoUI = GetComponentInParent<UnitInfoUI>();
-            if (unitInfoUI != null)
-            {
-                // mainRoot가 private이므로 alertRoot의 최상위 부모로 추측
-                Transform root = alertRoot.transform;
-                while (root.parent != null && root.parent.GetComponent<UnitInfoUI>() == null)
-                {
-                    root = root.parent;
-                }
-
-            }
-
-            alertRoot.SetActive(true);
-
-            // Canvas 체크
-            Canvas canvas = alertRoot.GetComponentInParent<Canvas>();
-
-        }
+        ShowAlert(message, null);
     }
 
+    /// <summary>
+    /// 알림 팝업 (콜백 있음)
+    /// </summary>
+    public void ShowAlert(string message, Action onOk)
+    {
+        if (!isInitialized)
+            Initialize();
+
+        currentAlertCallback = onOk;
+
+        if (alertMessage != null)
+            alertMessage.text = message;
+
+        if (alertRoot != null)
+            alertRoot.SetActive(true);
+    }
+
+    /// <summary>
+    /// 성공 팝업
+    /// </summary>
     public void ShowSuccess(string title, string detail)
     {
-
-        // 초기화 안됐으면 지금 초기화
         if (!isInitialized)
-        {
-
             Initialize();
-        }
 
         if (successTitle != null)
             successTitle.text = title;
@@ -147,5 +123,62 @@ public class UIPopupManager : MonoBehaviour
         {
             successRoot.SetActive(true);
         }
+    }
+
+    /// <summary>
+    /// 확인 팝업 (예/아니오)
+    /// </summary>
+    public void ShowConfirm(string title, string message, Action onConfirm, Action onCancel = null)
+    {
+        if (!isInitialized)
+            Initialize();
+
+        // Confirm 팝업이 설정되지 않았으면 Alert로 대체
+        if (confirmRoot == null)
+        {
+            Debug.LogWarning("[UIPopupManager] Confirm 팝업이 설정되지 않았습니다. Alert로 대체합니다.");
+            ShowAlert($"{title}\n{message}\n다시 한번 클릭하세요.", onConfirm);
+            return;
+        }
+
+        currentConfirmCallback = onConfirm;
+
+        if (confirmTitle != null)
+            confirmTitle.text = title;
+
+        if (confirmMessage != null)
+            confirmMessage.text = message;
+
+        if (confirmRoot != null)
+            confirmRoot.SetActive(true);
+    }
+
+    private void OnAlertOkClicked()
+    {
+        if (alertRoot != null)
+            alertRoot.SetActive(false);
+
+        // 콜백 실행
+        currentAlertCallback?.Invoke();
+        currentAlertCallback = null;
+    }
+
+    private void OnConfirmYesClicked()
+    {
+        if (confirmRoot != null)
+            confirmRoot.SetActive(false);
+
+        // 확인 콜백 실행
+        currentConfirmCallback?.Invoke();
+        currentConfirmCallback = null;
+    }
+
+    private void OnConfirmNoClicked()
+    {
+        if (confirmRoot != null)
+            confirmRoot.SetActive(false);
+
+        // 취소 콜백은 없음 (필요시 추가 가능)
+        currentConfirmCallback = null;
     }
 }
