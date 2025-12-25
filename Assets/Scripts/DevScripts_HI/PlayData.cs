@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -82,7 +82,7 @@ public static class PlayData
     public static event Action OnMailsChanged;
     public static event Action OnAchievementsChanged;
     public static event Action OnQuestsChanged;
-
+    public static event Action<string> OnCharacterUpdated;
 
     public static int LastClearedStageId { get; private set; }
 
@@ -456,4 +456,10 @@ public static class PlayData
     {
         return DatabaseManager.Instance?.GetCompletedQuestCount() ?? 0;
     }
+
+    public static void NotifyCharacterUpdated(string characterId)
+    {
+        OnCharacterUpdated?.Invoke(characterId);
+    }
+
 }

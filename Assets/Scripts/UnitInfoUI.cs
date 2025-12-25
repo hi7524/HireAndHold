@@ -32,6 +32,15 @@ public class UnitInfoUI : MonoBehaviour
         mainRoot.SetActive(false);
     }
 
+
+    public void OnHeroEnforceCompleted()
+    {
+        Debug.Log("[UnitInfoUI] OnHeroEnforceCompleted 호출");
+
+        RefreshByStar();
+    }
+
+
     private void OnStarChangedFromSelector(int star)
     {
         if (currentStar == star)
@@ -172,8 +181,13 @@ public class UnitInfoUI : MonoBehaviour
     public void RefreshUI()
     {
         if (baseUnitId >= 0 && isPreviewUnitReady)
+        {
+            PlayData.SyncCharactersFromDatabase();
+
             RefreshByStar();
+        }
     }
+
 
     public int GetCurrentUnitId()
     {
@@ -246,5 +260,25 @@ public class UnitInfoUI : MonoBehaviour
 
         if (previewUnit != null)
             Destroy(previewUnit.gameObject);
+    }
+    private void OnCharacterUpdated(string characterId)
+    {
+
+        if (baseUnitId < 0 || characterId != baseUnitId.ToString())
+            return;
+
+        Debug.Log("[UnitInfoUI] 캐릭터 변경 이벤트 수신 → 즉시 UI 갱신");
+        RefreshUI();
+    }
+
+
+    private void OnEnable()
+    {
+        PlayData.OnCharacterUpdated += OnCharacterUpdated;
+    }
+
+    private void OnDisable()
+    {
+        PlayData.OnCharacterUpdated -= OnCharacterUpdated;
     }
 }

@@ -162,7 +162,6 @@ public class UnitEnforceUI : MonoBehaviour
             return;
         }
 
-        // 항상 1성(baseUnitId) 기준으로 강화
         int baseUnitId = mainUI.GetBaseUnitIdForEnforce();
         if (baseUnitId < 0)
         {
