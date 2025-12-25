@@ -188,11 +188,12 @@ public class DeckControl : MonoBehaviour
         DatabaseManager.Instance.SyncPresetsToPlayData();
         LoadPresets();
 
-        if (PlayData.IsPresetCompletelyEmpty(activePresetIndex))
+        if (PlayData.IsPresetEmptyOnUnlockedSlots(activePresetIndex))
         {
-            Debug.LogWarning("[DeckControl OnEnable] 활성 프리셋 비어있음 → 자동 편성");
+            Debug.LogWarning("[DeckControl OnEnable] 열린 슬롯 기준 비어있음 → 자동 편성");
             await AutoFillPresetIfEmpty(activePresetIndex);
         }
+
 
         LoadPreset(activePresetIndex);
         ApplyPresetToSelectedUnitIds();
@@ -273,12 +274,13 @@ public class DeckControl : MonoBehaviour
         bool isFirstTime = true;
         for (int i = 0; i < 5; i++)
         {
-            if (!PlayData.IsPresetCompletelyEmpty(i))
+            if (!PlayData.IsPresetEmptyOnUnlockedSlots(i))
             {
                 isFirstTime = false;
                 break;
             }
         }
+
 
         if (isFirstTime)
         {
@@ -290,7 +292,7 @@ public class DeckControl : MonoBehaviour
         }
         else
         {
-            bool activePresetEmpty = PlayData.IsPresetCompletelyEmpty(activePresetIndex);
+            bool activePresetEmpty = PlayData.IsPresetEmptyOnUnlockedSlots(activePresetIndex);
 
             if (activePresetEmpty)
             {
@@ -413,7 +415,7 @@ public class DeckControl : MonoBehaviour
 
         await DatabaseManager.Instance.SetActivePresetAsync(index);
 
-        if (PlayData.IsPresetCompletelyEmpty(index))
+        if (PlayData.IsPresetEmptyOnUnlockedSlots(index))
         {
             Debug.LogWarning($"[DeckControl] 프리셋 {index}가 비어있음 → 자동 편성");
             await AutoFillPresetIfEmpty(index);
@@ -1107,4 +1109,17 @@ public class DeckControl : MonoBehaviour
 
         return presets[preset].units[slot];
     }
+
+    public bool CanEquipSlot(int presetIndex, int slotIndex)
+    {
+        if (slotIndex < 2)
+            return true;
+
+        var user = DatabaseManager.Instance.CurrentUser;
+        if (user?.presetSlotUnlocks == null)
+            return false;
+
+        return user.presetSlotUnlocks.IsSlotUnlocked(presetIndex, slotIndex);
+    }
+
 }

@@ -136,12 +136,16 @@ public class UnitEquipUI : MonoBehaviour
 
         for (int i = 0; i < 5; i++)
         {
+            if (!deckControl.CanEquipSlot(preset, i))
+                continue;
+
             if (PlayData.selectedDeckUnitIds[preset, i] == 0)
             {
                 EquipToSlot(i);
                 return;
             }
         }
+
 
 
         ShowReplacePopup();
@@ -222,6 +226,8 @@ public class UnitEquipUI : MonoBehaviour
 
         for (int i = 0; i < 5; i++)
         {
+            if (!deckControl.CanEquipSlot(preset, i))
+                continue;
             int slotIndex = i;
             int unitId = PlayData.selectedDeckUnitIds[preset, i];
             if (unitId == 0) continue;
@@ -248,6 +254,8 @@ public class UnitEquipUI : MonoBehaviour
             return;
         }
 
+
+
         int preset = PlayData.currentSelectedPreset;
 
         // 이미 다른 슬롯에 편성되어 있는지 확인
@@ -264,6 +272,13 @@ public class UnitEquipUI : MonoBehaviour
                 return;
             }
         }
+
+        if (!deckControl.CanEquipSlot(preset, slotIndex))
+        {
+            popupManager?.ShowAlert("잠긴 슬롯에는 장착할 수 없습니다.");
+            return;
+        }
+
 
         if (PlayData.selectedDeckUnitIds[preset, slotIndex] == currentUnitId)
         {

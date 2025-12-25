@@ -166,11 +166,11 @@ public class DatabaseManager : MonoBehaviour
             userData.partyPresets[key] = new PartyPreset(i);
         }
 
-        var firstPreset = userData.partyPresets["preset_0"];
-        for (int i = 0; i < 5 && i < initialUnitIds.Length; i++)
-        {
-            firstPreset.characterId[i] = initialUnitIds[i].ToString();
-        }
+        //var firstPreset = userData.partyPresets["preset_0"];
+        //for (int i = 0; i < 5 && i < initialUnitIds.Length; i++)
+        //{
+        //    firstPreset.characterId[i] = initialUnitIds[i].ToString();
+        //}
 
         return userData;
     }

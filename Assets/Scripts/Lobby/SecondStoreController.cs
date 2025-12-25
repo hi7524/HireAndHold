@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Cysharp.Threading.Tasks;
@@ -159,7 +159,6 @@ public class SecondStoreController : MonoBehaviour
         if (!CanPurchase(data))
         {
             Debug.LogWarning("[SecondStore] 재화가 부족합니다.");
-            // TODO: 재화 부족 UI 표시
             return;
         }
 
@@ -185,8 +184,10 @@ public class SecondStoreController : MonoBehaviour
             await SavePurchaseRecord(data.SELLING_ID);
         }
 
-        // 캐시 동기화
+        // ⭐ 캐시 동기화 - await 추가!
+        await UniTask.DelayFrame(1); // DB 업데이트 대기
         PlayData.SyncItemsFromDatabase();
+        await UniTask.DelayFrame(1); // 동기화 완료 대기
 
         Debug.Log($"[SecondStore] 구매 성공: {data.SELLING_ID}");
 

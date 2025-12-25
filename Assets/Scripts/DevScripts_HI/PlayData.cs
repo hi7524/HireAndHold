@@ -462,4 +462,36 @@ public static class PlayData
         OnCharacterUpdated?.Invoke(characterId);
     }
 
+    public static bool IsPresetEmptyOnUnlockedSlots(int presetIndex)
+    {
+
+        if (selectedDeckUnitIds == null)
+            return true;
+
+
+        var user = DatabaseManager.Instance?.CurrentUser;
+        if (user == null)
+            return true;
+
+        var unlocks = user.presetSlotUnlocks;
+
+        for (int slot = 0; slot < 5; slot++)
+        {
+            bool isUnlocked =
+                slot < 2 ||                       
+                (unlocks != null && unlocks.IsSlotUnlocked(presetIndex, slot));
+
+            if (!isUnlocked)
+                continue;
+
+            if (selectedDeckUnitIds[presetIndex, slot] != 0)
+                return false;
+        }
+
+        return true;
+    }
+
+
+
+
 }

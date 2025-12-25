@@ -13,6 +13,8 @@ public class StoreWindow : GenericWindow
 
     [Header("UI Panels")]
     [SerializeField] private GameObject gachaResultPanel;
+    [SerializeField] private GameObject insufficientCurrencyPanel; // 재화 부족 패널
+    [SerializeField] private TMPro.TextMeshProUGUI insufficientMessageText; // 재화 부족 메시지
 
     [Header("Result UI")]
     [SerializeField] private Transform resultContainer;
@@ -21,10 +23,11 @@ public class StoreWindow : GenericWindow
     [Header("Buttons")]
     [SerializeField] private UnityEngine.UI.Button skipButton;
     [SerializeField] private UnityEngine.UI.Button closeButton;
+    [SerializeField] private UnityEngine.UI.Button insufficientCloseButton; // 재화 부족 패널 닫기 버튼
 
     [Header("Animation Settings")]
-    [SerializeField] private float cardAppearDelay = 0.3f;     
-    [SerializeField] private float cardAnimationDuration = 0.2f; 
+    [SerializeField] private float cardAppearDelay = 0.3f;
+    [SerializeField] private float cardAnimationDuration = 0.2f;
 
     [Header("Cheat (Debug)")]
     [SerializeField] private UnityEngine.UI.Button cheatButton;
@@ -70,6 +73,11 @@ public class StoreWindow : GenericWindow
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(OnClickClose);
+        }
+
+        if (insufficientCloseButton != null)
+        {
+            insufficientCloseButton.onClick.AddListener(OnClickInsufficientClose);
         }
 
         if (cheatButton != null)
@@ -134,6 +142,7 @@ public class StoreWindow : GenericWindow
 
         currentGachaCount = 10;
         isPlaying = true;
+
         cts?.Cancel();
         cts?.Dispose();
         cts = new CancellationTokenSource();
@@ -143,20 +152,14 @@ public class StoreWindow : GenericWindow
         gachaManager.ExecuteGacha(GachaType.Premium, 10);
     }
 
-    /// <summary>
-    /// 버튼 클릭 즉시 문 연출 시작
-    /// </summary>
     private async UniTaskVoid ShowDoorImmediately(CancellationToken ct)
     {
         try
         {
-   
             var doorTask = ShowDoorAsync(ct);
             var waitResultTask = WaitForGachaResultAsync(ct);
 
-
             await UniTask.WhenAll(doorTask, waitResultTask);
-
 
             await WaitForSwipeAsync(ct);
 
@@ -177,18 +180,15 @@ public class StoreWindow : GenericWindow
         }
     }
 
-    /// <summary>
-    /// 가챠 결과 대기 (최적화 - 더 짧은 대기 시간)
-    /// </summary>
     private async UniTask WaitForGachaResultAsync(CancellationToken ct)
     {
         float waitTime = 0f;
-        float maxWaitTime = 3f; // 5초 → 3초로 단축
+        float maxWaitTime = 3f;
 
         while (pendingResult == null && waitTime < maxWaitTime)
         {
             ct.ThrowIfCancellationRequested();
-            await UniTask.Delay(50, cancellationToken: ct); 
+            await UniTask.Delay(50, cancellationToken: ct);
             waitTime += 0.05f;
         }
 
@@ -203,9 +203,6 @@ public class StoreWindow : GenericWindow
         }
     }
 
-    /// <summary>
-    /// 가챠 완료 이벤트 핸들러
-    /// </summary>
     private void OnGachaComplete(GachaResult result)
     {
         if (result == null)
@@ -219,9 +216,6 @@ public class StoreWindow : GenericWindow
         pendingResult = result;
     }
 
-    /// <summary>
-    /// 결과 카드 표시 (최적화)
-    /// </summary>
     private async UniTask ShowResultCardsAsync(GachaResult result, CancellationToken ct)
     {
         isPlayingAnimation = true;
@@ -237,15 +231,13 @@ public class StoreWindow : GenericWindow
 
             ClearResultCards();
 
-            // 1회 뽑기는 애니메이션 없이 즉시 표시
             if (result.items.Count == 1)
             {
                 ShowAllRemainingCards(result, 0);
-                await UniTask.Delay(100, cancellationToken: ct); // 잠깐 대기
+                await UniTask.Delay(100, cancellationToken: ct);
             }
             else
             {
-                // 10회 뽑기는 애니메이션
                 for (int i = 0; i < result.items.Count; i++)
                 {
                     if (isSkipping)
@@ -275,13 +267,57 @@ public class StoreWindow : GenericWindow
     }
 
     /// <summary>
-    /// 가챠 에러 핸들러
+    /// 가챠 에러 핸들러 - 애니메이션 즉시 중단!
     /// </summary>
     private void OnGachaError(string errorMessage)
     {
-        Debug.LogWarning($"[GachaUI] {errorMessage}");
+        Debug.LogWarning($"[StoreWindow] 가챠 에러: {errorMessage}");
+
+        // ⭐ 애니메이션 즉시 중단
+        cts?.Cancel();
+
         isPlaying = false;
         pendingResult = null;
+        isDoorActive = false;
+        isWaitingForSwipe = false;
+
+        // 문 패널 즉시 닫기
+        if (doorPanel != null)
+            doorPanel.SetActive(false);
+        if (swipeHintText != null)
+            swipeHintText.SetActive(false);
+        if (gachaResultPanel != null)
+            gachaResultPanel.SetActive(false);
+
+        // ⭐ 재화 부족 패널 표시
+        ShowInsufficientCurrencyPanel(errorMessage);
+    }
+
+    /// <summary>
+    /// 재화 부족 패널 표시
+    /// </summary>
+    private void ShowInsufficientCurrencyPanel(string message)
+    {
+        if (insufficientCurrencyPanel != null)
+        {
+            insufficientCurrencyPanel.SetActive(true);
+
+            if (insufficientMessageText != null)
+            {
+                insufficientMessageText.text = message;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 재화 부족 패널 닫기
+    /// </summary>
+    private void OnClickInsufficientClose()
+    {
+        if (insufficientCurrencyPanel != null)
+        {
+            insufficientCurrencyPanel.SetActive(false);
+        }
     }
 
     private void ShowAllRemainingCards(GachaResult result, int startIndex)
@@ -292,7 +328,6 @@ public class StoreWindow : GenericWindow
             var card = cardObj.GetComponent<GachaResultCard>();
             card?.Setup(result.items[i]);
 
-            // 애니메이션 없이 즉시 표시
             var rect = cardObj.GetComponent<RectTransform>();
             rect.localScale = Vector3.one;
 
@@ -304,9 +339,6 @@ public class StoreWindow : GenericWindow
         }
     }
 
-    /// <summary>
-    /// 결과 카드 표시 (최적화 - 더 빠른 애니메이션)
-    /// </summary>
     private async UniTask ShowResultCardAsync(GachaItem item, int index, CancellationToken ct)
     {
         if (gachaResultCardPrefab == null || resultContainer == null)
@@ -314,16 +346,14 @@ public class StoreWindow : GenericWindow
             return;
         }
 
-        // 카드 생성
         GameObject cardObj = Instantiate(gachaResultCardPrefab, resultContainer);
         var card = cardObj.GetComponent<GachaResultCard>();
 
         if (card != null)
         {
-            card.Setup(item); // 동기 Setup (캐시된 스프라이트 사용)
+            card.Setup(item);
         }
 
-        // 애니메이션
         RectTransform rectTransform = cardObj.GetComponent<RectTransform>();
         CanvasGroup canvasGroup = cardObj.GetComponent<CanvasGroup>();
 
@@ -335,7 +365,6 @@ public class StoreWindow : GenericWindow
         rectTransform.localScale = Vector3.zero;
         canvasGroup.alpha = 0f;
 
-        // 등장 애니메이션 (최적화)
         float elapsed = 0f;
         while (elapsed < cardAnimationDuration)
         {
@@ -392,21 +421,6 @@ public class StoreWindow : GenericWindow
             Debug.Log("[StoreWindow] Skip 버튼 클릭 - 연출 스킵");
             isSkipping = true;
         }
-
-        if (isDoorActive && isWaitingForSwipe)
-        {
-            isWaitingForSwipe = false;
-
-            doorAnimation?.ShowLastFrame();
-
-            if (swipeHintText != null)
-                swipeHintText.SetActive(false);
-
-            if (doorPanel != null)
-                doorPanel.SetActive(false);
-
-            isDoorActive = false;
-        }
     }
 
     private void OnClickClose()
@@ -424,21 +438,19 @@ public class StoreWindow : GenericWindow
         if (doorPanel != null)
             doorPanel.SetActive(false);
 
+        if (insufficientCurrencyPanel != null)
+            insufficientCurrencyPanel.SetActive(false);
+
         ClearResultCards();
     }
 
-    /// <summary>
-    /// 치트 버튼: 뽑기권 지급
-    /// </summary>
     private async void OnClickCheat()
     {
-        // 일반 뽑기, 프리미엄 뽑기권 지급
         bool normalSuccess = await DatabaseManager.Instance.AddItemAsync(5102, cheatDiceAmount);
         bool premiumSuccess = await DatabaseManager.Instance.AddItemAsync(5103, cheatDiceAmount);
 
         if (normalSuccess && premiumSuccess)
         {
-            // 캐시 동기화
             PlayData.SyncItemsFromDatabase();
         }
         else
@@ -459,9 +471,6 @@ public class StoreWindow : GenericWindow
         }
     }
 
-    /// <summary>
-    /// 문 등장 애니메이션 (페이드 인)
-    /// </summary>
     private async UniTask ShowDoorAsync(CancellationToken ct)
     {
         if (doorPanel != null)
@@ -481,14 +490,10 @@ public class StoreWindow : GenericWindow
         PlaySwipeHintPulseAsync(ct).Forget();
     }
 
-    /// <summary>
-    /// 문 슬라이드 처리 (최적화 - 더 빠른 반응)
-    /// </summary>
     private async UniTask WaitForSwipeAsync(CancellationToken ct)
     {
         hasShownSwipeHint = false;
 
-        // 최대 대기 시간 추가 (2초 후 자동으로 넘어감)
         float autoSkipTime = 2f;
         float elapsed = 0f;
 
@@ -500,7 +505,6 @@ public class StoreWindow : GenericWindow
             bool isPressed = false;
             bool isReleased = false;
 
-            // PC
             if (Mouse.current != null)
             {
                 isPressed = Mouse.current.leftButton.isPressed;
@@ -508,7 +512,6 @@ public class StoreWindow : GenericWindow
                 currentPos = Mouse.current.position.ReadValue();
             }
 
-            // Mobile
             if (Touchscreen.current != null)
             {
                 var touch = Touchscreen.current.primaryTouch;
@@ -548,7 +551,6 @@ public class StoreWindow : GenericWindow
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
         }
 
-        // 시간 초과 시 자동으로 문 닫기
         if (isWaitingForSwipe)
         {
             Debug.Log("[StoreWindow] 스와이프 대기 시간 초과 - 자동으로 문 닫기");
