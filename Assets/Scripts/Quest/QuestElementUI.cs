@@ -36,12 +36,12 @@ public class QuestElementUI : MonoBehaviour
     [SerializeField] private Color claimableColor = new Color(0.4f, 0.8f, 0.4f, 1f);
     [SerializeField] private Color completedColor = new Color(0.7f, 0.7f, 0.7f, 0.5f);
 
-    [Header("Reward Icons")]
-    [SerializeField] private Sprite goldIcon;
-    [SerializeField] private Sprite diamondIcon;
-    [SerializeField] private Sprite enhanceStoneIcon;
-    [SerializeField] private Sprite ticketIcon;
-    [SerializeField] private Sprite defaultIcon;
+    [Header("Reward Icon Keys (Addressable)")]
+    [SerializeField] private string goldIconKey = "ItemIcon_Coin_Gold";
+    [SerializeField] private string diamondIconKey = "ItemIcon_Dia";
+    [SerializeField] private string enhanceStoneIconKey = "item_stone";
+    [SerializeField] private string ticketIconKey = "item_key";
+    [SerializeField] private string defaultIconKey = "item_key";
 
     private QuestData questData;
     private QuestProgress progressData;
@@ -85,13 +85,13 @@ public class QuestElementUI : MonoBehaviour
         // 제목
         if (titleText != null)
         {
-            titleText.text = questData.Quest_Name;
+            titleText.text = DataTableManager.GetString(questData.Quest_Name) ?? $"퀘스트 {questData.Quest_ID}";
         }
 
         // 설명
         if (descriptionText != null)
         {
-            descriptionText.text = questData.Quest_Desc;
+            descriptionText.text = DataTableManager.GetString(questData.Quest_Desc) ?? "";
         }
 
         // 진행도 텍스트
@@ -144,13 +144,15 @@ public class QuestElementUI : MonoBehaviour
     {
         if (rewardIconImage == null || questData == null) return;
 
+        var preloader = AddressablePreloader.Instance;
+        Sprite defaultIcon = preloader.GetCachedSprite(defaultIconKey);
         Sprite icon = defaultIcon;
 
         // 보상 타입에 따른 아이콘
         if (questData.Reward_Type == 1)
         {
             // 골드
-            icon = goldIcon;
+            icon = preloader.GetCachedSprite(goldIconKey) ?? defaultIcon;
         }
         else if (questData.Reward_Type == 2)
         {
@@ -158,16 +160,21 @@ public class QuestElementUI : MonoBehaviour
             switch (questData.Reward_ID)
             {
                 case 5102: // 다이아
-                    icon = diamondIcon;
+                    icon = preloader.GetCachedSprite(diamondIconKey) ?? defaultIcon;
                     break;
                 case 5103: // 소환 티켓
-                    icon = ticketIcon;
+                    icon = preloader.GetCachedSprite(ticketIconKey) ?? defaultIcon;
                     break;
                 case 5201: // 강화석
-                    icon = enhanceStoneIcon;
+                    icon = preloader.GetCachedSprite(enhanceStoneIconKey) ?? defaultIcon;
                     break;
                 default:
-                    icon = defaultIcon;
+                    // 아이템 테이블에서 아이콘 로드
+                    var itemData = DataTableManager.ItemTable?.Get(questData.Reward_ID);
+                    if (itemData != null && !string.IsNullOrEmpty(itemData.ITEM_ICON) && itemData.ITEM_ICON != "폴더 경로")
+                    {
+                        icon = preloader.GetCachedSprite(itemData.ITEM_ICON) ?? defaultIcon;
+                    }
                     break;
             }
         }

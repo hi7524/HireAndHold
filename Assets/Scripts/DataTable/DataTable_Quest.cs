@@ -18,8 +18,8 @@ public class QuestData
     public int Reset_Cycle_Type { get; set; }     // 1=일일, 2=주간
     public int Exposure_Or_Not { get; set; }
     public int Sort_Order { get; set; }
-    public string Quest_Name { get; set; }
-    public string Quest_Desc { get; set; }
+    public int Quest_Name { get; set; }
+    public int Quest_Desc { get; set; }
 
     // 누적형 퀘스트인지 여부
     public bool IsCumulative => Cumulative_Or_Not == 1;

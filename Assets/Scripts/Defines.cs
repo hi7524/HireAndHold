@@ -24,6 +24,7 @@ public static class DataTableIds
     public static readonly string DailyReward = "DailyRewardTable";
     public static readonly string Tutorial = "TutorialTable";
     public static readonly string Quest = "QuestTable";
+    public static readonly string Package = "PackageTable";
 }
 
 public static class Tags

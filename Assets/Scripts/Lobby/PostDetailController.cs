@@ -25,12 +25,12 @@ public class PostDetailController : MonoBehaviour
     [SerializeField] private Button claimButton;
     [SerializeField] private TextMeshProUGUI claimButtonText;
 
-    [Header("Reward Icons")]
-    [SerializeField] private Sprite goldIcon;
-    [SerializeField] private Sprite diamondIcon;
-    [SerializeField] private Sprite staminaIcon;
-    [SerializeField] private Sprite enhanceStoneIcon;
-    [SerializeField] private Sprite defaultItemIcon;
+    [Header("Reward Icon Keys (Addressable)")]
+    [SerializeField] private string goldIconKey = "ItemIcon_Coin_Gold";
+    [SerializeField] private string diamondIconKey = "ItemIcon_Dia";
+    [SerializeField] private string staminaIconKey = "ItemIcon_Stamina";
+    [SerializeField] private string enhanceStoneIconKey = "item_stone";
+    [SerializeField] private string defaultItemIconKey = "item_key";
 
     private MailData currentMail;
     private Action onRewardClaimed;
@@ -115,21 +115,42 @@ public class PostDetailController : MonoBehaviour
 
         if (!hasReward) return;
 
+        var preloader = AddressablePreloader.Instance;
+        Sprite defaultIcon = preloader.GetCachedSprite(defaultItemIconKey);
+
+        Debug.Log($"[PostDetail] defaultIcon({defaultItemIconKey}): {defaultIcon}");
+        Debug.Log($"[PostDetail] goldIcon({goldIconKey}): {preloader.GetCachedSprite(goldIconKey)}");
+        Debug.Log($"[PostDetail] diamondIcon({diamondIconKey}): {preloader.GetCachedSprite(diamondIconKey)}");
+        Debug.Log($"[PostDetail] staminaIcon({staminaIconKey}): {preloader.GetCachedSprite(staminaIconKey)}");
+        Debug.Log($"[PostDetail] enhanceStoneIcon({enhanceStoneIconKey}): {preloader.GetCachedSprite(enhanceStoneIconKey)}");
+
         // 골드
         if (reward.gold > 0)
-            CreateRewardItem(goldIcon, "골드", FormatNumber(reward.gold));
+        {
+            var icon = preloader.GetCachedSprite(goldIconKey) ?? defaultIcon;
+            CreateRewardItem(icon, FormatNumber(reward.gold));
+        }
 
         // 다이아
         if (reward.diamond > 0)
-            CreateRewardItem(diamondIcon, "다이아", reward.diamond.ToString());
+        {
+            var icon = preloader.GetCachedSprite(diamondIconKey) ?? defaultIcon;
+            CreateRewardItem(icon, reward.diamond.ToString());
+        }
 
         // 스태미나
         if (reward.stamina > 0)
-            CreateRewardItem(staminaIcon, "스태미나", reward.stamina.ToString());
+        {
+            var icon = preloader.GetCachedSprite(staminaIconKey) ?? defaultIcon;
+            CreateRewardItem(icon, reward.stamina.ToString());
+        }
 
         // 강화석
         if (reward.enhanceStone > 0)
-            CreateRewardItem(enhanceStoneIcon, "강화석", reward.enhanceStone.ToString());
+        {
+            var icon = preloader.GetCachedSprite(enhanceStoneIconKey) ?? defaultIcon;
+            CreateRewardItem(icon, reward.enhanceStone.ToString());
+        }
 
         // 아이템
         if (reward.items != null && reward.items.Count > 0)
@@ -137,13 +158,23 @@ public class PostDetailController : MonoBehaviour
             foreach (var item in reward.items)
             {
                 var itemData = DataTableManager.ItemTable?.Get(item.Key);
-                string itemName = itemData?.ITEM_NAME ?? $"아이템 {item.Key}";
-                CreateRewardItem(defaultItemIcon, itemName, item.Value.ToString());
+
+                // 아이템 아이콘 가져오기 (AddressablePreloader 캐시에서)
+                Sprite itemIcon = defaultIcon;
+                if (itemData != null && !string.IsNullOrEmpty(itemData.ITEM_ICON) && itemData.ITEM_ICON != "폴더 경로")
+                {
+                    var cachedIcon = preloader.GetCachedSprite(itemData.ITEM_ICON);
+                    Debug.Log($"[PostDetail] item({item.Key}) icon({itemData.ITEM_ICON}): {cachedIcon}");
+                    if (cachedIcon != null)
+                        itemIcon = cachedIcon;
+                }
+
+                CreateRewardItem(itemIcon, item.Value.ToString());
             }
         }
     }
 
-    private void CreateRewardItem(Sprite icon, string itemName, string count)
+    private void CreateRewardItem(Sprite icon, string count)
     {
         if (rewardItemPrefab == null || rewardItemContainer == null) return;
 
@@ -153,11 +184,6 @@ public class PostDetailController : MonoBehaviour
         var iconImage = go.transform.Find("Icon")?.GetComponent<Image>();
         if (iconImage != null && icon != null)
             iconImage.sprite = icon;
-
-        // 이름 설정
-        var nameText = go.transform.Find("Name")?.GetComponent<TextMeshProUGUI>();
-        if (nameText != null)
-            nameText.text = itemName;
 
         // 수량 설정
         var countText = go.transform.Find("Count")?.GetComponent<TextMeshProUGUI>();

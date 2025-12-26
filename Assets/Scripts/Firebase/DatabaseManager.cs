@@ -1193,6 +1193,120 @@ public class DatabaseManager : MonoBehaviour
         return deletedCount;
     }
 
+    /// <summary>
+    /// 메일 발송 (개인 우편함에 추가)
+    /// </summary>
+    public async UniTask<bool> SendMailAsync(string title, string content, MailReward reward, int expireDays = 30)
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        if (CurrentUser.mails == null)
+            CurrentUser.mails = new Dictionary<string, MailData>();
+
+        long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        string mailId = $"mail_{now}_{UnityEngine.Random.Range(1000, 9999)}";
+
+        var mail = new MailData
+        {
+            mailId = mailId,
+            title = title,
+            content = content,
+            reward = reward,
+            isRead = false,
+            isClaimed = false,
+            createdAt = now,
+            expireAt = now + (expireDays * 24L * 60L * 60L * 1000L) // 밀리초 단위
+        };
+
+        CurrentUser.mails[mailId] = mail;
+
+        string path = $"users/{UserId}/mails/{mailId}";
+        bool success = await database.SetDataAsync(path, mail);
+
+        if (success)
+        {
+            Debug.Log($"[Mail] 메일 발송 완료: {title}");
+            PlayData.NotifyMailsChanged();
+        }
+
+        return success;
+    }
+
+    /// <summary>
+    /// 패키지 내용물을 우편으로 발송
+    /// </summary>
+    public async UniTask<bool> SendPackageMailAsync(int packageId, int packageAmount = 1)
+    {
+        var packageData = DataTableManager.PackageTable?.Get(packageId);
+        if (packageData == null)
+        {
+            Debug.LogError($"[Mail] 패키지 데이터를 찾을 수 없음: {packageId}");
+            return false;
+        }
+
+        // 패키지 이름 가져오기
+        string packageName = DataTableManager.GetString(packageData.PACKAGE_NAME) ?? $"패키지 {packageId}";
+
+        // 보상 구성
+        var reward = new MailReward();
+
+        for (int i = 0; i < packageAmount; i++)
+        {
+            // ITEM_ID1
+            if (packageData.ITEM_ID1 > 0 && packageData.ITEM1_AMOUNT > 0)
+            {
+                AddRewardItem(reward, packageData.ITEM_ID1, packageData.ITEM1_AMOUNT);
+            }
+
+            // ITEM_ID2
+            if (packageData.ITEM_ID2 > 0 && packageData.ITEM2_AMOUNT > 0)
+            {
+                AddRewardItem(reward, packageData.ITEM_ID2, packageData.ITEM2_AMOUNT);
+            }
+
+            // ITEM_ID3
+            if (packageData.ITEM_ID3 > 0 && packageData.ITEM3_AMOUNT > 0)
+            {
+                AddRewardItem(reward, packageData.ITEM_ID3, packageData.ITEM3_AMOUNT);
+            }
+        }
+
+        // 메일 발송
+        string title = packageName;
+        string content = "구매하신 패키지 상품입니다.";
+
+        return await SendMailAsync(title, content, reward);
+    }
+
+    /// <summary>
+    /// 보상에 아이템 추가 (골드/다이아/일반 아이템 분류)
+    /// </summary>
+    private void AddRewardItem(MailReward reward, int itemId, int amount)
+    {
+        switch (itemId)
+        {
+            case 0:
+                reward.gold += amount;
+                break;
+            case 5107:
+                reward.diamond += amount;
+                break;
+            case 5201:
+                reward.enhanceStone += amount;
+                break;
+            default:
+                if (reward.items == null)
+                    reward.items = new Dictionary<int, int>();
+
+                if (reward.items.ContainsKey(itemId))
+                    reward.items[itemId] += amount;
+                else
+                    reward.items[itemId] = amount;
+                break;
+        }
+    }
+
     #endregion
 
     #region 전역 메일 관리

@@ -44,6 +44,9 @@ public class DungeonSelectPanel : MonoBehaviour
         // PlayData의 재화 변경 이벤트 구독
         PlayData.OnCurrencyChanged += UpdateRequireResourcesText;
 
+        // 패널이 다시 활성화될 때 최신 아이템 개수로 UI 갱신
+        PlayData.SyncItemsFromDatabase();
+        UpdateRequireResourcesText();
         // 패널 활성화 시 가장 높은 해금된 던전으로 이동
         MoveToHighestUnlockedStage();
     }

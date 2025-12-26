@@ -197,16 +197,17 @@ public class GachaManager : MonoBehaviour
             }
 
             int currentCount = PlayData.GetItemCount(costItemId);
+            string itemName = DataTableManager.GetString(itemData.ITEM_NAME) ?? $"아이템 {costItemId}";
             if (currentCount < costAmount)
             {
                 // ⭐ 재화 부족 → 즉시 에러 이벤트 발생 후 중단!
-                Debug.LogWarning($"[GachaManager] {itemData.ITEM_NAME} 부족: 보유 {currentCount}, 필요 {costAmount}");
+                Debug.LogWarning($"[GachaManager] {itemName} 부족: 보유 {currentCount}, 필요 {costAmount}");
                 OnGachaError?.Invoke($"뽑기 아이템이 부족합니다.");
                 return null;
             }
 
             // 재화 차감
-            bool deductSuccess = await DeductCostAsync(costItemId, costAmount, itemData.ITEM_NAME);
+            bool deductSuccess = await DeductCostAsync(costItemId, costAmount, itemName);
             if (!deductSuccess)
             {
                 return null;
