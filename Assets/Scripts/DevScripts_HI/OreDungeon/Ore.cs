@@ -45,6 +45,16 @@ public class Ore : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        // 사운드 재생
+        if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+        {
+            AudioClip mineSound = AddressablePreloader.Instance.GetCachedAudioClip("MineSound");
+            if (mineSound != null)
+            {
+                SoundManager.Instance.PlaySFX(mineSound);
+            }
+        }
+
         // 터치 위치에서 이펙트 재생
         PlayEffectAtTouchPosition(eventData.position);
 
