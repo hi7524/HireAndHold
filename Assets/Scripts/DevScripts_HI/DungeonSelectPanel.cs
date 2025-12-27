@@ -43,6 +43,9 @@ public class DungeonSelectPanel : MonoBehaviour
     {
         // PlayData의 재화 변경 이벤트 구독
         PlayData.OnCurrencyChanged += UpdateRequireResourcesText;
+
+        // 패널 활성화 시 가장 높은 해금된 던전으로 이동
+        MoveToHighestUnlockedStage();
     }
 
     private void OnDisable()
@@ -110,6 +113,38 @@ public class DungeonSelectPanel : MonoBehaviour
         UpdateSelectedDungeonId();
         UpdateButtonStates();
         UpdateRequireResourcesText();
+    }
+
+    private void MoveToHighestUnlockedStage()
+    {
+        // maxStage가 아직 초기화되지 않았다면 초기화
+        if (maxStage == 0 || stageToIdMap.Count == 0)
+        {
+            InitializeDungeonList();
+        }
+
+        // 가장 높은 클리어 스테이지 가져오기
+        int highestClearedStage = DatabaseManager.Instance.GetHighestDungeonStage();
+
+        // 다음 플레이할 스테이지 = 클리어한 스테이지 + 1 (단, maxStage를 넘지 않음)
+        int targetStage = Mathf.Min(highestClearedStage + 1, maxStage);
+
+        Debug.Log($"[DungeonSelectPanel] MoveToHighestUnlockedStage - 최고 클리어 스테이지: {highestClearedStage}, 목표 스테이지: {targetStage}, maxStage: {maxStage}");
+
+        // 유효한 범위 내에서 스테이지 설정
+        if (targetStage >= 1 && targetStage <= maxStage)
+        {
+            curSelectedStage = targetStage;
+            UpdateCurStageText(curSelectedStage);
+            UpdateSelectedDungeonId();
+            UpdateButtonStates();
+            UpdateRequireResourcesText();
+            Debug.Log($"[DungeonSelectPanel] 패널 활성화 - 가장 높은 해금된 스테이지로 이동: {curSelectedStage}");
+        }
+        else
+        {
+            Debug.LogWarning($"[DungeonSelectPanel] 유효하지 않은 스테이지 범위 - targetStage: {targetStage}, maxStage: {maxStage}");
+        }
     }
 
     private void UpdateButtonStates()
