@@ -48,6 +48,7 @@ public class LevelUpRewardController : MonoBehaviour
     private int passiveSkillGoldReward = 50; // 패시브 스킬 골드 카드 보상
     private bool isSkillCardSelecting = false; // 스킬 카드 선택 중 플래그
     private bool skillActived = false;
+    private Tween autoConfirmTween = null; // 자동 확인 딜레이 트윈
 
     // 애니메이션 상수
     private const float CardAnimDuration = 0.25f; // 카드 스케일 애니메이션 시간
@@ -282,6 +283,9 @@ public class LevelUpRewardController : MonoBehaviour
         if (layoutGroup != null)
             layoutGroup.enabled = false;
 
+        // 가장 긴 애니메이션 시간 계산 (선택된 카드의 애니메이션이 가장 김)
+        float totalAnimTime = CardAnimDuration * 2 + SelectedCardWaitTime;
+
         // 선택된 카드를 제외하고 나머지만 역순으로 작아지면서 비활성화
         for (int i = 0; i < skillCardUIs.Length; i++)
         {
@@ -312,7 +316,12 @@ public class LevelUpRewardController : MonoBehaviour
 
                 selectedSequence.Append(card.transform.DOScale(0f, CardAnimDuration).SetEase(Ease.InBack));
 
-                selectedSequence.OnComplete(() => card.gameObject.SetActive(false));
+                selectedSequence.OnComplete(() =>
+                {
+                    card.gameObject.SetActive(false);
+                    // 애니메이션 완료 후 자동으로 확인 버튼 동작 실행
+                    OnClickConfirmBtn();
+                });
 
                 continue;
             }
@@ -377,7 +386,12 @@ public class LevelUpRewardController : MonoBehaviour
 
                 selectedSequence.Append(card.transform.DOScale(0f, CardAnimDuration).SetEase(Ease.InBack));
 
-                selectedSequence.OnComplete(() => card.gameObject.SetActive(false));
+                selectedSequence.OnComplete(() =>
+                {
+                    card.gameObject.SetActive(false);
+                    // 애니메이션 완료 후 자동으로 확인 버튼 동작 실행
+                    OnClickConfirmBtn();
+                });
 
                 continue;
             }
@@ -408,21 +422,37 @@ public class LevelUpRewardController : MonoBehaviour
     // 완료 버튼 클릭
     public void OnClickConfirmBtn()
     {
+        Debug.Log($"[LevelUpRewardController] OnClickConfirmBtn called. IsGameStarted: {gameManager.IsGameStarted}");
+
+        // 자동 확인 트윈이 실행 중이면 취소 (중복 실행 방지)
+        if (autoConfirmTween != null && autoConfirmTween.IsActive())
+        {
+            autoConfirmTween.Kill();
+            autoConfirmTween = null;
+            Debug.Log("[LevelUpRewardController] Cancelled auto-confirm tween in OnClickConfirmBtn");
+        }
+
         // 보상을 선택하지 않은채로 확인 버튼을 누를 경우 25G 지급 (인게임 골드)
         if (!isSelectedReward)
         {
             playerCredit.AddCredit(defaultGoldReward);
             uiManager.UpdateInfoText($"보상 선택을 패스하고 {defaultGoldReward}크레딧 지급");
         }
-        
+
         // 관련 UI 비활성화 및 활성화 (패널을 끄면 자식들도 자동으로 꺼짐)
         uiManager.SetLevelUpRewardPanelActive(false);
         uiManager.SetGameControllBtnsActive(true);
 
         if (!gameManager.IsGameStarted)
+        {
+            Debug.Log("[LevelUpRewardController] Starting game...");
             gameManager.StartGame();
+        }
         else
+        {
+            Debug.Log("[LevelUpRewardController] Resuming game...");
             gameManager.ResumeGame();
+        }
     }
 
     // 모든 선택 가능한 유닛의 GridData, sprite를 미리 캐싱 (AddressablePreloader에서 가져옴)
@@ -633,7 +663,7 @@ public class LevelUpRewardController : MonoBehaviour
     }
 
     // 일부 활성화
-    private void SetActiveCards(BaseCardUi[] cardArray, bool value)
+    private void SetActiveCards(BaseCardUi[] cardArray, bool value, bool autoConfirm = false)
     {
         if (value)
         {
@@ -676,11 +706,42 @@ public class LevelUpRewardController : MonoBehaviour
                 // 기존 애니메이션 정리
                 card.transform.DOKill();
 
+                // 마지막 카드인 경우 (reverseIndex == 0, 즉 첫 번째 카드가 마지막으로 사라짐)
+                bool isLastCard = (reverseIndex == 0);
+
                 card.transform.DOScale(Vector3.zero, CardAnimDuration)
                     .SetDelay(reverseIndex * CardAnimDelayInterval)
                     .SetEase(Ease.InBack)
                     .SetUpdate(true) // TimeScale 무시
-                    .OnComplete(() => card.gameObject.SetActive(false));
+                    .OnComplete(() =>
+                    {
+                        card.gameObject.SetActive(false);
+                    });
+            }
+
+            // 자동 진행이 필요한 경우, 모든 애니메이션이 끝난 후 호출
+            if (autoConfirm)
+            {
+                // 기존 자동 확인 트윈이 있으면 취소
+                if (autoConfirmTween != null && autoConfirmTween.IsActive())
+                {
+                    autoConfirmTween.Kill();
+                    Debug.Log("[LevelUpRewardController] Cancelled previous auto-confirm tween");
+                }
+
+                // 마지막 카드의 총 애니메이션 시간 = 마지막 딜레이 + 애니메이션 지속시간
+                float lastCardDelay = (cardArray.Length - 1) * CardAnimDelayInterval;
+                float totalAnimationTime = lastCardDelay + CardAnimDuration;
+
+                Debug.Log($"[LevelUpRewardController] Setting up auto-confirm with delay: {totalAnimationTime}s");
+
+                // 애니메이션이 완전히 끝난 후 OnClickConfirmBtn 호출
+                autoConfirmTween = DOVirtual.DelayedCall(totalAnimationTime, () =>
+                {
+                    Debug.Log("[LevelUpRewardController] Auto-confirm delay completed, calling OnClickConfirmBtn");
+                    OnClickConfirmBtn();
+                    autoConfirmTween = null; // 실행 후 null로 설정
+                }).SetUpdate(true); // ignoreTimeScale = true
             }
         }
     }
@@ -688,14 +749,16 @@ public class LevelUpRewardController : MonoBehaviour
     // 유닛 카드의 드롭 성공 처리
     private void OnUnitCardDropSuccess()
     {
+        Debug.Log($"[LevelUpRewardController] OnUnitCardDropSuccess called. IsGameStarted: {gameManager.IsGameStarted}");
+
         // 드래그 상태 비활성화
         for (int i = 0; i < unitCardUIs.Length; i++)
         {
             unitCardUIs[i].SetDragState(false);
         }
 
-        // 역순 애니메이션으로 카드 비활성화
-        SetActiveCards(unitCardUIs, false);
+        // 역순 애니메이션으로 카드 비활성화 (자동 진행 콜백 포함)
+        SetActiveCards(unitCardUIs, false, true);
 
         reRollBtn.interactable = false;
         isSelectedReward = true;
