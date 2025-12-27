@@ -12,6 +12,7 @@ public class OreSpawner : MonoBehaviour
     [SerializeField] private Ore orePrf;
     [SerializeField] private Canvas canvas;
     [SerializeField] private Transform spawnTrans;
+    [SerializeField] private Transform tailEffectTarget;
 
     [Header("스폰 설정")]
     [SerializeField] private int maxSpawnOreAmount = 10; // 한 번에 최대 스폰 개수
@@ -190,8 +191,8 @@ public class OreSpawner : MonoBehaviour
         // Camera 가져오기 (Canvas의 worldCamera가 null이면 Main Camera 사용)
         Camera camera = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
 
-        // 광석 타입 설정 (OreTable, Manager, Canvas, Camera, PoolManager 전달)
-        ore.SetOreType(oresID, assetManager.OreTable, gameManager, canvas, camera, poolManager);
+        // 광석 타입 설정 (OreTable, Manager, Canvas, Camera, PoolManager, TailEffectTarget 전달)
+        ore.SetOreType(oresID, assetManager.OreTable, gameManager, canvas, camera, poolManager, tailEffectTarget);
 
         return ore;
     }

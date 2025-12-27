@@ -1,10 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using AssetKits.ParticleImage;
+using DG.Tweening;
 
 public class Ore : MonoBehaviour, IPointerDownHandler
 {
     [SerializeField] private Image oreImage;
+    [SerializeField] private float particleArrivalTime = 0.5f; // 파티클이 목표에 도착하는 시간 (초)
 
     private OreData oreData;
     private int touchCount;
@@ -13,8 +16,10 @@ public class Ore : MonoBehaviour, IPointerDownHandler
     private Canvas canvas;
     private Camera worldCamera;
     private ObjectPoolManager poolManager;
+    private Transform tailEffectTarget;
+    private bool isDestroyed = false;
 
-    public void SetOreType(int id, DataTable_Ore oreTable, OreDungeonManager dungeonManager, Canvas canvasRef, Camera camera, ObjectPoolManager poolMgr)
+    public void SetOreType(int id, DataTable_Ore oreTable, OreDungeonManager dungeonManager, Canvas canvasRef, Camera camera, ObjectPoolManager poolMgr, Transform tailTarget)
     {
         oresID = id;
         oreData = oreTable.Get(id);
@@ -22,6 +27,7 @@ public class Ore : MonoBehaviour, IPointerDownHandler
         canvas = canvasRef;
         worldCamera = camera;
         poolManager = poolMgr;
+        tailEffectTarget = tailTarget;
 
         if (oreData == null)
         {
@@ -49,9 +55,20 @@ public class Ore : MonoBehaviour, IPointerDownHandler
     public void OnClick()
     {
         touchCount--;
-        manager.AddOreCount(1);
         manager?.OnOreTouched();
-        CheckDestroy();
+
+        // 광석이 파괴될 예정이라면 애니메이션 후 비활성화
+        if (touchCount <= 0)
+        {
+            isDestroyed = true;
+
+            // Punch 애니메이션 후 비활성화
+            transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f)
+                .OnComplete(() =>
+                {
+                    gameObject.SetActive(false);
+                });
+        }
     }
 
     private void PlayEffectAtTouchPosition(Vector2 screenPosition)
@@ -68,10 +85,10 @@ public class Ore : MonoBehaviour, IPointerDownHandler
             return;
         }
 
-        // 방법 1: Ore의 현재 World Position을 그대로 사용
+        // Ore의 현재 World Position을 그대로 사용
         Vector3 oreWorldPos = transform.position;
 
-        // 방법 2: Screen 좌표에서 Ray를 쏴서 Canvas Plane과의 교차점 찾기
+        // Screen 좌표에서 Ray를 쏴서 Canvas Plane과의 교차점 찾기
         Ray ray = worldCamera.ScreenPointToRay(screenPosition);
         Plane canvasPlane = new Plane(-worldCamera.transform.forward, oreWorldPos);
 
@@ -82,7 +99,7 @@ public class Ore : MonoBehaviour, IPointerDownHandler
             worldPosition = ray.GetPoint(distance);
         }
 
-        // 이펙트 재생
+        // 첫 번째 이펙트 재생 (MineEffect)
         GameObject effect = poolManager.Get("MineEffect");
 
         if (effect != null)
@@ -92,6 +109,58 @@ public class Ore : MonoBehaviour, IPointerDownHandler
         else
         {
             Debug.LogError("MineEffect를 풀에서 가져오지 못했습니다. 풀이 제대로 설정되었는지 확인하세요.");
+        }
+
+        // 두 번째 이펙트 재생 (ParticleImage) - Canvas 위치에 그대로 생성
+        if (canvas != null)
+        {
+            GameObject particleEffect = poolManager.Get("TailEffect");
+
+            if (particleEffect != null)
+            {
+                particleEffect.transform.SetParent(canvas.transform, false);
+                // Ore의 위치에서 시작
+                particleEffect.transform.position = transform.position;
+
+                // ParticleImage의 Attractor 설정
+                if (tailEffectTarget != null)
+                {
+                    ParticleImage particleImage = particleEffect.GetComponent<ParticleImage>();
+                    if (particleImage != null)
+                    {
+                        particleImage.attractorTarget = tailEffectTarget;
+
+                        // 설정된 시간 후 콜백 실행 (파티클이 목표에 도착하는 시간)
+                        DOVirtual.DelayedCall(particleArrivalTime, () =>
+                        {
+                            OnParticleReachedTarget();
+                        });
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogError("ParticleImage를 풀에서 가져오지 못했습니다. 풀이 제대로 설정되었는지 확인하세요.");
+            }
+        }
+    }
+
+    private void OnParticleReachedTarget()
+    {
+        // 아이콘 펀치 애니메이션
+        if (tailEffectTarget != null)
+        {
+            tailEffectTarget.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f);
+        }
+
+        // 숫자 증가
+        manager.AddOreCount(1);
+
+        // 광석이 파괴되었다면 남은 광석 수 감소 처리
+        if (isDestroyed)
+        {
+            CalculateDropResult();
+            manager?.OnOreDestroyed();
         }
     }
 
