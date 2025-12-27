@@ -110,6 +110,12 @@ public class PlayerExperience : MonoBehaviour
         OnLevelUp?.Invoke();
         UpdateLevelTextUI();
         expBar.value = 0f;
+
+        // 레벨업 시 튜토리얼 체크
+        var stageManager = FindObjectOfType<StageManager>();
+        int stageId = stageManager != null ? stageManager.CurrentStageId : 0;
+        TutorialManager.Instance?.CheckAndStartTutorialAsync(
+            TutorialTriggerType.OnLevelUp, stageId, Level).Forget();
     }
 
     private void UpdateLevelTextUI()

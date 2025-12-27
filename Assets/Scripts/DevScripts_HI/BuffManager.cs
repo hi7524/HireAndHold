@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Tutorial;
 using UnityEngine;
 
 // 버프 조건 체크 및 관리
@@ -104,6 +105,9 @@ public class BuffManager : MonoBehaviour
             ActivatedBuffs.Add("컴플리트");
 
             GlobalBuffPercentage += TotalBuffRate;
+
+            // 튜토리얼 조건 알림
+            TutorialManager.Instance?.NotifyConditionMet("COMPLETE_BUFF");
         }
         else if (!isFilledAllGrids && ActivatedBuffs.Contains("컴플리트"))
         {

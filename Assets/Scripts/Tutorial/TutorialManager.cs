@@ -28,6 +28,9 @@ namespace Tutorial
         private bool isPlaying;
         private bool isWaitingForAction;
 
+        // 스텝 단위 조건 만족 플래그
+        private HashSet<string> metConditions = new HashSet<string>();
+
         // 이벤트
         public event Action<TutorialSequence> OnSequenceStart;
         public event Action<TutorialSequence> OnSequenceComplete;
@@ -147,12 +150,20 @@ namespace Tutorial
                     {
                         case TutorialTriggerType.OnStageStart:
                         case TutorialTriggerType.OnStageClear:
+                        case TutorialTriggerType.OnLevelUp:
                             // Stage 씬에서만 복원
                             shouldRestore = currentScene == "03_Stage";
                             break;
                         case TutorialTriggerType.OnLobbyEnter:
                             // Lobby 씬에서만 복원
                             shouldRestore = currentScene == "02_Lobby";
+                            break;
+                        case TutorialTriggerType.OnCondition:
+                            // OnCondition은 stageId로 판단
+                            if (sequence.triggerStageId > 0)
+                                shouldRestore = currentScene == "03_Stage";
+                            else
+                                shouldRestore = true;
                             break;
                         default:
                             shouldRestore = true;
@@ -202,9 +213,13 @@ namespace Tutorial
                         break;
 
                     case TutorialTriggerType.OnLevelUp:
-                        if (sequence.triggerLevel == level)
-                            return sequence;
-                        break;
+                        // 레벨 조건 체크
+                        if (sequence.triggerLevel != level)
+                            break;
+                        // stageId가 지정되어 있으면 스테이지도 체크
+                        if (sequence.triggerStageId > 0 && sequence.triggerStageId != stageId)
+                            break;
+                        return sequence;
 
                     case TutorialTriggerType.OnLobbyEnter:
                         return sequence;
@@ -343,7 +358,10 @@ namespace Tutorial
                 await UniTask.Delay(TimeSpan.FromSeconds(step.delayBeforeStep), ignoreTimeScale: true);
             }
 
-            DebugLog($"스텝 시작: {step.stringId}");
+            Debug.Log($"[Tutorial] ========== 스텝 시작 ==========");
+            Debug.Log($"[Tutorial] 시퀀스: {currentSequence?.sequenceId} ({currentSequence?.description})");
+            Debug.Log($"[Tutorial] 스텝: {currentStepIndex + 1}/{currentSequence?.StepCount} (stringId: {step.stringId}, voiceKey: {step.voiceKey})");
+            Debug.Log($"[Tutorial] actionType: {step.actionType}, highlightTarget: {step.highlightTarget}");
 
             // 게임 일시정지
             if (step.pauseGame)
@@ -428,6 +446,16 @@ namespace Tutorial
             else
             {
                 tutorialUI.HideHighlight();
+            }
+
+            // 두 번째 하이라이트 표시
+            if (!string.IsNullOrEmpty(step.highlightTarget2))
+            {
+                tutorialUI.ShowHighlight2(step.highlightTarget2, step.highlightOffset2, step.highlightSize2);
+            }
+            else
+            {
+                tutorialUI.HideHighlight2();
             }
 
             // 손가락 가이드 표시
@@ -562,9 +590,8 @@ namespace Tutorial
         /// </summary>
         private bool CheckCondition(string conditionKey)
         {
-            // 조건 키에 따른 체크 로직
-            // 나중에 이벤트 시스템과 연동
-            return false;
+            // metConditions에서 조건 확인
+            return metConditions.Contains(conditionKey);
         }
 
         /// <summary>
@@ -681,8 +708,34 @@ namespace Tutorial
         /// </summary>
         public void NotifyConditionMet(string conditionKey)
         {
-            // 조건 만족 이벤트 처리
             DebugLog($"조건 만족: {conditionKey}");
+
+            // 스텝 단위 조건 저장 (WaitCondition용)
+            metConditions.Add(conditionKey);
+
+            // 이미 튜토리얼 진행 중이면 시퀀스 시작은 스킵
+            if (isPlaying)
+                return;
+
+            // 전체 튜토리얼 완료됐으면 스킵
+            if (DatabaseManager.Instance.IsTutorialCompleted())
+                return;
+
+            // OnCondition 타입이고 conditionKey가 일치하는 시퀀스 찾기
+            foreach (var sequence in sequences)
+            {
+                // 이미 완료된 시퀀스는 스킵
+                if (DatabaseManager.Instance.IsTutorialSequenceCompleted(sequence.sequenceId))
+                    continue;
+
+                if (sequence.triggerType == TutorialTriggerType.OnCondition &&
+                    sequence.triggerConditionKey == conditionKey)
+                {
+                    DebugLog($"조건 {conditionKey}에 맞는 시퀀스 발견: {sequence.sequenceId}");
+                    StartSequenceAsync(sequence).Forget();
+                    return;
+                }
+            }
         }
 
         /// <summary>

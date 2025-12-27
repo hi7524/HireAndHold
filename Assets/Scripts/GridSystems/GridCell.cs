@@ -547,6 +547,9 @@ public class GridCell : MonoBehaviour, IDroppable
         // 업적 연동: 합성
         UpdateCombineAchievementsAsync(newStarLevel).Forget();
 
+        // 튜토리얼 드래그 완료 알림 (합성)
+        NotifyTutorialDragComplete();
+
         return true;
     }
 
@@ -620,6 +623,9 @@ public class GridCell : MonoBehaviour, IDroppable
 
         // 업적 연동: 합성
         UpdateCombineAchievementsAsync(newStarLevel).Forget();
+
+        // 튜토리얼 드래그 완료 알림 (합성)
+        NotifyTutorialDragComplete();
 
         return true;
     }

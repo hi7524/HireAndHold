@@ -87,6 +87,17 @@ namespace Tutorial
         [Tooltip("하이라이트 크기 (0이면 타겟 크기 사용)")]
         public Vector2 highlightSize;
 
+        [Header("두 번째 하이라이트 설정")]
+        [Tooltip("두 번째 하이라이트할 UI 오브젝트 이름 (비어있으면 하이라이트 없음)")]
+        public string highlightTarget2;
+
+        [Tooltip("두 번째 하이라이트 위치 오프셋")]
+        public Vector2 highlightOffset2;
+
+        [Tooltip("두 번째 하이라이트 크기 (0이면 타겟 크기 사용)")]
+        public Vector2 highlightSize2;
+
+        [Header("손가락 가이드")]
         [Tooltip("손가락 가이드 표시 여부")]
         public bool showHandGuide;
 
