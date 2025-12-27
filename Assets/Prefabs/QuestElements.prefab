@@ -151,6 +151,7 @@ GameObject:
   - component: {fileID: 1520196343198129256}
   - component: {fileID: 3146760053252243807}
   - component: {fileID: -1931317891699594395}
+  - component: {fileID: -980118678286757025}
   m_Layer: 5
   m_Name: QuestElements
   m_TagString: Untagged
@@ -342,6 +343,20 @@ MonoBehaviour:
   enhanceStoneIconKey: item_stone
   ticketIconKey: item_key
   defaultIconKey: item_key
+--- !u!114 &-980118678286757025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2737028994516726825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f925834f8e8b9b144a851188dde7ea86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetKey: QuestElements
+  useGameObjectName: 1
 --- !u!1 &5335665072906621114
 GameObject:
   m_ObjectHideFlags: 0

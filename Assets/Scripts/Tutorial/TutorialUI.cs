@@ -22,10 +22,6 @@ namespace Tutorial
         [SerializeField] private GameObject highlightObject;
         [SerializeField] private RectTransform highlightRect;
 
-        [Header("두 번째 하이라이트")]
-        [SerializeField] private GameObject highlightObject2;
-        [SerializeField] private RectTransform highlightRect2;
-
         [Header("손가락 가이드")]
         [SerializeField] private GameObject handGuideObject;
         [SerializeField] private RectTransform handGuideRect;
@@ -294,113 +290,11 @@ namespace Tutorial
                 highlightObject.SetActive(false);
             }
 
-            // 두 번째 하이라이트도 숨기기
-            if (highlightObject2 != null)
-            {
-                highlightObject2.SetActive(false);
-            }
-
             // TutorialBlocker 구멍 제거
             var blocker = FindAnyObjectByType<TutorialBlocker>(FindObjectsInactive.Include);
             if (blocker != null)
             {
                 blocker.ClearHole();
-            }
-        }
-
-        /// <summary>
-        /// 두 번째 하이라이트 표시
-        /// </summary>
-        public void ShowHighlight2(string targetName, Vector2 offset, Vector2 size)
-        {
-            if (highlightObject2 == null || highlightRect2 == null)
-            {
-                return;
-            }
-
-            // 타겟 오브젝트 찾기
-            var target = FindUIObject(targetName);
-            if (target == null)
-            {
-                Debug.LogWarning($"[TutorialUI] 두 번째 하이라이트 타겟을 찾을 수 없음: {targetName}");
-                return;
-            }
-
-            // 위치 설정
-            var targetRect = target.GetComponent<RectTransform>();
-            if (targetRect == null)
-            {
-                Debug.LogWarning($"[TutorialUI] 타겟에 RectTransform이 없음: {targetName}");
-                return;
-            }
-
-            // 타겟의 월드 위치와 크기 가져오기
-            Vector3[] targetCorners = new Vector3[4];
-            targetRect.GetWorldCorners(targetCorners);
-
-            // 하이라이트의 부모 Canvas 가져오기
-            Canvas highlightCanvas = highlightRect2.GetComponentInParent<Canvas>();
-            if (highlightCanvas == null)
-            {
-                Debug.LogError("[TutorialUI] highlightRect2의 부모 Canvas를 찾을 수 없음!");
-                return;
-            }
-
-            // 타겟의 중심 월드 위치 계산
-            Vector3 targetCenter = (targetCorners[0] + targetCorners[2]) / 2f;
-
-            // 월드 위치를 하이라이트 캔버스의 로컬 위치로 변환
-            Vector2 localPoint;
-
-            if (highlightCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(null, targetCenter);
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    highlightRect2.parent as RectTransform,
-                    screenPoint,
-                    null,
-                    out localPoint
-                );
-            }
-            else
-            {
-                Camera cam = highlightCanvas.worldCamera ?? Camera.main;
-                Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(cam, targetCenter);
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    highlightRect2.parent as RectTransform,
-                    screenPoint,
-                    cam,
-                    out localPoint
-                );
-            }
-
-            highlightRect2.anchoredPosition = localPoint + offset;
-
-            // 크기 설정
-            if (size.x > 0 && size.y > 0)
-            {
-                highlightRect2.sizeDelta = size;
-            }
-            else
-            {
-                Vector2 targetSize = new Vector2(
-                    Vector3.Distance(targetCorners[0], targetCorners[3]),
-                    Vector3.Distance(targetCorners[0], targetCorners[1])
-                );
-                highlightRect2.sizeDelta = targetSize;
-            }
-
-            highlightObject2.SetActive(true);
-        }
-
-        /// <summary>
-        /// 두 번째 하이라이트 숨기기
-        /// </summary>
-        public void HideHighlight2()
-        {
-            if (highlightObject2 != null)
-            {
-                highlightObject2.SetActive(false);
             }
         }
 

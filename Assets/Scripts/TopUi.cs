@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Cysharp.Threading.Tasks;
+using Tutorial;
 
 
 public class TopUi : MonoBehaviour
@@ -88,6 +89,9 @@ public class TopUi : MonoBehaviour
 
     private async void OnLobbyButtonClick()
     {
+        // 튜토리얼에 버튼 터치 알림
+        TutorialManager.Instance?.NotifyButtonTouched("LobbyButton");
+
         await LoadingSceneManager.Instance.LoadSceneWithLoading(new LoadingRequest("Lobby"));
     }
 

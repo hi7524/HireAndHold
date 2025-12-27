@@ -411,12 +411,19 @@ public class StageManager : MonoBehaviour
     /// </summary>
     private async UniTaskVoid CheckStageClearTutorialAsync()
     {
+        Debug.Log($"[StageManager] CheckStageClearTutorialAsync - CurrentStageId: {CurrentStageId}, TutorialManager.Instance: {TutorialManager.Instance != null}");
+
         if (TutorialManager.Instance != null)
         {
-            await TutorialManager.Instance.CheckAndStartTutorialAsync(
+            bool started = await TutorialManager.Instance.CheckAndStartTutorialAsync(
                 TutorialTriggerType.OnStageClear,
                 CurrentStageId
             );
+            Debug.Log($"[StageManager] 튜토리얼 시작 결과: {started}");
+        }
+        else
+        {
+            Debug.LogWarning("[StageManager] TutorialManager.Instance가 null입니다!");
         }
     }
 

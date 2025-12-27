@@ -86,6 +86,13 @@ public class BuffManager : MonoBehaviour
                 {
                     ActivateBuff(regionBuff.buffName);
                     ActivatedBuffs.Add(regionBuff.buffName);
+
+                    // 703 스테이지에서만 영역 버프 완료 시 튜토리얼 조건 알림
+                    var stageManager = FindAnyObjectByType<StageManager>();
+                    if (stageManager != null && stageManager.CurrentStageId == 703)
+                    {
+                        TutorialManager.Instance?.NotifyConditionMet("COMPLETE_BUFF");
+                    }
                 }
                 else if (filledCount < regionBuff.regionCells.Count && ActivatedBuffs.Contains(regionBuff.buffName))
                 {

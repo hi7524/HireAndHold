@@ -1,5 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
+using Tutorial;
 
 public class UnitSellZone : MonoBehaviour, IDroppable
 {
@@ -234,6 +235,9 @@ public class UnitSellZone : MonoBehaviour, IDroppable
         var unit = draggable.GameObject.GetComponent<GridUnit>();
         HandleGridUnitDrop(unit);
         PlaySellSound();
+
+        // 튜토리얼 드래그 완료 알림
+        TutorialManager.Instance?.NotifyDragComplete("PlacedUnit", "UnitSellZone");
     }
 
     // GridUnit 드롭 처리

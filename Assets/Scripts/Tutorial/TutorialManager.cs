@@ -76,6 +76,8 @@ namespace Tutorial
         /// </summary>
         private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
         {
+            DebugLog($"OnSceneLoaded: {scene.name}, isPlaying: {isPlaying}, currentSequence: {currentSequence?.sequenceId}");
+
             FindTutorialUI();
 
             // 씬 로드 후 튜토리얼 자동 체크
@@ -98,19 +100,59 @@ namespace Tutorial
                 {
                     int stageId = stageManager.CurrentStageId;
 
-                    // 1스테이지(701)에서만 튜토리얼 시작
-                    if (stageId == 701)
+                    // 튜토리얼 스테이지(701, 703, 704)에서 OnStageStart 튜토리얼 시작
+                    if (stageId == 701 || stageId == 703 || stageId == 704)
                     {
                         await CheckAndStartTutorialAsync(TutorialTriggerType.OnStageStart, stageId);
                     }
                 }
             }
             // 02_Lobby 씬인 경우 OnLobbyEnter 튜토리얼 체크
-            // TODO: 로비 튜토리얼 필요시 주석 해제
-            // else if (sceneName == "02_Lobby")
-            // {
-            //     await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
-            // }
+            else if (sceneName == "02_Lobby")
+            {
+                bool stage1ClearCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted("forced_03_stage1clear");
+                bool lobbyTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted("forced_05_lobbytutorial");
+                bool gachaCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted("forced_05_gacha");
+                bool gachaPart2Completed = DatabaseManager.Instance.IsTutorialSequenceCompleted("forced_05_gacha_part2");
+                bool enhanceCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted("enhance_tutorial");
+                bool enhancePart2Completed = DatabaseManager.Instance.IsTutorialSequenceCompleted("enhance_part2");
+
+                Debug.Log($"[Tutorial] 로비 진입 - forced_03_stage1clear 완료: {stage1ClearCompleted}, forced_05_lobbytutorial 완료: {lobbyTutorialCompleted}, forced_05_gacha 완료: {gachaCompleted}, forced_05_gacha_part2 완료: {gachaPart2Completed}, enhance_tutorial 완료: {enhanceCompleted}, enhance_part2 완료: {enhancePart2Completed}");
+
+                // Stage1Clear 튜토리얼이 완료된 경우에만 로비 튜토리얼 시작
+                if (stage1ClearCompleted && !lobbyTutorialCompleted)
+                {
+                    Debug.Log("[Tutorial] 로비 튜토리얼 시작 조건 충족, CheckAndStartTutorialAsync 호출");
+                    await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
+                }
+                // 뽑기 파트1이 완료되었고 파트2가 완료되지 않은 경우 뽑기 파트2 시작
+                else if (gachaCompleted && !gachaPart2Completed)
+                {
+                    Debug.Log("[Tutorial] 뽑기 파트2 튜토리얼 시작 조건 충족, CheckAndStartTutorialAsync 호출");
+                    await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
+                }
+                // 강화 파트1이 완료되었고 파트2가 완료되지 않은 경우 강화 파트2 시작
+                else if (enhanceCompleted && !enhancePart2Completed)
+                {
+                    Debug.Log("[Tutorial] 강화 파트2 튜토리얼 시작 조건 충족, CheckAndStartTutorialAsync 호출");
+                    await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
+                }
+            }
+            // 04_OreDungeon 씬인 경우 던전 파트2 튜토리얼 체크
+            else if (sceneName == "04_OreDungeon")
+            {
+                bool dungeonTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted("dungeon_tutorial");
+                bool dungeonPart2Completed = DatabaseManager.Instance.IsTutorialSequenceCompleted("dungeon_part2");
+
+                Debug.Log($"[Tutorial] 던전 진입 - dungeon_tutorial 완료: {dungeonTutorialCompleted}, dungeon_part2 완료: {dungeonPart2Completed}");
+
+                // 던전 파트1이 완료되었고 파트2가 완료되지 않은 경우 던전 파트2 시작
+                if (dungeonTutorialCompleted && !dungeonPart2Completed)
+                {
+                    Debug.Log("[Tutorial] 던전 파트2 튜토리얼 시작 조건 충족");
+                    NotifyConditionMet("DUNGEON_STAGE_FIRST_ENTER");
+                }
+            }
         }
 
         /// <summary>
@@ -149,14 +191,30 @@ namespace Tutorial
                     switch (sequence.triggerType)
                     {
                         case TutorialTriggerType.OnStageStart:
+                            // Stage 씬에서만 복원
+                            shouldRestore = currentScene == "03_Stage";
+                            break;
                         case TutorialTriggerType.OnStageClear:
+                            // OnStageClear는 Stage에서 시작하지만 Lobby로 넘어갈 수 있음
+                            // 둘 다 허용
+                            shouldRestore = currentScene == "03_Stage" || currentScene == "02_Lobby";
+                            break;
                         case TutorialTriggerType.OnLevelUp:
                             // Stage 씬에서만 복원
                             shouldRestore = currentScene == "03_Stage";
                             break;
                         case TutorialTriggerType.OnLobbyEnter:
                             // Lobby 씬에서만 복원
-                            shouldRestore = currentScene == "02_Lobby";
+                            // 로비 튜토리얼은 Stage1Clear가 완료된 후에만 복원
+                            if (sequence.sequenceId == "forced_05_lobbytutorial")
+                            {
+                                shouldRestore = currentScene == "02_Lobby" &&
+                                    DatabaseManager.Instance.IsTutorialSequenceCompleted("forced_03_stage1clear");
+                            }
+                            else
+                            {
+                                shouldRestore = currentScene == "02_Lobby";
+                            }
                             break;
                         case TutorialTriggerType.OnCondition:
                             // OnCondition은 stageId로 판단
@@ -172,6 +230,7 @@ namespace Tutorial
 
                     if (shouldRestore)
                     {
+                        DebugLog($"튜토리얼 복원: {sequence.sequenceId}, 스텝: {progress.lastCheckpointIndex}");
                         int startIndex = progress.lastCheckpointIndex;
                         await StartSequenceFromStepAsync(sequence, startIndex);
                     }
@@ -222,7 +281,29 @@ namespace Tutorial
                         return sequence;
 
                     case TutorialTriggerType.OnLobbyEnter:
-                        return sequence;
+                        // 로비 튜토리얼은 Stage1Clear가 완료된 후에만 실행
+                        if (sequence.sequenceId == "forced_05_lobbytutorial")
+                        {
+                            if (DatabaseManager.Instance.IsTutorialSequenceCompleted("forced_03_stage1clear"))
+                                return sequence;
+                        }
+                        // 뽑기 파트2는 뽑기 파트1이 완료된 후에만 실행
+                        else if (sequence.sequenceId == "forced_05_gacha_part2")
+                        {
+                            if (DatabaseManager.Instance.IsTutorialSequenceCompleted("forced_05_gacha"))
+                                return sequence;
+                        }
+                        // 강화 파트2는 강화 파트1이 완료된 후에만 실행
+                        else if (sequence.sequenceId == "enhance_part2")
+                        {
+                            if (DatabaseManager.Instance.IsTutorialSequenceCompleted("enhance_tutorial"))
+                                return sequence;
+                        }
+                        else
+                        {
+                            return sequence;
+                        }
+                        break;
 
                     default:
                         return sequence;
@@ -237,17 +318,29 @@ namespace Tutorial
         /// </summary>
         public async UniTask<bool> CheckAndStartTutorialAsync(TutorialTriggerType triggerType, int stageId = 0, int level = 0)
         {
+            DebugLog($"CheckAndStartTutorialAsync - triggerType: {triggerType}, stageId: {stageId}, level: {level}, isPlaying: {isPlaying}");
+
             if (isPlaying)
+            {
+                DebugLog("튜토리얼 진행 중이라 스킵");
                 return false;
+            }
 
             // 전체 튜토리얼 완료됐으면 스킵
             if (DatabaseManager.Instance.IsTutorialCompleted())
+            {
+                DebugLog("전체 튜토리얼 완료됨, 스킵");
                 return false;
+            }
 
             var sequence = FindSequenceByTrigger(triggerType, stageId, level);
             if (sequence == null)
+            {
+                DebugLog($"triggerType: {triggerType}, stageId: {stageId}에 맞는 시퀀스 없음");
                 return false;
+            }
 
+            DebugLog($"시퀀스 찾음: {sequence.sequenceId}");
             await StartSequenceAsync(sequence);
             return true;
         }
@@ -379,11 +472,20 @@ namespace Tutorial
 
             // 액션 대기
             isWaitingForAction = true;
-            await WaitForActionAsync(step);
-            isWaitingForAction = false;
+            try
+            {
+                await WaitForActionAsync(step);
+                isWaitingForAction = false;
 
-            // 스텝 완료 처리
-            await CompleteCurrentStepAsync();
+                // 스텝 완료 처리
+                await CompleteCurrentStepAsync();
+            }
+            catch (System.OperationCanceledException)
+            {
+                // 씬 전환 버튼 클릭으로 시퀀스가 조기 완료됨
+                isWaitingForAction = false;
+                DebugLog("씬 전환으로 시퀀스 조기 완료됨");
+            }
         }
 
         /// <summary>
@@ -446,16 +548,6 @@ namespace Tutorial
             else
             {
                 tutorialUI.HideHighlight();
-            }
-
-            // 두 번째 하이라이트 표시
-            if (!string.IsNullOrEmpty(step.highlightTarget2))
-            {
-                tutorialUI.ShowHighlight2(step.highlightTarget2, step.highlightOffset2, step.highlightSize2);
-            }
-            else
-            {
-                tutorialUI.HideHighlight2();
             }
 
             // 손가락 가이드 표시
@@ -552,8 +644,66 @@ namespace Tutorial
         {
             if (tutorialBlocker != null)
             {
-                await tutorialBlocker.WaitForTargetTouchAsync(targetName);
+                // 씬 전환 버튼인 경우 특별 처리
+                if (IsSceneTransitionButton(targetName))
+                {
+                    // 버튼 터치 대기
+                    await tutorialBlocker.WaitForTargetTouchAsync(targetName);
+
+                    // 씬 전환 전에 시퀀스 완료 처리 (await 없이 즉시 실행 - 씬 전환 전에 로컬 저장 보장)
+                    DebugLog($"씬 전환 버튼 클릭됨: {targetName}, 시퀀스 즉시 완료 처리");
+
+                    // 현재 시퀀스 완료 처리 (동기적으로 로컬 저장, Firebase는 비동기)
+                    if (currentSequence != null)
+                    {
+                        string sequenceId = currentSequence.sequenceId;
+                        DatabaseManager.Instance.CompleteTutorialSequenceAsync(sequenceId).Forget();
+                        Debug.Log($"[Tutorial] 시퀀스 완료 요청됨 (비동기): {sequenceId}");
+                    }
+
+                    // UI 정리
+                    if (tutorialUI != null)
+                    {
+                        tutorialUI.Hide();
+                    }
+                    tutorialBlocker.Unblock();
+
+                    // 게임 재개
+                    ResumeGame();
+
+                    // 상태 초기화
+                    var completedSequence = currentSequence;
+                    currentSequence = null;
+                    currentStepIndex = 0;
+                    isPlaying = false;
+
+                    OnSequenceComplete?.Invoke(completedSequence);
+
+                    // 모든 시퀀스 완료 체크
+                    CheckAllSequencesCompleted();
+
+                    // 여기서 예외를 던져서 CompleteCurrentStepAsync가 실행되지 않도록 함
+                    throw new System.OperationCanceledException("Scene transition button clicked - sequence completed early");
+                }
+                else
+                {
+                    await tutorialBlocker.WaitForTargetTouchAsync(targetName);
+                }
             }
+        }
+
+        /// <summary>
+        /// 씬 전환을 유발하는 버튼인지 확인
+        /// </summary>
+        private bool IsSceneTransitionButton(string buttonName)
+        {
+            if (string.IsNullOrEmpty(buttonName)) return false;
+
+            // 씬 전환을 유발하는 버튼 목록
+            return buttonName == "LobbyButton" ||      // Stage → Lobby
+                   buttonName == "StartButton" ||      // Stage Select → Stage
+                   buttonName == "HomeButton" ||       // Any → Lobby
+                   buttonName == "DungeonEnterButton"; // Lobby → Dungeon
         }
 
         /// <summary>
@@ -645,7 +795,12 @@ namespace Tutorial
             switch (reward.rewardType)
             {
                 case TutorialRewardType.Credit:
-                    // 인게임 크레딧은 별도 처리 필요
+                    // 인게임 크레딧 지급
+                    var playerGold = FindObjectOfType<PlayerStageGold>();
+                    if (playerGold != null)
+                    {
+                        playerGold.AddCredit(reward.amount);
+                    }
                     break;
 
                 case TutorialRewardType.Gold:
@@ -657,7 +812,9 @@ namespace Tutorial
                     break;
 
                 case TutorialRewardType.SummonTicket:
-                    await DatabaseManager.Instance.AddItemAsync(5101, reward.amount); // 소환권 아이템 ID
+                    // itemId가 지정되어 있으면 사용, 없으면 기본 일반 소환권(5102) 사용
+                    int ticketId = reward.itemId > 0 ? reward.itemId : 5102;
+                    await DatabaseManager.Instance.AddItemAsync(ticketId, reward.amount);
                     break;
 
                 case TutorialRewardType.Item:
@@ -721,6 +878,14 @@ namespace Tutorial
             if (DatabaseManager.Instance.IsTutorialCompleted())
                 return;
 
+            // 현재 스테이지 ID 확인
+            int currentStageId = 0;
+            var stageManager = FindAnyObjectByType<StageManager>();
+            if (stageManager != null)
+            {
+                currentStageId = stageManager.CurrentStageId;
+            }
+
             // OnCondition 타입이고 conditionKey가 일치하는 시퀀스 찾기
             foreach (var sequence in sequences)
             {
@@ -731,6 +896,13 @@ namespace Tutorial
                 if (sequence.triggerType == TutorialTriggerType.OnCondition &&
                     sequence.triggerConditionKey == conditionKey)
                 {
+                    // triggerStageId가 지정되어 있으면 스테이지 ID도 체크
+                    if (sequence.triggerStageId > 0 && sequence.triggerStageId != currentStageId)
+                    {
+                        DebugLog($"조건 {conditionKey} 일치하지만 스테이지 불일치: 현재 {currentStageId}, 필요 {sequence.triggerStageId}");
+                        continue;
+                    }
+
                     DebugLog($"조건 {conditionKey}에 맞는 시퀀스 발견: {sequence.sequenceId}");
                     StartSequenceAsync(sequence).Forget();
                     return;

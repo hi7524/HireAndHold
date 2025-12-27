@@ -90,30 +90,56 @@ public class RewardPanelController : MonoBehaviour
         currentRewardSkillIds.Clear();
         goldRewardSlotIndices.Clear();
 
+        warningRewardSection.SetActive(true);
+        bossRewardSection.SetActive(false);
+
         if (passiveSkillManager == null)
         {
             return;
         }
 
-        List<int> randomSkills = passiveSkillManager.GetRandomPassiveSkillsForReward(1);
+        // 701, 702 스테이지(튜토리얼)에서는 방벽 회복 패시브 스킬만
+        int currentStageId = stageManager != null ? stageManager.CurrentStageId : 0;
+        bool isTutorialStage = currentStageId == 701 || currentStageId == 702;
 
-        warningRewardSection.SetActive(true);
-        bossRewardSection.SetActive(false);
-
-        if (randomSkills.Count > 0)
+        int skillId;
+        if (isTutorialStage)
         {
-            currentRewardSkillIds = randomSkills;
-            int skillId = randomSkills[0];
+            // 방벽 회복 스킬만 반환
+            skillId = passiveSkillManager.GetShieldRegenSkillId();
 
-            // SkillCardUi에 스킬 ID 설정
-            warningRewardSlot.SetAsPassiveSkillCard(skillId);
-            warningRewardSlot.FillNextStar();
+            if (skillId > 0)
+            {
+                currentRewardSkillIds.Add(skillId);
+                warningRewardSlot.SetAsPassiveSkillCard(skillId);
+                warningRewardSlot.FillNextStar();
+            }
+            else
+            {
+                // 방벽 회복 스킬이 이미 최대(3성)면 골드 카드
+                warningRewardSlot.SetAsGoldCard(defaultGoldReward);
+                goldRewardSlotIndices.Add(0);
+            }
         }
         else
         {
-            // 스킬이 없으면 골드 카드로 대체
-            warningRewardSlot.SetAsGoldCard(defaultGoldReward);
-            goldRewardSlotIndices.Add(0);
+            List<int> randomSkills = passiveSkillManager.GetRandomPassiveSkillsForReward(1);
+
+            if (randomSkills.Count > 0)
+            {
+                currentRewardSkillIds = randomSkills;
+                skillId = randomSkills[0];
+
+                // SkillCardUi에 스킬 ID 설정
+                warningRewardSlot.SetAsPassiveSkillCard(skillId);
+                warningRewardSlot.FillNextStar();
+            }
+            else
+            {
+                // 스킬이 없으면 골드 카드로 대체
+                warningRewardSlot.SetAsGoldCard(defaultGoldReward);
+                goldRewardSlotIndices.Add(0);
+            }
         }
 
         ShowBox();

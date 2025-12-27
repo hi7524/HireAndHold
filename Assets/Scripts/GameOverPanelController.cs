@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
+using Tutorial;
 
 public class GameOverPanelController : MonoBehaviour
 {
@@ -83,6 +84,9 @@ public class GameOverPanelController : MonoBehaviour
 
     private async void OnLobbyButtonClick()
     {
+        // 튜토리얼에 버튼 터치 알림
+        TutorialManager.Instance?.NotifyButtonTouched("LobbyButton");
+
         Hide();
         Time.timeScale = 1f;
 
