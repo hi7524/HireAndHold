@@ -29,6 +29,8 @@ public class OreDungeonManager : MonoBehaviour
     private const int UnitCountToUse = 5;
     public HashSet<int> draftUnitList = new HashSet<int> { 11101, 11312 }; // TODO: 나중에 실제 편성 덱과 연결
 
+    private int activeParticleCount = 0; // 진행 중인 파티클 개수
+    private bool shouldCheckStageEnd = false; // 스테이지 종료 체크 대기 중
 
     private void Awake()
     {
@@ -65,8 +67,24 @@ public class OreDungeonManager : MonoBehaviour
 
         Debug.Log($"Touch! RemainTouchCount: {RemainTouchCount}");
 
-        // 터치 횟수가 0 이하일 때만 체크
+        // 터치 횟수가 0 이하일 때 대기 플래그 설정 (즉시 체크하지 않음)
         if (RemainTouchCount <= 0)
+        {
+            shouldCheckStageEnd = true;
+        }
+    }
+
+    public void OnParticleStarted()
+    {
+        activeParticleCount++;
+    }
+
+    public void OnParticleCompleted()
+    {
+        activeParticleCount--;
+
+        // 모든 파티클이 완료되고 스테이지 종료 체크 대기 중이라면 체크
+        if (activeParticleCount <= 0 && shouldCheckStageEnd)
         {
             CheckStageEnd();
         }

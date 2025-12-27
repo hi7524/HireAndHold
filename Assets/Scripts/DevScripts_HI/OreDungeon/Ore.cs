@@ -130,10 +130,15 @@ public class Ore : MonoBehaviour, IPointerDownHandler
                     {
                         particleImage.attractorTarget = tailEffectTarget;
 
+                        // 파티클 시작 알림
+                        manager?.OnParticleStarted();
+
                         // 설정된 시간 후 콜백 실행 (파티클이 목표에 도착하는 시간)
                         DOVirtual.DelayedCall(particleArrivalTime, () =>
                         {
                             OnParticleReachedTarget();
+                            // 파티클 완료 알림
+                            manager?.OnParticleCompleted();
                         });
                     }
                 }

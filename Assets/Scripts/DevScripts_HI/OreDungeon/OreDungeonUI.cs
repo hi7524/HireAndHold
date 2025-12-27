@@ -109,6 +109,7 @@ public class OreDungeonUI : MonoBehaviour
         {
             if (count < 0)
                 return;
+            
             oreCountText.text = $"{count}";
 
             // 펀치 스케일 애니메이션

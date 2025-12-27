@@ -3,7 +3,17 @@ using DG.Tweening;
 
 public class PanelOpenEffect : MonoBehaviour
 {
+    [SerializeField] private bool playOnEnable;
+
     private Tween scaleTween;
+
+    public void OnEnable()
+    {
+        if (playOnEnable)
+        {
+            PlayEffect();
+        }
+    }
 
     public void PlayEffect()
     {
