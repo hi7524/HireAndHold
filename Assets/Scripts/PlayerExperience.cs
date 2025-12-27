@@ -2,6 +2,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using TMPro;
+using Tutorial;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -62,6 +63,12 @@ public class PlayerExperience : MonoBehaviour
             PassiveSkillEffects effects = passiveSkillManager.GetCurrentEffects();
             bonusPercent = effects.expBonus;
             finalAmount = amount * (1f + bonusPercent / 100f);
+        }
+
+        // 최초 경험치 획득 시 튜토리얼 조건 알림
+        if (curPlayerExp == 0f && finalAmount > 0f)
+        {
+            TutorialManager.Instance?.NotifyConditionMet("FIRST_EXP");
         }
 
         curPlayerExp += finalAmount;

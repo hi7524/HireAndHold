@@ -207,16 +207,27 @@ namespace Tutorial
         /// </summary>
         public void NotifyDragComplete(string sourceName, string targetName)
         {
+            Debug.Log($"[TutorialBlocker] NotifyDragComplete - sourceName: {sourceName}, targetName: {targetName}");
+            Debug.Log($"[TutorialBlocker] 현재 대기 중 - dragSourceName: {dragSourceName}, dragTargetName: {dragTargetName}");
+
             lastDragSource = sourceName;
             lastDragTarget = targetName;
 
             // 조건 확인
-            bool sourceMatch = string.IsNullOrEmpty(dragSourceName) || sourceName == dragSourceName;
-            bool targetMatch = string.IsNullOrEmpty(dragTargetName) || targetName == dragTargetName;
+            // sourceName/targetName이 null이거나 빈 문자열이면 무조건 매칭 (어떤 유닛이든 허용)
+            bool sourceMatch = string.IsNullOrEmpty(dragSourceName) || string.IsNullOrEmpty(sourceName) || sourceName == dragSourceName;
+            bool targetMatch = string.IsNullOrEmpty(dragTargetName) || string.IsNullOrEmpty(targetName) || targetName == dragTargetName;
+
+            Debug.Log($"[TutorialBlocker] sourceMatch: {sourceMatch}, targetMatch: {targetMatch}, dragCompleteSource null?: {dragCompleteSource == null}");
 
             if (sourceMatch && targetMatch)
             {
+                Debug.Log("[TutorialBlocker] 조건 매칭됨! TrySetResult 호출");
                 dragCompleteSource?.TrySetResult();
+            }
+            else
+            {
+                Debug.Log("[TutorialBlocker] 조건 불일치 - 튜토리얼 진행 안됨");
             }
         }
 

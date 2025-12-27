@@ -504,18 +504,31 @@ public class LevelUpRewardController : MonoBehaviour
         }
     }
 
+    // 1스테이지 튜토리얼용 고정 유닛 ID (엘렌, 타론, 리브)
+    private static readonly int[] TutorialFixedUnitIds = { 11113, 11110, 11107 };
+
     // 유닛 3개 중복 없이 뽑기
     public void DrawUnitID()
     {
-        List<int> tempList = new List<int>(PlayData.selectedUnitIds);
+        List<int> tempList;
 
-        for (int i = tempList.Count - 1; i > 0; i--)
+        // 1스테이지(701)이면 고정 유닛 순서 사용
+        if (stageManager != null && stageManager.CurrentStageId == 701)
         {
-            int randomIndex = Random.Range(0, i + 1);
+            tempList = new List<int>(TutorialFixedUnitIds);
+        }
+        else
+        {
+            tempList = new List<int>(PlayData.selectedUnitIds);
 
-            int temp = tempList[i];
-            tempList[i] = tempList[randomIndex];
-            tempList[randomIndex] = temp;
+            for (int i = tempList.Count - 1; i > 0; i--)
+            {
+                int randomIndex = Random.Range(0, i + 1);
+
+                int temp = tempList[i];
+                tempList[i] = tempList[randomIndex];
+                tempList[randomIndex] = temp;
+            }
         }
 
         for (int i = 0; i < 3 && i < unitCardUIs.Length; i++)

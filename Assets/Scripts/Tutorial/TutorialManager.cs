@@ -48,22 +48,75 @@ namespace Tutorial
             }
 
             Instance = this;
+
+            // DontDestroyOnLoad는 루트 오브젝트에서만 동작
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
             DontDestroyOnLoad(gameObject);
 
-            // 자동으로 TutorialUI, TutorialBlocker 찾기
-            if (tutorialUI == null)
-            {
-                tutorialUI = FindAnyObjectByType<TutorialUI>(FindObjectsInactive.Include);
-                if (tutorialUI != null)
-                    Debug.Log("[TutorialManager] TutorialUI 자동 연결됨");
-            }
+            // 씬 로드 이벤트 구독
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
 
-            if (tutorialBlocker == null)
+            // 현재 씬에서 UI 찾기
+            FindTutorialUI();
+        }
+
+        private void OnDestroy()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        /// <summary>
+        /// 씬 로드 시 호출 - UI 재연결 및 튜토리얼 체크
+        /// </summary>
+        private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            FindTutorialUI();
+
+            // 씬 로드 후 튜토리얼 자동 체크
+            CheckTutorialOnSceneLoadAsync(scene.name).Forget();
+        }
+
+        /// <summary>
+        /// 씬 로드 후 튜토리얼 자동 체크
+        /// </summary>
+        private async UniTaskVoid CheckTutorialOnSceneLoadAsync(string sceneName)
+        {
+            // 약간의 딜레이 (씬 초기화 대기)
+            await UniTask.Delay(TimeSpan.FromSeconds(0.5f), ignoreTimeScale: true);
+
+            // 03_Stage 씬인 경우에만 OnStageStart 튜토리얼 체크
+            if (sceneName == "03_Stage")
             {
-                tutorialBlocker = FindAnyObjectByType<TutorialBlocker>(FindObjectsInactive.Include);
-                if (tutorialBlocker != null)
-                    Debug.Log("[TutorialManager] TutorialBlocker 자동 연결됨");
+                var stageManager = FindAnyObjectByType<StageManager>();
+                if (stageManager != null)
+                {
+                    int stageId = stageManager.CurrentStageId;
+
+                    // 1스테이지(701)에서만 튜토리얼 시작
+                    if (stageId == 701)
+                    {
+                        await CheckAndStartTutorialAsync(TutorialTriggerType.OnStageStart, stageId);
+                    }
+                }
             }
+            // 02_Lobby 씬인 경우 OnLobbyEnter 튜토리얼 체크
+            // TODO: 로비 튜토리얼 필요시 주석 해제
+            // else if (sceneName == "02_Lobby")
+            // {
+            //     await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
+            // }
+        }
+
+        /// <summary>
+        /// TutorialUI, TutorialBlocker 찾기
+        /// </summary>
+        private void FindTutorialUI()
+        {
+            tutorialUI = FindAnyObjectByType<TutorialUI>(FindObjectsInactive.Include);
+            tutorialBlocker = FindAnyObjectByType<TutorialBlocker>(FindObjectsInactive.Include);
         }
 
         private void Start()
@@ -86,9 +139,31 @@ namespace Tutorial
                 var sequence = GetSequenceById(progress.currentSequenceId);
                 if (sequence != null)
                 {
-                    // 체크포인트에서 재시작
-                    int startIndex = progress.lastCheckpointIndex;
-                    await StartSequenceFromStepAsync(sequence, startIndex);
+                    // 현재 씬과 시퀀스 triggerType이 맞는지 확인
+                    string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                    bool shouldRestore = false;
+
+                    switch (sequence.triggerType)
+                    {
+                        case TutorialTriggerType.OnStageStart:
+                        case TutorialTriggerType.OnStageClear:
+                            // Stage 씬에서만 복원
+                            shouldRestore = currentScene == "03_Stage";
+                            break;
+                        case TutorialTriggerType.OnLobbyEnter:
+                            // Lobby 씬에서만 복원
+                            shouldRestore = currentScene == "02_Lobby";
+                            break;
+                        default:
+                            shouldRestore = true;
+                            break;
+                    }
+
+                    if (shouldRestore)
+                    {
+                        int startIndex = progress.lastCheckpointIndex;
+                        await StartSequenceFromStepAsync(sequence, startIndex);
+                    }
                 }
             }
         }
@@ -147,14 +222,16 @@ namespace Tutorial
         /// </summary>
         public async UniTask<bool> CheckAndStartTutorialAsync(TutorialTriggerType triggerType, int stageId = 0, int level = 0)
         {
-            if (isPlaying) return false;
+            if (isPlaying)
+                return false;
 
             // 전체 튜토리얼 완료됐으면 스킵
             if (DatabaseManager.Instance.IsTutorialCompleted())
                 return false;
 
             var sequence = FindSequenceByTrigger(triggerType, stageId, level);
-            if (sequence == null) return false;
+            if (sequence == null)
+                return false;
 
             await StartSequenceAsync(sequence);
             return true;
@@ -307,9 +384,7 @@ namespace Tutorial
                 // 텍스트가 있으면 대화창 표시
                 if (!string.IsNullOrEmpty(text) && text != $"[{step.stringId}]")
                 {
-                    await tutorialUI.ShowDialogAsync(text, step.dialogAnchor, step.dialogPosition, step.showCharacter);
-
-                    // 보이스 재생 (Addressable 캐시에서 로드)
+                    // 보이스 먼저 재생 (Addressable 캐시에서 로드)
                     // voiceKey가 없으면 TutorialTable에서 stringId로 자동 조회
                     string voiceKey = step.voiceKey;
                     if (string.IsNullOrEmpty(voiceKey))
@@ -329,6 +404,9 @@ namespace Tutorial
                             Debug.LogWarning($"[Tutorial] 튜토리얼 보이스 클립을 찾을 수 없음: {voiceKey}");
                         }
                     }
+
+                    // 보이스 재생 후 텍스트 표시
+                    await tutorialUI.ShowDialogAsync(text, step.dialogAnchor, step.dialogPosition, step.showCharacter);
                 }
                 else
                 {
@@ -514,6 +592,7 @@ namespace Tutorial
             // UI 숨기기
             if (tutorialUI != null)
             {
+                tutorialUI.HideDialog();
                 tutorialUI.HideHighlight();
                 tutorialUI.HideHandGuide();
             }

@@ -156,13 +156,10 @@ public class StageManager : MonoBehaviour
 
     public void StartStage(int stageId)
     {
-
         CurrentStageData = DataTableManager.StageTable.Get(stageId);
 
         if (CurrentStageData == null)
-        {
             return;
-        }
 
         CurrentStageId = stageId;
 
