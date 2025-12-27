@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class Ore : MonoBehaviour
+public class Ore : MonoBehaviour, IPointerDownHandler
 {
     [SerializeField] private Image oreImage;
 
@@ -9,12 +10,18 @@ public class Ore : MonoBehaviour
     private int touchCount;
     private int oresID;
     private OreDungeonManager manager;
+    private Canvas canvas;
+    private Camera worldCamera;
+    private ObjectPoolManager poolManager;
 
-    public void SetOreType(int id, DataTable_Ore oreTable, OreDungeonManager dungeonManager)
+    public void SetOreType(int id, DataTable_Ore oreTable, OreDungeonManager dungeonManager, Canvas canvasRef, Camera camera, ObjectPoolManager poolMgr)
     {
         oresID = id;
         oreData = oreTable.Get(id);
         manager = dungeonManager;
+        canvas = canvasRef;
+        worldCamera = camera;
+        poolManager = poolMgr;
 
         if (oreData == null)
         {
@@ -30,12 +37,62 @@ public class Ore : MonoBehaviour
         touchCount = count;
     }
 
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        // 터치 위치에서 이펙트 재생
+        PlayEffectAtTouchPosition(eventData.position);
+
+        // 기존 로직
+        OnClick();
+    }
+
     public void OnClick()
     {
         touchCount--;
         manager.AddOreCount(1);
         manager?.OnOreTouched();
         CheckDestroy();
+    }
+
+    private void PlayEffectAtTouchPosition(Vector2 screenPosition)
+    {
+        if (poolManager == null)
+        {
+            Debug.LogError("poolManager가 null입니다!");
+            return;
+        }
+
+        if (worldCamera == null)
+        {
+            Debug.LogError("worldCamera가 null입니다!");
+            return;
+        }
+
+        // 방법 1: Ore의 현재 World Position을 그대로 사용
+        Vector3 oreWorldPos = transform.position;
+
+        // 방법 2: Screen 좌표에서 Ray를 쏴서 Canvas Plane과의 교차점 찾기
+        Ray ray = worldCamera.ScreenPointToRay(screenPosition);
+        Plane canvasPlane = new Plane(-worldCamera.transform.forward, oreWorldPos);
+
+        Vector3 worldPosition = oreWorldPos; // 기본값
+
+        if (canvasPlane.Raycast(ray, out float distance))
+        {
+            worldPosition = ray.GetPoint(distance);
+        }
+
+        // 이펙트 재생
+        GameObject effect = poolManager.Get("MineEffect");
+
+        if (effect != null)
+        {
+            effect.transform.position = worldPosition;
+        }
+        else
+        {
+            Debug.LogError("MineEffect를 풀에서 가져오지 못했습니다. 풀이 제대로 설정되었는지 확인하세요.");
+        }
     }
 
     private void CheckDestroy()

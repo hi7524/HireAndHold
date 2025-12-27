@@ -187,8 +187,11 @@ public class OreSpawner : MonoBehaviour
         RectTransform rectTransform = ore.GetComponent<RectTransform>();
         rectTransform.anchoredPosition = position;
 
-        // 광석 타입 설정 (OreTable, Manager 전달)
-        ore.SetOreType(oresID, assetManager.OreTable, gameManager);
+        // Camera 가져오기 (Canvas의 worldCamera가 null이면 Main Camera 사용)
+        Camera camera = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
+
+        // 광석 타입 설정 (OreTable, Manager, Canvas, Camera, PoolManager 전달)
+        ore.SetOreType(oresID, assetManager.OreTable, gameManager, canvas, camera, poolManager);
 
         return ore;
     }
