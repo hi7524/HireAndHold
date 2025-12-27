@@ -188,12 +188,9 @@ public class DeckControl : MonoBehaviour
         DatabaseManager.Instance.SyncPresetsToPlayData();
         LoadPresets();
 
-        if (PlayData.IsPresetEmptyOnUnlockedSlots(activePresetIndex))
-        {
-            Debug.LogWarning("[DeckControl OnEnable] 열린 슬롯 기준 비어있음 → 자동 편성");
-            await AutoFillPresetIfEmpty(activePresetIndex);
-        }
-
+        // OnEnable에서는 자동 편성하지 않음 - 저장된 프리셋 그대로 유지
+        // (자동 편성은 Start()의 LoadAndSetupPresets()에서만 수행)
+        Debug.Log($"[DeckControl RefreshFromFirebase] 프리셋 {activePresetIndex} 로드 완료 - 슬롯0: {PlayData.selectedDeckUnitIds[activePresetIndex, 0]}, 슬롯1: {PlayData.selectedDeckUnitIds[activePresetIndex, 1]}");
 
         LoadPreset(activePresetIndex);
         ApplyPresetToSelectedUnitIds();
@@ -410,19 +407,16 @@ public class DeckControl : MonoBehaviour
 
     public async void OnClickPresetButton(int index)
     {
+        Debug.Log($"[DeckControl OnClickPresetButton] 프리셋 {index} 선택");
+
         activePresetIndex = index;
         PlayData.currentSelectedPreset = index;
 
         await DatabaseManager.Instance.SetActivePresetAsync(index);
 
-        if (PlayData.IsPresetEmptyOnUnlockedSlots(index))
-        {
-            Debug.LogWarning($"[DeckControl] 프리셋 {index}가 비어있음 → 자동 편성");
-            await AutoFillPresetIfEmpty(index);
-
-            DatabaseManager.Instance.SyncPresetsToPlayData();
-            LoadPresets();
-        }
+        // 프리셋 전환 시 자동 편성하지 않음 - 저장된 프리셋 그대로 유지
+        // (빈 프리셋이더라도 사용자가 직접 편성할 수 있도록 함)
+        Debug.Log($"[DeckControl OnClickPresetButton] 프리셋 {index} 데이터 - 슬롯0: {PlayData.selectedDeckUnitIds[index, 0]}, 슬롯1: {PlayData.selectedDeckUnitIds[index, 1]}");
 
         LoadPreset(index);
         UpdatePresetButtonsStates();
@@ -876,7 +870,16 @@ public class DeckControl : MonoBehaviour
             }
         }
 
-        await DatabaseManager.Instance.SavePresetFromPlayDataAsync(activePresetIndex);
+        bool saveSuccess = await DatabaseManager.Instance.SavePresetFromPlayDataAsync(activePresetIndex);
+
+        if (saveSuccess)
+        {
+            Debug.Log($"[DeckControl OnCompleteClicked] 프리셋 {activePresetIndex} 저장 완료 - 슬롯0: {PlayData.selectedDeckUnitIds[activePresetIndex, 0]}, 슬롯1: {PlayData.selectedDeckUnitIds[activePresetIndex, 1]}");
+        }
+        else
+        {
+            Debug.LogError($"[DeckControl OnCompleteClicked] 프리셋 {activePresetIndex} 저장 실패!");
+        }
 
         ExitEditMode();
         ApplyPresetToSelectedUnitIds();

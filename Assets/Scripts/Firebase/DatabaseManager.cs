@@ -188,37 +188,46 @@ public class DatabaseManager : MonoBehaviour
         {
             string key = $"preset_{p}";
 
-            if (!CurrentUser.partyPresets.TryGetValue(key, out var preset)
-                || preset.characterId == null
-                || preset.characterId.Length < 5)
+            // 모든 슬롯을 0으로 초기화
+            for (int s = 0; s < 5; s++)
             {
-                // 빈 프리셋으로 처리
-                for (int s = 0; s < 5; s++)
-                {
-                    PlayData.selectedDeckUnitIds[p, s] = 0;
-                    PlayData.selectedDeckUnitIconAddresses[p, s] = "";
-                }
+                PlayData.selectedDeckUnitIds[p, s] = 0;
+                PlayData.selectedDeckUnitIconAddresses[p, s] = "";
+            }
 
+            if (!CurrentUser.partyPresets.TryGetValue(key, out var preset) || preset.characterId == null)
+            {
+                // 프리셋이 없으면 빈 상태 유지
+                Debug.LogWarning($"[DatabaseManager SyncPresetsToPlayData] 프리셋 {p} - Firebase에 데이터 없음");
                 continue;
             }
 
-            // 정상 프리셋 로드
+            // 정상 프리셋 로드 - 해제된 슬롯만 순서대로 채움
+            int arrayLength = preset.characterId.Length;
+
+            int arrayIndex = 0;
             for (int s = 0; s < 5; s++)
             {
-                // 캐릭터 ID 읽기
-                int unitId = 0;
-                string value = preset.characterId[s];
+                if (!IsSlotUnlocked(p, s))
+                    continue;
 
-                if (!string.IsNullOrEmpty(value))
-                    int.TryParse(value, out unitId);
+                if (arrayIndex >= arrayLength)
+                    break;
+
+                // 배열에서 데이터 읽기
+                int unitId = 0;
+                if (!string.IsNullOrEmpty(preset.characterId[arrayIndex]))
+                {
+                    int.TryParse(preset.characterId[arrayIndex], out unitId);
+                }
 
                 PlayData.selectedDeckUnitIds[p, s] = unitId;
 
                 // 아이콘 주소 읽기
-                if (preset.iconAddress != null && preset.iconAddress.Length > s)
-                    PlayData.selectedDeckUnitIconAddresses[p, s] = preset.iconAddress[s] ?? "";
-                else
-                    PlayData.selectedDeckUnitIconAddresses[p, s] = "";
+                if (preset.iconAddress != null && arrayIndex < preset.iconAddress.Length)
+                    PlayData.selectedDeckUnitIconAddresses[p, s] = preset.iconAddress[arrayIndex] ?? "";
+
+                arrayIndex++;
             }
         }
     }
@@ -228,25 +237,44 @@ public class DatabaseManager : MonoBehaviour
     {
         var preset = GetPreset(index);
         if (preset == null)
+        {
+            Debug.LogError($"[DatabaseManager SavePresetFromPlayDataAsync] 프리셋 {index} null!");
             return false;
+        }
 
-        if (preset.characterId == null || preset.characterId.Length != 5)
-            preset.characterId = new string[5];
-
-        if (preset.iconAddress == null || preset.iconAddress.Length != 5)
-            preset.iconAddress = new string[5];
-
+        // 해제된 슬롯 개수 계산
+        int unlockedSlots = 0;
         for (int s = 0; s < 5; s++)
         {
-            int unitId = PlayData.selectedDeckUnitIds[index, s];
+            if (IsSlotUnlocked(index, s))
+                unlockedSlots++;
+        }
 
-            preset.characterId[s] = unitId == 0 ? null : unitId.ToString();
-            preset.iconAddress[s] = PlayData.selectedDeckUnitIconAddresses[index, s];
+        // 배열 크기를 해제된 슬롯 개수로 설정
+        preset.characterId = new string[unlockedSlots];
+        preset.iconAddress = new string[unlockedSlots];
+
+        // 해제된 슬롯만 저장
+        int arrayIndex = 0;
+        for (int s = 0; s < 5; s++)
+        {
+            if (!IsSlotUnlocked(index, s))
+                continue;
+
+            int unitId = PlayData.selectedDeckUnitIds[index, s];
+            preset.characterId[arrayIndex] = unitId == 0 ? null : unitId.ToString();
+            preset.iconAddress[arrayIndex] = PlayData.selectedDeckUnitIconAddresses[index, s];
+            arrayIndex++;
         }
 
         preset.lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        return await SavePresetAsync(index);
+        bool success = await SavePresetAsync(index);
+
+        if (!success)
+            Debug.LogError($"[DatabaseManager SavePresetFromPlayDataAsync] 프리셋 {index} Firebase 저장 실패!");
+
+        return success;
     }
 
 
@@ -742,7 +770,23 @@ public class DatabaseManager : MonoBehaviour
             return null;
 
         string key = $"preset_{index}";
-        return CurrentUser.partyPresets.TryGetValue(key, out var preset) ? preset : null;
+
+        if (!CurrentUser.partyPresets.TryGetValue(key, out var preset))
+        {
+            // 프리셋이 없으면 새로 생성 (기본 2개 슬롯)
+            preset = new PartyPreset
+            {
+                name = $"프리셋 {index + 1}",
+                characterId = new string[2],
+                iconAddress = new string[2],
+                isLocked = false,
+                lastModified = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+            CurrentUser.partyPresets[key] = preset;
+            Debug.Log($"[DatabaseManager GetPreset] 프리셋 {index} 새로 생성 (2개 슬롯)");
+        }
+
+        return preset;
     }
 
     public PartyPreset GetActivePreset()
