@@ -4840,7 +4840,6 @@ RectTransform:
   m_Children:
   - {fileID: 2264911853705329494}
   - {fileID: 6883575966006039864}
-  - {fileID: 2018596034}
   m_Father: {fileID: 2053207176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -8459,6 +8458,7 @@ RectTransform:
   - {fileID: 4431310581341320641}
   - {fileID: 527338850}
   - {fileID: 2047088274}
+  - {fileID: 2018596034}
   - {fileID: 800242050}
   - {fileID: 1007274365}
   - {fileID: 758475764}
@@ -14390,11 +14390,11 @@ RectTransform:
   m_Children:
   - {fileID: 177245114}
   - {fileID: 373531274}
-  m_Father: {fileID: 736372716}
+  m_Father: {fileID: 1213958859}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 120.32, y: 0}
+  m_AnchoredPosition: {x: 120.32, y: -104.52606}
   m_SizeDelta: {x: 55, y: 55}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2018596035
@@ -14450,6 +14450,8 @@ MonoBehaviour:
   uiManager: {fileID: 1213958860}
   gridManager: {fileID: 397958961}
   playerGold: {fileID: 569250257}
+  dragManager: {fileID: 1367760510434314015}
+  levelUpRewardController: {fileID: 3153970961501435487}
   sellClip: {fileID: 8300000, guid: 6b767a75870a27c4b96a014c74d8c884, type: 3}
   unitSellFailedClip: {fileID: 8300000, guid: e42d0cd616cdbd84c8cf733a0376e300, type: 3}
   scaleMultiplier: 1.1
@@ -18555,7 +18557,7 @@ GameObject:
   - component: {fileID: 6692720282619480360}
   - component: {fileID: 1622378203460758751}
   m_Layer: 5
-  m_Name: ConfirmBtn
+  m_Name: SkipBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -19384,7 +19386,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC644\uB8CC"
+  m_text: "\uAC74\uB108\uB6F0\uAE30"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
   m_sharedMaterial: {fileID: -2522021900909612901, guid: 89194c25efdadfb48a4a4a110ae8ad02, type: 2}
