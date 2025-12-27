@@ -409,6 +409,46 @@ namespace Tutorial
 
             // 모든 시퀀스 완료 체크
             CheckAllSequencesCompleted();
+
+            // 시퀀스 완료 후 대기 중인 조건 체크
+            CheckPendingConditions();
+        }
+
+        /// <summary>
+        /// 대기 중인 조건 체크 (시퀀스 완료 후 호출)
+        /// </summary>
+        private void CheckPendingConditions()
+        {
+            if (isPlaying) return;
+
+            // metConditions에 저장된 조건들을 다시 체크
+            foreach (var conditionKey in metConditions)
+            {
+                // 현재 스테이지 ID 확인
+                int currentStageId = 0;
+                var stageManager = FindAnyObjectByType<StageManager>();
+                if (stageManager != null)
+                {
+                    currentStageId = stageManager.CurrentStageId;
+                }
+
+                foreach (var sequence in sequences)
+                {
+                    if (DatabaseManager.Instance.IsTutorialSequenceCompleted(sequence.sequenceId))
+                        continue;
+
+                    if (sequence.triggerType == TutorialTriggerType.OnCondition &&
+                        sequence.triggerConditionKey == conditionKey)
+                    {
+                        if (sequence.triggerStageId > 0 && sequence.triggerStageId != currentStageId)
+                            continue;
+
+                        DebugLog($"대기 중인 조건 {conditionKey}에 맞는 시퀀스 발견: {sequence.sequenceId}");
+                        StartSequenceAsync(sequence).Forget();
+                        return;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -865,18 +905,19 @@ namespace Tutorial
         /// </summary>
         public void NotifyConditionMet(string conditionKey)
         {
-            DebugLog($"조건 만족: {conditionKey}");
+            Debug.Log($"[Tutorial] NotifyConditionMet 호출됨: {conditionKey}");
 
             // 스텝 단위 조건 저장 (WaitCondition용)
             metConditions.Add(conditionKey);
 
-            // 이미 튜토리얼 진행 중이면 시퀀스 시작은 스킵
-            if (isPlaying)
-                return;
-
             // 전체 튜토리얼 완료됐으면 스킵
             if (DatabaseManager.Instance.IsTutorialCompleted())
+            {
+                Debug.Log("[Tutorial] 전체 튜토리얼 완료됨, 스킵");
                 return;
+            }
+
+            Debug.Log($"[Tutorial] sequences 개수: {sequences.Count}");
 
             // 현재 스테이지 ID 확인
             int currentStageId = 0;
@@ -893,21 +934,25 @@ namespace Tutorial
                 if (DatabaseManager.Instance.IsTutorialSequenceCompleted(sequence.sequenceId))
                     continue;
 
+                Debug.Log($"[Tutorial] 시퀀스 체크: {sequence.sequenceId}, triggerType: {sequence.triggerType}, triggerConditionKey: {sequence.triggerConditionKey}");
+
                 if (sequence.triggerType == TutorialTriggerType.OnCondition &&
                     sequence.triggerConditionKey == conditionKey)
                 {
                     // triggerStageId가 지정되어 있으면 스테이지 ID도 체크
                     if (sequence.triggerStageId > 0 && sequence.triggerStageId != currentStageId)
                     {
-                        DebugLog($"조건 {conditionKey} 일치하지만 스테이지 불일치: 현재 {currentStageId}, 필요 {sequence.triggerStageId}");
+                        Debug.Log($"[Tutorial] 조건 {conditionKey} 일치하지만 스테이지 불일치: 현재 {currentStageId}, 필요 {sequence.triggerStageId}");
                         continue;
                     }
 
-                    DebugLog($"조건 {conditionKey}에 맞는 시퀀스 발견: {sequence.sequenceId}");
+                    Debug.Log($"[Tutorial] 조건 {conditionKey}에 맞는 시퀀스 발견: {sequence.sequenceId}, 시작!");
                     StartSequenceAsync(sequence).Forget();
                     return;
                 }
             }
+
+            Debug.Log($"[Tutorial] 조건 {conditionKey}에 맞는 시퀀스를 찾지 못함");
         }
 
         /// <summary>

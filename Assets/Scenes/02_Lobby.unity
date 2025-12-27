@@ -7044,7 +7044,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 277816378}
         m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
-        m_MethodName: OnClickedStoreButton
+        m_MethodName: OnClickedDungeonButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -16949,7 +16949,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 277816378}
         m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
-        m_MethodName: OnClickedDungeonButton
+        m_MethodName: OnClickedStoreButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -29034,6 +29034,26 @@ PrefabInstance:
     - target: {fileID: 5303093168861086068, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
       propertyPath: m_Name
       value: TutorialCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 5303093168861086068, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748563639046876297, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
+      propertyPath: m_fontSize
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748563639046876297, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
+      propertyPath: m_fontSizeMax
+      value: 36
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748563639046876297, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748563639046876297, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6114073674858787202, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
       propertyPath: m_Pivot.x
