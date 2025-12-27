@@ -50,6 +50,7 @@ public class OreDungeonIntro : MonoBehaviour
     private List<int> allUnitIds = new List<int>(); // 룰렛에 사용할 전체 유닛 ID 리스트
     private CanvasGroup canvasGroup;
     private RectTransform prfRectTransform; // prfTrans의 RectTransform
+    private bool isSkipped = false; // 스킵 여부 확인
 
 
     private void Awake()
@@ -460,5 +461,90 @@ public class OreDungeonIntro : MonoBehaviour
         {
             oreDungeonUI.SetActiveDefaultPanel(true);
         }
+    }
+
+    // 스킵 버튼 클릭 시 호출
+    public void OnClickSkipBtn()
+    {
+        if (isSkipped)
+            return;
+
+        isSkipped = true;
+
+        // 모든 DOTween 애니메이션 완전히 킬 (룰렛 포함)
+        DOTween.KillAll();
+
+        // 개별적으로도 킬 (안전장치)
+        DOTween.Kill(this);
+        foreach (var card in cardList)
+        {
+            DOTween.Kill(card.transform);
+            DOTween.Kill(card.CanvasGroup);
+            if (card.Text != null)
+                DOTween.Kill(card.Text);
+        }
+        DOTween.Kill(attackPowerTextCG);
+        DOTween.Kill(attackPowerText.transform);
+
+        // LayoutGroup 활성화
+        if (layoutGroup != null)
+        {
+            layoutGroup.enabled = true;
+        }
+
+        // 모든 카드 즉시 최종 상태로 설정
+        List<int> unitIds = gameManager.draftUnitList.ToList();
+        for (int i = 0; i < cardList.Count; i++)
+        {
+            BaseCardUi card = cardList[i];
+
+            // 카드 완전히 보이게
+            card.CanvasGroup.alpha = 1f;
+            card.transform.localScale = Vector3.one;
+            card.SetImageColor(Color.white);
+
+            // 최종 이미지 설정
+            if (i < unitIds.Count)
+            {
+                int unitId = unitIds[i];
+                if (assetManager.UnitSprites.TryGetValue(unitId, out Sprite sprite))
+                {
+                    card.SetImage(sprite);
+                }
+
+                // 공격력 텍스트 설정
+                UnitData unitData = DataTableManager.UnitTable?.Get(unitId);
+                if (unitData != null)
+                {
+                    card.SetTitleText(unitData.ATTACK.ToString());
+                    if (card.Text != null)
+                    {
+                        card.Text.alpha = 1f;
+                    }
+                }
+            }
+        }
+
+        // 총 공격력 계산 및 표시
+        int totalAttack = CalculateTotalAttack();
+        attackPowerText.text = totalAttack.ToString();
+        attackPowerTextCG.alpha = 1f;
+
+        // 터치 회수로 즉시 변경
+        titleText.text = "총 터치 가능 횟수";
+        attackPowerText.text = gameManager.RemainTouchCount.ToString();
+        attackPowerText.color = Color.yellow;
+
+        // 짧은 딜레이 후 PlayCardSlideDownAnimation 실행
+        DOVirtual.DelayedCall(0.3f, () =>
+        {
+            PlayCardSlideDownAnimation();
+
+            // canvasGroup 페이드 아웃 후 비활성화
+            canvasGroup.DOFade(0f, 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
+            {
+                canvasGroup.gameObject.SetActive(false);
+            });
+        });
     }
 }

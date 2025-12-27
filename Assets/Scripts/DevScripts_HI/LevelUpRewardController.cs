@@ -429,7 +429,6 @@ public class LevelUpRewardController : MonoBehaviour
         {
             autoConfirmTween.Kill();
             autoConfirmTween = null;
-            Debug.Log("[LevelUpRewardController] Cancelled auto-confirm tween in OnClickConfirmBtn");
         }
 
         // 보상을 선택하지 않은채로 확인 버튼을 누를 경우 25G 지급 (인게임 골드)
@@ -445,12 +444,10 @@ public class LevelUpRewardController : MonoBehaviour
 
         if (!gameManager.IsGameStarted)
         {
-            Debug.Log("[LevelUpRewardController] Starting game...");
             gameManager.StartGame();
         }
         else
         {
-            Debug.Log("[LevelUpRewardController] Resuming game...");
             gameManager.ResumeGame();
         }
     }
@@ -726,19 +723,16 @@ public class LevelUpRewardController : MonoBehaviour
                 if (autoConfirmTween != null && autoConfirmTween.IsActive())
                 {
                     autoConfirmTween.Kill();
-                    Debug.Log("[LevelUpRewardController] Cancelled previous auto-confirm tween");
                 }
 
                 // 마지막 카드의 총 애니메이션 시간 = 마지막 딜레이 + 애니메이션 지속시간
                 float lastCardDelay = (cardArray.Length - 1) * CardAnimDelayInterval;
                 float totalAnimationTime = lastCardDelay + CardAnimDuration;
 
-                Debug.Log($"[LevelUpRewardController] Setting up auto-confirm with delay: {totalAnimationTime}s");
 
                 // 애니메이션이 완전히 끝난 후 OnClickConfirmBtn 호출
                 autoConfirmTween = DOVirtual.DelayedCall(totalAnimationTime, () =>
                 {
-                    Debug.Log("[LevelUpRewardController] Auto-confirm delay completed, calling OnClickConfirmBtn");
                     OnClickConfirmBtn();
                     autoConfirmTween = null; // 실행 후 null로 설정
                 }).SetUpdate(true); // ignoreTimeScale = true
@@ -749,8 +743,6 @@ public class LevelUpRewardController : MonoBehaviour
     // 유닛 카드의 드롭 성공 처리
     private void OnUnitCardDropSuccess()
     {
-        Debug.Log($"[LevelUpRewardController] OnUnitCardDropSuccess called. IsGameStarted: {gameManager.IsGameStarted}");
-
         // 드래그 상태 비활성화
         for (int i = 0; i < unitCardUIs.Length; i++)
         {
