@@ -267,8 +267,6 @@ namespace Tutorial
                 highlightRect.sizeDelta = new Vector2(width / canvasScale.x, height / canvasScale.y);
             }
 
-            Debug.Log($"[TutorialUI] 하이라이트 표시: {targetName}, 위치: {highlightRect.anchoredPosition}, 크기: {highlightRect.sizeDelta}");
-
             highlightObject.SetActive(true);
 
             // TutorialBlocker에 구멍 설정
@@ -370,12 +368,10 @@ namespace Tutorial
             {
                 if (obj.gameObject.scene.IsValid() && obj.name == objectName)
                 {
-                    Debug.Log($"[TutorialUI] 이름으로 발견: {objectName}");
                     return obj.gameObject;
                 }
             }
 
-            Debug.LogWarning($"[TutorialUI] 타겟을 찾을 수 없음: {objectName}");
             return null;
         }
 

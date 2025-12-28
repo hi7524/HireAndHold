@@ -79,13 +79,13 @@ MonoBehaviour:
     dialogAnchor: 1
     dialogPosition: {x: 0, y: 0}
     showCharacter: 0
-    highlightTarget: QuestElements
+    highlightTarget: QuestConfirm
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
     showHandGuide: 1
     handGuideOffset: {x: 0, y: 0}
-    actionType: 0
-    targetButtonName: QuestElements
+    actionType: 1
+    targetButtonName: QuestConfirm
     dragSourceName: 
     dragTargetName: 
     allowedTiles: []
@@ -119,7 +119,7 @@ MonoBehaviour:
     pauseGame: 0
     isCheckpoint: 0
     allowedUnitNames: []
-    delayBeforeStep: 0.3
+    delayBeforeStep: 0.5
   - stringId: 103119
     voiceKey: Tut_19
     reward:
@@ -154,13 +154,13 @@ MonoBehaviour:
     dialogAnchor: 1
     dialogPosition: {x: 0, y: 0}
     showCharacter: 1
-    highlightTarget: AchieveElements
+    highlightTarget: PriceConfirm
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
     showHandGuide: 1
     handGuideOffset: {x: 0, y: 0}
-    actionType: 0
-    targetButtonName: AchieveElements
+    actionType: 1
+    targetButtonName: PriceConfirm
     dragSourceName: 
     dragTargetName: 
     allowedTiles: []
@@ -194,7 +194,7 @@ MonoBehaviour:
     pauseGame: 0
     isCheckpoint: 0
     allowedUnitNames: []
-    delayBeforeStep: 0.3
+    delayBeforeStep: 0.5
   - stringId: 103121
     voiceKey: Tut_21
     reward:
@@ -246,7 +246,7 @@ MonoBehaviour:
     allowedUnitNames: []
     delayBeforeStep: 0.3
   - stringId: 0
-    voiceKey:
+    voiceKey: 
     reward:
       rewardType: 0
       itemId: 0
@@ -261,11 +261,11 @@ MonoBehaviour:
     handGuideOffset: {x: 0, y: 0}
     actionType: 1
     targetButtonName: StartButton
-    dragSourceName:
-    dragTargetName:
+    dragSourceName: 
+    dragTargetName: 
     allowedTiles: []
     autoAdvanceDelay: 0
-    conditionKey:
+    conditionKey: 
     pauseGame: 0
     isCheckpoint: 0
     allowedUnitNames: []

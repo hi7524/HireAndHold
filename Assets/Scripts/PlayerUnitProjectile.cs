@@ -36,6 +36,7 @@ public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
         isCritical = data.isCritical;
         target = data.target;
         transform.position = data.spawnPosition;
+        hitAudioClipName = data.hitAudioClipName;
 
         // customDirection이 있으면 사용, 없으면 targetPosition에서 방향 계산
         if (data.customDirection != Vector3.zero)

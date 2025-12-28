@@ -23,6 +23,9 @@ public abstract class PlayerSkillBase : MonoBehaviour
     // Addressable 이펙트 프리팹 캐시
     protected GameObject cachedEffectPrefab;
 
+    // 사운드 클립 이름
+    protected string skillSoundName;
+
     // 직접 Addressable 로드 시 핸들 저장 (캐시 히트 시에는 사용 안함)
     private AsyncOperationHandle<GameObject> effectHandle;
 
@@ -105,6 +108,9 @@ public abstract class PlayerSkillBase : MonoBehaviour
             }
             statusEffectDuration = skillData.EFFECT_TIME1;
 
+            // 사운드 이름 저장
+            skillSoundName = skillData.SKILL_SOUND;
+
             // Addressable 이펙트 로드
             await LoadEffectPrefabAsync();
         }
@@ -176,6 +182,7 @@ public abstract class PlayerSkillBase : MonoBehaviour
             }
         }
         if (isOnCoolTime) return;
+        PlaySkillSound();
         OnUse(spawnPoint);
         StartCooldown(); 
     }
@@ -225,6 +232,25 @@ public abstract class PlayerSkillBase : MonoBehaviour
             return;
 
         skillEffectApplier.ApplyStatusEffectToNearest(position, statusEffectType, statusEffectDuration, statusEffectValue);
+    }
+
+    /// <summary>
+    /// 스킬 사운드 재생
+    /// </summary>
+    protected void PlaySkillSound()
+    {
+        if (string.IsNullOrEmpty(skillSoundName))
+            return;
+
+        if (SoundManager.Instance == null || AddressablePreloader.Instance == null)
+            return;
+
+        if (!AddressablePreloader.Instance.HasCachedAudioClip(skillSoundName))
+            return;
+
+        var clip = AddressablePreloader.Instance.GetCachedAudioClip(skillSoundName);
+        if (clip != null)
+            SoundManager.Instance.PlaySFX(clip);
     }
 
     /// <summary>

@@ -475,6 +475,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -309.25
       objectReference: {fileID: 0}
+    - target: {fileID: 4011846682327835325, guid: b85a981036c42524e8dd6e242de54234, type: 3}
+      propertyPath: m_Name
+      value: QuestConfirm
+      objectReference: {fileID: 0}
     - target: {fileID: 4888564130677923751, guid: b85a981036c42524e8dd6e242de54234, type: 3}
       propertyPath: m_Name
       value: QuestArea
@@ -555,6 +559,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4011846682327835325, guid: b85a981036c42524e8dd6e242de54234, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 10622183}
     - targetCorrespondingSourceObject: {fileID: 8163378648412280341, guid: b85a981036c42524e8dd6e242de54234, type: 3}
       insertIndex: -1
       addedObject: {fileID: 10622181}
@@ -587,6 +594,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetKey: QuestClose
+  useGameObjectName: 1
+--- !u!1 &10622182 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4011846682327835325, guid: b85a981036c42524e8dd6e242de54234, type: 3}
+  m_PrefabInstance: {fileID: 10622177}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &10622183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 10622182}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f925834f8e8b9b144a851188dde7ea86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetKey: QuestConfirm
   useGameObjectName: 1
 --- !u!1 &25397575
 GameObject:
@@ -56534,6 +56560,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8283841861321750274, guid: e0be77ab6e2136b449283da174f88708, type: 3}
+      propertyPath: m_Name
+      value: PriceConfirm
     - target: {fileID: 8666978980774248288, guid: e0be77ab6e2136b449283da174f88708, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -56558,6 +56587,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8283841861321750274, guid: e0be77ab6e2136b449283da174f88708, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1901359544}
     - targetCorrespondingSourceObject: {fileID: 5065587857345446752, guid: e0be77ab6e2136b449283da174f88708, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1901359542}
@@ -56590,6 +56622,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetKey: PriceClose
+  useGameObjectName: 1
+--- !u!1 &1901359543 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8283841861321750274, guid: e0be77ab6e2136b449283da174f88708, type: 3}
+  m_PrefabInstance: {fileID: 1901359538}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1901359544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1901359543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f925834f8e8b9b144a851188dde7ea86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetKey: PriceConfirm
   useGameObjectName: 1
 --- !u!1 &1910663401
 GameObject:

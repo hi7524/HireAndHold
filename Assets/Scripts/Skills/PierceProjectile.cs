@@ -60,17 +60,18 @@ public class PierceProjectile : MonoBehaviour, ISkillProjectile
 
     private void PlayLaunchSound()
     {
-        if (string.IsNullOrEmpty(data.hitAudioClipName) || SoundManager.Instance == null)
+        if (string.IsNullOrEmpty(data.hitAudioClipName))
             return;
 
-        if (AddressablePreloader.Instance != null && AddressablePreloader.Instance.HasCachedAudioClip(data.hitAudioClipName))
-        {
-            var clip = AddressablePreloader.Instance.GetCachedAudioClip(data.hitAudioClipName);
-            if (clip != null)
-            {
-                SoundManager.Instance.PlaySFX(clip);
-            }
-        }
+        if (SoundManager.Instance == null || AddressablePreloader.Instance == null)
+            return;
+
+        if (!AddressablePreloader.Instance.HasCachedAudioClip(data.hitAudioClipName))
+            return;
+
+        var clip = AddressablePreloader.Instance.GetCachedAudioClip(data.hitAudioClipName);
+        if (clip != null)
+            SoundManager.Instance.PlaySFX(clip);
     }
 
     private void SetEffectSortingOrder()

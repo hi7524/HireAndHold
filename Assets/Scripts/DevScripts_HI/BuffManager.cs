@@ -128,6 +128,7 @@ public class BuffManager : MonoBehaviour
             GlobalBuffPercentage += TotalBuffRate;
 
             // 튜토리얼 조건 알림
+            Debug.Log($"[BuffManager] COMPLETE_BUFF 호출! isFilledAllGrids: {isFilledAllGrids}, 스테이지: {FindAnyObjectByType<StageManager>()?.CurrentStageId}");
             TutorialManager.Instance?.NotifyConditionMet("COMPLETE_BUFF");
         }
         else if (!isFilledAllGrids && ActivatedBuffs.Contains("컴플리트"))
