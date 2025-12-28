@@ -50,6 +50,13 @@ public class BuffManager : MonoBehaviour
                 {
                     ActivateBuff(crossBuff.horizontalBuffName);
                     ActivatedBuffs.Add(crossBuff.horizontalBuffName);
+
+                    // 703 스테이지에서 가로/세로 버프 활성화 시 튜토리얼 조건 알림
+                    var stageManager = FindAnyObjectByType<StageManager>();
+                    if (stageManager != null && stageManager.CurrentStageId == 703)
+                    {
+                        TutorialManager.Instance?.NotifyConditionMet("STAGE_BUFF");
+                    }
                 }
                 else if (!horizontalFilled && ActivatedBuffs.Contains(crossBuff.horizontalBuffName))
                 {
@@ -62,6 +69,13 @@ public class BuffManager : MonoBehaviour
                 {
                     ActivateBuff(crossBuff.verticalBuffName);
                     ActivatedBuffs.Add(crossBuff.verticalBuffName);
+
+                    // 703 스테이지에서 가로/세로 버프 활성화 시 튜토리얼 조건 알림
+                    var stageManager = FindAnyObjectByType<StageManager>();
+                    if (stageManager != null && stageManager.CurrentStageId == 703)
+                    {
+                        TutorialManager.Instance?.NotifyConditionMet("STAGE_BUFF");
+                    }
                 }
                 else if (!verticalFilled && ActivatedBuffs.Contains(crossBuff.verticalBuffName))
                 {
