@@ -188,7 +188,8 @@ public class GridPreviewHelper
         cellObj.name = $"PreviewCell_{cellPos.x}_{cellPos.y}";
 
         RectTransform rect = cellObj.GetComponent<RectTransform>();
-        rect.anchoredPosition = new Vector2(cellPos.x * cellSize, cellPos.y * cellSize);
+        Vector2 centeredPosition = CalculateCenteredPosition(cellPos, gridData);
+        rect.anchoredPosition = centeredPosition;
 
         Image img = cellObj.GetComponent<Image>();
         img.color = gridData.gridColor;
@@ -203,9 +204,41 @@ public class GridPreviewHelper
 
         RectTransform rect = cellObj.AddComponent<RectTransform>();
         rect.sizeDelta = new Vector2(cellSize, cellSize);
-        rect.anchoredPosition = new Vector2(cellPos.x * cellSize, cellPos.y * cellSize);
+        Vector2 centeredPosition = CalculateCenteredPosition(cellPos, gridData);
+        rect.anchoredPosition = centeredPosition;
 
         Image img = cellObj.AddComponent<Image>();
         img.color = gridData.gridColor;
+    }
+
+    // 그리드 중심을 기준으로 셀 위치 계산
+    private Vector2 CalculateCenteredPosition(Vector2Int cellPos, UnitGridData gridData)
+    {
+        // 모든 셀(중심 + occupied cells)의 경계 계산
+        var occupiedCells = gridData.GetOccupiedCells();
+
+        float minX = 0f;
+        float maxX = 0f;
+        float minY = 0f;
+        float maxY = 0f;
+
+        // 중심 셀(0,0) 포함
+        foreach (var cell in occupiedCells)
+        {
+            minX = Mathf.Min(minX, cell.x);
+            maxX = Mathf.Max(maxX, cell.x);
+            minY = Mathf.Min(minY, cell.y);
+            maxY = Mathf.Max(maxY, cell.y);
+        }
+
+        // 그리드 중심 오프셋 계산
+        float centerOffsetX = (minX + maxX) * 0.5f * cellSize;
+        float centerOffsetY = (minY + maxY) * 0.5f * cellSize;
+
+        // 현재 셀 위치에서 중심 오프셋을 빼서 중앙 정렬
+        return new Vector2(
+            cellPos.x * cellSize - centerOffsetX,
+            cellPos.y * cellSize - centerOffsetY
+        );
     }
 }
