@@ -50,6 +50,7 @@ public class OreDungeonIntro : MonoBehaviour
     private List<int> allUnitIds = new List<int>(); // 룰렛에 사용할 전체 유닛 ID 리스트
     private CanvasGroup canvasGroup;
     private RectTransform prfRectTransform; // prfTrans의 RectTransform
+    private bool isSkipped = false; // 스킵 여부 확인
 
 
     private void Awake()
@@ -232,6 +233,19 @@ public class OreDungeonIntro : MonoBehaviour
 
         sequence.AppendInterval(index * delayBetweenPopCards);
 
+        // 크기 확대 시작 시 사운드 재생
+        sequence.AppendCallback(() =>
+        {
+            if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+            {
+                AudioClip clip = AddressablePreloader.Instance.GetCachedAudioClip("UnitSetSound");
+                if (clip != null)
+                {
+                    SoundManager.Instance.PlaySFX(clip);
+                }
+            }
+        });
+
         // 크기 확상
         sequence.Append(card.transform.DOScale(popScale, slowGrowDuration).SetEase(Ease.Linear));
 
@@ -276,12 +290,22 @@ public class OreDungeonIntro : MonoBehaviour
 
         float delay = startDelay + beforeStartSlideAnimDelay + index * delayBetweenSlideCards;
 
-        // 슬라이드 애니메이션 시작 시 텍스트 페이드 인
+        // 슬라이드 애니메이션 시작 시 텍스트 페이드 인 및 사운드 재생
         DOVirtual.DelayedCall(delay, () =>
         {
             if (card.Text != null)
             {
                 UnitDamageTextAnimation(card.Text);
+            }
+
+            // 사운드 재생
+            if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+            {
+                AudioClip clip = AddressablePreloader.Instance.GetCachedAudioClip("SlideUpSound");
+                if (clip != null)
+                {
+                    SoundManager.Instance.PlaySFX(clip);
+                }
             }
         });
 
@@ -322,6 +346,16 @@ public class OreDungeonIntro : MonoBehaviour
                 {
                     // 검은색 상태에서 실제 유닛 이미지 먼저 적용
                     SetFinalUnitImage(card, capturedSlideIndex);
+
+                    // 사운드 재생
+                    if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+                    {
+                        AudioClip clip = AddressablePreloader.Instance.GetCachedAudioClip("UnitSetSound");
+                        if (clip != null)
+                        {
+                            SoundManager.Instance.PlaySFX(clip);
+                        }
+                    }
 
                     // 몇 초 후 팝 이펙트 발생
                     card.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f)
@@ -442,7 +476,19 @@ public class OreDungeonIntro : MonoBehaviour
             sequence.AppendInterval(i * delayBetweenCardSlideDown);
 
             // 아래로 내려가기
-            sequence.Append(cardRect.DOAnchorPosY(originalY - containerY + cardHeight, cardSlideDownDuration).SetEase(Ease.InBack));
+            sequence.Append(cardRect.DOAnchorPosY(originalY - containerY + cardHeight, cardSlideDownDuration).SetEase(Ease.InBack))
+                .OnComplete(() =>
+                {
+                    // 카드가 도착했을 때 사운드 재생
+                    if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+                    {
+                        AudioClip clip = AddressablePreloader.Instance.GetCachedAudioClip("CardPutSound");
+                        if (clip != null)
+                        {
+                            SoundManager.Instance.PlaySFX(clip);
+                        }
+                    }
+                });
         }
 
         // 모든 애니메이션 끝난 후 실행
@@ -460,5 +506,90 @@ public class OreDungeonIntro : MonoBehaviour
         {
             oreDungeonUI.SetActiveDefaultPanel(true);
         }
+    }
+
+    // 스킵 버튼 클릭 시 호출
+    public void OnClickSkipBtn()
+    {
+        if (isSkipped)
+            return;
+
+        isSkipped = true;
+
+        // 모든 DOTween 애니메이션 완전히 킬 (룰렛 포함)
+        DOTween.KillAll();
+
+        // 개별적으로도 킬 (안전장치)
+        DOTween.Kill(this);
+        foreach (var card in cardList)
+        {
+            DOTween.Kill(card.transform);
+            DOTween.Kill(card.CanvasGroup);
+            if (card.Text != null)
+                DOTween.Kill(card.Text);
+        }
+        DOTween.Kill(attackPowerTextCG);
+        DOTween.Kill(attackPowerText.transform);
+
+        // LayoutGroup 활성화
+        if (layoutGroup != null)
+        {
+            layoutGroup.enabled = true;
+        }
+
+        // 모든 카드 즉시 최종 상태로 설정
+        List<int> unitIds = gameManager.draftUnitList.ToList();
+        for (int i = 0; i < cardList.Count; i++)
+        {
+            BaseCardUi card = cardList[i];
+
+            // 카드 완전히 보이게
+            card.CanvasGroup.alpha = 1f;
+            card.transform.localScale = Vector3.one;
+            card.SetImageColor(Color.white);
+
+            // 최종 이미지 설정
+            if (i < unitIds.Count)
+            {
+                int unitId = unitIds[i];
+                if (assetManager.UnitSprites.TryGetValue(unitId, out Sprite sprite))
+                {
+                    card.SetImage(sprite);
+                }
+
+                // 공격력 텍스트 설정
+                UnitData unitData = DataTableManager.UnitTable?.Get(unitId);
+                if (unitData != null)
+                {
+                    card.SetTitleText(unitData.ATTACK.ToString());
+                    if (card.Text != null)
+                    {
+                        card.Text.alpha = 1f;
+                    }
+                }
+            }
+        }
+
+        // 총 공격력 계산 및 표시
+        int totalAttack = CalculateTotalAttack();
+        attackPowerText.text = totalAttack.ToString();
+        attackPowerTextCG.alpha = 1f;
+
+        // 터치 회수로 즉시 변경
+        titleText.text = "총 터치 가능 횟수";
+        attackPowerText.text = gameManager.RemainTouchCount.ToString();
+        attackPowerText.color = Color.yellow;
+
+        // 짧은 딜레이 후 PlayCardSlideDownAnimation 실행
+        DOVirtual.DelayedCall(0.3f, () =>
+        {
+            PlayCardSlideDownAnimation();
+
+            // canvasGroup 페이드 아웃 후 비활성화
+            canvasGroup.DOFade(0f, 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
+            {
+                canvasGroup.gameObject.SetActive(false);
+            });
+        });
     }
 }

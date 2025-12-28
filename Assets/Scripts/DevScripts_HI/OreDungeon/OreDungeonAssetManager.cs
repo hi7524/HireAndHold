@@ -32,6 +32,12 @@ public class OreDungeonAssetManager : MonoBehaviour
 
     private async void Start()
     {
+        // DatabaseManager 초기화 대기 (프리셋 데이터 로드를 위해)
+        if (isPreloaded && DatabaseManager.Instance != null)
+        {
+            await DatabaseManager.Instance.WaitForInitializationAsync();
+        }
+
         await LoadResources();
 
         gameManager.Initialize(isPreloaded);

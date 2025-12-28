@@ -166,11 +166,20 @@ public class DatabaseManager : MonoBehaviour
             userData.partyPresets[key] = new PartyPreset(i);
         }
 
-        //var firstPreset = userData.partyPresets["preset_0"];
-        //for (int i = 0; i < 5 && i < initialUnitIds.Length; i++)
-        //{
-        //    firstPreset.characterId[i] = initialUnitIds[i].ToString();
-        //}
+        // 기본 프리셋에 처음 2개 유닛 설정
+        var firstPreset = userData.partyPresets["preset_0"];
+        for (int i = 0; i < 2 && i < initialUnitIds.Length; i++)
+        {
+            int unitId = initialUnitIds[i];
+            firstPreset.characterId[i] = unitId.ToString();
+
+            // 유닛 아이콘 주소도 설정
+            var unitData = DataTableManager.UnitTable?.Get(unitId);
+            if (unitData != null && !string.IsNullOrEmpty(unitData.UNIT_ICON))
+            {
+                firstPreset.iconAddress[i] = unitData.UNIT_ICON;
+            }
+        }
 
         return userData;
     }

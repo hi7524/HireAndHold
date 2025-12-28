@@ -29,13 +29,34 @@ public class OreDungeonManager : MonoBehaviour
     private const int UnitCountToUse = 5;
     public HashSet<int> draftUnitList = new HashSet<int> { 11101, 11312 }; // TODO: 나중에 실제 편성 덱과 연결
 
+    private int activeParticleCount = 0; // 진행 중인 파티클 개수
+    private bool shouldCheckStageEnd = false; // 스테이지 종료 체크 대기 중
 
     private void Awake()
     {
-        draftUnitList = PlayData.selectedUnitIds;
         // 참조 누락 확인
         if (!ValidateReferences())
             return;
+    }
+
+    // 현재 활성화된 프리셋에서 편성된 유닛들을 draftUnitList에 로드
+    private void LoadDraftUnitsFromActivePreset()
+    {
+        draftUnitList.Clear();
+
+        int activePreset = PlayData.currentSelectedPreset;
+
+        for (int i = 0; i < 5; i++)
+        {
+            int unitId = PlayData.selectedDeckUnitIds[activePreset, i];
+
+            if (unitId != 0)
+            {
+                draftUnitList.Add(unitId);
+            }
+        }
+
+        Debug.Log($"[OreDungeonManager] 프리셋 {activePreset}에서 {draftUnitList.Count}개 유닛 로드 완료");
     }
 
     // AssetManager가 Awake에서 호출하는 초기화 메서드
@@ -44,6 +65,9 @@ public class OreDungeonManager : MonoBehaviour
     {
         IsPreloaded = isPreloaded;
         CurDungeonID = isPreloaded ? PlayData.OreDungeonID : CurDungeonIdForTesting;
+
+        // 현재 프리셋에서 편성된 유닛 ID 가져오기
+        LoadDraftUnitsFromActivePreset();
 
         var oreDungeonTable = assetManager.OreDungeonTable;
         DungeonData = oreDungeonTable?.Get(CurDungeonID);
@@ -65,8 +89,24 @@ public class OreDungeonManager : MonoBehaviour
 
         Debug.Log($"Touch! RemainTouchCount: {RemainTouchCount}");
 
-        // 터치 횟수가 0 이하일 때만 체크
+        // 터치 횟수가 0 이하일 때 대기 플래그 설정 (즉시 체크하지 않음)
         if (RemainTouchCount <= 0)
+        {
+            shouldCheckStageEnd = true;
+        }
+    }
+
+    public void OnParticleStarted()
+    {
+        activeParticleCount++;
+    }
+
+    public void OnParticleCompleted()
+    {
+        activeParticleCount--;
+
+        // 모든 파티클이 완료되고 스테이지 종료 체크 대기 중이라면 체크
+        if (activeParticleCount <= 0 && shouldCheckStageEnd)
         {
             CheckStageEnd();
         }
@@ -87,20 +127,19 @@ public class OreDungeonManager : MonoBehaviour
 
     private void CheckStageEnd()
     {
-        // 터치도 남고 광석도 남음 → 계속 진행
-        if (RemainTouchCount > 0 && RemainOreCount > 0)
-            return;
-
-        // 광석을 모두 파괴했고 터치가 남음 → 성공
-        if (RemainOreCount <= 0 && RemainTouchCount >= 0)
+        // 모든 광석을 파괴했다면 성공 (터치 남은 여부 상관없음)
+        if (RemainOreCount <= 0)
         {
+            Debug.Log("스테이지 성공: 모든 광석 파괴");
             OnStageEnded?.Invoke(true);
         }
-        // 터치를 모두 소진했는데 광석이 남음 → 실패
+        // 터치를 다 썼는데 광석이 남았다면 실패
         else if (RemainTouchCount <= 0 && RemainOreCount > 0)
         {
+            Debug.Log("스테이지 실패: 터치 소진, 광석 남음");
             OnStageEnded?.Invoke(false);
         }
+        // 터치도 남고 광석도 남음 → 계속 진행
     }
 
     // 참조 누락 확인
