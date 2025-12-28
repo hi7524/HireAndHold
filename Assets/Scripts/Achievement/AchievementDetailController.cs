@@ -147,7 +147,18 @@ public class AchievementDetailController : MonoBehaviour
                     break;
                 default:
                     var itemData = DataTableManager.ItemTable?.Get(currentAchievement.Reward_ID);
-                    rewardName = itemData?.ITEM_NAME ?? $"아이템 {currentAchievement.Reward_ID}";
+                    if (itemData != null)
+                    {
+                        // 아이템 이름 (StringTable에서)
+                        rewardName = DataTableManager.GetString(itemData.ITEM_NAME) ?? $"아이템 {currentAchievement.Reward_ID}";
+
+                        // 아이템 아이콘 (비동기 로드)
+                        LoadItemIconAsync(itemData.ITEM_ICON).Forget();
+                    }
+                    else
+                    {
+                        rewardName = $"아이템 {currentAchievement.Reward_ID}";
+                    }
                     break;
             }
         }
@@ -160,6 +171,16 @@ public class AchievementDetailController : MonoBehaviour
 
         if (rewardAmountText != null)
             rewardAmountText.text = $"x{FormatNumber(currentAchievement.Reward_Value)}";
+    }
+
+    private async UniTaskVoid LoadItemIconAsync(string iconAddress)
+    {
+        if (string.IsNullOrEmpty(iconAddress) || iconAddress == "폴더 경로") return;
+        if (rewardIconImage == null) return;
+
+        var loadedIcon = await SpriteCache.Instance.LoadSpriteAsync(iconAddress);
+        if (loadedIcon != null)
+            rewardIconImage.sprite = loadedIcon;
     }
 
     private void UpdateClaimButton()

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 public class PierceProjectile : MonoBehaviour, ISkillProjectile
 {
@@ -52,6 +53,24 @@ public class PierceProjectile : MonoBehaviour, ISkillProjectile
         // 이펙트 재생
         if (mainEffect != null)
             mainEffect.Play();
+
+        // 발사 시 사운드 1회 재생
+        PlayLaunchSound();
+    }
+
+    private void PlayLaunchSound()
+    {
+        if (string.IsNullOrEmpty(data.hitAudioClipName) || SoundManager.Instance == null)
+            return;
+
+        if (AddressablePreloader.Instance != null && AddressablePreloader.Instance.HasCachedAudioClip(data.hitAudioClipName))
+        {
+            var clip = AddressablePreloader.Instance.GetCachedAudioClip(data.hitAudioClipName);
+            if (clip != null)
+            {
+                SoundManager.Instance.PlaySFX(clip);
+            }
+        }
     }
 
     private void SetEffectSortingOrder()

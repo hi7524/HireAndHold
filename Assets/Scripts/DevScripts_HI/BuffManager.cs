@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Tutorial;
 using UnityEngine;
 
 // 버프 조건 체크 및 관리
@@ -49,6 +50,13 @@ public class BuffManager : MonoBehaviour
                 {
                     ActivateBuff(crossBuff.horizontalBuffName);
                     ActivatedBuffs.Add(crossBuff.horizontalBuffName);
+
+                    // 703 스테이지에서 가로/세로 버프 활성화 시 튜토리얼 조건 알림
+                    var stageManager = FindAnyObjectByType<StageManager>();
+                    if (stageManager != null && stageManager.CurrentStageId == 703)
+                    {
+                        TutorialManager.Instance?.NotifyConditionMet("STAGE_BUFF");
+                    }
                 }
                 else if (!horizontalFilled && ActivatedBuffs.Contains(crossBuff.horizontalBuffName))
                 {
@@ -61,6 +69,13 @@ public class BuffManager : MonoBehaviour
                 {
                     ActivateBuff(crossBuff.verticalBuffName);
                     ActivatedBuffs.Add(crossBuff.verticalBuffName);
+
+                    // 703 스테이지에서 가로/세로 버프 활성화 시 튜토리얼 조건 알림
+                    var stageManager = FindAnyObjectByType<StageManager>();
+                    if (stageManager != null && stageManager.CurrentStageId == 703)
+                    {
+                        TutorialManager.Instance?.NotifyConditionMet("STAGE_BUFF");
+                    }
                 }
                 else if (!verticalFilled && ActivatedBuffs.Contains(crossBuff.verticalBuffName))
                 {
@@ -85,6 +100,13 @@ public class BuffManager : MonoBehaviour
                 {
                     ActivateBuff(regionBuff.buffName);
                     ActivatedBuffs.Add(regionBuff.buffName);
+
+                    // 703 스테이지에서만 영역 버프 완료 시 튜토리얼 조건 알림
+                    var stageManager = FindAnyObjectByType<StageManager>();
+                    if (stageManager != null && stageManager.CurrentStageId == 703)
+                    {
+                        TutorialManager.Instance?.NotifyConditionMet("COMPLETE_BUFF");
+                    }
                 }
                 else if (filledCount < regionBuff.regionCells.Count && ActivatedBuffs.Contains(regionBuff.buffName))
                 {
@@ -104,6 +126,9 @@ public class BuffManager : MonoBehaviour
             ActivatedBuffs.Add("컴플리트");
 
             GlobalBuffPercentage += TotalBuffRate;
+
+            // 튜토리얼 조건 알림
+            TutorialManager.Instance?.NotifyConditionMet("COMPLETE_BUFF");
         }
         else if (!isFilledAllGrids && ActivatedBuffs.Contains("컴플리트"))
         {

@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
+using Tutorial;
 
 public class StageClearPanelController : MonoBehaviour
 {
@@ -229,6 +230,9 @@ public class StageClearPanelController : MonoBehaviour
 
     private async void OnConfirmButtonClick()
     {
+        // 튜토리얼에 버튼 터치 알림 (confirmButton이지만 LobbyButton으로 알림)
+        TutorialManager.Instance?.NotifyButtonTouched("LobbyButton");
+
         Hide();
         Time.timeScale = 1f;
 

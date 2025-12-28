@@ -139,7 +139,8 @@ public class UnitSkill
                 target = target.transform,
                 spawnPosition = owner.transform.position,
                 targetPosition = target.transform.position,
-                range = skillData.SKILL_RANGE
+                range = skillData.SKILL_RANGE,
+                hitAudioClipName = skillData.SKILL_SOUND
             };
 
             projectile.Initialize(ref data);

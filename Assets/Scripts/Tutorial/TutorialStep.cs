@@ -87,6 +87,7 @@ namespace Tutorial
         [Tooltip("하이라이트 크기 (0이면 타겟 크기 사용)")]
         public Vector2 highlightSize;
 
+        [Header("손가락 가이드")]
         [Tooltip("손가락 가이드 표시 여부")]
         public bool showHandGuide;
 

@@ -11,4 +11,5 @@ public struct SkillProjectileData
     public Vector3 targetPosition;
     public Vector3 customDirection;
     public float range;
+    public string hitAudioClipName;
 }

@@ -166,6 +166,22 @@ public class PassiveSkillManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 방벽 회복(ShieldRegen) 스킬만 반환 (튜토리얼 스테이지용)
+    /// </summary>
+    public int GetShieldRegenSkillId()
+    {
+        var shieldRegenGroup = skillGroups[PassiveSkillType.ShieldRegen];
+
+        // 이미 3성이면 -1 반환 (더 이상 업그레이드 불가)
+        if (shieldRegenGroup.currentStar >= 3)
+            return -1;
+
+        return shieldRegenGroup.currentStar == 0
+            ? shieldRegenGroup.GetSkillIdByStar(1)
+            : shieldRegenGroup.GetNextSkillId();
+    }
+
+    /// <summary>
     /// ShieldRegen 스킬이 선택지에 포함되어야 하는지 확인
     /// 조건: 1) 이미 배운 경우, 2) 방벽이 피해를 받은 적 있는 경우, 3) 다른 5종류가 모두 MAX인 경우, 4) 획득 가능한 일반 스킬이 2개 이하인 경우
     /// </summary>

@@ -1,6 +1,8 @@
+using System;
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using TMPro;
+using Tutorial;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -44,8 +46,35 @@ public class DungeonSelectPanel : MonoBehaviour
         // PlayData의 재화 변경 이벤트 구독
         PlayData.OnCurrencyChanged += UpdateRequireResourcesText;
 
+        // 패널이 다시 활성화될 때 최신 아이템 개수로 UI 갱신
+        PlayData.SyncItemsFromDatabase();
+        UpdateRequireResourcesText();
+
+        // 던전 튜토리얼 체크 및 시작
+        CheckAndStartDungeonTutorialAsync().Forget();
         // 패널 활성화 시 가장 높은 해금된 던전으로 이동
         MoveToHighestUnlockedStage();
+    }
+
+    private async UniTaskVoid CheckAndStartDungeonTutorialAsync()
+    {
+        Debug.Log("[DungeonSelectPanel] CheckAndStartDungeonTutorialAsync 시작");
+
+        bool isDungeonTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted("dungeon_tutorial");
+        Debug.Log($"[DungeonSelectPanel] dungeon_tutorial 완료 여부: {isDungeonTutorialCompleted}");
+
+        // 던전 튜토리얼이 아직 완료되지 않았으면 튜토리얼 시작
+        if (!isDungeonTutorialCompleted)
+        {
+            // 패널이 완전히 열릴 때까지 잠시 대기
+            await UniTask.Delay(TimeSpan.FromSeconds(0.3f), ignoreTimeScale: true);
+
+            Debug.Log($"[DungeonSelectPanel] TutorialManager.Instance: {TutorialManager.Instance}");
+            Debug.Log($"[DungeonSelectPanel] TutorialManager.IsPlaying: {TutorialManager.Instance?.IsPlaying}");
+            Debug.Log("[DungeonSelectPanel] 던전 튜토리얼 시작 - DUNGEON_TAB_FIRST_ENTER 조건 알림");
+            TutorialManager.Instance?.NotifyConditionMet("DUNGEON_TAB_FIRST_ENTER");
+        }
+        
     }
 
     private void OnDisable()

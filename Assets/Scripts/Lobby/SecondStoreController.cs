@@ -370,9 +370,36 @@ public class SecondStoreController : MonoBehaviour
                 // 다이아 지급
                 return await DatabaseManager.Instance.AddDiamondAsync(amount);
             default:
+                // 패키지 아이템인지 확인
+                var itemData = DataTableManager.ItemTable?.Get(itemId);
+                if (itemData != null && itemData.PACKAGE_ID > 0)
+                {
+                    // 패키지 내용물 지급
+                    return await GivePackageItemsAsync(itemData.PACKAGE_ID, amount);
+                }
+
                 // 일반 아이템 지급
                 return await DatabaseManager.Instance.AddItemAsync(itemId, amount);
         }
+    }
+
+    /// <summary>
+    /// 패키지 내용물을 우편으로 발송
+    /// </summary>
+    private async UniTask<bool> GivePackageItemsAsync(int packageId, int packageAmount)
+    {
+        bool success = await DatabaseManager.Instance.SendPackageMailAsync(packageId, packageAmount);
+
+        if (success)
+        {
+            Debug.Log($"[SecondStore] 패키지 {packageId} 우편 발송 완료 (수량: {packageAmount})");
+        }
+        else
+        {
+            Debug.LogError($"[SecondStore] 패키지 {packageId} 우편 발송 실패");
+        }
+
+        return success;
     }
 
     /// <summary>

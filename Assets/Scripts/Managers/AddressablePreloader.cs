@@ -146,6 +146,16 @@ public class AddressablePreloader : MonoBehaviour
             }
         }
 
+        // 3-2. 재화 아이콘 키 수집 (테이블에 없는 것들)
+        var currencyIcons = new[] { "ItemIcon_Coin_Gold" };
+        foreach (var iconKey in currencyIcons)
+        {
+            if (!spriteKeys.Contains(iconKey))
+            {
+                spriteKeys.Add(iconKey);
+            }
+        }
+
         // 4. 스테이지 맵 키 수집
         var stageTable = DataTableManager.StageTable.GetAll();
         foreach (var stage in stageTable)

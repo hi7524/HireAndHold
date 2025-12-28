@@ -1,10 +1,12 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Tutorial
 {
     /// <summary>
     /// 이 컴포넌트를 UI에 붙이면 자동으로 튜토리얼 타겟으로 등록됨
     /// 비활성화 상태에서도 등록됨
+    /// 버튼인 경우 클릭 시 자동으로 NotifyButtonTouched 호출
     /// </summary>
     public class TutorialTarget : MonoBehaviour
     {
@@ -12,17 +14,37 @@ namespace Tutorial
         [SerializeField] private string targetKey;
         [SerializeField] private bool useGameObjectName = true;
 
+        private Button button;
+
         public string TargetKey => useGameObjectName ? gameObject.name : targetKey;
 
         private void Awake()
         {
             // 비활성화 상태에서도 등록
             TutorialTargetRegistry.Register(TargetKey, gameObject);
+
+            // 버튼 컴포넌트가 있으면 클릭 이벤트 등록
+            button = GetComponent<Button>();
+            if (button != null)
+            {
+                button.onClick.AddListener(OnButtonClicked);
+            }
+        }
+
+        private void OnButtonClicked()
+        {
+            // 튜토리얼 매니저에 버튼 터치 알림
+            TutorialManager.Instance?.NotifyButtonTouched(TargetKey);
         }
 
         private void OnDestroy()
         {
             TutorialTargetRegistry.Unregister(TargetKey);
+
+            if (button != null)
+            {
+                button.onClick.RemoveListener(OnButtonClicked);
+            }
         }
 
 #if UNITY_EDITOR

@@ -2,6 +2,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using TMPro;
+using Tutorial;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -64,6 +65,12 @@ public class PlayerExperience : MonoBehaviour
             finalAmount = amount * (1f + bonusPercent / 100f);
         }
 
+        // 최초 경험치 획득 시 튜토리얼 조건 알림
+        if (curPlayerExp == 0f && finalAmount > 0f)
+        {
+            TutorialManager.Instance?.NotifyConditionMet("FIRST_EXP");
+        }
+
         curPlayerExp += finalAmount;
 
         AnimateExpBar();
@@ -103,6 +110,13 @@ public class PlayerExperience : MonoBehaviour
         OnLevelUp?.Invoke();
         UpdateLevelTextUI();
         expBar.value = 0f;
+
+        // 레벨업 시 튜토리얼 체크
+        var stageManager = FindObjectOfType<StageManager>();
+        int stageId = stageManager != null ? stageManager.CurrentStageId : 0;
+        Debug.Log($"[Tutorial] LevelUp 호출 - stageId: {stageId}, Level: {Level}");
+        TutorialManager.Instance?.CheckAndStartTutorialAsync(
+            TutorialTriggerType.OnLevelUp, stageId, Level).Forget();
     }
 
     private void UpdateLevelTextUI()

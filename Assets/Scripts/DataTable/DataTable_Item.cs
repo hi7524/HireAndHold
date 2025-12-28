@@ -7,12 +7,12 @@ using UnityEngine.AddressableAssets;
 public class ItemData
 {
     public int ITEM_ID { get; set; }
-    public string ITEM_NAME { get; set; }
+    public int ITEM_NAME { get; set; }  // StringTable ID
     public int ITEM_TYPE { get; set; }
     public int ITEM_STACK { get; set; }
     public int PACKAGE_ID { get; set; }
     public string ITEM_ICON { get; set; }
-    public string ITEM_DESCRIPTION { get; set; }
+    public int ITEM_DESCRIPTION { get; set; }  // StringTable ID
 }
 
 public class DataTable_Item : DataTable

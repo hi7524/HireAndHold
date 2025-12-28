@@ -1,0 +1,149 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de4cdb6a437572f419dab2921f6ddc0f, type: 3}
+  m_Name: Seq_Dungeon_Part2
+  m_EditorClassIdentifier:
+  sequenceId: dungeon_part2
+  description: "던전 튜토리얼 - 강화석 던전 스테이지 첫 입장"
+  triggerType: 4
+  triggerStageId: 0
+  triggerLevel: 0
+  triggerConditionKey: DUNGEON_STAGE_FIRST_ENTER
+  steps:
+  - stringId: 103150
+    voiceKey: Tut_50
+    reward:
+      rewardType: 0
+      itemId: 0
+      amount: 0
+    dialogAnchor: 2
+    dialogPosition: {x: 0, y: 0}
+    showCharacter: 1
+    highlightTarget:
+    highlightOffset: {x: 0, y: 0}
+    highlightSize: {x: 0, y: 0}
+    showHandGuide: 0
+    handGuideOffset: {x: 0, y: 0}
+    actionType: 0
+    targetButtonName:
+    dragSourceName:
+    dragTargetName:
+    allowedTiles: []
+    autoAdvanceDelay: 0
+    conditionKey:
+    pauseGame: 1
+    isCheckpoint: 0
+    allowedUnitNames: []
+    delayBeforeStep: 0.5
+  - stringId: 103151
+    voiceKey: Tut_51
+    reward:
+      rewardType: 0
+      itemId: 0
+      amount: 0
+    dialogAnchor: 0
+    dialogPosition: {x: 0, y: 0}
+    showCharacter: 1
+    highlightTarget:
+    highlightOffset: {x: 0, y: 0}
+    highlightSize: {x: 0, y: 0}
+    showHandGuide: 0
+    handGuideOffset: {x: 0, y: 0}
+    actionType: 0
+    targetButtonName:
+    dragSourceName:
+    dragTargetName:
+    allowedTiles: []
+    autoAdvanceDelay: 0
+    conditionKey:
+    pauseGame: 1
+    isCheckpoint: 0
+    allowedUnitNames: []
+    delayBeforeStep: 0
+  - stringId: 103152
+    voiceKey: Tut_52
+    reward:
+      rewardType: 0
+      itemId: 0
+      amount: 0
+    dialogAnchor: 0
+    dialogPosition: {x: 0, y: 0}
+    showCharacter: 1
+    highlightTarget: TouchCountUI
+    highlightOffset: {x: 0, y: 0}
+    highlightSize: {x: 0, y: 0}
+    showHandGuide: 0
+    handGuideOffset: {x: 0, y: 0}
+    actionType: 0
+    targetButtonName:
+    dragSourceName:
+    dragTargetName:
+    allowedTiles: []
+    autoAdvanceDelay: 0
+    conditionKey:
+    pauseGame: 1
+    isCheckpoint: 0
+    allowedUnitNames: []
+    delayBeforeStep: 0
+  - stringId: 103153
+    voiceKey: Tut_53
+    reward:
+      rewardType: 0
+      itemId: 0
+      amount: 0
+    dialogAnchor: 0
+    dialogPosition: {x: 0, y: 0}
+    showCharacter: 1
+    highlightTarget: OreCountUI
+    highlightOffset: {x: 0, y: 0}
+    highlightSize: {x: 0, y: 0}
+    showHandGuide: 0
+    handGuideOffset: {x: 0, y: 0}
+    actionType: 0
+    targetButtonName:
+    dragSourceName:
+    dragTargetName:
+    allowedTiles: []
+    autoAdvanceDelay: 0
+    conditionKey:
+    pauseGame: 1
+    isCheckpoint: 0
+    allowedUnitNames: []
+    delayBeforeStep: 0
+  - stringId: 103154
+    voiceKey: Tut_54
+    reward:
+      rewardType: 0
+      itemId: 0
+      amount: 0
+    dialogAnchor: 0
+    dialogPosition: {x: 0, y: 0}
+    showCharacter: 1
+    highlightTarget: Ore
+    highlightOffset: {x: 0, y: 0}
+    highlightSize: {x: 0, y: 0}
+    showHandGuide: 1
+    handGuideOffset: {x: 0, y: 0}
+    actionType: 1
+    targetButtonName: Ore
+    dragSourceName:
+    dragTargetName:
+    allowedTiles: []
+    autoAdvanceDelay: 0
+    conditionKey:
+    pauseGame: 1
+    isCheckpoint: 1
+    allowedUnitNames: []
+    delayBeforeStep: 0
+  canSkip: 0
+  isRequired: 1
+  priority: 0

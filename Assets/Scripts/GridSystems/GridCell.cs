@@ -1,6 +1,7 @@
 using UnityEngine;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
+using Tutorial;
 
 public class GridCell : MonoBehaviour, IDroppable
 {
@@ -377,12 +378,30 @@ public class GridCell : MonoBehaviour, IDroppable
             // 유닛 배치 사운드 재생
             PlayPutGridSound();
 
+            // 튜토리얼 드래그 완료 알림
+            NotifyTutorialDragComplete();
+
             // DraggableGridUnitUi 배치 성공
             draggable.OnDropSuccess();
         }
 
         gridManager.ClearAllGridsColor();
         gridManager.ChangeOccupiedCellColor();
+    }
+
+    /// <summary>
+    /// 튜토리얼에 드래그 완료 알림
+    /// </summary>
+    private void NotifyTutorialDragComplete()
+    {
+        if (TutorialManager.Instance == null)
+            return;
+
+        // 현재 튜토리얼이 진행 중이면 드래그 완료 알림
+        if (TutorialManager.Instance.IsPlaying)
+        {
+            TutorialManager.Instance.NotifyDragComplete(null, null);
+        }
     }
 
     public void ClearObject()
@@ -528,6 +547,9 @@ public class GridCell : MonoBehaviour, IDroppable
         // 업적 연동: 합성
         UpdateCombineAchievementsAsync(newStarLevel).Forget();
 
+        // 튜토리얼 드래그 완료 알림 (합성)
+        NotifyTutorialDragComplete();
+
         return true;
     }
 
@@ -601,6 +623,9 @@ public class GridCell : MonoBehaviour, IDroppable
 
         // 업적 연동: 합성
         UpdateCombineAchievementsAsync(newStarLevel).Forget();
+
+        // 튜토리얼 드래그 완료 알림 (합성)
+        NotifyTutorialDragComplete();
 
         return true;
     }

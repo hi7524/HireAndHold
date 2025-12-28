@@ -90,11 +90,11 @@ public class QuestDetailController : MonoBehaviour
 
         // 제목
         if (titleText != null)
-            titleText.text = currentQuest.Quest_Name;
+            titleText.text = DataTableManager.GetString(currentQuest.Quest_Name) ?? $"퀘스트 {currentQuest.Quest_ID}";
 
         // 설명
         if (descriptionText != null)
-            descriptionText.text = currentQuest.Quest_Desc;
+            descriptionText.text = DataTableManager.GetString(currentQuest.Quest_Desc) ?? "";
 
         // 퀘스트 타입
         if (questTypeText != null)
