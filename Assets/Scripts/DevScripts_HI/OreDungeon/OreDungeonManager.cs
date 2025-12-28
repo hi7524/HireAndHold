@@ -34,10 +34,29 @@ public class OreDungeonManager : MonoBehaviour
 
     private void Awake()
     {
-        draftUnitList = PlayData.selectedUnitIds;
         // 참조 누락 확인
         if (!ValidateReferences())
             return;
+    }
+
+    // 현재 활성화된 프리셋에서 편성된 유닛들을 draftUnitList에 로드
+    private void LoadDraftUnitsFromActivePreset()
+    {
+        draftUnitList.Clear();
+
+        int activePreset = PlayData.currentSelectedPreset;
+
+        for (int i = 0; i < 5; i++)
+        {
+            int unitId = PlayData.selectedDeckUnitIds[activePreset, i];
+
+            if (unitId != 0)
+            {
+                draftUnitList.Add(unitId);
+            }
+        }
+
+        Debug.Log($"[OreDungeonManager] 프리셋 {activePreset}에서 {draftUnitList.Count}개 유닛 로드 완료");
     }
 
     // AssetManager가 Awake에서 호출하는 초기화 메서드
@@ -46,6 +65,9 @@ public class OreDungeonManager : MonoBehaviour
     {
         IsPreloaded = isPreloaded;
         CurDungeonID = isPreloaded ? PlayData.OreDungeonID : CurDungeonIdForTesting;
+
+        // 현재 프리셋에서 편성된 유닛 ID 가져오기
+        LoadDraftUnitsFromActivePreset();
 
         var oreDungeonTable = assetManager.OreDungeonTable;
         DungeonData = oreDungeonTable?.Get(CurDungeonID);
