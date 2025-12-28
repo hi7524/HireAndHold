@@ -35,11 +35,11 @@ public class DeckControl : MonoBehaviour
     public BattleUnitManager battleUnitManager;
 
     [Header("Unlock Alert Panel")]
-    public GameObject unlockAlertPanel;           
-    public TMPro.TextMeshProUGUI alertMessageText; 
-    public TMPro.TextMeshProUGUI alertCostText;    
+    public GameObject unlockAlertPanel;
+    public TMPro.TextMeshProUGUI alertMessageText;
+    public TMPro.TextMeshProUGUI alertCostText;
     public Button alertBuyButton;
-    public Button alertCancelButton;            
+    public Button alertCancelButton;
 
     private const long SLOT_2_GOLD_COST = 10000;
     private const int SLOT_3_DIAMOND_COST = 100;
@@ -444,7 +444,16 @@ public class DeckControl : MonoBehaviour
         {
             DeckUnitModel model = preset.units[i];
             slots[i].SetCommittedExternal(model);
-            slots[i].SetInteractable(false);
+
+            // 잠긴 슬롯은 항상 클릭 가능하도록 활성화
+            if (slots[i].IsLocked)
+            {
+                slots[i].SetInteractable(true);
+            }
+            else
+            {
+                slots[i].SetInteractable(false);
+            }
 
             if (model != null)
             {
@@ -509,7 +518,8 @@ public class DeckControl : MonoBehaviour
         foreach (var slot in slots)
         {
             slot.BeginEdit();
-            slot.SetInteractable(!slot.IsLocked);
+            // 편집 모드: 잠긴 슬롯은 항상 활성화, 잠금 해제 슬롯도 활성화
+            slot.SetInteractable(true);
         }
 
         UpdateAllUI();
@@ -520,11 +530,6 @@ public class DeckControl : MonoBehaviour
         isEditing = false;
         highlightOverlay.SetActive(false);
         LoadPreset(activePresetIndex);
-
-        foreach (var slot in slots)
-        {
-            slot.SetInteractable(false);
-        }
 
         UpdateAllUI();
     }
