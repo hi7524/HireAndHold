@@ -233,6 +233,19 @@ public class OreDungeonIntro : MonoBehaviour
 
         sequence.AppendInterval(index * delayBetweenPopCards);
 
+        // 크기 확대 시작 시 사운드 재생
+        sequence.AppendCallback(() =>
+        {
+            if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+            {
+                AudioClip clip = AddressablePreloader.Instance.GetCachedAudioClip("UnitSetSound");
+                if (clip != null)
+                {
+                    SoundManager.Instance.PlaySFX(clip);
+                }
+            }
+        });
+
         // 크기 확상
         sequence.Append(card.transform.DOScale(popScale, slowGrowDuration).SetEase(Ease.Linear));
 
@@ -277,12 +290,22 @@ public class OreDungeonIntro : MonoBehaviour
 
         float delay = startDelay + beforeStartSlideAnimDelay + index * delayBetweenSlideCards;
 
-        // 슬라이드 애니메이션 시작 시 텍스트 페이드 인
+        // 슬라이드 애니메이션 시작 시 텍스트 페이드 인 및 사운드 재생
         DOVirtual.DelayedCall(delay, () =>
         {
             if (card.Text != null)
             {
                 UnitDamageTextAnimation(card.Text);
+            }
+
+            // 사운드 재생
+            if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+            {
+                AudioClip clip = AddressablePreloader.Instance.GetCachedAudioClip("SlideUpSound");
+                if (clip != null)
+                {
+                    SoundManager.Instance.PlaySFX(clip);
+                }
             }
         });
 
@@ -323,6 +346,16 @@ public class OreDungeonIntro : MonoBehaviour
                 {
                     // 검은색 상태에서 실제 유닛 이미지 먼저 적용
                     SetFinalUnitImage(card, capturedSlideIndex);
+
+                    // 사운드 재생
+                    if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+                    {
+                        AudioClip clip = AddressablePreloader.Instance.GetCachedAudioClip("UnitSetSound");
+                        if (clip != null)
+                        {
+                            SoundManager.Instance.PlaySFX(clip);
+                        }
+                    }
 
                     // 몇 초 후 팝 이펙트 발생
                     card.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f)
@@ -443,7 +476,19 @@ public class OreDungeonIntro : MonoBehaviour
             sequence.AppendInterval(i * delayBetweenCardSlideDown);
 
             // 아래로 내려가기
-            sequence.Append(cardRect.DOAnchorPosY(originalY - containerY + cardHeight, cardSlideDownDuration).SetEase(Ease.InBack));
+            sequence.Append(cardRect.DOAnchorPosY(originalY - containerY + cardHeight, cardSlideDownDuration).SetEase(Ease.InBack))
+                .OnComplete(() =>
+                {
+                    // 카드가 도착했을 때 사운드 재생
+                    if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
+                    {
+                        AudioClip clip = AddressablePreloader.Instance.GetCachedAudioClip("CardPutSound");
+                        if (clip != null)
+                        {
+                            SoundManager.Instance.PlaySFX(clip);
+                        }
+                    }
+                });
         }
 
         // 모든 애니메이션 끝난 후 실행
