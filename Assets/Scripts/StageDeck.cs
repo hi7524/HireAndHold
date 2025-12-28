@@ -9,11 +9,70 @@ public class StageDeck : MonoBehaviour
     public Image[] slotImages;
     public Sprite emptySprite;
 
+    [Header("Navigation")]
+    [SerializeField] private GameObject deckControlWindow; // 편성창 오브젝트
+
+    private Button[] slotButtons; // 슬롯 버튼들
+
     private async void Start()
     {
         await DatabaseManager.Instance.WaitForInitializationAsync();
         await AutoFillAllPresetsIfNeeded();
+
+        SetupSlotButtons();
         Init();
+    }
+
+    /// <summary>
+    /// 각 슬롯에 버튼 컴포넌트 추가 및 클릭 이벤트 설정
+    /// </summary>
+    private void SetupSlotButtons()
+    {
+        if (slotImages == null || slotImages.Length == 0)
+            return;
+
+        slotButtons = new Button[slotImages.Length];
+
+        for (int i = 0; i < slotImages.Length; i++)
+        {
+            // 이미지에 Button 컴포넌트가 없으면 추가
+            Button btn = slotImages[i].GetComponent<Button>();
+            if (btn == null)
+            {
+                btn = slotImages[i].gameObject.AddComponent<Button>();
+            }
+
+            slotButtons[i] = btn;
+
+            // 기존 리스너 제거 후 새로 등록
+            btn.onClick.RemoveAllListeners();
+
+            int slotIndex = i; // 클로저 문제 방지
+            btn.onClick.AddListener(() => OnSlotClicked(slotIndex));
+        }
+
+        Debug.Log($"[StageDeck] {slotButtons.Length}개 슬롯 버튼 설정 완료");
+    }
+
+    /// <summary>
+    /// 슬롯 클릭 핸들러 - 편성창으로 이동
+    /// </summary>
+    private void OnSlotClicked(int slotIndex)
+    {
+        Debug.Log($"[StageDeck] 슬롯 {slotIndex} 클릭 - 편성창으로 이동");
+
+        if (deckControlWindow != null)
+        {
+            // 편성창 활성화
+            deckControlWindow.SetActive(true);
+
+            // 현재 게임오브젝트(스테이지 창) 비활성화
+            gameObject.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning("[StageDeck] deckControlWindow가 할당되지 않았습니다!");
+        }
     }
 
     private async UniTask AutoFillAllPresetsIfNeeded()
