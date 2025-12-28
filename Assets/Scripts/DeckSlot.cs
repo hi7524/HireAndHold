@@ -9,11 +9,11 @@ public class DeckSlot : MonoBehaviour
     public Sprite emptySprite;
 
     [Header("Lock UI")]
-    public GameObject lockOverlay;     
-    public Button slotButton;           
+    public GameObject lockOverlay;
+    public Button slotButton;
 
     [Header("Slot Settings")]
-    public int slotIndex;  
+    public int slotIndex;
 
     private DeckUnitModel committed;
     private DeckUnitModel pending;
@@ -39,12 +39,6 @@ public class DeckSlot : MonoBehaviour
             slotButton.onClick.RemoveAllListeners();
             slotButton.onClick.AddListener(OnClick);
         }
-    }
-
-    private void Start()
-    {
-
-        UpdateButtonInteractable(false);
     }
 
     /// <summary>
@@ -81,10 +75,14 @@ public class DeckSlot : MonoBehaviour
             icon.sprite = emptySprite;
         }
 
-        // 잠긴 슬롯은 즉시 활성화
+        // 잠금 상태 업데이트 후 버튼 상태 갱신
         if (isLocked)
         {
-            UpdateButtonInteractable(false);
+            // 잠긴 슬롯은 항상 클릭 가능
+            if (slotButton != null)
+            {
+                slotButton.interactable = true;
+            }
         }
     }
 
@@ -211,13 +209,18 @@ public class DeckSlot : MonoBehaviour
     {
         if (slotButton != null)
         {
-
+            // 잠긴 슬롯은 항상 클릭 가능하도록 유지
+            // 잠금 해제된 슬롯은 편집 모드일 때만 클릭 가능
             slotButton.interactable = isLocked || isEditMode;
         }
     }
 
     public void SetInteractable(bool interactable)
     {
-        UpdateButtonInteractable(interactable);
+        if (slotButton != null)
+        {
+            // 명시적으로 설정
+            slotButton.interactable = interactable;
+        }
     }
 }
