@@ -156,13 +156,19 @@ public class StoreWindow : GenericWindow
     {
         try
         {
-            var doorTask = ShowDoorAsync(ct);
-            var waitResultTask = WaitForGachaResultAsync(ct);
+            // 1. 문을 정지 상태로 표시 (애니메이션 없이)
+            ShowDoorStatic();
 
-            await UniTask.WhenAll(doorTask, waitResultTask);
+            // 2. 가챠 결과 대기
+            await WaitForGachaResultAsync(ct);
 
+            // 3. 스와이프 대기 (문은 정지 상태)
             await WaitForSwipeAsync(ct);
 
+            // 4. 스와이프 완료 시 문 열림 애니메이션 재생
+            await PlayDoorOpenAnimationAsync(ct);
+
+            // 5. 결과 표시
             if (pendingResult != null)
             {
                 await ShowResultCardsAsync(pendingResult, ct);
@@ -178,6 +184,52 @@ public class StoreWindow : GenericWindow
             Debug.LogError($"[StoreWindow] 문 연출 중 오류: {ex.Message}");
             isPlaying = false;
         }
+    }
+
+    /// <summary>
+    /// 문을 정지 상태로 표시 (애니메이션 재생 없음)
+    /// </summary>
+    private void ShowDoorStatic()
+    {
+        if (doorPanel != null)
+        {
+            doorPanel.SetActive(true);
+        }
+
+        // 애니메이션은 재생하지 않고 첫 프레임만 표시
+        if (doorAnimation != null)
+        {
+            doorAnimation.Stop();
+        }
+
+        isDoorActive = true;
+        isWaitingForSwipe = true;
+
+        Debug.Log("[StoreWindow] 문 정지 상태로 표시 완료");
+    }
+
+    /// <summary>
+    /// 스와이프 시 문 열림 애니메이션 재생
+    /// </summary>
+    private async UniTask PlayDoorOpenAnimationAsync(CancellationToken ct)
+    {
+        Debug.Log("[StoreWindow] 문 열림 애니메이션 시작");
+
+        if (swipeHintText != null)
+            swipeHintText.SetActive(false);
+
+        if (doorAnimation != null)
+        {
+            await doorAnimation.PlayOnceAsync(ct);
+        }
+
+        // 애니메이션 완료 후 문 패널 닫기
+        if (doorPanel != null)
+            doorPanel.SetActive(false);
+
+        isDoorActive = false;
+
+        Debug.Log("[StoreWindow] 문 열림 애니메이션 완료");
     }
 
     private async UniTask WaitForGachaResultAsync(CancellationToken ct)
@@ -405,15 +457,9 @@ public class StoreWindow : GenericWindow
     {
         if (isDoorActive && isWaitingForSwipe)
         {
-            Debug.Log("[StoreWindow] Skip - 문 즉시 닫기");
+            Debug.Log("[StoreWindow] Skip - 스와이프 단계 스킵");
             isWaitingForSwipe = false;
-
-            if (doorPanel != null)
-                doorPanel.SetActive(false);
-            if (swipeHintText != null)
-                swipeHintText.SetActive(false);
-
-            isDoorActive = false;
+            return;
         }
 
         if (isPlayingAnimation && !isSkipping)
@@ -471,79 +517,47 @@ public class StoreWindow : GenericWindow
         }
     }
 
-    private async UniTask ShowDoorAsync(CancellationToken ct)
-    {
-        if (doorPanel != null)
-            doorPanel.SetActive(true);
-
-        if (doorAnimation != null)
-        {
-            await doorAnimation.PlayOnceAsync(ct);
-        }
-
-        if (swipeHintText != null)
-            swipeHintText.SetActive(true);
-
-        isDoorActive = true;
-        isWaitingForSwipe = true;
-
-        PlaySwipeHintPulseAsync(ct).Forget();
-    }
-
     private async UniTask WaitForSwipeAsync(CancellationToken ct)
     {
         hasShownSwipeHint = false;
 
-        float autoSkipTime = 2f;
+        // 스와이프 힌트 텍스트 표시
+        if (swipeHintText != null)
+            swipeHintText.SetActive(true);
+
+        // 펄스 애니메이션 시작
+        PlaySwipeHintPulseAsync(ct).Forget();
+
+        float autoSkipTime = 5f; // 자동 스킵 시간 증가 (사용자가 읽을 시간 제공)
         float elapsed = 0f;
 
         while (isWaitingForSwipe && elapsed < autoSkipTime)
         {
             ct.ThrowIfCancellationRequested();
 
-            Vector2 currentPos = Vector2.zero;
-            bool isPressed = false;
-            bool isReleased = false;
-
-            if (Mouse.current != null)
-            {
-                isPressed = Mouse.current.leftButton.isPressed;
-                isReleased = Mouse.current.leftButton.wasReleasedThisFrame;
-                currentPos = Mouse.current.position.ReadValue();
-            }
-
+            // 터치 입력 처리
             if (Touchscreen.current != null)
             {
                 var touch = Touchscreen.current.primaryTouch;
-                isPressed = touch.press.isPressed;
-                isReleased = touch.press.wasReleasedThisFrame;
-                currentPos = touch.position.ReadValue();
-            }
 
-            if (isPressed && !hasShownSwipeHint)
-            {
-                Vector2 delta = currentPos - swipeStartPos;
-
-                if (Mathf.Abs(delta.x) > 10f)
+                // 터치 시작
+                if (touch.press.wasPressedThisFrame)
                 {
-                    hasShownSwipeHint = true;
-
-                    if (swipeHintText != null)
-                        swipeHintText.SetActive(true);
-
-                    PlaySwipeHintPulseAsync(ct).Forget();
+                    swipeStartPos = touch.position.ReadValue();
                 }
-            }
 
-            if (isReleased)
-            {
-                Vector2 delta = currentPos - swipeStartPos;
-
-                if (delta.x > swipeThreshold)
+                // 터치 종료 시 스와이프 거리 계산
+                if (touch.press.wasReleasedThisFrame)
                 {
-                    isWaitingForSwipe = false;
-                    FadeOutDoorAsync(ct).Forget();
-                    break;
+                    Vector2 currentPos = touch.position.ReadValue();
+                    Vector2 delta = currentPos - swipeStartPos;
+
+                    if (delta.x > swipeThreshold)
+                    {
+                        Debug.Log($"[StoreWindow] 스와이프 감지! delta.x = {delta.x}");
+                        isWaitingForSwipe = false;
+                        break;
+                    }
                 }
             }
 
@@ -553,21 +567,9 @@ public class StoreWindow : GenericWindow
 
         if (isWaitingForSwipe)
         {
-            Debug.Log("[StoreWindow] 스와이프 대기 시간 초과 - 자동으로 문 닫기");
+            Debug.Log("[StoreWindow] 스와이프 대기 시간 초과 - 자동으로 문 열기");
             isWaitingForSwipe = false;
-            FadeOutDoorAsync(ct).Forget();
         }
-    }
-
-    private async UniTask FadeOutDoorAsync(CancellationToken ct)
-    {
-        if (swipeHintText != null)
-            swipeHintText.SetActive(false);
-
-        if (doorPanel != null)
-            doorPanel.SetActive(false);
-
-        isDoorActive = false;
     }
 
     private async UniTask PlaySwipeHintPulseAsync(CancellationToken ct)

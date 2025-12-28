@@ -29,6 +29,9 @@ public class NormalEnforcePopup : MonoBehaviour
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button closeButton;
 
+    [Header("Success Effect")]
+    [SerializeField] private EnforceSuccessEffect successEffect; // ⭐ 추가
+
     private NormalEnforceSystem enforceSystem;
     private UnitInfoUI mainUI;
     private UIPopupManager popupManager;
@@ -79,7 +82,6 @@ public class NormalEnforcePopup : MonoBehaviour
 
     public void Open(int unitId, Unit previewUnit)
     {
-        // 혹시 Start가 안 불렸을 경우를 대비
         if (closeButton != null && closeButton.onClick.GetPersistentEventCount() == 0)
             SetupPopup();
 
@@ -118,7 +120,7 @@ public class NormalEnforcePopup : MonoBehaviour
             return;
         }
 
-        int lv = character.enforceLevel; 
+        int lv = character.enforceLevel;
 
         if (levelCurrent != null)
             levelCurrent.text = lv.ToString();
@@ -131,7 +133,6 @@ public class NormalEnforcePopup : MonoBehaviour
         if (powerCurrent != null)
             powerCurrent.text = currAtk.ToString();
 
-        // 다음 공격력 계산
         if (lv < NORMAL_MAX)
         {
             float nextAtk = enforceSystem.GetNextAttack(currentPreviewUnit);
@@ -146,7 +147,6 @@ public class NormalEnforcePopup : MonoBehaviour
 
         var (goldCost, stoneCost) = enforceSystem.GetNextEnforceCost(currentPreviewUnit);
 
-        // PlayData에서 직접 가져오기
         long currentGold = PlayData.Gold;
         int currentStone = PlayData.EnhanceStone;
 
@@ -164,7 +164,6 @@ public class NormalEnforcePopup : MonoBehaviour
         if (goldNeed != null)
             goldNeed.text = goldCost.ToString();
     }
-
 
     private void OnConfirmClicked()
     {
@@ -201,10 +200,8 @@ public class NormalEnforcePopup : MonoBehaviour
                 return;
             }
 
-            // DB에서 최신 데이터 다시 로드
             character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
 
-            // PlayData 동기화
             PlayData.SyncCharactersFromDatabase();
             PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
 
@@ -213,12 +210,17 @@ public class NormalEnforcePopup : MonoBehaviour
 
             Debug.Log($"[NormalEnforcePopup] 강화 성공: 강화 후 레벨={afterLv}, 공격력={afterAtk}, 남은 골드={PlayData.Gold}, 남은 강화석={PlayData.EnhanceStone}");
 
+            // ⭐ 별 효과와 성공 메시지를 동시에 시작
+            if (successEffect != null)
+            {
+                successEffect.PlayEffect().Forget(); // 별 효과는 백그라운드에서 재생
+            }
+
             popupManager?.ShowSuccess(
                 "강화 성공",
                 $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}"
             );
 
-            // UI 갱신
             if (mainUI != null)
             {
                 mainUI.RefreshUI();
@@ -243,7 +245,6 @@ public class NormalEnforcePopup : MonoBehaviour
 
         var (goldCost, stoneCost) = enforceSystem.GetNextEnforceCost(currentPreviewUnit);
 
-        // PlayData에서 직접 가져오기
         long currentGold = PlayData.Gold;
         int currentStone = PlayData.EnhanceStone;
 

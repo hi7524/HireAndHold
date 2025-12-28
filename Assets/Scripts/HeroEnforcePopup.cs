@@ -27,12 +27,15 @@ public class HeroEnforcePopup : MonoBehaviour
     [SerializeField] private GameObject effectItemPrefab;
 
     [Header("Effect Colors")]
-    [SerializeField] private Color activeEffectColor = new Color(1f, 1f, 1f, 1f);      // 활성화: 흰색
-    [SerializeField] private Color inactiveEffectColor = new Color(0.5f, 0.5f, 0.5f, 0.5f); // 비활성화: 회색 반투명
+    [SerializeField] private Color activeEffectColor = new Color(1f, 1f, 1f, 1f);
+    [SerializeField] private Color inactiveEffectColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
 
     [Header("Buttons")]
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button closeButton;
+
+    [Header("Success Effect")]
+    [SerializeField] private EnforceSuccessEffect successEffect; 
 
     private HeroEnforceSystem enforceSystem;
     private DataTable_Unit unitTable;
@@ -50,7 +53,6 @@ public class HeroEnforcePopup : MonoBehaviour
     {
         SetupPopup();
 
-        // 색상이 설정되지 않았다면 기본값 설정
         if (activeEffectColor == default)
             activeEffectColor = new Color(1f, 1f, 1f, 1f);
 
@@ -186,7 +188,6 @@ public class HeroEnforcePopup : MonoBehaviour
         if (effectListParent == null)
             return;
 
-        // 기존 아이템 제거
         foreach (Transform t in effectListParent)
             Destroy(t.gameObject);
 
@@ -203,17 +204,13 @@ public class HeroEnforcePopup : MonoBehaviour
 
             var go = Instantiate(effectItemPrefab, effectListParent);
 
-            // 활성화 여부
             bool isActive = lv <= heroLv;
 
-            // 텍스트 설정
             var txt = go.GetComponentInChildren<TextMeshProUGUI>();
             if (txt != null)
             {
                 string desc = effectTable.FormatEffect(eff);
                 txt.text = $"LV {lv}: {desc}";
-
-                // 색상 적용
                 txt.color = isActive ? activeEffectColor : inactiveEffectColor;
             }
 
@@ -282,12 +279,17 @@ public class HeroEnforcePopup : MonoBehaviour
         var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
         var desc = effectTable.FormatEffect(effData);
 
+        // ⭐ 별 효과와 성공 메시지를 동시에 시작
+        if (successEffect != null)
+        {
+            successEffect.PlayEffect().Forget(); // 별 효과는 백그라운드에서 재생
+        }
+
         popupManager?.ShowSuccess(
             "영웅 강화 성공!",
             $"★{beforeLv} → ★{afterLv}\n효과: {desc}"
         );
     }
-
 
     private void RefreshCostUI()
     {
