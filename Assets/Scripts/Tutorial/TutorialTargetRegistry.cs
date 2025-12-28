@@ -20,12 +20,10 @@ namespace Tutorial
             if (targets.ContainsKey(key))
             {
                 targets[key] = target;
-                Debug.Log($"[TutorialTarget] 업데이트: {key}");
             }
             else
             {
                 targets.Add(key, target);
-                Debug.Log($"[TutorialTarget] 등록: {key}");
             }
         }
 
@@ -37,7 +35,6 @@ namespace Tutorial
             if (targets.ContainsKey(key))
             {
                 targets.Remove(key);
-                Debug.Log($"[TutorialTarget] 해제: {key}");
             }
         }
 

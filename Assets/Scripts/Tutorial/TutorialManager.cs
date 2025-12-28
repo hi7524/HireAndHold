@@ -78,6 +78,9 @@ namespace Tutorial
         {
             DebugLog($"OnSceneLoaded: {scene.name}, isPlaying: {isPlaying}, currentSequence: {currentSequence?.sequenceId}");
 
+            // 씬 전환 시 조건 플래그 초기화 (이전 스테이지 조건이 남아있지 않도록)
+            metConditions.Clear();
+
             FindTutorialUI();
 
             // 씬 로드 후 튜토리얼 자동 체크
@@ -117,24 +120,19 @@ namespace Tutorial
                 bool enhanceCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted("enhance_tutorial");
                 bool enhancePart2Completed = DatabaseManager.Instance.IsTutorialSequenceCompleted("enhance_part2");
 
-                Debug.Log($"[Tutorial] 로비 진입 - forced_03_stage1clear 완료: {stage1ClearCompleted}, forced_05_lobbytutorial 완료: {lobbyTutorialCompleted}, forced_05_gacha 완료: {gachaCompleted}, forced_05_gacha_part2 완료: {gachaPart2Completed}, enhance_tutorial 완료: {enhanceCompleted}, enhance_part2 완료: {enhancePart2Completed}");
-
                 // Stage1Clear 튜토리얼이 완료된 경우에만 로비 튜토리얼 시작
                 if (stage1ClearCompleted && !lobbyTutorialCompleted)
                 {
-                    Debug.Log("[Tutorial] 로비 튜토리얼 시작 조건 충족, CheckAndStartTutorialAsync 호출");
                     await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
                 }
                 // 뽑기 파트1이 완료되었고 파트2가 완료되지 않은 경우 뽑기 파트2 시작
                 else if (gachaCompleted && !gachaPart2Completed)
                 {
-                    Debug.Log("[Tutorial] 뽑기 파트2 튜토리얼 시작 조건 충족, CheckAndStartTutorialAsync 호출");
                     await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
                 }
                 // 강화 파트1이 완료되었고 파트2가 완료되지 않은 경우 강화 파트2 시작
                 else if (enhanceCompleted && !enhancePart2Completed)
                 {
-                    Debug.Log("[Tutorial] 강화 파트2 튜토리얼 시작 조건 충족, CheckAndStartTutorialAsync 호출");
                     await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
                 }
             }
@@ -144,12 +142,9 @@ namespace Tutorial
                 bool dungeonTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted("dungeon_tutorial");
                 bool dungeonPart2Completed = DatabaseManager.Instance.IsTutorialSequenceCompleted("dungeon_part2");
 
-                Debug.Log($"[Tutorial] 던전 진입 - dungeon_tutorial 완료: {dungeonTutorialCompleted}, dungeon_part2 완료: {dungeonPart2Completed}");
-
                 // 던전 파트1이 완료되었고 파트2가 완료되지 않은 경우 던전 파트2 시작
                 if (dungeonTutorialCompleted && !dungeonPart2Completed)
                 {
-                    Debug.Log("[Tutorial] 던전 파트2 튜토리얼 시작 조건 충족");
                     NotifyConditionMet("DUNGEON_STAGE_FIRST_ENTER");
                 }
             }
@@ -491,11 +486,6 @@ namespace Tutorial
                 await UniTask.Delay(TimeSpan.FromSeconds(step.delayBeforeStep), ignoreTimeScale: true);
             }
 
-            Debug.Log($"[Tutorial] ========== 스텝 시작 ==========");
-            Debug.Log($"[Tutorial] 시퀀스: {currentSequence?.sequenceId} ({currentSequence?.description})");
-            Debug.Log($"[Tutorial] 스텝: {currentStepIndex + 1}/{currentSequence?.StepCount} (stringId: {step.stringId}, voiceKey: {step.voiceKey})");
-            Debug.Log($"[Tutorial] actionType: {step.actionType}, highlightTarget: {step.highlightTarget}");
-
             // 게임 일시정지
             if (step.pauseGame)
             {
@@ -698,7 +688,6 @@ namespace Tutorial
                     {
                         string sequenceId = currentSequence.sequenceId;
                         DatabaseManager.Instance.CompleteTutorialSequenceAsync(sequenceId).Forget();
-                        Debug.Log($"[Tutorial] 시퀀스 완료 요청됨 (비동기): {sequenceId}");
                     }
 
                     // UI 정리
@@ -901,23 +890,24 @@ namespace Tutorial
         #region 외부 호출용
 
         /// <summary>
+        /// 스테이지 변경 시 조건 초기화 (StageManager에서 호출)
+        /// </summary>
+        public void OnStageChanged()
+        {
+            metConditions.Clear();
+        }
+
+        /// <summary>
         /// 조건 만족 알림 (외부에서 호출)
         /// </summary>
         public void NotifyConditionMet(string conditionKey)
         {
-            Debug.Log($"[Tutorial] NotifyConditionMet 호출됨: {conditionKey}");
-
             // 스텝 단위 조건 저장 (WaitCondition용)
             metConditions.Add(conditionKey);
 
             // 전체 튜토리얼 완료됐으면 스킵
             if (DatabaseManager.Instance.IsTutorialCompleted())
-            {
-                Debug.Log("[Tutorial] 전체 튜토리얼 완료됨, 스킵");
                 return;
-            }
-
-            Debug.Log($"[Tutorial] sequences 개수: {sequences.Count}");
 
             // 현재 스테이지 ID 확인
             int currentStageId = 0;
@@ -934,25 +924,17 @@ namespace Tutorial
                 if (DatabaseManager.Instance.IsTutorialSequenceCompleted(sequence.sequenceId))
                     continue;
 
-                Debug.Log($"[Tutorial] 시퀀스 체크: {sequence.sequenceId}, triggerType: {sequence.triggerType}, triggerConditionKey: {sequence.triggerConditionKey}");
-
                 if (sequence.triggerType == TutorialTriggerType.OnCondition &&
                     sequence.triggerConditionKey == conditionKey)
                 {
                     // triggerStageId가 지정되어 있으면 스테이지 ID도 체크
                     if (sequence.triggerStageId > 0 && sequence.triggerStageId != currentStageId)
-                    {
-                        Debug.Log($"[Tutorial] 조건 {conditionKey} 일치하지만 스테이지 불일치: 현재 {currentStageId}, 필요 {sequence.triggerStageId}");
                         continue;
-                    }
 
-                    Debug.Log($"[Tutorial] 조건 {conditionKey}에 맞는 시퀀스 발견: {sequence.sequenceId}, 시작!");
                     StartSequenceAsync(sequence).Forget();
                     return;
                 }
             }
-
-            Debug.Log($"[Tutorial] 조건 {conditionKey}에 맞는 시퀀스를 찾지 못함");
         }
 
         /// <summary>
@@ -1001,7 +983,6 @@ namespace Tutorial
         public void DebugResetTutorial()
         {
             DatabaseManager.Instance.ResetTutorialProgressAsync().Forget();
-            Debug.Log("[Tutorial] 진행 상황 초기화됨");
         }
 
         /// <summary>

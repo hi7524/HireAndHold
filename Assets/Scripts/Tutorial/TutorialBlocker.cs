@@ -178,11 +178,8 @@ namespace Tutorial
         /// </summary>
         public void NotifyButtonTouched(string buttonName)
         {
-            Debug.Log($"[TutorialBlocker] NotifyButtonTouched: {buttonName}, 대기중인 타겟: {targetButtonName}");
-
             if (buttonName == targetButtonName)
             {
-                Debug.Log($"[TutorialBlocker] 타겟 일치! 다음 스텝으로 진행");
                 targetTouchSource?.TrySetResult();
             }
         }
@@ -207,9 +204,6 @@ namespace Tutorial
         /// </summary>
         public void NotifyDragComplete(string sourceName, string targetName)
         {
-            Debug.Log($"[TutorialBlocker] NotifyDragComplete - sourceName: {sourceName}, targetName: {targetName}");
-            Debug.Log($"[TutorialBlocker] 현재 대기 중 - dragSourceName: {dragSourceName}, dragTargetName: {dragTargetName}");
-
             lastDragSource = sourceName;
             lastDragTarget = targetName;
 
@@ -218,16 +212,9 @@ namespace Tutorial
             bool sourceMatch = string.IsNullOrEmpty(dragSourceName) || string.IsNullOrEmpty(sourceName) || sourceName == dragSourceName;
             bool targetMatch = string.IsNullOrEmpty(dragTargetName) || string.IsNullOrEmpty(targetName) || targetName == dragTargetName;
 
-            Debug.Log($"[TutorialBlocker] sourceMatch: {sourceMatch}, targetMatch: {targetMatch}, dragCompleteSource null?: {dragCompleteSource == null}");
-
             if (sourceMatch && targetMatch)
             {
-                Debug.Log("[TutorialBlocker] 조건 매칭됨! TrySetResult 호출");
                 dragCompleteSource?.TrySetResult();
-            }
-            else
-            {
-                Debug.Log("[TutorialBlocker] 조건 불일치 - 튜토리얼 진행 안됨");
             }
         }
 
