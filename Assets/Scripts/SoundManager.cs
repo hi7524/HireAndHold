@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Audio;
 
 public class SoundManager : MonoBehaviour
 {
@@ -6,6 +7,7 @@ public class SoundManager : MonoBehaviour
 
     [SerializeField] private AudioSource bgmSource;
     [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioMixer audioMixer;
 
     private bool isFading = false;
     private float fadeTargetVolume = 1f;
@@ -13,6 +15,11 @@ public class SoundManager : MonoBehaviour
 
     [SerializeField] float bgmVolume = 1f;
     [SerializeField] float sfxVolume = 1f;
+
+    private const string SFX_KEY = "SFXVolume";
+    private const string BGM_KEY = "BGMVolume";
+    private const string MASTER_KEY = "MasterVolume";
+    private const float DEFAULT_VOLUME = 0.75f;
 
     private void Awake()
     {
@@ -24,6 +31,28 @@ public class SoundManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // 게임 시작 시 저장된 볼륨 설정 로드
+        LoadVolumeSettings();
+    }
+
+    private void LoadVolumeSettings()
+    {
+        if (audioMixer == null)
+        {
+            Debug.LogWarning("[SoundManager] AudioMixer is not assigned!");
+            return;
+        }
+
+        float sfxVolume = PlayerPrefs.GetFloat(SFX_KEY, DEFAULT_VOLUME);
+        float bgmVolume = PlayerPrefs.GetFloat(BGM_KEY, DEFAULT_VOLUME);
+        float masterVolume = PlayerPrefs.GetFloat(MASTER_KEY, DEFAULT_VOLUME);
+
+        audioMixer.SetFloat(AudioMixerParams.Sfx, sfxVolume);
+        audioMixer.SetFloat(AudioMixerParams.Bgm, bgmVolume);
+        audioMixer.SetFloat(AudioMixerParams.Master, masterVolume);
+
+        Debug.Log($"[SoundManager] Volume settings loaded - SFX: {sfxVolume}, BGM: {bgmVolume}, Master: {masterVolume}");
     }
 
     private void Update()
