@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -18,6 +19,9 @@ public class Ore : MonoBehaviour, IPointerDownHandler
     private ObjectPoolManager poolManager;
     private Transform tailEffectTarget;
     private bool isDestroyed = false;
+
+    // 광석 비활성화 이벤트
+    public event Action<Ore> OnOreDeactivated;
 
     public void SetOreType(int id, DataTable_Ore oreTable, OreDungeonManager dungeonManager, Canvas canvasRef, Camera camera, ObjectPoolManager poolMgr, Transform tailTarget)
     {
@@ -77,6 +81,8 @@ public class Ore : MonoBehaviour, IPointerDownHandler
                 .OnComplete(() =>
                 {
                     gameObject.SetActive(false);
+                    // 비활성화 이벤트 발생
+                    OnOreDeactivated?.Invoke(this);
                 });
         }
     }
@@ -191,14 +197,14 @@ public class Ore : MonoBehaviour, IPointerDownHandler
 
     private void CalculateDropResult()
     {
-        int randomValue = Random.Range(0, 100);
+        int randomValue = UnityEngine.Random.Range(0, 100);
         int jackpotPercent = oreData.Jackpot_Percent;
         int fiascoPercent = oreData.Fiasco;
 
         if (randomValue < jackpotPercent)
         {
             // 대성공
-            int dropCount = Random.Range(oreData.Jackpot_Percent_Minimum_Number_Of_Drops,
+            int dropCount = UnityEngine.Random.Range(oreData.Jackpot_Percent_Minimum_Number_Of_Drops,
                                           oreData.Jackpot_Percent_Maximum_Number_Of_Drops + 1);
         }
         else if (randomValue < jackpotPercent + fiascoPercent)

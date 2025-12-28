@@ -127,20 +127,19 @@ public class OreDungeonManager : MonoBehaviour
 
     private void CheckStageEnd()
     {
-        // 터치도 남고 광석도 남음 → 계속 진행
-        if (RemainTouchCount > 0 && RemainOreCount > 0)
-            return;
-
-        // 광석을 모두 파괴했고 터치가 남음 → 성공
-        if (RemainOreCount <= 0 && RemainTouchCount >= 0)
+        // 모든 광석을 파괴했다면 성공 (터치 남은 여부 상관없음)
+        if (RemainOreCount <= 0)
         {
+            Debug.Log("스테이지 성공: 모든 광석 파괴");
             OnStageEnded?.Invoke(true);
         }
-        // 터치를 모두 소진했는데 광석이 남음 → 실패
+        // 터치를 다 썼는데 광석이 남았다면 실패
         else if (RemainTouchCount <= 0 && RemainOreCount > 0)
         {
+            Debug.Log("스테이지 실패: 터치 소진, 광석 남음");
             OnStageEnded?.Invoke(false);
         }
+        // 터치도 남고 광석도 남음 → 계속 진행
     }
 
     // 참조 누락 확인

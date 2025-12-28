@@ -21,6 +21,9 @@ public class OreSpawner : MonoBehaviour
     [SerializeField] private RectTransform[] excludePanels; // 겹치지 않을 패널들
 
     private List<Vector2> availablePositions = new List<Vector2>();
+    private List<Ore> allOres = new List<Ore>(); // 전체 광석 리스트
+    private List<Ore> currentBatchOres = new List<Ore>(); // 현재 배치의 광석 리스트
+    private int currentSpawnIndex = 0; // 현재 스폰 위치 인덱스
 
     private void Awake()
     {
@@ -81,31 +84,80 @@ public class OreSpawner : MonoBehaviour
 
     private void SpawnOres(OreDungeonData data)
     {
-        List<Ore> oreList = new List<Ore>();
+        allOres.Clear();
+        currentSpawnIndex = 0;
         int posIndex = 0;
 
-        // 타입1 생성
-        for (int i = 0; i < data.Number_Of_Ores && posIndex < availablePositions.Count && posIndex < maxSpawnOreAmount; i++)
+        // 타입1 생성 (전체 광석을 모두 생성)
+        for (int i = 0; i < data.Number_Of_Ores && posIndex < availablePositions.Count; i++)
         {
             Ore ore = SpawnOre(availablePositions[posIndex], data.OresID);
             ore.gameObject.SetActive(false);
-            oreList.Add(ore);
+            allOres.Add(ore);
             posIndex++;
         }
 
         // 타입2 생성
-        for (int i = 0; i < data.Number_Of_Ores2 && posIndex < availablePositions.Count && posIndex < maxSpawnOreAmount; i++)
+        for (int i = 0; i < data.Number_Of_Ores2 && posIndex < availablePositions.Count; i++)
         {
             Ore ore = SpawnOre(availablePositions[posIndex], data.OresID2);
             ore.gameObject.SetActive(false);
-            oreList.Add(ore);
+            allOres.Add(ore);
             posIndex++;
         }
 
-        ShuffleList(oreList);
-        foreach (var ore in oreList)
+        // 전체 광석 리스트 섞기
+        ShuffleList(allOres);
+
+        // 첫 번째 배치 스폰
+        SpawnNextBatch();
+    }
+
+    private void SpawnNextBatch()
+    {
+        currentBatchOres.Clear();
+
+        // 다음 배치에 스폰할 광석 수 계산
+        int remainingOres = allOres.Count - currentSpawnIndex;
+        int oresToSpawn = Mathf.Min(remainingOres, maxSpawnOreAmount);
+
+        if (oresToSpawn <= 0)
         {
+            Debug.Log("모든 광석 스폰 완료");
+            return;
+        }
+
+        // 현재 배치 광석 활성화
+        for (int i = 0; i < oresToSpawn; i++)
+        {
+            Ore ore = allOres[currentSpawnIndex];
             ore.gameObject.SetActive(true);
+            ore.OnOreDeactivated += OnOreDeactivated; // 이벤트 구독
+            currentBatchOres.Add(ore);
+            currentSpawnIndex++;
+        }
+
+        Debug.Log($"배치 스폰: {oresToSpawn}개 광석 활성화 (총 {currentSpawnIndex}/{allOres.Count})");
+    }
+
+    private void OnOreDeactivated(Ore ore)
+    {
+        // 이벤트 구독 해제
+        ore.OnOreDeactivated -= OnOreDeactivated;
+
+        // 현재 배치에서 제거
+        currentBatchOres.Remove(ore);
+
+        // 현재 배치의 모든 광석이 비활성화되었는지 확인
+        if (currentBatchOres.Count == 0)
+        {
+            Debug.Log("현재 배치 모두 비활성화됨. 다음 배치 스폰 시도");
+
+            // 남은 광석이 있으면 다음 배치 스폰
+            if (currentSpawnIndex < allOres.Count)
+            {
+                SpawnNextBatch();
+            }
         }
     }
 
