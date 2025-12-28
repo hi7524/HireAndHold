@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.VFX;
 
 public class AreaProjectile : MonoBehaviour, ISkillProjectile
@@ -36,6 +37,9 @@ public class AreaProjectile : MonoBehaviour, ISkillProjectile
         if (vfxEffect != null)
             vfxEffect.Play();
 
+        // 발동 시 사운드 1회 재생
+        PlayLaunchSound();
+
         // 범위 내 적 데미지 (딜레이 적용)
         if (damageDelay > 0f)
             Invoke(nameof(DamageEnemiesInRange), damageDelay);
@@ -44,6 +48,21 @@ public class AreaProjectile : MonoBehaviour, ISkillProjectile
 
         // 일정 시간 후 풀에 반환
         Invoke(nameof(ReturnToPool), lifeTime);
+    }
+
+    private void PlayLaunchSound()
+    {
+        if (string.IsNullOrEmpty(data.hitAudioClipName) || SoundManager.Instance == null)
+            return;
+
+        if (AddressablePreloader.Instance != null && AddressablePreloader.Instance.HasCachedAudioClip(data.hitAudioClipName))
+        {
+            var clip = AddressablePreloader.Instance.GetCachedAudioClip(data.hitAudioClipName);
+            if (clip != null)
+            {
+                SoundManager.Instance.PlaySFX(clip);
+            }
+        }
     }
 
     private void DamageEnemiesInRange()
