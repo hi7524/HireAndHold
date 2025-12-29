@@ -8,16 +8,16 @@ namespace Tutorial
     /// </summary>
     public static class GameEvents
     {
-        #region 경험치/레벨업 이벤트
+        #region 레벨업 이벤트
 
         /// <summary>
-        /// 최초 경험치 획득 시 발생
+        /// 레벨업 시 발생 (레벨 전달)
         /// </summary>
-        public static event Action OnFirstExpGained;
+        public static event Action<int> OnLevelUp;
 
-        public static void RaiseFirstExpGained()
+        public static void RaiseLevelUp(int level)
         {
-            OnFirstExpGained?.Invoke();
+            OnLevelUp?.Invoke(level);
         }
 
         #endregion
@@ -34,6 +34,11 @@ namespace Tutorial
         /// </summary>
         public static event Action<string> OnBuffCompleted;
 
+        /// <summary>
+        /// 첫 버프 획득 시 발생 (703 스테이지용)
+        /// </summary>
+        public static event Action OnFirstBuffActivated;
+
         public static void RaiseBuffActivated(string buffName)
         {
             OnBuffActivated?.Invoke(buffName);
@@ -42,6 +47,25 @@ namespace Tutorial
         public static void RaiseBuffCompleted(string conditionKey)
         {
             OnBuffCompleted?.Invoke(conditionKey);
+        }
+
+        public static void RaiseFirstBuffActivated()
+        {
+            OnFirstBuffActivated?.Invoke();
+        }
+
+        #endregion
+
+        #region 보스 이벤트
+
+        /// <summary>
+        /// 중간 보스 클리어 시 발생 (703 스테이지용)
+        /// </summary>
+        public static event Action OnMidBossClear;
+
+        public static void RaiseMidBossClear()
+        {
+            OnMidBossClear?.Invoke();
         }
 
         #endregion
@@ -101,9 +125,11 @@ namespace Tutorial
         /// </summary>
         public static void ClearAllEvents()
         {
-            OnFirstExpGained = null;
+            OnLevelUp = null;
             OnBuffActivated = null;
             OnBuffCompleted = null;
+            OnFirstBuffActivated = null;
+            OnMidBossClear = null;
             OnDragCompleted = null;
             GetRewardOptions = null;
             ShouldUseFixedUnitOrder = null;

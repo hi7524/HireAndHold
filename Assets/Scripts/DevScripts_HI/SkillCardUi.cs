@@ -7,6 +7,7 @@ using System;
 using DG.Tweening;
 using AssetKits.ParticleImage;
 using TMPro;
+using Tutorial;
 
 public class SkillCardUi : BaseCardUi
 {
@@ -351,6 +352,9 @@ public class SkillCardUi : BaseCardUi
             // 테두리 활성화
             SetFocus(true);
             isSelected = true;
+
+            // 튜토리얼에 패시브 스킬 카드 선택 알림
+            TutorialManager.Instance?.NotifyButtonTouched("LevelUpRewardController");
 
             // 골드 카드 모드일 때
             if (currentMode == CardMode.Gold)

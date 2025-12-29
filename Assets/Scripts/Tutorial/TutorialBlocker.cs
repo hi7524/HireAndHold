@@ -25,11 +25,12 @@ namespace Tutorial
 
         // 상태
         private bool isBlocking;
+        private bool isDragEnabled;  // 드래그 허용 여부 (false면 모든 드래그 차단)
         private string targetButtonName;
         private string dragSourceName;
         private string dragTargetName;
         private Vector2Int[] allowedTiles;
-        private string[] allowedUnitNames;
+        private int[] allowedUnitIds;
 
         // 대기용
         private UniTaskCompletionSource targetTouchSource;
@@ -81,7 +82,7 @@ namespace Tutorial
             dragSourceName = null;
             dragTargetName = null;
             allowedTiles = null;
-            allowedUnitNames = null;
+            allowedUnitIds = null;
         }
 
         /// <summary>
@@ -100,12 +101,13 @@ namespace Tutorial
         }
 
         /// <summary>
-        /// 대화창만 터치 허용
+        /// 대화창만 터치 허용 (드래그 차단)
         /// </summary>
         public void AllowDialogOnly()
         {
             allowedButtonNames.Clear();
             allowedButtonNames.Add("DialogPanel");
+            isDragEnabled = false;  // 드래그 차단
         }
 
         /// <summary>
@@ -121,13 +123,14 @@ namespace Tutorial
         /// <summary>
         /// 드래그 허용
         /// </summary>
-        public void AllowDrag(string sourceName, string targetName, Vector2Int[] tiles, string[] unitNames)
+        public void AllowDrag(string sourceName, string targetName, Vector2Int[] tiles, int[] unitIds)
         {
             AllowDialogOnly();
+            isDragEnabled = true;  // 드래그 허용
             dragSourceName = sourceName;
             dragTargetName = targetName;
             allowedTiles = tiles;
-            allowedUnitNames = unitNames;
+            allowedUnitIds = unitIds;
 
             // 드래그 관련 오브젝트 허용
             if (!string.IsNullOrEmpty(sourceName))
@@ -149,6 +152,8 @@ namespace Tutorial
             if (clickedObject == null) return;
 
             string clickedName = clickedObject.name;
+
+            Debug.Log($"[TutorialBlocker] OnPointerClick - clickedName: {clickedName}, targetButtonName: {targetButtonName}, allowedButtons: {string.Join(", ", allowedButtonNames)}");
 
             // 허용된 버튼인지 확인
             if (allowedButtonNames.Contains(clickedName))
@@ -221,23 +226,26 @@ namespace Tutorial
         /// <summary>
         /// 드래그가 허용된 소스인지 확인
         /// </summary>
-        public bool IsDragAllowed(string sourceName, string unitName = null)
+        public bool IsDragAllowed(string sourceName, int unitId = -1)
         {
             if (!isBlocking) return true;
+
+            // 드래그 자체가 비활성화된 경우 (Touch, TouchTarget 스텝 등)
+            if (!isDragEnabled) return false;
 
             // 소스 이름 체크
             if (!string.IsNullOrEmpty(dragSourceName) && sourceName != dragSourceName)
                 return false;
 
-            // 유닛 이름 체크
-            if (allowedUnitNames != null && allowedUnitNames.Length > 0)
+            // 유닛 ID 체크
+            if (allowedUnitIds != null && allowedUnitIds.Length > 0)
             {
-                if (string.IsNullOrEmpty(unitName)) return false;
+                if (unitId < 0) return false;
 
                 bool found = false;
-                foreach (var allowed in allowedUnitNames)
+                foreach (var allowed in allowedUnitIds)
                 {
-                    if (unitName == allowed)
+                    if (unitId == allowed)
                     {
                         found = true;
                         break;

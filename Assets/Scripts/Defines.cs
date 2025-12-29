@@ -73,7 +73,10 @@ public static class TutorialConditions
 {
     public const string STAGE_BUFF = "STAGE_BUFF";
     public const string COMPLETE_BUFF = "COMPLETE_BUFF";
-    public const string FIRST_EXP = "FIRST_EXP";
+    public const string FIRST_BUFF = "FIRST_BUFF";           // 703 스테이지: 첫 버프 획득
+    public const string MID_BOSS_CLEAR = "MID_BOSS_CLEAR";   // 703 스테이지: 중간 보스 클리어
+    public const string GACHA_TUTORIAL = "GACHA_TUTORIAL";       // 로비: 뽑기 튜토리얼 시작
+    public const string ENHANCE_TUTORIAL = "ENHANCE_TUTORIAL"; // 로비: 강화 튜토리얼 시작
     public const string DUNGEON_TAB_FIRST_ENTER = "DUNGEON_TAB_FIRST_ENTER";
     public const string DUNGEON_STAGE_FIRST_ENTER = "DUNGEON_STAGE_FIRST_ENTER";
 }
@@ -91,16 +94,34 @@ public static class TutorialButtons
 }
 
 /// <summary>
-/// 튜토리얼 시퀀스 ID
+/// 튜토리얼 시퀀스 ID (기획서 v2.0)
 /// </summary>
 public static class TutorialSequenceIds
 {
-    public const string Stage1Clear = "forced_03_stage1clear";
-    public const string LobbyTutorial = "forced_05_lobbytutorial";
-    public const string Gacha = "forced_05_gacha";
-    public const string GachaPart2 = "forced_05_gacha_part2";
+    // 1. 로비 튜토리얼
+    public const string LobbyTutorial = "lobby_tutorial";
+
+    // 2. 1스테이지 인게임
+    public const string Stage1Tutorial = "stage1_tutorial";
+
+    // 3. 1스테이지 클리어 후 로비로
+    public const string Stage1Clear = "stage1_clear_tutorial";
+
+    // 3-2. 로비에서 뽑기 튜토리얼
+    public const string GachaTutorial = "gacha_tutorial";
+
+    // 4. 3스테이지 클리어 후 로비로
+    public const string Stage3Clear = "stage3_clear_tutorial";
+
+    // 4-2. 로비에서 강화 튜토리얼
     public const string EnhanceTutorial = "enhance_tutorial";
-    public const string EnhancePart2 = "enhance_part2";
+
+    // 5. 3스테이지 인게임 튜토리얼 (분리됨)
+    public const string Stage3Intro = "stage3_intro";           // 스테이지 시작
+    public const string Stage3Buff = "stage3_buff";             // 첫 버프 획득
+    public const string Stage3Passive = "stage3_passive";       // 레벨 3 패시브 선택
+    public const string Stage3MidBoss = "stage3_midboss";       // 중간 보스 클리어
+
+    // 6. 던전 튜토리얼
     public const string DungeonTutorial = "dungeon_tutorial";
-    public const string DungeonPart2 = "dungeon_part2";
 }

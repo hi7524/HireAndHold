@@ -1,4 +1,5 @@
 ﻿using GameData;
+using Tutorial;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -99,6 +100,9 @@ public class UnitEnforceUI : MonoBehaviour
 
     private void OnNormalEnforceClicked()
     {
+        // 튜토리얼에 버튼 클릭 알림 (TutorialTarget 리스너가 RemoveAllListeners로 삭제되므로 여기서 직접 호출)
+        TutorialManager.Instance?.NotifyButtonTouched("NormalEnhanceButton");
+
         if (mainUI == null)
             mainUI = GetComponentInParent<UnitInfoUI>();
 

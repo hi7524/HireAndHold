@@ -65,12 +65,6 @@ public class PlayerExperience : MonoBehaviour
             finalAmount = amount * (1f + bonusPercent / 100f);
         }
 
-        // 최초 경험치 획득 시 이벤트 발생 (TutorialManager가 구독해서 처리)
-        if (curPlayerExp == 0f && finalAmount > 0f)
-        {
-            GameEvents.RaiseFirstExpGained();
-        }
-
         curPlayerExp += finalAmount;
 
         AnimateExpBar();
@@ -116,6 +110,9 @@ public class PlayerExperience : MonoBehaviour
         Debug.Log($"[Tutorial] LevelUp 호출 - stageId: {stageId}, Level: {Level}");
         TutorialManager.Instance?.CheckAndStartTutorialAsync(
             TutorialTriggerType.OnLevelUp, stageId, Level).Forget();
+
+        // 레벨업 이벤트 발생 (스텝별 conditionKey 처리용)
+        GameEvents.RaiseLevelUp(Level);
     }
 
     private void UpdateLevelTextUI()

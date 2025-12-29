@@ -81,6 +81,12 @@ namespace Tutorial
         [Tooltip("하이라이트할 UI 오브젝트 이름 (비어있으면 하이라이트 없음)")]
         public string highlightTarget;
 
+        [Tooltip("하이라이트할 유닛 ID (동적 생성 유닛용, 0이면 사용 안함)")]
+        public int highlightUnitId;
+
+        [Tooltip("하이라이트할 타일 좌표들 (여러 타일 하이라이트 가능, 비어있으면 사용 안함)")]
+        public Vector2Int[] highlightTilePositions;
+
         [Tooltip("하이라이트 위치 오프셋")]
         public Vector2 highlightOffset;
 
@@ -123,8 +129,8 @@ namespace Tutorial
         [Tooltip("이 스텝이 체크포인트인지 (중간 저장 지점)")]
         public bool isCheckpoint;
 
-        [Tooltip("특정 유닛만 드래그 허용 (비어있으면 제한 없음)")]
-        public string[] allowedUnitNames;
+        [Tooltip("특정 유닛만 드래그 허용 - UnitId 목록 (비어있으면 제한 없음)")]
+        public int[] allowedUnitIds;
 
         [Tooltip("스텝 시작 전 대기 시간 (초) - UI 활성화 대기용")]
         public float delayBeforeStep = 0f;

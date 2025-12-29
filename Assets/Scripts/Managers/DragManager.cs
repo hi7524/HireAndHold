@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using System;
+using Tutorial;
 
 public class DragManager : MonoBehaviour
 {
@@ -161,6 +162,23 @@ public class DragManager : MonoBehaviour
 
         if (newTarget == null || !newTarget.IsDraggable)
             return;
+
+        // 튜토리얼 블로커 체크 - 허용된 유닛만 드래그 가능
+        if (TutorialManager.Instance != null && TutorialManager.Instance.TutorialBlocker != null)
+        {
+            var blocker = TutorialManager.Instance.TutorialBlocker;
+            if (blocker.IsBlocking)
+            {
+                // 유닛 ID 추출 (GridUnit, DraggableGridUnitUi 등에서)
+                int unitId = GetUnitId(newTarget);
+                string sourceName = newTarget.GameObject.name;
+
+                if (!blocker.IsDragAllowed(sourceName, unitId))
+                {
+                    return; // 드래그 불허
+                }
+            }
+        }
 
         // 새로운 드래그 상태 설정
         dragState.Target = newTarget;
@@ -461,5 +479,41 @@ public class DragManager : MonoBehaviour
     {
         var spriteRenderer = collider.GetComponent<SpriteRenderer>();
         return spriteRenderer != null ? spriteRenderer.sortingOrder : 0;
+    }
+
+    // 드래그 대상에서 유닛 ID 추출
+    private int GetUnitId(IDraggable draggable)
+    {
+        if (draggable == null) return -1;
+
+        var go = draggable.GameObject;
+        if (go == null) return -1;
+
+        // GridUnit에서 유닛 ID 추출
+        var gridUnit = go.GetComponent<GridUnit>();
+        if (gridUnit != null)
+        {
+            return gridUnit.UnitId;
+        }
+
+        // DraggableGridUnitUi에서 유닛 ID 추출
+        var draggableUnitUi = go.GetComponent<DraggableGridUnitUi>();
+        if (draggableUnitUi != null)
+        {
+            return draggableUnitUi.UnitId;
+        }
+
+        // GridUnitDragProxy에서 부모 GridUnit의 유닛 ID 추출
+        var proxy = go.GetComponent<GridUnitDragProxy>();
+        if (proxy != null)
+        {
+            var parentGridUnit = proxy.GameObject?.GetComponent<GridUnit>();
+            if (parentGridUnit != null)
+            {
+                return parentGridUnit.UnitId;
+            }
+        }
+
+        return -1;
     }
 }

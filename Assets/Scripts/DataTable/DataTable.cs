@@ -31,10 +31,10 @@ public abstract class DataTable
         if (handle.Status == AsyncOperationStatus.Succeeded)
         {
             List<T> records = LoadCSV<T>(csvAsset.text);
-            
+
             // 사용 후 리소스 해제
             Addressables.Release(handle);
-            
+
             return records;
         }
         else

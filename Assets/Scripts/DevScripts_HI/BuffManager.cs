@@ -244,6 +244,9 @@ public class BuffManager : MonoBehaviour
     // 버프 활성화
     private void ActivateBuff(string buffName)
     {
+        // 첫 버프 획득 시 이벤트 발생 (703 스테이지 튜토리얼용)
+        bool wasEmpty = ActivatedBuffs.Count == 0;
+
         if (uiManager != null)
             uiManager.UpdateInfoText($"{buffName} 활성화!");
 
@@ -251,6 +254,13 @@ public class BuffManager : MonoBehaviour
         {
             gridManager.UpdateBuffColors();
             gridManager.PlayBuffActivationEffect(buffName);
+        }
+
+        // 이 함수가 호출된 후 ActivatedBuffs.Add가 되므로,
+        // 여기서 wasEmpty이면 첫 버프가 되는 것
+        if (wasEmpty)
+        {
+            GameEvents.RaiseFirstBuffActivated();
         }
     }
 

@@ -450,10 +450,23 @@ public class LevelUpRewardController : MonoBehaviour
         if (!gameManager.IsGameStarted)
         {
             gameManager.StartGame();
+            // 701 스테이지에서 튜토리얼 진행 중이면 바로 다시 Pause
+            if (stageManager != null && stageManager.CurrentStageId == 701 &&
+                Tutorial.TutorialManager.Instance != null && Tutorial.TutorialManager.Instance.IsPlaying)
+            {
+                gameManager.PauseGame();
+            }
         }
         else
         {
-            gameManager.ResumeGame();
+            // 701 스테이지에서 튜토리얼이 Pause를 요구하는 상태면 Resume하지 않음
+            bool shouldSkipResume = stageManager != null && stageManager.CurrentStageId == 701 &&
+                Tutorial.TutorialManager.Instance != null && Tutorial.TutorialManager.Instance.RequiresPause;
+
+            if (!shouldSkipResume)
+            {
+                gameManager.ResumeGame();
+            }
         }
     }
 

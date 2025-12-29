@@ -58,7 +58,6 @@ public class GameManager : MonoBehaviour
         curSpeedLevelIdx = 0;
         IsGameStarted = false;
         Time.timeScale = 0;
-
         ElapsedTime = 0f;
         timeScheduler.Reset();
     }

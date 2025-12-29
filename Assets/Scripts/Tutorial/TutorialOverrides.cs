@@ -17,8 +17,7 @@ namespace Tutorial
         private static readonly HashSet<int> DisablePassiveDrawStages = new HashSet<int>
         {
             701, // 1스테이지 튜토리얼
-            702, // 2스테이지 튜토리얼
-            703  // 3스테이지 튜토리얼
+            702  // 2스테이지 튜토리얼
         };
 
         /// <summary>
@@ -97,7 +96,7 @@ namespace Tutorial
         /// </summary>
         public static bool IsTutorialStage(int stageId)
         {
-            return stageId >= 701 && stageId <= 704;
+            return stageId == 701 || stageId == 703;
         }
 
         #endregion

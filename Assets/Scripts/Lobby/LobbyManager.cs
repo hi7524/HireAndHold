@@ -62,10 +62,35 @@ public class LobbyManager : MonoBehaviour
 
     private async UniTaskVoid CheckTutorialAsync()
     {
-        // TutorialManager가 있으면 로비 진입 튜토리얼 체크
-        if (TutorialManager.Instance != null)
+        if (TutorialManager.Instance == null) return;
+
+        // 로비 진입 튜토리얼 먼저 체크
+        bool lobbyTutorialStarted = await TutorialManager.Instance.CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
+
+        // 로비 튜토리얼이 시작되지 않았으면 다른 튜토리얼 체크
+        if (!lobbyTutorialStarted)
         {
-            await TutorialManager.Instance.CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
+            // 1스테이지 클리어 → 뽑기 튜토리얼
+            bool stage1ClearCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.Stage1Clear);
+            bool gachaTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.GachaTutorial);
+
+            if (stage1ClearCompleted && !gachaTutorialCompleted)
+            {
+                Debug.Log("[LobbyManager] 1스테이지 클리어 완료 → 뽑기 튜토리얼 시작");
+                TutorialManager.Instance.NotifyConditionMet(TutorialConditions.GACHA_TUTORIAL);
+                return;
+            }
+
+            // 3스테이지 클리어 → 강화 튜토리얼
+            bool stage3ClearCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.Stage3Clear);
+            bool enhanceTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.EnhanceTutorial);
+
+            if (stage3ClearCompleted && !enhanceTutorialCompleted)
+            {
+                Debug.Log("[LobbyManager] 3스테이지 클리어 완료 → 강화 튜토리얼 시작");
+                TutorialManager.Instance.NotifyConditionMet(TutorialConditions.ENHANCE_TUTORIAL);
+                return;
+            }
         }
     }
 

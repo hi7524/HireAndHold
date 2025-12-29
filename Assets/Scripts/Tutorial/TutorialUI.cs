@@ -175,9 +175,51 @@ namespace Tutorial
         #region 하이라이트
 
         /// <summary>
+        /// 하이라이트 표시 (UnitId 기반)
+        /// </summary>
+        public void ShowHighlightByUnitId(int unitId, Vector2 offset, Vector2 size)
+        {
+            if (unitId <= 0) return;
+
+            var target = FindUIObjectByUnitId(unitId);
+            if (target == null)
+            {
+                Debug.LogWarning($"[TutorialUI] UnitId로 하이라이트 타겟을 찾을 수 없음: {unitId}");
+                return;
+            }
+
+            ShowHighlightForTarget(target, offset, size);
+        }
+
+        /// <summary>
         /// 하이라이트 표시
         /// </summary>
         public void ShowHighlight(string targetName, Vector2 offset, Vector2 size)
+        {
+            if (string.IsNullOrEmpty(targetName)) return;
+
+            // TileGrid 특수 처리 - 전체 그리드 하이라이트
+            if (targetName == "TileGrid")
+            {
+                ShowHighlightAllTiles(offset, size);
+                return;
+            }
+
+            // 타겟 오브젝트 찾기
+            var target = FindUIObject(targetName);
+            if (target == null)
+            {
+                Debug.LogWarning($"[TutorialUI] 하이라이트 타겟을 찾을 수 없음: {targetName}");
+                return;
+            }
+
+            ShowHighlightForTarget(target, offset, size);
+        }
+
+        /// <summary>
+        /// 하이라이트 표시 (공통 로직)
+        /// </summary>
+        private void ShowHighlightForTarget(GameObject target, Vector2 offset, Vector2 size)
         {
             if (highlightObject == null)
             {
@@ -191,19 +233,11 @@ namespace Tutorial
                 return;
             }
 
-            // 타겟 오브젝트 찾기
-            var target = FindUIObject(targetName);
-            if (target == null)
-            {
-                Debug.LogWarning($"[TutorialUI] 하이라이트 타겟을 찾을 수 없음: {targetName}");
-                return;
-            }
-
             // 위치 설정
             var targetRect = target.GetComponent<RectTransform>();
             if (targetRect == null)
             {
-                Debug.LogWarning($"[TutorialUI] 타겟에 RectTransform이 없음: {targetName}");
+                Debug.LogWarning($"[TutorialUI] 타겟에 RectTransform이 없음: {target.name}");
                 return;
             }
 
@@ -265,6 +299,226 @@ namespace Tutorial
                 // 스케일 보정
                 Vector3 canvasScale = canvasRect.lossyScale;
                 highlightRect.sizeDelta = new Vector2(width / canvasScale.x, height / canvasScale.y);
+            }
+
+            highlightObject.SetActive(true);
+
+            // TutorialBlocker에 구멍 설정
+            var blocker = FindAnyObjectByType<TutorialBlocker>(FindObjectsInactive.Include);
+            if (blocker != null)
+            {
+                blocker.SetHole(highlightRect);
+            }
+        }
+
+        /// <summary>
+        /// 타일 좌표들 기반 하이라이트 표시 (4-panel 구멍 방식)
+        /// </summary>
+        public void ShowHighlightAtTilePositions(Vector2Int[] tilePositions, Vector2 offset, Vector2 size)
+        {
+            if (tilePositions == null || tilePositions.Length == 0) return;
+
+            // GridVisualizer 찾기
+            var gridVisualizer = FindAnyObjectByType<GridVisualizer>(FindObjectsInactive.Exclude);
+            if (gridVisualizer == null)
+            {
+                Debug.LogWarning("[TutorialUI] GridVisualizer를 찾을 수 없음");
+                return;
+            }
+
+            // 유효한 GridCell들의 월드 좌표 수집
+            Vector3 minWorld = Vector3.positiveInfinity;
+            Vector3 maxWorld = Vector3.negativeInfinity;
+            int validCellCount = 0;
+
+            foreach (var tilePos in tilePositions)
+            {
+                var gridCell = gridVisualizer.GetGridCellAt(tilePos);
+                if (gridCell != null)
+                {
+                    // GridCell의 월드 바운드 계산
+                    Vector3 cellPos = gridCell.transform.position;
+                    Vector3 cellScale = gridCell.transform.lossyScale;
+                    float halfWidth = cellScale.x / 2f;
+                    float halfHeight = cellScale.y / 2f;
+
+                    Vector3 cellMin = new Vector3(cellPos.x - halfWidth, cellPos.y - halfHeight, cellPos.z);
+                    Vector3 cellMax = new Vector3(cellPos.x + halfWidth, cellPos.y + halfHeight, cellPos.z);
+
+                    minWorld = Vector3.Min(minWorld, cellMin);
+                    maxWorld = Vector3.Max(maxWorld, cellMax);
+                    validCellCount++;
+                }
+            }
+
+            if (validCellCount == 0)
+            {
+                Debug.LogWarning("[TutorialUI] 유효한 GridCell을 찾을 수 없음");
+                return;
+            }
+
+            // 바운딩 박스의 중심과 크기 계산
+            Vector3 worldCenter = (minWorld + maxWorld) / 2f;
+            Vector3 worldSize = maxWorld - minWorld;
+
+            // 월드 좌표를 스크린 좌표로 변환
+            Camera cam = Camera.main;
+            if (cam == null)
+            {
+                Debug.LogError("[TutorialUI] Main Camera를 찾을 수 없음");
+                return;
+            }
+
+            // 하이라이트 캔버스 가져오기
+            Canvas highlightCanvas = highlightRect.GetComponentInParent<Canvas>();
+            if (highlightCanvas == null)
+            {
+                Debug.LogError("[TutorialUI] highlightRect의 부모 Canvas를 찾을 수 없음!");
+                return;
+            }
+
+            // 중심점 스크린 좌표
+            Vector2 screenCenter = cam.WorldToScreenPoint(worldCenter);
+
+            // 캔버스 로컬 좌표로 변환
+            RectTransform canvasRect = highlightCanvas.GetComponent<RectTransform>();
+            Vector2 localPoint;
+            Camera canvasCam = highlightCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : highlightCanvas.worldCamera;
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                highlightRect.parent as RectTransform,
+                screenCenter,
+                canvasCam,
+                out localPoint);
+
+            // 위치 설정 (offset 적용)
+            highlightRect.anchoredPosition = localPoint + offset;
+
+            // 크기 설정
+            if (size != Vector2.zero)
+            {
+                highlightRect.sizeDelta = size;
+            }
+            else
+            {
+                // 월드 크기를 스크린 크기로 변환
+                Vector2 screenMin = cam.WorldToScreenPoint(minWorld);
+                Vector2 screenMax = cam.WorldToScreenPoint(maxWorld);
+                Vector2 screenSize = screenMax - screenMin;
+
+                // 캔버스 스케일 보정
+                Vector3 canvasScale = canvasRect.lossyScale;
+                highlightRect.sizeDelta = new Vector2(
+                    screenSize.x / canvasScale.x,
+                    screenSize.y / canvasScale.y);
+            }
+
+            highlightObject.SetActive(true);
+
+            // TutorialBlocker에 구멍 설정
+            var blocker = FindAnyObjectByType<TutorialBlocker>(FindObjectsInactive.Include);
+            if (blocker != null)
+            {
+                blocker.SetHole(highlightRect);
+            }
+        }
+
+        /// <summary>
+        /// 전체 그리드 타일 하이라이트 표시 (TileGrid 특수 처리)
+        /// </summary>
+        private void ShowHighlightAllTiles(Vector2 offset, Vector2 size)
+        {
+            // GridVisualizer 찾기
+            var gridVisualizer = FindAnyObjectByType<GridVisualizer>(FindObjectsInactive.Exclude);
+            if (gridVisualizer == null)
+            {
+                Debug.LogWarning("[TutorialUI] GridVisualizer를 찾을 수 없음");
+                return;
+            }
+
+            // GridVisualizer의 모든 자식 GridCell들의 월드 바운드 계산
+            Vector3 minWorld = Vector3.positiveInfinity;
+            Vector3 maxWorld = Vector3.negativeInfinity;
+            int validCellCount = 0;
+
+            foreach (Transform child in gridVisualizer.transform)
+            {
+                var gridCell = child.GetComponent<GridCell>();
+                if (gridCell != null)
+                {
+                    Vector3 cellPos = gridCell.transform.position;
+                    Vector3 cellScale = gridCell.transform.lossyScale;
+                    float halfWidth = cellScale.x / 2f;
+                    float halfHeight = cellScale.y / 2f;
+
+                    Vector3 cellMin = new Vector3(cellPos.x - halfWidth, cellPos.y - halfHeight, cellPos.z);
+                    Vector3 cellMax = new Vector3(cellPos.x + halfWidth, cellPos.y + halfHeight, cellPos.z);
+
+                    minWorld = Vector3.Min(minWorld, cellMin);
+                    maxWorld = Vector3.Max(maxWorld, cellMax);
+                    validCellCount++;
+                }
+            }
+
+            if (validCellCount == 0)
+            {
+                Debug.LogWarning("[TutorialUI] GridVisualizer에 유효한 GridCell이 없음");
+                return;
+            }
+
+            // 바운딩 박스의 중심 계산
+            Vector3 worldCenter = (minWorld + maxWorld) / 2f;
+
+            // 월드 좌표를 스크린 좌표로 변환
+            Camera cam = Camera.main;
+            if (cam == null)
+            {
+                Debug.LogError("[TutorialUI] Main Camera를 찾을 수 없음");
+                return;
+            }
+
+            // 하이라이트 캔버스 가져오기
+            Canvas highlightCanvas = highlightRect.GetComponentInParent<Canvas>();
+            if (highlightCanvas == null)
+            {
+                Debug.LogError("[TutorialUI] highlightRect의 부모 Canvas를 찾을 수 없음!");
+                return;
+            }
+
+            // 중심점 스크린 좌표
+            Vector2 screenCenter = cam.WorldToScreenPoint(worldCenter);
+
+            // 캔버스 로컬 좌표로 변환
+            RectTransform canvasRect = highlightCanvas.GetComponent<RectTransform>();
+            Vector2 localPoint;
+            Camera canvasCam = highlightCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : highlightCanvas.worldCamera;
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                highlightRect.parent as RectTransform,
+                screenCenter,
+                canvasCam,
+                out localPoint);
+
+            // 위치 설정 (offset 적용)
+            highlightRect.anchoredPosition = localPoint + offset;
+
+            // 크기 설정
+            if (size != Vector2.zero)
+            {
+                highlightRect.sizeDelta = size;
+            }
+            else
+            {
+                // 월드 크기를 스크린 크기로 변환
+                Vector2 screenMin = cam.WorldToScreenPoint(minWorld);
+                Vector2 screenMax = cam.WorldToScreenPoint(maxWorld);
+                Vector2 screenSize = screenMax - screenMin;
+
+                // 캔버스 스케일 보정
+                Vector3 canvasScale = canvasRect.lossyScale;
+                highlightRect.sizeDelta = new Vector2(
+                    screenSize.x / canvasScale.x,
+                    screenSize.y / canvasScale.y);
             }
 
             highlightObject.SetActive(true);
@@ -400,6 +654,26 @@ namespace Tutorial
                 if (found != null)
                 {
                     return found;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// UnitId로 UI 오브젝트 찾기 (DraggableGridUnitUi 검색)
+        /// </summary>
+        private GameObject FindUIObjectByUnitId(int unitId)
+        {
+            if (unitId <= 0) return null;
+
+            // DraggableGridUnitUi 컴포넌트를 가진 오브젝트 중 UnitId가 일치하는 것 찾기
+            var draggableUnits = FindObjectsByType<DraggableGridUnitUi>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            foreach (var unit in draggableUnits)
+            {
+                if (unit.UnitId == unitId)
+                {
+                    return unit.gameObject;
                 }
             }
 
