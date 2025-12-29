@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Tutorial;
 
 public class GameManager : MonoBehaviour
 {
@@ -23,11 +24,22 @@ public class GameManager : MonoBehaviour
 
     public float SchedulerTime => timeScheduler.ElapsedTime;
 
-
+    private void Awake()
+    {
+        // GameEvents에 등록
+        GameEvents.GameManager = this;
+    }
 
     private void Start()
     {
         Reset();
+    }
+
+    private void OnDestroy()
+    {
+        // GameEvents에서 해제
+        if (GameEvents.GameManager == this)
+            GameEvents.GameManager = null;
     }
 
     private void Update()

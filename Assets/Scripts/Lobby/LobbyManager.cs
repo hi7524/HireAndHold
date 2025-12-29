@@ -89,7 +89,7 @@ public class LobbyManager : MonoBehaviour
     public void OnClickedStageButton()
     {
         // 튜토리얼에 버튼 터치 알림
-        TutorialManager.Instance?.NotifyButtonTouched("StageButton");
+        TutorialManager.Instance?.NotifyButtonTouched(TutorialButtons.StageButton);
 
         windowManager.Open(Windows.Stage);
     }

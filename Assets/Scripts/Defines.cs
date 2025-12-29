@@ -65,3 +65,42 @@ public enum ProjectileType
     Default = 0,
     Bow = 1,
 }
+
+/// <summary>
+/// 튜토리얼 조건 키
+/// </summary>
+public static class TutorialConditions
+{
+    public const string STAGE_BUFF = "STAGE_BUFF";
+    public const string COMPLETE_BUFF = "COMPLETE_BUFF";
+    public const string FIRST_EXP = "FIRST_EXP";
+    public const string DUNGEON_TAB_FIRST_ENTER = "DUNGEON_TAB_FIRST_ENTER";
+    public const string DUNGEON_STAGE_FIRST_ENTER = "DUNGEON_STAGE_FIRST_ENTER";
+}
+
+/// <summary>
+/// 튜토리얼 버튼 이름
+/// </summary>
+public static class TutorialButtons
+{
+    public const string LobbyButton = "LobbyButton";
+    public const string StartButton = "StartButton";
+    public const string StageButton = "StageButton";
+    public const string HomeButton = "HomeButton";
+    public const string DungeonEnterButton = "DungeonEnterButton";
+}
+
+/// <summary>
+/// 튜토리얼 시퀀스 ID
+/// </summary>
+public static class TutorialSequenceIds
+{
+    public const string Stage1Clear = "forced_03_stage1clear";
+    public const string LobbyTutorial = "forced_05_lobbytutorial";
+    public const string Gacha = "forced_05_gacha";
+    public const string GachaPart2 = "forced_05_gacha_part2";
+    public const string EnhanceTutorial = "enhance_tutorial";
+    public const string EnhancePart2 = "enhance_part2";
+    public const string DungeonTutorial = "dungeon_tutorial";
+    public const string DungeonPart2 = "dungeon_part2";
+}

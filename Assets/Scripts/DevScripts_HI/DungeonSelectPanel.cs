@@ -60,7 +60,7 @@ public class DungeonSelectPanel : MonoBehaviour
     {
         Debug.Log("[DungeonSelectPanel] CheckAndStartDungeonTutorialAsync 시작");
 
-        bool isDungeonTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted("dungeon_tutorial");
+        bool isDungeonTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.DungeonTutorial);
         Debug.Log($"[DungeonSelectPanel] dungeon_tutorial 완료 여부: {isDungeonTutorialCompleted}");
 
         // 던전 튜토리얼이 아직 완료되지 않았으면 튜토리얼 시작
@@ -72,9 +72,9 @@ public class DungeonSelectPanel : MonoBehaviour
             Debug.Log($"[DungeonSelectPanel] TutorialManager.Instance: {TutorialManager.Instance}");
             Debug.Log($"[DungeonSelectPanel] TutorialManager.IsPlaying: {TutorialManager.Instance?.IsPlaying}");
             Debug.Log("[DungeonSelectPanel] 던전 튜토리얼 시작 - DUNGEON_TAB_FIRST_ENTER 조건 알림");
-            TutorialManager.Instance?.NotifyConditionMet("DUNGEON_TAB_FIRST_ENTER");
+            TutorialManager.Instance?.NotifyConditionMet(TutorialConditions.DUNGEON_TAB_FIRST_ENTER);
         }
-        
+
     }
 
     private void OnDisable()

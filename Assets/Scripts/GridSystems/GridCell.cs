@@ -394,14 +394,8 @@ public class GridCell : MonoBehaviour, IDroppable
     /// </summary>
     private void NotifyTutorialDragComplete()
     {
-        if (TutorialManager.Instance == null)
-            return;
-
-        // 현재 튜토리얼이 진행 중이면 드래그 완료 알림
-        if (TutorialManager.Instance.IsPlaying)
-        {
-            TutorialManager.Instance.NotifyDragComplete(null, null);
-        }
+        // 이벤트 발생 (TutorialManager가 구독해서 처리)
+        GameEvents.RaiseDragCompleted(null, null);
     }
 
     public void ClearObject()

@@ -37,13 +37,13 @@ public class GenericWindow : MonoBehaviour
     private async UniTaskVoid CheckDungeonTutorialAsync()
     {
         // 던전 튜토리얼이 아직 완료되지 않았으면 튜토리얼 시작
-        if (!DatabaseManager.Instance.IsTutorialSequenceCompleted("dungeon_tutorial"))
+        if (!DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.DungeonTutorial))
         {
             // 윈도우 열리는 애니메이션 대기
             await UniTask.Delay(TimeSpan.FromSeconds(0.3f), ignoreTimeScale: true);
 
             Debug.Log("[GenericWindow] 던전 튜토리얼 시작 - DUNGEON_TAB_FIRST_ENTER 조건 알림");
-            TutorialManager.Instance?.NotifyConditionMet("DUNGEON_TAB_FIRST_ENTER");
+            TutorialManager.Instance?.NotifyConditionMet(TutorialConditions.DUNGEON_TAB_FIRST_ENTER);
         }
     }
 

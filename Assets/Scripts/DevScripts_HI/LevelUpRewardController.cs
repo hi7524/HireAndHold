@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using TMPro;
+using Tutorial;
 
 public class LevelUpRewardController : MonoBehaviour
 {
@@ -229,15 +230,15 @@ public class LevelUpRewardController : MonoBehaviour
         SetActiveCards(unitCardUIs, false);
         uiManager.SetGameControllBtnsActive(false);
 
-        // 701, 702, 703 스테이지(튜토리얼)에서는 패시브 스킬 뽑기 비활성화
+        // TutorialOverrides에서 스테이지별 보상 옵션 조회
         int currentStageId = stageManager != null ? stageManager.CurrentStageId : 0;
-        bool isTutorialStage = currentStageId == 701 || currentStageId == 702 || currentStageId == 703;
+        var rewardOptions = GameEvents.GetRewardOptions?.Invoke(currentStageId) ?? RewardOptions.Default;
 
         // 그리드가 꽉 차있고 모든 유닛이 2성 이상이면 무조건 스킬 뽑기
         bool forceSkillDraw = ShouldForceSkillDraw();
 
-        // 강제 스킬 뽑기 조건이거나 플레이어 레벨이 3의 배수일 때 스킬 뽑기 (튜토리얼 스테이지 제외)
-        if (!isTutorialStage && (forceSkillDraw || playerExp.Level % 3 == 0))
+        // 강제 스킬 뽑기 조건이거나 플레이어 레벨이 3의 배수일 때 스킬 뽑기 (패시브 스킬 비활성화 스테이지 제외)
+        if (!rewardOptions.DisablePassiveSkillDraw && (forceSkillDraw || playerExp.Level % 3 == 0))
         {
             DrawPassiveSkills();
             SetActiveCards(skillCardUIs, true);
@@ -516,8 +517,11 @@ public class LevelUpRewardController : MonoBehaviour
     {
         List<int> tempList;
 
-        // 1스테이지(701)이면 고정 유닛 순서 사용
-        if (stageManager != null && stageManager.CurrentStageId == 701)
+        // TutorialOverrides에서 고정 유닛 순서 사용 여부 조회
+        int currentStageId = stageManager != null ? stageManager.CurrentStageId : 0;
+        bool useFixedOrder = GameEvents.ShouldUseFixedUnitOrder?.Invoke(currentStageId) ?? false;
+
+        if (useFixedOrder)
         {
             tempList = new List<int>(TutorialFixedUnitIds);
         }

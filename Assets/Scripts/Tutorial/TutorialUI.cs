@@ -355,20 +355,51 @@ namespace Tutorial
         {
             if (string.IsNullOrEmpty(objectName)) return null;
 
-            // 1. Registry에서 검색 (O(1))
+            // 1. Registry에서 검색 (O(1)) - 권장 방식
             var registered = TutorialTargetRegistry.Get(objectName);
             if (registered != null)
             {
                 return registered;
             }
 
-            // 2. 이름으로 직접 검색 (폴백)
-            var allObjects = Resources.FindObjectsOfTypeAll<RectTransform>();
-            foreach (var obj in allObjects)
+            // 2. GameObject.Find로 활성 오브젝트 검색 (폴백)
+            var foundByName = GameObject.Find(objectName);
+            if (foundByName != null)
             {
-                if (obj.gameObject.scene.IsValid() && obj.name == objectName)
+                return foundByName;
+            }
+
+            // 3. 비활성 오브젝트 포함 검색 (최후의 수단)
+            // FindAnyObjectByType은 타입 기반이므로 이름 매칭을 위해 Canvas 하위 순회
+            var canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var canvas in canvases)
+            {
+                var found = FindInChildren(canvas.transform, objectName);
+                if (found != null)
                 {
-                    return obj.gameObject;
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 자식 오브젝트에서 이름으로 검색 (비활성 포함)
+        /// </summary>
+        private GameObject FindInChildren(Transform parent, string objectName)
+        {
+            if (parent.name == objectName)
+            {
+                return parent.gameObject;
+            }
+
+            foreach (Transform child in parent)
+            {
+                var found = FindInChildren(child, objectName);
+                if (found != null)
+                {
+                    return found;
                 }
             }
 

@@ -236,8 +236,8 @@ public class UnitSellZone : MonoBehaviour, IDroppable
         HandleGridUnitDrop(unit);
         PlaySellSound();
 
-        // 튜토리얼 드래그 완료 알림
-        TutorialManager.Instance?.NotifyDragComplete("PlacedUnit", "UnitSellZone");
+        // 이벤트 발생 (TutorialManager가 구독해서 처리)
+        GameEvents.RaiseDragCompleted("PlacedUnit", "UnitSellZone");
     }
 
     // GridUnit 드롭 처리

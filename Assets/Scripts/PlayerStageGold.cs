@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using Tutorial;
 
 public class PlayerStageGold : MonoBehaviour
 {
@@ -9,10 +10,22 @@ public class PlayerStageGold : MonoBehaviour
 
     public event Action OnChangeGold;
 
+    private void Awake()
+    {
+        // GameEvents에 등록
+        GameEvents.PlayerGold = this;
+    }
 
     public void Start()
     {
         uiManager.UpdateCreditText(Credit);
+    }
+
+    private void OnDestroy()
+    {
+        // GameEvents에서 해제
+        if (GameEvents.PlayerGold == this)
+            GameEvents.PlayerGold = null;
     }
 
     public void AddCredit(int amount)

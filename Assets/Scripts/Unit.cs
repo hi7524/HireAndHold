@@ -162,7 +162,7 @@ public class Unit : MonoBehaviour
     // 유닛 ID 설정 및 데이터 로드
     public void SetUnitID(int ID)
     {
-        IsInitialized = false;  
+        IsInitialized = false;
 
         UnitID = ID;
         BaseCharacterID = ID;
@@ -175,16 +175,17 @@ public class Unit : MonoBehaviour
             return;
         }
 
-        SetStats();             
-        SetSkills();         
-        ApplyEnforceBonus();    
-        SetVisualPrefab();    
-
-        IsInitialized = true;
         SetStats();
         SetSkills();
         ApplyEnforceBonus();
-        SetVisualPrefab();
+
+        // Preview 유닛은 비주얼 생성하지 않음 (로비에서 유닛이 보이는 문제 방지)
+        if (!IsPreview)
+        {
+            SetVisualPrefab();
+        }
+
+        IsInitialized = true;
     }
 
 
