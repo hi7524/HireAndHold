@@ -28,6 +28,13 @@ public class DailyRewardPanel : MonoBehaviour
             return;
         }
 
+        // 28일 이후에는 인터랙티브 영역 비활성화
+        if (DateTime.Now.Day > 28)
+        {
+            interactiveAreaObj.SetActive(false);
+            return;
+        }
+
         // 오늘 보상을 받았는지 체크
         bool hasClaimed = DatabaseManager.Instance.HasClaimedToday();
         interactiveAreaObj.SetActive(!hasClaimed);
@@ -45,10 +52,6 @@ public class DailyRewardPanel : MonoBehaviour
         await DatabaseManager.Instance.WaitForInitializationAsync();
 
         DateTime now = DateTime.Now;
-
-        // 28일 체크 시스템이므로 28일 초과면 리턴
-        if (now.Day > 28)
-            return;
 
         // 현재 월의 각 날짜 상태 표시
         for (int day = 1; day <= 28; day++)
@@ -73,9 +76,10 @@ public class DailyRewardPanel : MonoBehaviour
                 }
             }
 
-            if (day < now.Day)
+            // 28일 초과인 경우 과거 날짜만 표시
+            if (now.Day > 28)
             {
-                // 과거 날짜
+                // 과거 날짜만 표시 (받았는지 여부)
                 if (DatabaseManager.Instance.HasClaimedOnDate(dateToCheck))
                 {
                     slots[slotIndex].MarkAsClaimed();
@@ -85,17 +89,33 @@ public class DailyRewardPanel : MonoBehaviour
                     slots[slotIndex].MarkAsMissed();
                 }
             }
-            else if (day == now.Day)
+            else
             {
-                // 오늘 날짜
-                slots[slotIndex].MarkAsToday();
-
-                if (DatabaseManager.Instance.HasClaimedToday())
+                // 28일 이하인 경우 정상 로직
+                if (day < now.Day)
                 {
-                    slots[slotIndex].MarkAsClaimed();
+                    // 과거 날짜
+                    if (DatabaseManager.Instance.HasClaimedOnDate(dateToCheck))
+                    {
+                        slots[slotIndex].MarkAsClaimed();
+                    }
+                    else
+                    {
+                        slots[slotIndex].MarkAsMissed();
+                    }
                 }
+                else if (day == now.Day)
+                {
+                    // 오늘 날짜
+                    slots[slotIndex].MarkAsToday();
+
+                    if (DatabaseManager.Instance.HasClaimedToday())
+                    {
+                        slots[slotIndex].MarkAsClaimed();
+                    }
+                }
+                // 미래 날짜는 기본 상태(잠김)
             }
-            // 미래 날짜는 기본 상태(잠김)
         }
     }
 
