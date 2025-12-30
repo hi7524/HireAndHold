@@ -1,5 +1,5 @@
 using System;
-using System.Collections;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -30,6 +30,10 @@ namespace Tutorial
         [SerializeField] private GameObject handGuideObject;
         [SerializeField] private RectTransform handGuideRect;
         [SerializeField] private Animator handGuideAnimator;
+        [SerializeField] private float dragGuideDuration = 1f;
+        [SerializeField] private float dragGuideDelay = 0.3f;
+
+        private CancellationTokenSource dragGuideCts;
 
         [Header("타이핑 설정")]
         [SerializeField] private float typingSpeed = 0.05f;
@@ -793,6 +797,8 @@ namespace Tutorial
         {
             if (handGuideObject == null) return;
 
+            StopDragGuide();
+
             // 하이라이트 위치 기준으로 배치
             if (highlightRect != null && handGuideRect != null)
             {
@@ -810,10 +816,78 @@ namespace Tutorial
         }
 
         /// <summary>
+        /// 드래그 가이드 표시 (하이라이트1에서 하이라이트2로 이동)
+        /// </summary>
+        public void ShowDragGuide(Vector2 offset1, Vector2 offset2)
+        {
+            if (handGuideObject == null) return;
+            if (highlightRect == null || highlightRect2 == null) return;
+
+            StopDragGuide();
+
+            handGuideObject.SetActive(true);
+            dragGuideCts = new CancellationTokenSource();
+            DragGuideAsync(offset1, offset2, dragGuideCts.Token).Forget();
+        }
+
+        private async UniTaskVoid DragGuideAsync(Vector2 offset1, Vector2 offset2, CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                // 시작 위치 (하이라이트1)
+                Vector3 startPos = highlightRect.position;
+                startPos += (Vector3)offset1;
+
+                // 끝 위치 (하이라이트2)
+                Vector3 endPos = highlightRect2.position;
+                endPos += (Vector3)offset2;
+
+                // 시작 위치로 이동
+                handGuideRect.position = startPos;
+
+                // 애니메이션 트리거
+                if (handGuideAnimator != null)
+                {
+                    handGuideAnimator.SetTrigger("Show");
+                }
+
+                // 잠시 대기
+                await UniTask.Delay(TimeSpan.FromSeconds(dragGuideDelay), ignoreTimeScale: true, cancellationToken: ct);
+
+                // 하이라이트1에서 하이라이트2로 이동
+                float elapsed = 0f;
+                while (elapsed < dragGuideDuration && !ct.IsCancellationRequested)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    float t = Mathf.SmoothStep(0f, 1f, elapsed / dragGuideDuration);
+                    handGuideRect.position = Vector3.Lerp(startPos, endPos, t);
+                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                }
+
+                handGuideRect.position = endPos;
+
+                // 끝에서 잠시 대기 후 반복
+                await UniTask.Delay(TimeSpan.FromSeconds(dragGuideDelay), ignoreTimeScale: true, cancellationToken: ct);
+            }
+        }
+
+        private void StopDragGuide()
+        {
+            if (dragGuideCts != null)
+            {
+                dragGuideCts.Cancel();
+                dragGuideCts.Dispose();
+                dragGuideCts = null;
+            }
+        }
+
+        /// <summary>
         /// 손가락 가이드 숨기기
         /// </summary>
         public void HideHandGuide()
         {
+            StopDragGuide();
+
             if (handGuideObject != null)
             {
                 handGuideObject.SetActive(false);

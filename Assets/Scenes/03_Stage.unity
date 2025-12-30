@@ -6937,7 +6937,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bgmSource: {fileID: 1054146663}
   sfxSource: {fileID: 1054146662}
+  voiceSource: {fileID: 0}
   audioMixer: {fileID: 24100000, guid: 9cd25b4508f69db4da06551b1d604ff8, type: 2}
+  sfxMixerGroup: {fileID: 0}
   bgmVolume: 1
   sfxVolume: 1
 --- !u!4 &1054146661
@@ -9864,8 +9866,12 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7339608508676711318, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: ac088dd1bf28a4b838bba92f9cf820e5, type: 3}
+    - target: {fileID: 7339608508676711318, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
       propertyPath: m_Color.a
-      value: 0
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 7943283425045450266, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
       propertyPath: m_AnchorMax.y
@@ -9894,9 +9900,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 3193275699268992714, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
+    - {fileID: 3601954624953122194, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 3218912319362140124, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}
-      insertIndex: 2
+      insertIndex: -1
       addedObject: {fileID: 1274406712}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bca9691139b6aa24eb9dbd098140e0bb, type: 3}

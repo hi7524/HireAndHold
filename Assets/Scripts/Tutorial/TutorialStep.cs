@@ -113,6 +113,15 @@ namespace Tutorial
         [Tooltip("손가락 가이드 위치 오프셋")]
         public Vector2 handGuideOffset;
 
+        [Tooltip("드래그 가이드 사용 (하이라이트1 → 하이라이트2 이동 애니메이션)")]
+        public bool showDragGuide;
+
+        [Tooltip("드래그 가이드 시작점 오프셋")]
+        public Vector2 dragGuideOffset1;
+
+        [Tooltip("드래그 가이드 끝점 오프셋")]
+        public Vector2 dragGuideOffset2;
+
         [Header("진행 조건")]
         [Tooltip("다음 스텝으로 넘어가는 조건")]
         public TutorialActionType actionType = TutorialActionType.Touch;

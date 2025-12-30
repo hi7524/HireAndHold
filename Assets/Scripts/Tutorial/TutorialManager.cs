@@ -743,7 +743,12 @@ namespace Tutorial
             }
 
             // 손가락 가이드 표시
-            if (step.showHandGuide)
+            if (step.showDragGuide)
+            {
+                // 드래그 가이드 (하이라이트1 → 하이라이트2 이동)
+                tutorialUI.ShowDragGuide(step.dragGuideOffset1, step.dragGuideOffset2);
+            }
+            else if (step.showHandGuide)
             {
                 tutorialUI.ShowHandGuide(step.handGuideOffset);
             }
@@ -945,6 +950,15 @@ namespace Tutorial
 
             DebugLog($"스텝 완료: {step.stringId}");
 
+            // UI 먼저 숨기기 (딜레이 방지)
+            if (tutorialUI != null)
+            {
+                tutorialUI.HideDialog();
+                tutorialUI.HideHighlight();
+                tutorialUI.HideHighlight2();
+                tutorialUI.HideHandGuide();
+            }
+
             // 보상 지급
             if (step.reward != null && step.reward.HasReward)
             {
@@ -956,14 +970,6 @@ namespace Tutorial
             await DatabaseManager.Instance.UpdateTutorialStepAsync(currentStepIndex, isCheckpoint);
 
             OnStepComplete?.Invoke(step);
-
-            // UI 숨기기
-            if (tutorialUI != null)
-            {
-                tutorialUI.HideDialog();
-                tutorialUI.HideHighlight();
-                tutorialUI.HideHandGuide();
-            }
 
             // 다음 스텝으로
             currentStepIndex++;

@@ -364,7 +364,7 @@ public class UnitEquipUI : MonoBehaviour
 
         if (arrow != null)
         {
-            StartCoroutine(AnimateArrow(arrow));
+            AnimateArrowAsync(arrow).Forget();
         }
         else
         {
@@ -373,9 +373,9 @@ public class UnitEquipUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 화살표 위아래 애니메이션 코루틴
+    /// 화살표 위아래 애니메이션
     /// </summary>
-    private System.Collections.IEnumerator AnimateArrow(Transform arrow)
+    private async UniTaskVoid AnimateArrowAsync(Transform arrow)
     {
         Vector3 originalPosition = arrow.localPosition;
         float animationSpeed = 2f; // 애니메이션 속도 (높을수록 빠름)
@@ -385,7 +385,7 @@ public class UnitEquipUI : MonoBehaviour
         {
             float offset = Mathf.Sin(Time.time * animationSpeed) * moveDistance;
             arrow.localPosition = originalPosition + new Vector3(0, offset, 0);
-            yield return null;
+            await UniTask.Yield();
         }
 
         // 애니메이션 종료 시 원래 위치로 복귀
