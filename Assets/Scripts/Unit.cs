@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -284,12 +284,19 @@ public class Unit : MonoBehaviour
 
         // NORMAL 강화 효과 적용
         int enforceLv = character.enforceLevel;
-        if (enforceLv > 0 && NormalEnforceSystem.SharedTable != null)
+        if (enforceLv > 0)
         {
+            var normalTable = DataTableManager.NormalEnforceTable;
+            if (normalTable == null)
+            {
+                Debug.LogError("[Unit] normalEnforceTable is null");
+                return;
+            }
+
             float totalAtkUp = 0f;
             int rank = unitData.RANK;
 
-            foreach (var kv in NormalEnforceSystem.SharedTable.All)
+            foreach (var kv in normalTable.All)
             {
                 var data = kv.Value;
                 if (data.Class == rank && data.Normal_Enforce_LV <= enforceLv)
@@ -301,6 +308,7 @@ public class Unit : MonoBehaviour
             attackDamage.RemoveModifiersBySource("NormalEnforce");
             attackDamage.AddModifier(new StatModifier(totalAtkUp, ModifierType.Flat, "NormalEnforce"));
         }
+
 
         // HERO 강화 효과 적용 (모든 레벨 누적)
         int heroLv = character.heroEnforceLevel;
@@ -389,6 +397,14 @@ public class Unit : MonoBehaviour
                 heroSkillCooltimeBonus *= effect.CoolTime_Down;
             }
         }
+    }
+
+    public void RefreshEnforceBonus()
+    {
+        if (unitData == null)
+            return;
+
+        ApplyEnforceBonus();
     }
     // 유닛 데이터에서 스킬 로드 및 추가
     private void SetSkills()

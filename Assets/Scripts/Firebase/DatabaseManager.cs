@@ -45,8 +45,11 @@ public class DatabaseManager : MonoBehaviour
         database = new Database();
         database.Initialize();
 
+        await DataTableManager.InitAsync();
+
         isInitialized = true;
     }
+
 
     public async UniTask WaitForInitializationAsync()
     {

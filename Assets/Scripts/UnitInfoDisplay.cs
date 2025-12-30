@@ -304,7 +304,8 @@ public class UnitInfoDisplay : MonoBehaviour
             int rank = starUnitData.RANK;
             int enforceLv = character.enforceLevel;
 
-            var table = NormalEnforceSystem.SharedTable;
+            var table = DataTableManager.NormalEnforceTable;
+
             if (table != null)
             {
                 foreach (var kv in table.All)

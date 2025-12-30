@@ -47,6 +47,8 @@ public class BattleUnitManager : MonoBehaviour
 
         activeUnits.Add(unit);
 
+        unit.RefreshEnforceBonus();
+
         if (buffManager != null)
         {
             ApplyBuffToUnit(unit, buffManager.GlobalBuffPercentage);
@@ -55,6 +57,7 @@ public class BattleUnitManager : MonoBehaviour
         if (passiveSkillManager != null)
             ApplyPassiveToUnit(unit, passiveSkillManager.GetCurrentEffects());
     }
+
 
     public void UnregisterUnit(Unit unit)
     {

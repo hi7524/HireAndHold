@@ -8,14 +8,14 @@ public class NormalEnforceSystem
     private readonly BattleUnitManager battleUnitManager;
     private readonly DataTable_NormalEnforce enforceTable;
     private readonly DataTable_Unit unitTable;
-    public static DataTable_NormalEnforce SharedTable;
+    //public static DataTable_NormalEnforce SharedTable;
 
     public NormalEnforceSystem(BattleUnitManager battleUnitManager, DataTable_NormalEnforce enforceTable, DataTable_Unit unitTable)
     {
         this.battleUnitManager = battleUnitManager;
         this.enforceTable = enforceTable;
         this.unitTable = unitTable;
-        SharedTable = enforceTable;
+        //SharedTable = enforceTable;
     }
 
     private bool TryGetEnforceData(int classNum, int level, out DataTable_NormalEnforce.NormalEnforceData result)
@@ -205,14 +205,14 @@ public class NormalEnforceSystem
         if (unit == null)
         {
             Debug.LogWarning("[NormalEnforceSystem] GetNextAttack: unit is null");
-            return 0;
+            return 0f;
         }
 
         var unitData = unit.GetUnitData();
         if (unitData == null)
         {
             Debug.LogWarning($"[NormalEnforceSystem] GetNextAttack: unitData is null for unit {unit.UnitID}");
-            return 0;
+            return 0f;
         }
 
         // DatabaseManager null 체크
@@ -225,10 +225,8 @@ public class NormalEnforceSystem
         // 기본 공격력
         float baseAtk = unitData.ATTACK;
 
-        // 현재 강화 레벨
+        // 캐릭터 데이터
         var character = DatabaseManager.Instance.GetCharacter(unit.UnitID.ToString());
-
-        // Character null 체크
         if (character == null)
         {
             Debug.LogWarning($"[NormalEnforceSystem] GetNextAttack: character is null for unit {unit.UnitID}");
@@ -238,63 +236,45 @@ public class NormalEnforceSystem
         int currLv = character.enforceLevel;
         int rank = unitData.RANK;
 
-        // SharedTable null 체크
-        if (SharedTable == null)
+        var table = DataTableManager.NormalEnforceTable;
+        if (table == null || table.All == null)
         {
-            Debug.LogError("[NormalEnforceSystem] GetNextAttack: SharedTable is null");
-            return baseAtk;
-        }
-
-        if (SharedTable.All == null)
-        {
-            Debug.LogError("[NormalEnforceSystem] GetNextAttack: SharedTable.All is null");
+            Debug.LogError("[NormalEnforceSystem] GetNextAttack: NormalEnforceTable not loaded");
             return baseAtk;
         }
 
         float totalAtkUp = 0f;
 
         // 1 ~ 현재 강화 레벨까지 누적 공격력
-        try
+        foreach (var kv in table.All)
         {
-            foreach (var kv in SharedTable.All)
-            {
-                if (kv.Value == null) continue;
+            var d = kv.Value;
+            if (d == null) continue;
 
-                var d = kv.Value;
-                if (d.Class == rank && d.Normal_Enforce_LV <= currLv)
-                    totalAtkUp += d.AttackUp;
+            if (d.Class == rank && d.Normal_Enforce_LV <= currLv)
+            {
+                totalAtkUp += d.AttackUp;
             }
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[NormalEnforceSystem] GetNextAttack: Error calculating totalAtkUp - {ex.Message}");
-            return baseAtk;
         }
 
         float currAtk = baseAtk + totalAtkUp;
 
-        // 다음 레벨 강화 데이터 찾기
+        // 다음 레벨 강화 공격력
         float nextAtkUp = 0f;
-        try
+        foreach (var kv in table.All)
         {
-            foreach (var kv in SharedTable.All)
-            {
-                if (kv.Value == null) continue;
+            var d = kv.Value;
+            if (d == null) continue;
 
-                var d = kv.Value;
-                if (d.Class == rank && d.Normal_Enforce_LV == currLv + 1)
-                {
-                    nextAtkUp = d.AttackUp;
-                    break;
-                }
+            if (d.Class == rank && d.Normal_Enforce_LV == currLv + 1)
+            {
+                nextAtkUp = d.AttackUp;
+                break;
             }
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[NormalEnforceSystem] GetNextAttack: Error calculating nextAtkUp - {ex.Message}");
         }
 
         // 현재 공격력 + 다음 강화 효과
         return currAtk + nextAtkUp;
     }
+
 }
