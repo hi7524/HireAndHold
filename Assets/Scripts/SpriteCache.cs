@@ -21,13 +21,11 @@ public class SpriteCache : MonoBehaviour
         }
     }
 
-    // ✅ 캐시된 결과
+
     private readonly Dictionary<string, Sprite> cache = new();
 
-    // ✅ 동시 로딩 병합 (UniTask 안전)
     private readonly Dictionary<string, AsyncLazy<Sprite>> loadingTasks = new();
 
-    // ✅ 실패 키
     private readonly HashSet<string> failedKeys = new();
 
     private void Awake()
@@ -43,9 +41,7 @@ public class SpriteCache : MonoBehaviour
         }
     }
 
-    /* ===============================
-     * Public API
-     * =============================== */
+
 
     /// <summary>
     /// 스프라이트 로드 (캐시 + 병합)
@@ -117,28 +113,30 @@ public class SpriteCache : MonoBehaviour
     /// </summary>
     public int FailedCount => failedKeys.Count;
 
-    /// <summary>
-    /// 캐시 여부
-    /// </summary>
+
     public bool IsCached(string address)
     {
         return cache.ContainsKey(address);
     }
 
-    /// <summary>
-    /// 전체 캐시 제거
-    /// </summary>
+
     public void ClearCache()
     {
+        foreach (var kv in cache)
+        {
+
+            if (kv.Value != null)
+                Addressables.Release(kv.Value);
+        }
+
         cache.Clear();
         loadingTasks.Clear();
         failedKeys.Clear();
         Debug.Log("[SpriteCache] 캐시 클리어");
     }
 
-    /* ===============================
-     * Internal
-     * =============================== */
+
+
 
     private async UniTask<Sprite> LoadSpriteInternalAsync(string address)
     {
@@ -174,4 +172,14 @@ public class SpriteCache : MonoBehaviour
             }
         }
     }
+
+    public Sprite GetCachedSpriteOrNull(string address)
+    {
+        if (string.IsNullOrEmpty(address)) return null;
+        return cache.TryGetValue(address, out var s) ? s : null;
+    }
+
+    public bool IsFailed(string address) => failedKeys.Contains(address);
+
+
 }

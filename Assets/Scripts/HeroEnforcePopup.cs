@@ -128,26 +128,33 @@ public class HeroEnforcePopup : MonoBehaviour
             return;
         }
 
-        LoadUnitIconAsync().Forget();
+        //LoadUnitIconAsync().Forget();
         RefreshUI();
     }
 
-    private async UniTaskVoid LoadUnitIconAsync()
-    {
-        if (unitImage == null || unitTable == null)
-            return;
+    //private async UniTaskVoid LoadUnitIconAsync()
+    //{
+    //    if (unitImage == null || unitTable == null)
+    //        return;
 
-        var data = unitTable.Get(currentUnitId);
-        if (data == null)
-            return;
+    //    var data = unitTable.Get(currentUnitId);
+    //    if (data == null)
+    //        return;
 
-        var sprite = await SpriteCache.Instance.LoadSpriteAsync(data.UNIT_ICON);
-        if (unitImage != null && sprite != null)
-            unitImage.sprite = sprite;
-    }
+    //    var sprite = await SpriteCache.Instance.LoadSpriteAsync(data.UNIT_ICON);
+    //    if (unitImage != null && sprite != null)
+    //        unitImage.sprite = sprite;
+    //}
 
     private void RefreshUI()
     {
+        var data = unitTable.Get(currentUnitId);
+        if (data != null && unitImage != null)
+        {
+            var sp = SpriteCache.Instance.GetCachedSpriteOrNull(data.UNIT_ICON);
+            if (sp != null) unitImage.sprite = sp;
+        }
+
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
         if (character == null)
             return;
@@ -232,10 +239,10 @@ public class HeroEnforcePopup : MonoBehaviour
 
     private void OnConfirmClicked()
     {
-        TryEnforce().Forget();
+        _ = TryEnforceAsync();
     }
 
-    private async UniTaskVoid TryEnforce()
+    private async UniTask TryEnforceAsync()
     {
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
         if (character == null)
@@ -244,19 +251,15 @@ public class HeroEnforcePopup : MonoBehaviour
             return;
         }
 
-        if (currentPreviewUnit == null)
+        if (currentPreviewUnit == null || !currentPreviewUnit.IsInitialized)
         {
-            popupManager?.ShowAlert("유닛 데이터를 불러올 수 없습니다.");
+            popupManager?.ShowAlert("유닛 데이터 준비 중입니다.");
             return;
         }
 
         int beforeLv = character.heroEnforceLevel;
 
         bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
-
-        PlayData.SyncCharactersFromDatabase();
-        PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
-
         if (!ok)
         {
             popupManager?.ShowAlert("재료 부족!");
@@ -264,12 +267,9 @@ public class HeroEnforcePopup : MonoBehaviour
         }
 
         PlayData.SyncCharactersFromDatabase();
+        PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
 
-        if (mainUI != null)
-        {
-            mainUI.RefreshUI();
-        }
-
+        mainUI?.RefreshUI();
         RefreshUI();
 
         var updatedChar = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
@@ -279,17 +279,14 @@ public class HeroEnforcePopup : MonoBehaviour
         var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
         var desc = effectTable.FormatEffect(effData);
 
-        // ⭐ 별 효과와 성공 메시지를 동시에 시작
-        if (successEffect != null)
-        {
-            successEffect.PlayEffect().Forget(); // 별 효과는 백그라운드에서 재생
-        }
+        successEffect?.PlayEffect().Forget();
 
         popupManager?.ShowSuccess(
             "영웅 강화 성공!",
             $"★{beforeLv} → ★{afterLv}\n효과: {desc}"
         );
     }
+
 
     private void RefreshCostUI()
     {

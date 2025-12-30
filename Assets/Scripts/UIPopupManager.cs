@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using Cysharp.Threading.Tasks;
 
 public class UIPopupManager : MonoBehaviour
 {
@@ -23,7 +24,7 @@ public class UIPopupManager : MonoBehaviour
     [SerializeField] private Button confirmYes;
     [SerializeField] private Button confirmNo;
 
-    private bool isInitialized = false;
+    private bool isInitialized;
     private Action currentAlertCallback;
     private Action currentConfirmCallback;
 
@@ -37,7 +38,6 @@ public class UIPopupManager : MonoBehaviour
         if (isInitialized)
             return;
 
-        // Alert 초기화
         if (alertRoot != null)
             alertRoot.SetActive(false);
 
@@ -47,7 +47,6 @@ public class UIPopupManager : MonoBehaviour
             alertOk.onClick.AddListener(OnAlertOkClicked);
         }
 
-        // Success 초기화
         if (successRoot != null)
             successRoot.SetActive(false);
 
@@ -61,7 +60,6 @@ public class UIPopupManager : MonoBehaviour
             });
         }
 
-        // Confirm 초기화
         if (confirmRoot != null)
             confirmRoot.SetActive(false);
 
@@ -80,18 +78,18 @@ public class UIPopupManager : MonoBehaviour
         isInitialized = true;
     }
 
-    /// <summary>
-    /// 기본 알림 팝업 (콜백 없음)
-    /// </summary>
+
     public void ShowAlert(string message)
     {
-        ShowAlert(message, null);
+        _ = ShowAlertAsync(message, null);
     }
 
-    /// <summary>
-    /// 알림 팝업 (콜백 있음)
-    /// </summary>
     public void ShowAlert(string message, Action onOk)
+    {
+        _ = ShowAlertAsync(message, onOk);
+    }
+
+    public async UniTask ShowAlertAsync(string message, Action onOk = null)
     {
         if (!isInitialized)
             Initialize();
@@ -102,13 +100,29 @@ public class UIPopupManager : MonoBehaviour
             alertMessage.text = message;
 
         if (alertRoot != null)
+        {
             alertRoot.SetActive(true);
+            ForceImmediateUIUpdate(alertRoot);
+        }
+
+        await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
     }
 
-    /// <summary>
-    /// 성공 팝업
-    /// </summary>
+    private void OnAlertOkClicked()
+    {
+        if (alertRoot != null)
+            alertRoot.SetActive(false);
+
+        currentAlertCallback?.Invoke();
+        currentAlertCallback = null;
+    }
+
     public void ShowSuccess(string title, string detail)
+    {
+        _ = ShowSuccessAsync(title, detail);
+    }
+
+    public async UniTask ShowSuccessAsync(string title, string detail)
     {
         if (!isInitialized)
             Initialize();
@@ -122,22 +136,30 @@ public class UIPopupManager : MonoBehaviour
         if (successRoot != null)
         {
             successRoot.SetActive(true);
+            ForceImmediateUIUpdate(successRoot);
         }
+
+        await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
     }
 
-    /// <summary>
-    /// 확인 팝업 (예/아니오)
-    /// </summary>
+
     public void ShowConfirm(string title, string message, Action onConfirm, Action onCancel = null)
+    {
+        _ = ShowConfirmAsync(title, message, onConfirm, onCancel);
+    }
+
+    public async UniTask ShowConfirmAsync(
+        string title,
+        string message,
+        Action onConfirm,
+        Action onCancel = null)
     {
         if (!isInitialized)
             Initialize();
 
-        // Confirm 팝업이 설정되지 않았으면 Alert로 대체
         if (confirmRoot == null)
         {
-            Debug.LogWarning("[UIPopupManager] Confirm 팝업이 설정되지 않았습니다. Alert로 대체합니다.");
-            ShowAlert($"{title}\n{message}\n다시 한번 클릭하세요.", onConfirm);
+            await ShowAlertAsync($"{title}\n{message}", onConfirm);
             return;
         }
 
@@ -149,18 +171,10 @@ public class UIPopupManager : MonoBehaviour
         if (confirmMessage != null)
             confirmMessage.text = message;
 
-        if (confirmRoot != null)
-            confirmRoot.SetActive(true);
-    }
+        confirmRoot.SetActive(true);
+        ForceImmediateUIUpdate(confirmRoot);
 
-    private void OnAlertOkClicked()
-    {
-        if (alertRoot != null)
-            alertRoot.SetActive(false);
-
-        // 콜백 실행
-        currentAlertCallback?.Invoke();
-        currentAlertCallback = null;
+        await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
     }
 
     private void OnConfirmYesClicked()
@@ -168,7 +182,6 @@ public class UIPopupManager : MonoBehaviour
         if (confirmRoot != null)
             confirmRoot.SetActive(false);
 
-        // 확인 콜백 실행
         currentConfirmCallback?.Invoke();
         currentConfirmCallback = null;
     }
@@ -178,7 +191,21 @@ public class UIPopupManager : MonoBehaviour
         if (confirmRoot != null)
             confirmRoot.SetActive(false);
 
-        // 취소 콜백은 없음 (필요시 추가 가능)
         currentConfirmCallback = null;
+    }
+
+
+    private static void ForceImmediateUIUpdate(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+
+        var rect = root.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+        }
     }
 }

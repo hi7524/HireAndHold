@@ -85,17 +85,21 @@ public class NormalEnforcePopup : MonoBehaviour
         if (closeButton != null && closeButton.onClick.GetPersistentEventCount() == 0)
             SetupPopup();
 
+        if (previewUnit == null || !previewUnit.IsInitialized)
+        {
+            Debug.LogError("[NormalEnforcePopup] previewUnit not ready");
+            return;
+        }
+
         if (popupRoot != null)
             popupRoot.SetActive(true);
 
         currentUnitId = unitId;
         currentPreviewUnit = previewUnit;
 
-        Debug.Log($"[NormalEnforcePopup] Open: unitId={unitId}, 현재 골드={PlayData.Gold}, 현재 강화석={PlayData.EnhanceStone}");
-
-        LoadUnitIconAsync().Forget();
         RefreshUI();
     }
+
 
     private async UniTaskVoid LoadUnitIconAsync()
     {
@@ -115,63 +119,49 @@ public class NormalEnforcePopup : MonoBehaviour
     {
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
         if (character == null || currentPreviewUnit == null)
-        {
-            Debug.LogWarning($"[NormalEnforcePopup] RefreshUI: character or previewUnit is null");
             return;
+
+        var data = unitTable.Get(currentUnitId);
+        if (data != null && unitImage != null)
+        {
+            var sp = SpriteCache.Instance.GetCachedSpriteOrNull(data.UNIT_ICON);
+            if (sp != null) unitImage.sprite = sp;
         }
 
         int lv = character.enforceLevel;
 
-        if (levelCurrent != null)
-            levelCurrent.text = lv.ToString();
-
-        if (levelNext != null)
-            levelNext.text = lv < NORMAL_MAX ? (lv + 1).ToString() : "MAX";
+        levelCurrent.text = lv.ToString();
+        levelNext.text = lv < NORMAL_MAX ? (lv + 1).ToString() : "MAX";
 
         float currAtk = currentPreviewUnit.GetAttackDamageStat().Value;
+        powerCurrent.text = currAtk.ToString();
 
-        if (powerCurrent != null)
-            powerCurrent.text = currAtk.ToString();
-
-        if (lv < NORMAL_MAX)
-        {
-            float nextAtk = enforceSystem.GetNextAttack(currentPreviewUnit);
-            if (powerNext != null)
-                powerNext.text = nextAtk.ToString();
-        }
-        else
-        {
-            if (powerNext != null)
-                powerNext.text = "-";
-        }
+        powerNext.text = lv < NORMAL_MAX
+            ? enforceSystem.GetNextAttack(currentPreviewUnit).ToString()
+            : "-";
 
         var (goldCost, stoneCost) = enforceSystem.GetNextEnforceCost(currentPreviewUnit);
 
-        long currentGold = PlayData.Gold;
-        int currentStone = PlayData.EnhanceStone;
-
-        Debug.Log($"[NormalEnforcePopup] RefreshUI: 보유 골드={currentGold}, 필요 골드={goldCost}, 보유 강화석={currentStone}, 필요 강화석={stoneCost}");
-
-        if (stoneHave != null)
-            stoneHave.text = currentStone.ToString();
-
-        if (stoneNeed != null)
-            stoneNeed.text = stoneCost.ToString();
-
-        if (goldHave != null)
-            goldHave.text = currentGold.ToString();
-
-        if (goldNeed != null)
-            goldNeed.text = goldCost.ToString();
+        goldHave.text = PlayData.Gold.ToString();
+        goldNeed.text = goldCost.ToString();
+        stoneHave.text = PlayData.EnhanceStone.ToString();
+        stoneNeed.text = stoneCost.ToString();
     }
+
 
     private void OnConfirmClicked()
     {
-        TryEnforce().Forget();
+        _ = TryEnforceAsync();
     }
 
-    private async UniTaskVoid TryEnforce()
+    private async UniTask TryEnforceAsync()
     {
+        if (currentPreviewUnit == null || !currentPreviewUnit.IsInitialized)
+        {
+            popupManager?.ShowAlert("유닛 데이터 준비 중입니다.");
+            return;
+        }
+
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
         if (character == null)
         {
@@ -179,61 +169,35 @@ public class NormalEnforcePopup : MonoBehaviour
             return;
         }
 
-        if (currentPreviewUnit == null)
-        {
-            popupManager?.ShowAlert("유닛 데이터를 불러올 수 없습니다.");
-            return;
-        }
-
         int beforeLv = character.enforceLevel;
         int beforeAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
 
-        Debug.Log($"[NormalEnforcePopup] 강화 시도: 강화 전 레벨={beforeLv}, 공격력={beforeAtk}");
-
-        try
+        bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
+        if (!ok)
         {
-            bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
-
-            if (!ok)
-            {
-                popupManager?.ShowAlert("재료가 부족합니다.");
-                return;
-            }
-
-            character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
-
-            PlayData.SyncCharactersFromDatabase();
-            PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
-
-            int afterLv = character.enforceLevel;
-            int afterAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
-
-            Debug.Log($"[NormalEnforcePopup] 강화 성공: 강화 후 레벨={afterLv}, 공격력={afterAtk}, 남은 골드={PlayData.Gold}, 남은 강화석={PlayData.EnhanceStone}");
-
-            // ⭐ 별 효과와 성공 메시지를 동시에 시작
-            if (successEffect != null)
-            {
-                successEffect.PlayEffect().Forget(); // 별 효과는 백그라운드에서 재생
-            }
-
-            popupManager?.ShowSuccess(
-                "강화 성공",
-                $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}"
-            );
-
-            if (mainUI != null)
-            {
-                mainUI.RefreshUI();
-            }
-
-            RefreshUI();
+            popupManager?.ShowAlert("재료가 부족합니다.");
+            return;
         }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[NormalEnforcePopup] 강화 실패: {ex}");
-            popupManager?.ShowAlert("강화 중 오류가 발생했습니다.");
-        }
+
+        PlayData.SyncCharactersFromDatabase();
+        PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
+
+        character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+
+        int afterLv = character.enforceLevel;
+        int afterAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
+
+        successEffect?.PlayEffect().Forget();
+
+        popupManager?.ShowSuccess(
+            "강화 성공",
+            $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}"
+        );
+
+        mainUI?.RefreshUI();
+        RefreshUI();
     }
+
 
     private void RefreshCostUI()
     {
