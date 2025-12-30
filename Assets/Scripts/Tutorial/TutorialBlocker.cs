@@ -337,6 +337,28 @@ namespace Tutorial
             }
         }
 
+        /// <summary>
+        /// 두 번째 구멍 영역 설정
+        /// </summary>
+        public void SetHole2(RectTransform rect)
+        {
+            if (blockerHole != null)
+            {
+                blockerHole.SetHole2(rect);
+            }
+        }
+
+        /// <summary>
+        /// 두 번째 구멍 제거
+        /// </summary>
+        public void ClearHole2()
+        {
+            if (blockerHole != null)
+            {
+                blockerHole.ClearHole2();
+            }
+        }
+
         #endregion
     }
 }

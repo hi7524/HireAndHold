@@ -723,6 +723,25 @@ namespace Tutorial
                 tutorialUI.HideHighlight();
             }
 
+            // 두 번째 하이라이트 표시
+            bool hasHighlight2 = false;
+
+            if (!string.IsNullOrEmpty(step.highlightTarget2))
+            {
+                tutorialUI.ShowHighlight2(step.highlightTarget2, step.highlightOffset2, step.highlightSize2);
+                hasHighlight2 = true;
+            }
+            else if (step.highlightTilePositions2 != null && step.highlightTilePositions2.Length > 0)
+            {
+                tutorialUI.ShowHighlightAtTilePositions2(step.highlightTilePositions2, step.highlightOffset2, step.highlightSize2);
+                hasHighlight2 = true;
+            }
+
+            if (!hasHighlight2)
+            {
+                tutorialUI.HideHighlight2();
+            }
+
             // 손가락 가이드 표시
             if (step.showHandGuide)
             {

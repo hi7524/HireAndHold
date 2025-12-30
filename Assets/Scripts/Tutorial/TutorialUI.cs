@@ -18,9 +18,13 @@ namespace Tutorial
         [SerializeField] private Image characterImage;
         [SerializeField] private RectTransform dialogRect;
 
-        [Header("하이라이트")]
+        [Header("하이라이트 (첫 번째)")]
         [SerializeField] private GameObject highlightObject;
         [SerializeField] private RectTransform highlightRect;
+
+        [Header("하이라이트 (두 번째)")]
+        [SerializeField] private GameObject highlightObject2;
+        [SerializeField] private RectTransform highlightRect2;
 
         [Header("손가락 가이드")]
         [SerializeField] private GameObject handGuideObject;
@@ -552,6 +556,234 @@ namespace Tutorial
 
         #endregion
 
+        #region 두 번째 하이라이트
+
+        /// <summary>
+        /// 두 번째 하이라이트 표시
+        /// </summary>
+        public void ShowHighlight2(string targetName, Vector2 offset, Vector2 size)
+        {
+            if (string.IsNullOrEmpty(targetName)) return;
+
+            var target = FindUIObject(targetName);
+            if (target == null)
+            {
+                Debug.LogWarning($"[TutorialUI] 두 번째 하이라이트 타겟을 찾을 수 없음: {targetName}");
+                return;
+            }
+
+            ShowHighlightForTarget2(target, offset, size);
+        }
+
+        /// <summary>
+        /// 두 번째 타일 좌표 기반 하이라이트 표시
+        /// </summary>
+        public void ShowHighlightAtTilePositions2(Vector2Int[] tilePositions, Vector2 offset, Vector2 size)
+        {
+            Debug.Log($"[TutorialUI] ShowHighlightAtTilePositions2 호출 - tilePositions: {tilePositions?.Length ?? 0}개");
+
+            if (tilePositions == null || tilePositions.Length == 0)
+            {
+                Debug.LogWarning("[TutorialUI] tilePositions가 비어있음");
+                return;
+            }
+
+            if (highlightObject2 == null)
+            {
+                Debug.LogError("[TutorialUI] highlightObject2가 연결되지 않았습니다! Inspector에서 연결해주세요.");
+                return;
+            }
+
+            if (highlightRect2 == null)
+            {
+                Debug.LogError("[TutorialUI] highlightRect2가 연결되지 않았습니다! Inspector에서 연결해주세요.");
+                return;
+            }
+
+            var gridVisualizer = FindAnyObjectByType<GridVisualizer>(FindObjectsInactive.Exclude);
+            if (gridVisualizer == null)
+            {
+                Debug.LogWarning("[TutorialUI] GridVisualizer를 찾을 수 없음");
+                return;
+            }
+
+            Vector3 minWorld = Vector3.positiveInfinity;
+            Vector3 maxWorld = Vector3.negativeInfinity;
+            int validCellCount = 0;
+
+            foreach (var tilePos in tilePositions)
+            {
+                var gridCell = gridVisualizer.GetGridCellAt(tilePos);
+                if (gridCell != null)
+                {
+                    Vector3 cellPos = gridCell.transform.position;
+                    Vector3 cellScale = gridCell.transform.lossyScale;
+                    float halfWidth = cellScale.x / 2f;
+                    float halfHeight = cellScale.y / 2f;
+
+                    Vector3 cellMin = new Vector3(cellPos.x - halfWidth, cellPos.y - halfHeight, cellPos.z);
+                    Vector3 cellMax = new Vector3(cellPos.x + halfWidth, cellPos.y + halfHeight, cellPos.z);
+
+                    minWorld = Vector3.Min(minWorld, cellMin);
+                    maxWorld = Vector3.Max(maxWorld, cellMax);
+                    validCellCount++;
+                    Debug.Log($"[TutorialUI] GridCell 찾음: {tilePos} -> worldPos: {cellPos}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[TutorialUI] GridCell을 찾을 수 없음: {tilePos}");
+                }
+            }
+
+            Debug.Log($"[TutorialUI] 유효한 GridCell 개수: {validCellCount}/{tilePositions.Length}");
+
+            if (validCellCount == 0)
+            {
+                Debug.LogWarning("[TutorialUI] 유효한 GridCell을 찾을 수 없음");
+                return;
+            }
+
+            Vector3 worldCenter = (minWorld + maxWorld) / 2f;
+
+            Camera cam = Camera.main;
+            if (cam == null) return;
+
+            Canvas highlightCanvas = highlightRect2.GetComponentInParent<Canvas>();
+            if (highlightCanvas == null) return;
+
+            Vector2 screenCenter = cam.WorldToScreenPoint(worldCenter);
+            RectTransform canvasRect = highlightCanvas.GetComponent<RectTransform>();
+            Vector2 localPoint;
+            Camera canvasCam = highlightCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : highlightCanvas.worldCamera;
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                highlightRect2.parent as RectTransform,
+                screenCenter,
+                canvasCam,
+                out localPoint);
+
+            highlightRect2.anchoredPosition = localPoint + offset;
+
+            if (size != Vector2.zero)
+            {
+                highlightRect2.sizeDelta = size;
+            }
+            else
+            {
+                Vector2 screenMin = cam.WorldToScreenPoint(minWorld);
+                Vector2 screenMax = cam.WorldToScreenPoint(maxWorld);
+                Vector2 screenSize = screenMax - screenMin;
+
+                Vector3 canvasScale = canvasRect.lossyScale;
+                highlightRect2.sizeDelta = new Vector2(
+                    screenSize.x / canvasScale.x,
+                    screenSize.y / canvasScale.y);
+            }
+
+            Debug.Log($"[TutorialUI] Highlight2 최종 위치: {highlightRect2.anchoredPosition}, 크기: {highlightRect2.sizeDelta}");
+
+            highlightObject2.SetActive(true);
+
+            // TutorialBlocker에 두 번째 구멍 설정
+            var blocker = FindAnyObjectByType<TutorialBlocker>(FindObjectsInactive.Include);
+            if (blocker != null)
+            {
+                blocker.SetHole2(highlightRect2);
+            }
+        }
+
+        /// <summary>
+        /// 두 번째 하이라이트 표시 (공통 로직)
+        /// </summary>
+        private void ShowHighlightForTarget2(GameObject target, Vector2 offset, Vector2 size)
+        {
+            if (highlightObject2 == null || highlightRect2 == null)
+            {
+                Debug.LogWarning("[TutorialUI] highlightObject2 또는 highlightRect2가 연결되지 않았습니다!");
+                return;
+            }
+
+            var targetRect = target.GetComponent<RectTransform>();
+            if (targetRect == null)
+            {
+                Debug.LogWarning($"[TutorialUI] 타겟에 RectTransform이 없음: {target.name}");
+                return;
+            }
+
+            Vector3[] targetCorners = new Vector3[4];
+            targetRect.GetWorldCorners(targetCorners);
+
+            Canvas highlightCanvas = highlightRect2.GetComponentInParent<Canvas>();
+            if (highlightCanvas == null) return;
+
+            Vector3 targetCenter = (targetCorners[0] + targetCorners[2]) / 2f;
+            RectTransform canvasRect = highlightCanvas.GetComponent<RectTransform>();
+            Vector2 localPoint;
+
+            if (highlightCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
+                Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(null, targetCenter);
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    highlightRect2.parent as RectTransform,
+                    screenPoint,
+                    null,
+                    out localPoint);
+            }
+            else
+            {
+                Camera cam = highlightCanvas.worldCamera ?? Camera.main;
+                Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(cam, targetCenter);
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    highlightRect2.parent as RectTransform,
+                    screenPoint,
+                    cam,
+                    out localPoint);
+            }
+
+            highlightRect2.anchoredPosition = localPoint + offset;
+
+            if (size != Vector2.zero)
+            {
+                highlightRect2.sizeDelta = size;
+            }
+            else
+            {
+                float width = Vector3.Distance(targetCorners[0], targetCorners[3]);
+                float height = Vector3.Distance(targetCorners[0], targetCorners[1]);
+
+                Vector3 canvasScale = canvasRect.lossyScale;
+                highlightRect2.sizeDelta = new Vector2(width / canvasScale.x, height / canvasScale.y);
+            }
+
+            highlightObject2.SetActive(true);
+
+            // TutorialBlocker에 두 번째 구멍 설정
+            var blocker = FindAnyObjectByType<TutorialBlocker>(FindObjectsInactive.Include);
+            if (blocker != null)
+            {
+                blocker.SetHole2(highlightRect2);
+            }
+        }
+
+        /// <summary>
+        /// 두 번째 하이라이트 숨기기
+        /// </summary>
+        public void HideHighlight2()
+        {
+            if (highlightObject2 != null)
+            {
+                highlightObject2.SetActive(false);
+            }
+
+            var blocker = FindAnyObjectByType<TutorialBlocker>(FindObjectsInactive.Include);
+            if (blocker != null)
+            {
+                blocker.ClearHole2();
+            }
+        }
+
+        #endregion
+
         #region 손가락 가이드
 
         /// <summary>
@@ -599,6 +831,7 @@ namespace Tutorial
         {
             HideDialog();
             HideHighlight();
+            HideHighlight2();
             HideHandGuide();
         }
 

@@ -11,6 +11,7 @@ namespace Tutorial
     public class TutorialBlockerHole : MonoBehaviour, ICanvasRaycastFilter
     {
         private RectTransform holeRect;
+        private RectTransform holeRect2;  // 두 번째 구멍
         private Image mainImage;
         private RectTransform mainRect;
 
@@ -79,18 +80,73 @@ namespace Tutorial
         {
             holeRect = null;
 
-            // 메인 이미지 다시 표시
-            if (mainImage != null)
-                mainImage.enabled = true;
-
-            // 사이드 패널 숨기기
-            if (sidePanels != null)
+            // 두 번째 구멍도 없으면 메인 이미지 복원
+            if (holeRect2 == null)
             {
-                foreach (var panel in sidePanels)
+                if (mainImage != null)
+                    mainImage.enabled = true;
+
+                // 사이드 패널 숨기기
+                if (sidePanels != null)
                 {
-                    if (panel != null)
-                        panel.gameObject.SetActive(false);
+                    foreach (var panel in sidePanels)
+                    {
+                        if (panel != null)
+                            panel.gameObject.SetActive(false);
+                    }
                 }
+            }
+            else
+            {
+                // 두 번째 구멍만 있으면 그것만 표시
+                UpdateSidePanels();
+            }
+        }
+
+        /// <summary>
+        /// 두 번째 구멍 영역 설정
+        /// </summary>
+        public void SetHole2(RectTransform rect)
+        {
+            holeRect2 = rect;
+
+            if (rect == null)
+            {
+                ClearHole2();
+                return;
+            }
+
+            InitializeSidePanels();
+            UpdateSidePanels();
+        }
+
+        /// <summary>
+        /// 두 번째 구멍 제거
+        /// </summary>
+        public void ClearHole2()
+        {
+            holeRect2 = null;
+
+            // 첫 번째 구멍도 없으면 메인 이미지 복원
+            if (holeRect == null)
+            {
+                if (mainImage != null)
+                    mainImage.enabled = true;
+
+                // 사이드 패널 숨기기
+                if (sidePanels != null)
+                {
+                    foreach (var panel in sidePanels)
+                    {
+                        if (panel != null)
+                            panel.gameObject.SetActive(false);
+                    }
+                }
+            }
+            else
+            {
+                // 첫 번째 구멍만 있으면 그것만 표시
+                UpdateSidePanels();
             }
         }
 
@@ -167,15 +223,16 @@ namespace Tutorial
         /// </summary>
         public bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
         {
-            // 구멍이 없으면 무조건 막음
-            if (holeRect == null || !holeRect.gameObject.activeInHierarchy)
-                return true;
+            // 첫 번째 구멍 체크
+            bool isInsideHole1 = holeRect != null && holeRect.gameObject.activeInHierarchy &&
+                RectTransformUtility.RectangleContainsScreenPoint(holeRect, screenPoint, eventCamera);
 
-            // 구멍 영역 안쪽인지 확인
-            bool isInsideHole = RectTransformUtility.RectangleContainsScreenPoint(holeRect, screenPoint, eventCamera);
+            // 두 번째 구멍 체크
+            bool isInsideHole2 = holeRect2 != null && holeRect2.gameObject.activeInHierarchy &&
+                RectTransformUtility.RectangleContainsScreenPoint(holeRect2, screenPoint, eventCamera);
 
-            // 구멍 안쪽이면 false 반환 (이 Image가 raycast 안 받음 = 터치 통과)
-            return !isInsideHole;
+            // 어느 구멍이든 안쪽이면 false 반환 (터치 통과)
+            return !(isInsideHole1 || isInsideHole2);
         }
 
         private void OnDestroy()
