@@ -15,6 +15,7 @@ namespace Tutorial
         [SerializeField] private bool useGameObjectName = true;
 
         private Button button;
+        private bool isListenerRegistered;
 
         public string TargetKey => useGameObjectName ? gameObject.name : targetKey;
 
@@ -23,16 +24,31 @@ namespace Tutorial
             // 비활성화 상태에서도 등록
             TutorialTargetRegistry.Register(TargetKey, gameObject);
 
+            RegisterButtonListener();
+        }
+
+        private void OnEnable()
+        {
+            // Awake가 호출 안 된 경우를 대비 (비활성 상태로 시작했다가 활성화된 경우)
+            RegisterButtonListener();
+        }
+
+        private void RegisterButtonListener()
+        {
+            if (isListenerRegistered) return;
+
             // 버튼 컴포넌트가 있으면 클릭 이벤트 등록
             button = GetComponent<Button>();
             if (button != null)
             {
                 button.onClick.AddListener(OnButtonClicked);
+                isListenerRegistered = true;
             }
         }
 
         private void OnButtonClicked()
         {
+            Debug.Log($"[TutorialTarget] OnButtonClicked - TargetKey: {TargetKey}");
             // 튜토리얼 매니저에 버튼 터치 알림
             TutorialManager.Instance?.NotifyButtonTouched(TargetKey);
         }

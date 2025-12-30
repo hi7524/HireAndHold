@@ -303,15 +303,21 @@ public class QuestAreaController : MonoBehaviour
         else
             quests = DataTableManager.QuestTable.GetWeeklyQuests();
 
-        int claimedCount = 0;
+        // 수령 가능한 퀘스트 ID 목록 수집
+        var claimableTasks = new List<UniTask<bool>>();
         foreach (var quest in quests)
         {
             var progress = QuestManager.GetProgress(quest.Quest_ID);
             if (progress != null && progress.isCompleted && !progress.isRewarded)
             {
-                bool success = await QuestManager.ClaimRewardAsync(quest.Quest_ID);
-                if (success) claimedCount++;
+                claimableTasks.Add(QuestManager.ClaimRewardAsync(quest.Quest_ID));
             }
+        }
+
+        // 병렬로 모든 보상 수령
+        if (claimableTasks.Count > 0)
+        {
+            await UniTask.WhenAll(claimableTasks);
         }
 
         await UniTask.Yield();

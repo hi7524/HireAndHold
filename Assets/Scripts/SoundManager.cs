@@ -7,7 +7,9 @@ public class SoundManager : MonoBehaviour
 
     [SerializeField] private AudioSource bgmSource;
     [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioSource voiceSource;
     [SerializeField] private AudioMixer audioMixer;
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
 
     private bool isFading = false;
     private float fadeTargetVolume = 1f;
@@ -31,6 +33,12 @@ public class SoundManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // voiceSource에 SFX 믹서 그룹 할당
+        if (voiceSource != null && sfxMixerGroup != null)
+        {
+            voiceSource.outputAudioMixerGroup = sfxMixerGroup;
+        }
 
         // 게임 시작 시 저장된 볼륨 설정 로드
         LoadVolumeSettings();
@@ -130,5 +138,29 @@ public class SoundManager : MonoBehaviour
         }
 
         sfxSource.PlayOneShot(clip, sfxVolume);
+    }
+
+    /// <summary>
+    /// 보이스 재생 (이전 보이스 중단 후 새 보이스 재생)
+    /// </summary>
+    public void PlayVoice(AudioClip clip)
+    {
+        if (clip == null)
+        {
+            return;
+        }
+
+        voiceSource.Stop();
+        voiceSource.clip = clip;
+        voiceSource.volume = sfxVolume;
+        voiceSource.Play();
+    }
+
+    /// <summary>
+    /// 현재 재생 중인 보이스 정지
+    /// </summary>
+    public void StopVoice()
+    {
+        voiceSource.Stop();
     }
 }

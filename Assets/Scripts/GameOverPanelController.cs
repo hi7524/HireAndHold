@@ -85,7 +85,7 @@ public class GameOverPanelController : MonoBehaviour
     private async void OnLobbyButtonClick()
     {
         // 튜토리얼에 버튼 터치 알림
-        TutorialManager.Instance?.NotifyButtonTouched("LobbyButton");
+        TutorialManager.Instance?.NotifyButtonTouched(TutorialButtons.LobbyButton);
 
         Hide();
         Time.timeScale = 1f;

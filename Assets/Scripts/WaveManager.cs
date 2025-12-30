@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using Tutorial;
 using UnityEngine;
 
 public class WaveManager : MonoBehaviour
@@ -284,6 +285,8 @@ public class WaveManager : MonoBehaviour
         }
         else
         {
+            // 중간 보스 클리어 이벤트 발생 (703 스테이지 튜토리얼용)
+            GameEvents.RaiseMidBossClear();
 
             if (stageUiManager != null)
             {

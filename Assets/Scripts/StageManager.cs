@@ -23,6 +23,9 @@ public class StageManager : MonoBehaviour
     public event Action<int> OnStageFailed;
     public event Action<int> OnMonsterCountChanged; // (remaining
 
+    // 이벤트 핸들러 참조 (구독 해제용)
+    private Action onGameStartHandler;
+
     [SerializeField] private WaveManager waveManager;
     [SerializeField] private GameManager gameManager;
     [SerializeField] private StageUiManager stageUiManager;
@@ -33,6 +36,9 @@ public class StageManager : MonoBehaviour
 
     private void Awake()
     {
+        // GameEvents에 등록
+        GameEvents.StageManager = this;
+
         // CurrentStageId 먼저 설정 (다른 컴포넌트가 Start에서 참조할 수 있도록)
         CurrentStageId = PageSnap.SelectedStageId;
         CurrentStageData = DataTableManager.StageTable.Get(CurrentStageId);
@@ -46,7 +52,10 @@ public class StageManager : MonoBehaviour
     {
         // 로딩 씬에서 DataTableManager가 이미 초기화됨
         waveManager.Initialize(gameManager, this);
-        gameManager.OnGameStart += () => StartStage(CurrentStageId);
+
+        // Lambda를 필드에 저장하여 나중에 해제 가능하게 함
+        onGameStartHandler = () => StartStage(CurrentStageId);
+        gameManager.OnGameStart += onGameStartHandler;
 
         // MonsterSpawner 이벤트 구독
         if (monsterSpawner != null)
@@ -379,7 +388,16 @@ public class StageManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        gameManager.OnGameStart -= () => StartStage(CurrentStageId);
+        // GameEvents에서 해제
+        if (GameEvents.StageManager == this)
+            GameEvents.StageManager = null;
+
+        // 저장된 핸들러 참조로 정확히 해제
+        if (onGameStartHandler != null)
+        {
+            gameManager.OnGameStart -= onGameStartHandler;
+            onGameStartHandler = null;
+        }
 
         if (monsterSpawner != null)
         {

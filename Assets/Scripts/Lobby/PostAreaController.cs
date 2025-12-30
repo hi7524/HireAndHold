@@ -140,11 +140,11 @@ public class PostAreaController : MonoBehaviour
         if (claimAllButton != null)
             claimAllButton.interactable = false;
 
-        // 개인 메일 일괄 수령
-        int personalClaimedCount = await DatabaseManager.Instance.ClaimAllMailRewardsAsync();
-
-        // 전역 메일 일괄 수령
-        int globalClaimedCount = await DatabaseManager.Instance.ClaimAllGlobalMailRewardsAsync();
+        // 개인 메일과 전역 메일 병렬로 일괄 수령
+        var (personalClaimedCount, globalClaimedCount) = await UniTask.WhenAll(
+            DatabaseManager.Instance.ClaimAllMailRewardsAsync(),
+            DatabaseManager.Instance.ClaimAllGlobalMailRewardsAsync()
+        );
 
         // 다음 프레임까지 대기 후 UI 갱신
         await UniTask.Yield();

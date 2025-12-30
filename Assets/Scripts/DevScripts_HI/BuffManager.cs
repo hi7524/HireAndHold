@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Tutorial;
 using UnityEngine;
+using Tutorial;
 
 // 버프 조건 체크 및 관리
 public class BuffManager : MonoBehaviour
@@ -51,12 +51,8 @@ public class BuffManager : MonoBehaviour
                     ActivateBuff(crossBuff.horizontalBuffName);
                     ActivatedBuffs.Add(crossBuff.horizontalBuffName);
 
-                    // 703 스테이지에서 가로/세로 버프 활성화 시 튜토리얼 조건 알림
-                    var stageManager = FindAnyObjectByType<StageManager>();
-                    if (stageManager != null && stageManager.CurrentStageId == 703)
-                    {
-                        TutorialManager.Instance?.NotifyConditionMet("STAGE_BUFF");
-                    }
+                    // 이벤트 발생 (TutorialManager가 구독해서 처리)
+                    GameEvents.RaiseBuffActivated(crossBuff.horizontalBuffName);
                 }
                 else if (!horizontalFilled && ActivatedBuffs.Contains(crossBuff.horizontalBuffName))
                 {
@@ -70,12 +66,8 @@ public class BuffManager : MonoBehaviour
                     ActivateBuff(crossBuff.verticalBuffName);
                     ActivatedBuffs.Add(crossBuff.verticalBuffName);
 
-                    // 703 스테이지에서 가로/세로 버프 활성화 시 튜토리얼 조건 알림
-                    var stageManager = FindAnyObjectByType<StageManager>();
-                    if (stageManager != null && stageManager.CurrentStageId == 703)
-                    {
-                        TutorialManager.Instance?.NotifyConditionMet("STAGE_BUFF");
-                    }
+                    // 이벤트 발생 (TutorialManager가 구독해서 처리)
+                    GameEvents.RaiseBuffActivated(crossBuff.verticalBuffName);
                 }
                 else if (!verticalFilled && ActivatedBuffs.Contains(crossBuff.verticalBuffName))
                 {
@@ -101,12 +93,8 @@ public class BuffManager : MonoBehaviour
                     ActivateBuff(regionBuff.buffName);
                     ActivatedBuffs.Add(regionBuff.buffName);
 
-                    // 703 스테이지에서만 영역 버프 완료 시 튜토리얼 조건 알림
-                    var stageManager = FindAnyObjectByType<StageManager>();
-                    if (stageManager != null && stageManager.CurrentStageId == 703)
-                    {
-                        TutorialManager.Instance?.NotifyConditionMet("COMPLETE_BUFF");
-                    }
+                    // 이벤트 발생 (TutorialManager가 구독해서 처리)
+                    GameEvents.RaiseBuffCompleted(TutorialConditions.COMPLETE_BUFF);
                 }
                 else if (filledCount < regionBuff.regionCells.Count && ActivatedBuffs.Contains(regionBuff.buffName))
                 {
@@ -127,9 +115,8 @@ public class BuffManager : MonoBehaviour
 
             GlobalBuffPercentage += TotalBuffRate;
 
-            // 튜토리얼 조건 알림
-            Debug.Log($"[BuffManager] COMPLETE_BUFF 호출! isFilledAllGrids: {isFilledAllGrids}, 스테이지: {FindAnyObjectByType<StageManager>()?.CurrentStageId}");
-            TutorialManager.Instance?.NotifyConditionMet("COMPLETE_BUFF");
+            // 이벤트 발생 (TutorialManager가 구독해서 처리)
+            GameEvents.RaiseBuffCompleted(TutorialConditions.COMPLETE_BUFF);
         }
         else if (!isFilledAllGrids && ActivatedBuffs.Contains("컴플리트"))
         {
@@ -257,6 +244,9 @@ public class BuffManager : MonoBehaviour
     // 버프 활성화
     private void ActivateBuff(string buffName)
     {
+        // 첫 버프 획득 시 이벤트 발생 (703 스테이지 튜토리얼용)
+        bool wasEmpty = ActivatedBuffs.Count == 0;
+
         if (uiManager != null)
             uiManager.UpdateInfoText($"{buffName} 활성화!");
 
@@ -264,6 +254,13 @@ public class BuffManager : MonoBehaviour
         {
             gridManager.UpdateBuffColors();
             gridManager.PlayBuffActivationEffect(buffName);
+        }
+
+        // 이 함수가 호출된 후 ActivatedBuffs.Add가 되므로,
+        // 여기서 wasEmpty이면 첫 버프가 되는 것
+        if (wasEmpty)
+        {
+            GameEvents.RaiseFirstBuffActivated();
         }
     }
 

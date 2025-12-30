@@ -1,5 +1,6 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public enum GridState
@@ -451,7 +452,7 @@ public class GridManager : MonoBehaviour
             {
                 effect.transform.position = position;
                 effect.SetActive(true);
-                StartCoroutine(ReturnEffectToPool(effect, index, 2f));
+                ReturnEffectToPoolAsync(effect, index, 2f).Forget();
             }
         }
     }
@@ -475,9 +476,9 @@ public class GridManager : MonoBehaviour
     }
 
     // 이펙트를 풀로 반환
-    private IEnumerator ReturnEffectToPool(GameObject effect, int index, float delay)
+    private async UniTaskVoid ReturnEffectToPoolAsync(GameObject effect, int index, float delay)
     {
-        yield return new WaitForSeconds(delay);
+        await UniTask.Delay(TimeSpan.FromSeconds(delay));
 
         effect.SetActive(false);
         mergeEffectPools[index].Enqueue(effect);

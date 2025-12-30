@@ -77,9 +77,15 @@ namespace Tutorial
         [Tooltip("캐릭터 이미지 표시 여부")]
         public bool showCharacter = true;
 
-        [Header("하이라이트 설정")]
+        [Header("하이라이트 설정 (첫 번째)")]
         [Tooltip("하이라이트할 UI 오브젝트 이름 (비어있으면 하이라이트 없음)")]
         public string highlightTarget;
+
+        [Tooltip("하이라이트할 유닛 ID (동적 생성 유닛용, 0이면 사용 안함)")]
+        public int highlightUnitId;
+
+        [Tooltip("하이라이트할 타일 좌표들 (여러 타일 하이라이트 가능, 비어있으면 사용 안함)")]
+        public Vector2Int[] highlightTilePositions;
 
         [Tooltip("하이라이트 위치 오프셋")]
         public Vector2 highlightOffset;
@@ -87,12 +93,34 @@ namespace Tutorial
         [Tooltip("하이라이트 크기 (0이면 타겟 크기 사용)")]
         public Vector2 highlightSize;
 
+        [Header("하이라이트 설정 (두 번째)")]
+        [Tooltip("두 번째 하이라이트할 UI 오브젝트 이름 (비어있으면 두 번째 하이라이트 없음)")]
+        public string highlightTarget2;
+
+        [Tooltip("두 번째 하이라이트할 타일 좌표들")]
+        public Vector2Int[] highlightTilePositions2;
+
+        [Tooltip("두 번째 하이라이트 위치 오프셋")]
+        public Vector2 highlightOffset2;
+
+        [Tooltip("두 번째 하이라이트 크기 (0이면 타겟 크기 사용)")]
+        public Vector2 highlightSize2;
+
         [Header("손가락 가이드")]
         [Tooltip("손가락 가이드 표시 여부")]
         public bool showHandGuide;
 
         [Tooltip("손가락 가이드 위치 오프셋")]
         public Vector2 handGuideOffset;
+
+        [Tooltip("드래그 가이드 사용 (하이라이트1 → 하이라이트2 이동 애니메이션)")]
+        public bool showDragGuide;
+
+        [Tooltip("드래그 가이드 시작점 오프셋")]
+        public Vector2 dragGuideOffset1;
+
+        [Tooltip("드래그 가이드 끝점 오프셋")]
+        public Vector2 dragGuideOffset2;
 
         [Header("진행 조건")]
         [Tooltip("다음 스텝으로 넘어가는 조건")]
@@ -123,8 +151,8 @@ namespace Tutorial
         [Tooltip("이 스텝이 체크포인트인지 (중간 저장 지점)")]
         public bool isCheckpoint;
 
-        [Tooltip("특정 유닛만 드래그 허용 (비어있으면 제한 없음)")]
-        public string[] allowedUnitNames;
+        [Tooltip("특정 유닛만 드래그 허용 - UnitId 목록 (비어있으면 제한 없음)")]
+        public int[] allowedUnitIds;
 
         [Tooltip("스텝 시작 전 대기 시간 (초) - UI 활성화 대기용")]
         public float delayBeforeStep = 0f;

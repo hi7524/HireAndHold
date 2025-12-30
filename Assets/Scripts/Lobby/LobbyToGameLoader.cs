@@ -7,18 +7,18 @@ public class LobbyToGameLoader : MonoBehaviour
     private void Awake()
     {
         // 튜토리얼 타겟으로 등록 (StartButton으로)
-        TutorialTargetRegistry.Register("StartButton", gameObject);
+        TutorialTargetRegistry.Register(TutorialButtons.StartButton, gameObject);
     }
 
     private void OnDestroy()
     {
-        TutorialTargetRegistry.Unregister("StartButton");
+        TutorialTargetRegistry.Unregister(TutorialButtons.StartButton);
     }
 
     public void OnStartGameButtonClicked()
     {
         // 튜토리얼에 버튼 터치 알림
-        TutorialManager.Instance?.NotifyButtonTouched("StartButton");
+        TutorialManager.Instance?.NotifyButtonTouched(TutorialButtons.StartButton);
 
         LoadGameScene();
     }

@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using Tutorial;
 
 
 public class RewardPanelController : MonoBehaviour
@@ -98,12 +99,12 @@ public class RewardPanelController : MonoBehaviour
             return;
         }
 
-        // 701, 702 스테이지(튜토리얼)에서는 방벽 회복 패시브 스킬만
+        // TutorialOverrides에서 스테이지별 보상 옵션 조회
         int currentStageId = stageManager != null ? stageManager.CurrentStageId : 0;
-        bool isTutorialStage = currentStageId == 701 || currentStageId == 702;
+        var rewardOptions = GameEvents.GetRewardOptions?.Invoke(currentStageId) ?? RewardOptions.Default;
 
         int skillId;
-        if (isTutorialStage)
+        if (rewardOptions.ShieldRegenOnly)
         {
             // 방벽 회복 스킬만 반환
             skillId = passiveSkillManager.GetShieldRegenSkillId();

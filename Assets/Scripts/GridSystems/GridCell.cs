@@ -122,6 +122,17 @@ public class GridCell : MonoBehaviour, IDroppable
             return;
         }
 
+        // 튜토리얼 중 허용된 타일인지 체크
+        if (TutorialManager.Instance != null && TutorialManager.Instance.TutorialBlocker != null)
+        {
+            var blocker = TutorialManager.Instance.TutorialBlocker;
+            if (blocker.IsBlocking && !blocker.IsDropAllowed(GridPosition))
+            {
+                canDrop = false;
+                return;
+            }
+        }
+
         // GridUnit 처리
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
         if (gridUnit != null)
@@ -198,6 +209,17 @@ public class GridCell : MonoBehaviour, IDroppable
         // 드롭 가능 상태가 아닐 경우 배치 불가
         if (!canDrop)
             return;
+
+        // 튜토리얼 중 허용된 타일인지 체크
+        if (TutorialManager.Instance != null && TutorialManager.Instance.TutorialBlocker != null)
+        {
+            var blocker = TutorialManager.Instance.TutorialBlocker;
+            if (blocker.IsBlocking && !blocker.IsDropAllowed(GridPosition))
+            {
+                draggable.OnDropFailed();
+                return;
+            }
+        }
 
         // 유닛 또는 DraggableGridUnitUi 아닐 경우 배치 불가
         var gridUnit = draggable.GameObject.GetComponent<GridUnit>();
@@ -394,14 +416,8 @@ public class GridCell : MonoBehaviour, IDroppable
     /// </summary>
     private void NotifyTutorialDragComplete()
     {
-        if (TutorialManager.Instance == null)
-            return;
-
-        // 현재 튜토리얼이 진행 중이면 드래그 완료 알림
-        if (TutorialManager.Instance.IsPlaying)
-        {
-            TutorialManager.Instance.NotifyDragComplete(null, null);
-        }
+        // 이벤트 발생 (TutorialManager가 구독해서 처리)
+        GameEvents.RaiseDragCompleted(null, null);
     }
 
     public void ClearObject()

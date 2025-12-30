@@ -65,12 +65,6 @@ public class PlayerExperience : MonoBehaviour
             finalAmount = amount * (1f + bonusPercent / 100f);
         }
 
-        // 최초 경험치 획득 시 튜토리얼 조건 알림
-        if (curPlayerExp == 0f && finalAmount > 0f)
-        {
-            TutorialManager.Instance?.NotifyConditionMet("FIRST_EXP");
-        }
-
         curPlayerExp += finalAmount;
 
         AnimateExpBar();
@@ -112,11 +106,13 @@ public class PlayerExperience : MonoBehaviour
         expBar.value = 0f;
 
         // 레벨업 시 튜토리얼 체크
-        var stageManager = FindObjectOfType<StageManager>();
-        int stageId = stageManager != null ? stageManager.CurrentStageId : 0;
+        int stageId = GameEvents.StageManager != null ? GameEvents.StageManager.CurrentStageId : 0;
         Debug.Log($"[Tutorial] LevelUp 호출 - stageId: {stageId}, Level: {Level}");
         TutorialManager.Instance?.CheckAndStartTutorialAsync(
             TutorialTriggerType.OnLevelUp, stageId, Level).Forget();
+
+        // 레벨업 이벤트 발생 (스텝별 conditionKey 처리용)
+        GameEvents.RaiseLevelUp(Level);
     }
 
     private void UpdateLevelTextUI()
