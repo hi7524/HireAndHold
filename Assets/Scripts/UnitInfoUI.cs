@@ -43,22 +43,33 @@ public class UnitInfoUI : MonoBehaviour
 
     private void OnStarChangedFromSelector(int star)
     {
-        if (currentStar == star)
-            return;
-
+        if (currentStar == star) return;
         currentStar = star;
 
-        // 별이 변경되면 해당 별의 유닛으로 previewUnit 재생성
+        ChangeStarPreparedAsync().Forget();
+    }
+
+    private async UniTaskVoid ChangeStarPreparedAsync()
+    {
         var unitData = FindUnitDataByStar(baseUnitId, currentStar);
-        if (unitData != null)
-        {
-            CreatePreviewUnit(unitData.UNIT_ID);
-        }
-        else
+        if (unitData == null)
         {
             RefreshByStar();
+            return;
         }
+
+        // UI 잠깐 유지해도 되고, 깜빡임 싫으면 mainRoot는 그대로 두고 내부만 갱신해도 됨
+        if (previewUnit != null)
+            Destroy(previewUnit.gameObject);
+
+        previewUnit = await UnitUIWarmup.Instance.PreparePreviewUnitAsync(unitData.UNIT_ID);
+        if (previewUnit == null) return;
+
+        isPreviewUnitReady = true;
+        RefreshByStar();
     }
+
+
 
     private void InitializeSubComponents()
     {
@@ -81,12 +92,18 @@ public class UnitInfoUI : MonoBehaviour
             equipUI.SetDeckControl(control);
     }
 
+    //public void SetUnit(int unitId)
+    //{
+    //    Open(unitId);
+    //}
+
     public void SetUnit(int unitId)
     {
-        Open(unitId);
+        // 기존처럼 즉시 열지 말고, 준비 후 열기
+        OpenPreparedAsync(unitId).Forget();
     }
 
-    private void Open(int unitId)
+    private async UniTaskVoid OpenPreparedAsync(int unitId)
     {
         if (!DataTableManager.IsInitialized)
         {
@@ -96,36 +113,54 @@ public class UnitInfoUI : MonoBehaviour
 
         baseUnitId = unitId;
         currentStar = 1;
-        mainRoot.SetActive(true);
 
-        CreatePreviewUnit(baseUnitId);
+        if (mainRoot != null)
+            mainRoot.SetActive(false);
+
+        if (previewUnit != null)
+            Destroy(previewUnit.gameObject);
+
+        previewUnit = await UnitUIWarmup.Instance.PreparePreviewUnitAsync(baseUnitId);
+        if (previewUnit == null)
+        {
+            Debug.LogError("[UnitInfoUI] previewUnit 준비 실패");
+            return;
+        }
+
+        isPreviewUnitReady = true;
 
         int maxStar = GetMaxStarForBaseUnit(baseUnitId);
         if (starSelector != null)
             starSelector.Initialize(maxStar);
-    }
 
-    private void CreatePreviewUnit(int unitId)
-    {
-        if (previewUnit != null)
-            Destroy(previewUnit.gameObject);
+        if (mainRoot != null)
+            mainRoot.SetActive(true);
 
-        isPreviewUnitReady = false;
-
-        var go = new GameObject($"PreviewUnit_{unitId}");
-        previewUnit = go.AddComponent<Unit>();
-        previewUnit.IsPreview = true;
-        previewUnit.SetUnitID(unitId);
-
-        WaitForPreviewUnitAndRefresh().Forget();
-    }
-
-    private async UniTaskVoid WaitForPreviewUnitAndRefresh()
-    {
-        await UniTask.WaitUntil(() => previewUnit != null && previewUnit.IsInitialized);
-        isPreviewUnitReady = true;
         RefreshByStar();
     }
+
+
+    //private void CreatePreviewUnit(int unitId)
+    //{
+    //    if (previewUnit != null)
+    //        Destroy(previewUnit.gameObject);
+
+    //    isPreviewUnitReady = false;
+
+    //    var go = new GameObject($"PreviewUnit_{unitId}");
+    //    previewUnit = go.AddComponent<Unit>();
+    //    previewUnit.IsPreview = true;
+    //    previewUnit.SetUnitID(unitId);
+
+    //    WaitForPreviewUnitAndRefresh().Forget();
+    //}
+
+    //private async UniTaskVoid WaitForPreviewUnitAndRefresh()
+    //{
+    //    await UniTask.WaitUntil(() => previewUnit != null && previewUnit.IsInitialized);
+    //    isPreviewUnitReady = true;
+    //    RefreshByStar();
+    //}
 
     private void RefreshByStar()
     {

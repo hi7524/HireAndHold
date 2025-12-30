@@ -69,12 +69,17 @@ public class UnitInfoDisplay : MonoBehaviour
             string rankName = GetRankName(unitData.RANK);
             classText.text = rankName;
         }
-
-        if (powerText != null && previewUnit != null)
+        if (powerText != null)
         {
-            int power = Mathf.RoundToInt(previewUnit.GetAttackDamageStat().Value);
-            powerText.text = power.ToString();
+            int atk = CalculateFinalAttack(
+                unitData,
+                character,
+                currentDisplayStar
+            );
+
+            powerText.text = atk.ToString();
         }
+
 
         if (levelText != null)
         {
@@ -82,8 +87,13 @@ public class UnitInfoDisplay : MonoBehaviour
                 ? $"{character.enforceLevel}/{NORMAL_MAX}"
                 : $"-/{NORMAL_MAX}";
         }
+        if (unitImage != null)
+        {
+            var sprite = SpriteCache.Instance.GetCachedSpriteOrNull(unitData.UNIT_ICON);
+            if (sprite != null)
+                unitImage.sprite = sprite;
+        }
 
-        LoadUnitIconAsync(unitData.UNIT_ICON).Forget();
 
         int heroLv = owned ? character.heroEnforceLevel : 0;
         if (heroStarText != null)
@@ -222,11 +232,12 @@ public class UnitInfoDisplay : MonoBehaviour
             }
             descText.text = !string.IsNullOrEmpty(skillDesc) ? skillDesc : skill.SKILL_DESCRIPTION;
         }
-
         if (icon != null && !string.IsNullOrEmpty(skill.SKILL_ICON))
         {
-            LoadSkillIconAsync(icon, skill.SKILL_ICON).Forget();
+            var sp = SpriteCache.Instance.GetCachedSpriteOrNull(skill.SKILL_ICON);
+            if (sp != null) icon.sprite = sp;
         }
+
     }
 
     private async UniTaskVoid LoadSkillIconAsync(Image icon, string iconKey)
@@ -279,4 +290,65 @@ public class UnitInfoDisplay : MonoBehaviour
 
         Debug.Log($"[UnitInfoDisplay] RefreshHeroEffectList 완료 - unitId: {unitId}, heroLv: {heroLv}");
     }
+
+    private int CalculateFinalAttack(UnitData starUnitData,OwnedCharacter character, int star)
+    {
+        if (starUnitData == null)
+            return 0;
+
+        float baseAttack = starUnitData.ATTACK;
+
+        float normalEnforceAtk = 0f;
+        if (character != null)
+        {
+            int rank = starUnitData.RANK;
+            int enforceLv = character.enforceLevel;
+
+            var table = NormalEnforceSystem.SharedTable;
+            if (table != null)
+            {
+                foreach (var kv in table.All)
+                {
+                    var d = kv.Value;
+                    if (d.Class == rank && d.Normal_Enforce_LV <= enforceLv)
+                        normalEnforceAtk += d.AttackUp;
+                }
+            }
+        }
+
+        float attackAfterNormal = baseAttack + normalEnforceAtk;
+
+        float heroMultiplier = 1f;
+
+        if (character != null)
+        {
+            int heroLv = character.heroEnforceLevel;
+
+            int baseId = 0;
+            int.TryParse(character.id, out baseId);
+
+            var heroTable = DataTableManager.heroEnforceTable;
+            var effectTable = DataTableManager.heroEnforceEffectTable;
+
+            if (heroTable != null && effectTable != null && baseId > 0)
+            {
+                for (int lv = 1; lv <= heroLv; lv++)
+                {
+                    var row = heroTable.Get(baseId, lv);
+                    if (row == null) continue;
+
+                    var effect = effectTable.Get(row.Hero_Enforce_EffectID);
+                    if (effect == null) continue;
+
+                    if (effect.Attack_Up > 1f)
+                        heroMultiplier *= effect.Attack_Up;
+                }
+            }
+        }
+
+
+        float finalAtk = attackAfterNormal * heroMultiplier;
+        return Mathf.RoundToInt(finalAtk);
+    }
+
 }

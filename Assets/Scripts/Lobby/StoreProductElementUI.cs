@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.AddressableAssets;
@@ -79,13 +79,10 @@ public class StoreProductElementUI : MonoBehaviour
     {
         if (productData == null) return;
 
-        // 수량 텍스트
+        // 수량 텍스트 - 모든 상품 표시
         if (amountText != null)
         {
-            if (productData.SELLING_AMOUNT > 1)
-                amountText.text = $"x{productData.SELLING_AMOUNT}";
-            else
-                amountText.text = "";
+            amountText.text = $"x{productData.SELLING_AMOUNT:N0}";
         }
 
         // 가격 텍스트

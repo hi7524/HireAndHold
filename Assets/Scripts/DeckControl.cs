@@ -33,7 +33,7 @@ public class DeckControl : MonoBehaviour
     [Header("External References")]
     public StageDeck stageDeck;
     public BattleUnitManager battleUnitManager;
-    public WindowManager windowManager; // ⭐ WindowManager 추가
+    public WindowManager windowManager;
 
     [Header("Unlock Alert Panel")]
     public GameObject unlockAlertPanel;
@@ -292,37 +292,30 @@ public class DeckControl : MonoBehaviour
 
         LoadPresets();
 
-        bool isFirstTime = true;
+        bool needsInitialization = false;
         for (int i = 0; i < 5; i++)
         {
-            if (!PlayData.IsPresetEmptyOnUnlockedSlots(i))
+            if (PlayData.IsPresetEmptyOnUnlockedSlots(i))
             {
-                isFirstTime = false;
+                needsInitialization = true;
                 break;
             }
         }
 
-        if (isFirstTime)
+        if (needsInitialization)
         {
-            Debug.Log("[DeckControl] 첫 시작 감지 → 모든 프리셋의 잠금 해제된 슬롯에 유닛 배치");
+            Debug.Log("[DeckControl] 비어있는 프리셋 감지 → 자동 편성 시작");
+
+            // 모든 프리셋의 잠금 해제된 슬롯 채우기
             for (int i = 0; i < 5; i++)
             {
-                await AutoFillPresetIfEmpty(i);
+                if (PlayData.IsPresetEmptyOnUnlockedSlots(i))
+                {
+                    await AutoFillPresetIfEmpty(i);
+                }
             }
 
             LoadPresets();
-        }
-        else
-        {
-            bool activePresetEmpty = PlayData.IsPresetEmptyOnUnlockedSlots(activePresetIndex);
-
-            if (activePresetEmpty)
-            {
-                Debug.LogWarning($"[DeckControl] 활성 프리셋({activePresetIndex})이 비어있음 → 자동 편성 시작");
-                await AutoFillPresetIfEmpty(activePresetIndex);
-
-                LoadPresets();
-            }
         }
 
         LoadPreset(activePresetIndex);
@@ -371,28 +364,25 @@ public class DeckControl : MonoBehaviour
 
     private async UniTask AutoFillPresetIfEmpty(int presetIndex)
     {
-        bool isEmpty = true;
+        List<int> emptySlots = new List<int>();
         for (int i = 0; i < 5; i++)
         {
-            // 잠긴 슬롯은 스킵
             if (!IsSlotUnlocked(presetIndex, i))
                 continue;
 
-            // PlayData에 유닛이 있으면 비어있지 않음
-            if (PlayData.selectedDeckUnitIds[presetIndex, i] != 0)
+            if (PlayData.selectedDeckUnitIds[presetIndex, i] == 0)
             {
-                isEmpty = false;
-                break;
+                emptySlots.Add(i);
             }
         }
 
-        if (!isEmpty)
+        if (emptySlots.Count == 0)
         {
             Debug.Log($"[DeckControl] 프리셋 {presetIndex} 이미 유닛이 배치되어 있음 - 스킵");
             return;
         }
 
-        Debug.Log($"[DeckControl] 프리셋 {presetIndex} 비어있음 - 자동 편성 시작");
+        Debug.Log($"[DeckControl] 프리셋 {presetIndex} 비어있는 슬롯 {emptySlots.Count}개 발견 - 자동 편성 시작");
 
         var owned = DatabaseManager.Instance.GetAllCharacters();
         if (owned.Count == 0)
@@ -407,11 +397,23 @@ public class DeckControl : MonoBehaviour
             return;
         }
 
+        // 이미 배치된 유닛 찾기
+        HashSet<int> assignedUnits = new HashSet<int>();
+        for (int i = 0; i < 5; i++)
+        {
+            int unitId = PlayData.selectedDeckUnitIds[presetIndex, i];
+            if (unitId != 0)
+            {
+                assignedUnits.Add(unitId);
+            }
+        }
+
+        // 사용 가능한 유닛 목록
         List<DeckUnitModel> availableUnits = new List<DeckUnitModel>();
         foreach (var character in owned)
         {
             int unitId = int.Parse(character.id);
-            if (unitModelMap.ContainsKey(unitId))
+            if (unitModelMap.ContainsKey(unitId) && !assignedUnits.Contains(unitId))
             {
                 availableUnits.Add(unitModelMap[unitId]);
             }
@@ -419,10 +421,11 @@ public class DeckControl : MonoBehaviour
 
         if (availableUnits.Count == 0)
         {
-            Debug.LogWarning("[DeckControl] 사용 가능한 유닛이 없습니다!");
+            Debug.LogWarning("[DeckControl] 배치할 수 있는 유닛이 없습니다!");
             return;
         }
 
+        // 랜덤 섞기
         for (int i = availableUnits.Count - 1; i > 0; i--)
         {
             int randomIndex = UnityEngine.Random.Range(0, i + 1);
@@ -436,19 +439,12 @@ public class DeckControl : MonoBehaviour
 
         DeckPreset preset = presets[presetIndex];
 
-        for (int i = 0; i < 5; i++)
+        // 비어있는 슬롯에만 유닛 배치
+        foreach (int slotIndex in emptySlots)
         {
-            // 잠긴 슬롯은 스킵
-            if (!IsSlotUnlocked(presetIndex, i))
-            {
-                Debug.Log($"[DeckControl] 프리셋 {presetIndex} 슬롯 {i} - 잠김, 스킵");
-                continue;
-            }
-
-            // 더 이상 배치할 유닛이 없으면 종료
             if (unitIndex >= availableUnits.Count)
             {
-                Debug.Log($"[DeckControl] 프리셋 {presetIndex} - 배치할 유닛 부족");
+                Debug.LogWarning($"[DeckControl] 프리셋 {presetIndex} - 배치할 유닛 부족");
                 break;
             }
 
@@ -460,11 +456,11 @@ public class DeckControl : MonoBehaviour
                 model.FixMissingAddress();
             }
 
-            preset.units[i] = model;
-            PlayData.selectedDeckUnitIds[presetIndex, i] = model.unitId;
-            PlayData.selectedDeckUnitIconAddresses[presetIndex, i] = model.iconAddress;
+            preset.units[slotIndex] = model;
+            PlayData.selectedDeckUnitIds[presetIndex, slotIndex] = model.unitId;
+            PlayData.selectedDeckUnitIconAddresses[presetIndex, slotIndex] = model.iconAddress;
 
-            Debug.Log($"[DeckControl] 프리셋 {presetIndex} 슬롯 {i} - 유닛 {model.unitId} ({model.unitName}) 배치");
+            Debug.Log($"[DeckControl] 프리셋 {presetIndex} 슬롯 {slotIndex} - 유닛 {model.unitId} ({model.unitName}) 배치");
 
             unitIndex++;
             filledCount++;
@@ -474,10 +470,6 @@ public class DeckControl : MonoBehaviour
         {
             await DatabaseManager.Instance.SavePresetFromPlayDataAsync(presetIndex);
             Debug.Log($"[DeckControl] 프리셋 {presetIndex} 자동 편성 완료 - {filledCount}개 유닛 배치 완료");
-        }
-        else
-        {
-            Debug.LogWarning($"[DeckControl] 프리셋 {presetIndex} - 배치 가능한 슬롯이 없습니다!");
         }
     }
 
@@ -495,7 +487,7 @@ public class DeckControl : MonoBehaviour
         {
             Debug.LogWarning($"[DeckControl] 프리셋 {index} 비어있음 - 자동 편성 실행");
             await AutoFillPresetIfEmpty(index);
-            LoadPresets(); 
+            LoadPresets();
         }
 
         LoadPreset(index);
@@ -522,16 +514,18 @@ public class DeckControl : MonoBehaviour
 
         for (int i = 0; i < slots.Count; i++)
         {
-            DeckUnitModel model = preset.units[i];
+            bool isSlotLocked = !IsSlotUnlocked(index, i);
+
+            DeckUnitModel model = isSlotLocked ? null : preset.units[i];
             slots[i].SetCommittedExternal(model);
 
-            if (slots[i].IsLocked)
+            if (isSlotLocked)
             {
-                slots[i].SetInteractable(true);
+                slots[i].SetInteractable(true); 
             }
             else
             {
-                slots[i].SetInteractable(false);
+                slots[i].SetInteractable(false); 
             }
 
             if (model != null)
@@ -621,23 +615,22 @@ public class DeckControl : MonoBehaviour
 
         if (slot.HasPending)
         {
-            var pending = slot.GetPending();
+            var unit = slot.GetPending();
             slot.ClearPending();
-            NotifyUnitCleared(pending);
+            NotifyUnitCleared(unit);
             UpdateCompleteButton();
             return;
         }
 
         if (slot.HasCommitted)
         {
-            var committed = slot.GetCommitted();
-            slot.SetPending(null);
-            slot.CommitPending();
-            NotifyUnitCleared(committed);
+            var unit = slot.GetCommitted();
+            slot.SetCommittedExternal(null);
+            NotifyUnitCleared(unit);
             UpdateCompleteButton();
-            return;
         }
     }
+
 
     public void OnLockedSlotClicked(int slotIndex, int presetIndex)
     {
@@ -698,7 +691,7 @@ public class DeckControl : MonoBehaviour
 
         if (success)
         {
-            Debug.Log($"[DeckControl] 슬롯 {pendingUnlockSlot} 해제 완료");
+            Debug.Log($"[DeckControl] 슬롯 {pendingUnlockSlot} 해제 완료 (모든 프리셋)");
         }
 
         pendingUnlockSlot = -1;
@@ -752,11 +745,19 @@ public class DeckControl : MonoBehaviour
                 DatabaseManager.Instance.CurrentUser.presetSlotUnlocks = new PresetSlotUnlockData();
             }
 
-            DatabaseManager.Instance.CurrentUser.presetSlotUnlocks.UnlockSlot(presetIndex, slotIndex);
+            for (int p = 0; p < 5; p++)
+            {
+                DatabaseManager.Instance.CurrentUser.presetSlotUnlocks.UnlockSlot(p, slotIndex);
+            }
+
             await DatabaseManager.Instance.SaveSlotUnlocksAsync();
 
+            for (int p = 0; p < 5; p++)
+            {
+                await FillUnlockedSlotWithRandomUnit(p, slotIndex);
+            }
+
             UpdateAllSlotLockStates();
-            await FillUnlockedSlotWithRandomUnit(presetIndex, slotIndex);
 
             DatabaseManager.Instance.SyncPresetsToPlayData();
             LoadPresets();
@@ -795,7 +796,7 @@ public class DeckControl : MonoBehaviour
 
         if (availableUnits.Count == 0)
         {
-            Debug.LogWarning("[DeckControl] 배치할 수 있는 유닛이 없습니다!");
+            Debug.LogWarning($"[DeckControl] 프리셋 {presetIdx} - 배치할 수 있는 유닛이 없습니다!");
             return;
         }
 
@@ -808,7 +809,7 @@ public class DeckControl : MonoBehaviour
 
         await DatabaseManager.Instance.SavePresetFromPlayDataAsync(presetIdx);
 
-        Debug.Log($"[DeckControl] 슬롯 {slotIdx}에 유닛 {selectedUnit.unitId} 자동 배치 완료");
+        Debug.Log($"[DeckControl] 프리셋 {presetIdx} 슬롯 {slotIdx}에 유닛 {selectedUnit.unitId} 자동 배치 완료");
     }
 
     void OnUnitCardClicked(DeckUnitModel model)
@@ -827,33 +828,15 @@ public class DeckControl : MonoBehaviour
     {
         foreach (var slot in slots)
         {
-            if (slot.IsLocked)
-                continue;
+            if (slot.IsLocked) continue;
 
-            var pending = slot.GetPending();
-            if (pending != null && pending.unitId == model.unitId)
-            {
-                slot.ClearPending();
-                NotifyUnitCleared(model);
-                UpdateCompleteButton();
-                return;
-            }
-
-            var committed = slot.GetCommitted();
-            if (committed != null && committed.unitId == model.unitId)
-            {
-                slot.SetPending(null);
-                slot.CommitPending();
-                NotifyUnitCleared(committed);
-                UpdateCompleteButton();
-                return;
-            }
+            if (slot.GetCommitted()?.unitId == model.unitId) return;
+            if (slot.GetPending()?.unitId == model.unitId) return;
         }
 
         foreach (var slot in slots)
         {
-            if (slot.IsLocked)
-                continue;
+            if (slot.IsLocked) continue;
 
             if (!slot.HasCommitted && !slot.HasPending)
             {
@@ -863,6 +846,7 @@ public class DeckControl : MonoBehaviour
                 return;
             }
         }
+
     }
 
     void HandleViewModeCardClick(DeckUnitModel model)
@@ -900,7 +884,23 @@ public class DeckControl : MonoBehaviour
     {
         if (!isEditing) return;
 
-        FillEmptySlotsWithRandomUnits();
+        bool hasEmptySlot = false;
+        foreach (var slot in slots)
+        {
+            if (slot.IsLocked)
+                continue;
+
+            if (!slot.HasPending && !slot.HasCommitted)
+            {
+                hasEmptySlot = true;
+                break;
+            }
+        }
+
+        if (hasEmptySlot)
+        {
+            FillEmptySlotsWithRandomUnits();
+        }
 
         for (int i = 0; i < slots.Count; i++)
         {
@@ -928,6 +928,8 @@ public class DeckControl : MonoBehaviour
             }
             else
             {
+                // 빈 슬롯이 있으면 경고
+                Debug.LogWarning($"[DeckControl] 슬롯 {i}에 유닛이 없습니다!");
                 PlayData.selectedDeckUnitIds[activePresetIndex, i] = 0;
                 PlayData.selectedDeckUnitIconAddresses[activePresetIndex, i] = "";
             }
@@ -1101,7 +1103,6 @@ public class DeckControl : MonoBehaviour
         if (!isEditing)
             return;
 
-        // 편집 모드에서만 외부 클릭 감지
         if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
         {
             Vector2 touchPos = Touchscreen.current.primaryTouch.position.ReadValue();
@@ -1128,7 +1129,6 @@ public class DeckControl : MonoBehaviour
                     }
                 }
 
-                // 편집 UI 외부를 클릭하면 편집 모드 종료
                 if (!clickedEditableUI && results.Count > 0)
                 {
                     ExitEditMode();
