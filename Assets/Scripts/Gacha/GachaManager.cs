@@ -213,7 +213,7 @@ public class GachaManager : MonoBehaviour
                 return null;
             }
 
-            // 🔍 디버그!
+            // 디버그!
             Debug.Log($"━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             Debug.Log($"[가챠 재화 검사]");
             Debug.Log($"타입: {type}, 횟수: {count}");
