@@ -674,7 +674,7 @@ namespace Tutorial
                         var voiceClip = AddressablePreloader.Instance?.GetCachedTutorialVoice(voiceKey);
                         if (voiceClip != null)
                         {
-                            SoundManager.Instance?.PlaySFX(voiceClip);
+                            SoundManager.Instance?.PlayVoice(voiceClip);
                         }
                         else
                         {
