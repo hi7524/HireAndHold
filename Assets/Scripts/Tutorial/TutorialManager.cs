@@ -203,6 +203,19 @@ namespace Tutorial
             // 씬 전환 시 조건 플래그 초기화 (이전 스테이지 조건이 남아있지 않도록)
             metConditions.Clear();
 
+            // 스테이지 튜토리얼 진행 중 로비로 돌아간 경우 튜토리얼 초기화
+            if (isPlaying && currentSequence != null && scene.name == "02_Lobby")
+            {
+                // 스테이지 관련 튜토리얼인 경우 (OnStageStart, OnLevelUp, OnStageClear 등)
+                if (currentSequence.triggerType == TutorialTriggerType.OnStageStart ||
+                    currentSequence.triggerType == TutorialTriggerType.OnLevelUp ||
+                    (currentSequence.triggerType == TutorialTriggerType.OnCondition && currentSequence.triggerStageId > 0))
+                {
+                    DebugLog($"스테이지 튜토리얼 진행 중 로비 복귀 - 튜토리얼 초기화: {currentSequence.sequenceId}");
+                    CancelCurrentTutorial();
+                }
+            }
+
             FindTutorialUI();
 
             // 씬 로드 후 튜토리얼 자동 체크
@@ -224,8 +237,8 @@ namespace Tutorial
                 {
                     int stageId = GameEvents.StageManager.CurrentStageId;
 
-                    // 튜토리얼 스테이지(701, 703, 704)에서 OnStageStart 튜토리얼 시작
-                    if (stageId == 701 || stageId == 703 || stageId == 704)
+                    // 튜토리얼 스테이지(701, 703)에서 OnStageStart 튜토리얼 시작
+                    if (stageId == 701 || stageId == 703)
                     {
                         await CheckAndStartTutorialAsync(TutorialTriggerType.OnStageStart, stageId);
                     }
@@ -1122,6 +1135,39 @@ namespace Tutorial
             if (!currentSequence.canSkip) return;
 
             await CompleteSequenceAsync();
+        }
+
+        /// <summary>
+        /// 현재 튜토리얼 취소 (씬 전환 등으로 인한 강제 종료)
+        /// 완료 처리하지 않고 상태만 초기화하여 다음에 다시 시작할 수 있도록 함
+        /// </summary>
+        public void CancelCurrentTutorial()
+        {
+            if (!isPlaying || currentSequence == null) return;
+
+            DebugLog($"튜토리얼 취소: {currentSequence.sequenceId}");
+
+            // UI 정리
+            if (tutorialUI != null)
+            {
+                tutorialUI.Hide();
+            }
+            if (tutorialBlocker != null)
+            {
+                tutorialBlocker.Unblock();
+            }
+
+            // 게임 재개
+            ResumeGame();
+
+            // Firebase 진행 상태 초기화 (완료 처리하지 않음)
+            DatabaseManager.Instance.CancelTutorialSequenceAsync(currentSequence.sequenceId).Forget();
+
+            // 상태 초기화
+            currentSequence = null;
+            currentStepIndex = 0;
+            isPlaying = false;
+            isWaitingForAction = false;
         }
 
         #endregion

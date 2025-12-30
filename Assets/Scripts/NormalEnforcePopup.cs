@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using GameData;
 using TMPro;
+using Tutorial;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -101,20 +102,6 @@ public class NormalEnforcePopup : MonoBehaviour
     }
 
 
-    private async UniTaskVoid LoadUnitIconAsync()
-    {
-        if (unitImage == null || unitTable == null)
-            return;
-
-        var data = unitTable.Get(currentUnitId);
-        if (data == null)
-            return;
-
-        var sprite = await SpriteCache.Instance.LoadSpriteAsync(data.UNIT_ICON);
-        if (unitImage != null && sprite != null)
-            unitImage.sprite = sprite;
-    }
-
     private void RefreshUI()
     {
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
@@ -151,6 +138,9 @@ public class NormalEnforcePopup : MonoBehaviour
 
     private void OnConfirmClicked()
     {
+        // 튜토리얼에 버튼 클릭 알림 (TutorialTarget 리스너가 RemoveAllListeners로 삭제되므로 여기서 직접 호출)
+        TutorialManager.Instance?.NotifyButtonTouched("EnhanceButton");
+
         _ = TryEnforceAsync();
     }
 

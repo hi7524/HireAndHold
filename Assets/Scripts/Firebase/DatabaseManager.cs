@@ -2147,6 +2147,27 @@ public class DatabaseManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 튜토리얼 시퀀스 취소 (완료 처리하지 않고 진행 상태만 초기화)
+    /// </summary>
+    public async UniTask<bool> CancelTutorialSequenceAsync(string sequenceId)
+    {
+        if (CurrentUser?.tutorial == null)
+            return false;
+
+        // 현재 진행 중인 시퀀스인 경우에만 초기화
+        if (CurrentUser.tutorial.currentSequenceId == sequenceId)
+        {
+            CurrentUser.tutorial.currentSequenceId = null;
+            CurrentUser.tutorial.currentStepIndex = 0;
+            CurrentUser.tutorial.lastCheckpointIndex = 0;
+
+            return await SaveTutorialProgressAsync();
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// 전체 튜토리얼 완료 처리
     /// </summary>
     public async UniTask<bool> CompleteTutorialAsync()
