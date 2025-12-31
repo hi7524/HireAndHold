@@ -2,9 +2,8 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
-/// <summary>
-/// 재화 + 버튼 - 상점 열고 해당 탭으로 이동
-/// </summary>
+
+
 public class CurrencyPlusButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
 {
     [Header("Settings")]
