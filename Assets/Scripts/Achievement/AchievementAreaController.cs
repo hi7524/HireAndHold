@@ -191,21 +191,20 @@ public class AchievementAreaController : MonoBehaviour
         RefreshAchievementList();
     }
 
-    private async void OnClaimAllClicked()
+    private void OnClaimAllClicked()
     {
         if (claimAllButton != null)
             claimAllButton.interactable = false;
 
-        var claimable = AchievementManager.GetClaimableAchievements();
-        int claimedCount = 0;
+        // 낙관적 업데이트: 로컬 즉시 처리, Firebase는 백그라운드
+        int claimedCount = AchievementManager.ClaimAllRewardsOptimistic(out var saveTask);
 
-        foreach (var achievement in claimable)
+        if (claimedCount > 0)
         {
-            bool success = await AchievementManager.ClaimRewardAsync(achievement.Achievements_ID);
-            if (success) claimedCount++;
+            Debug.Log($"[Achievement] 일괄 수령 완료: {claimedCount}개");
         }
 
-        await UniTask.Yield();
+        // UI 즉시 갱신
         RefreshAchievementList();
 
         if (claimAllButton != null)

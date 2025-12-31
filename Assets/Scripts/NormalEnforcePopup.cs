@@ -40,6 +40,7 @@ public class NormalEnforcePopup : MonoBehaviour
 
     private int currentUnitId;
     private Unit currentPreviewUnit;
+    private bool isProcessing;
 
     private const int NORMAL_MAX = 20;
 
@@ -138,6 +139,8 @@ public class NormalEnforcePopup : MonoBehaviour
 
     private void OnConfirmClicked()
     {
+        if (isProcessing) return;
+
         // 튜토리얼에 버튼 클릭 알림 (TutorialTarget 리스너가 RemoveAllListeners로 삭제되므로 여기서 직접 호출)
         TutorialManager.Instance?.NotifyButtonTouched("EnhanceButton");
 
@@ -146,46 +149,58 @@ public class NormalEnforcePopup : MonoBehaviour
 
     private async UniTask TryEnforceAsync()
     {
-        if (currentPreviewUnit == null || !currentPreviewUnit.IsInitialized)
+        if (isProcessing) return;
+        isProcessing = true;
+        confirmButton.interactable = false;
+
+        try
         {
-            popupManager?.ShowAlert("유닛 데이터 준비 중입니다.");
-            return;
-        }
+            if (currentPreviewUnit == null || !currentPreviewUnit.IsInitialized)
+            {
+                popupManager?.ShowAlert("유닛 데이터 준비 중입니다.");
+                return;
+            }
 
-        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
-        if (character == null)
+            var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+            if (character == null)
+            {
+                popupManager?.ShowAlert("미보유 유닛입니다.");
+                return;
+            }
+
+            int beforeLv = character.enforceLevel;
+            int beforeAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
+
+            bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
+            if (!ok)
+            {
+                popupManager?.ShowAlert("재료가 부족합니다.");
+                return;
+            }
+
+            PlayData.SyncCharactersFromDatabase();
+            PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
+
+            character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+
+            int afterLv = character.enforceLevel;
+            int afterAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
+
+            successEffect?.PlayEffect().Forget();
+
+            popupManager?.ShowSuccess(
+                "강화 성공",
+                $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}"
+            );
+
+            mainUI?.RefreshUI();
+            RefreshUI();
+        }
+        finally
         {
-            popupManager?.ShowAlert("미보유 유닛입니다.");
-            return;
+            isProcessing = false;
+            confirmButton.interactable = true;
         }
-
-        int beforeLv = character.enforceLevel;
-        int beforeAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
-
-        bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
-        if (!ok)
-        {
-            popupManager?.ShowAlert("재료가 부족합니다.");
-            return;
-        }
-
-        PlayData.SyncCharactersFromDatabase();
-        PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
-
-        character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
-
-        int afterLv = character.enforceLevel;
-        int afterAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
-
-        successEffect?.PlayEffect().Forget();
-
-        popupManager?.ShowSuccess(
-            "강화 성공",
-            $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}"
-        );
-
-        mainUI?.RefreshUI();
-        RefreshUI();
     }
 
 

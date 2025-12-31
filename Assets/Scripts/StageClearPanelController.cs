@@ -95,7 +95,7 @@ public class StageClearPanelController : MonoBehaviour
             Debug.LogWarning("[StageClearPanel] DatabaseManager 없음");
             return;
         }
-        
+
         string stageKey = stageId.ToString();
         if (isCleared)
         {
@@ -154,11 +154,11 @@ public class StageClearPanelController : MonoBehaviour
                     progress = new GameData.StageProgress();
                     currentUser.stageProgress[stageKey] = progress;
                 }
-                
+
                 progress.playCount++;
-                
+
                 await DatabaseManager.Instance.SaveStageProgressAsync(stageKey);
-                
+
                 // 획득한 재화 지급
                 if (gold > 0)
                 {

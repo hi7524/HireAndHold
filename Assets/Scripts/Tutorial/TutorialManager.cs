@@ -329,7 +329,9 @@ namespace Tutorial
                             if (sequence.triggerStageId > 0)
                                 shouldRestore = currentScene == "03_Stage";
                             else
-                                shouldRestore = true;
+                                // triggerStageId가 없는 OnCondition(던전 튜토리얼 등)은 복원하지 않음
+                                // 해당 조건이 다시 발생할 때 새로 시작
+                                shouldRestore = false;
                             break;
                         default:
                             shouldRestore = true;
@@ -343,6 +345,12 @@ namespace Tutorial
                         Debug.Log($"[Tutorial] 튜토리얼 복원 시작: {sequence.sequenceId}, 스텝: {progress.lastCheckpointIndex}");
                         int startIndex = progress.lastCheckpointIndex;
                         await StartSequenceFromStepAsync(sequence, startIndex);
+                    }
+                    else
+                    {
+                        // 복원하지 않는 경우 진행 상태 취소 (다음에 조건 발생 시 새로 시작)
+                        Debug.Log($"[Tutorial] 튜토리얼 복원 취소: {sequence.sequenceId}");
+                        await DatabaseManager.Instance.CancelTutorialSequenceAsync(sequence.sequenceId);
                     }
                 }
                 else
@@ -468,8 +476,9 @@ namespace Tutorial
 
             DebugLog($"시퀀스 시작: {sequence.sequenceId}, 스텝: {startStepIndex}");
 
-            // Firebase에 시작 기록
-            await DatabaseManager.Instance.StartTutorialSequenceAsync(sequence.sequenceId);
+            // Firebase에 시작 기록 (백그라운드)
+            var saveTask = DatabaseManager.Instance.StartTutorialSequenceAsync(sequence.sequenceId);
+            PendingSaveManager.Track(saveTask);
 
             OnSequenceStart?.Invoke(sequence);
 
@@ -486,8 +495,9 @@ namespace Tutorial
 
             DebugLog($"시퀀스 완료: {currentSequence.sequenceId}");
 
-            // Firebase에 완료 기록
-            await DatabaseManager.Instance.CompleteTutorialSequenceAsync(currentSequence.sequenceId);
+            // Firebase에 완료 기록 (백그라운드)
+            var saveTask = DatabaseManager.Instance.CompleteTutorialSequenceAsync(currentSequence.sequenceId);
+            PendingSaveManager.Track(saveTask);
 
             OnSequenceComplete?.Invoke(currentSequence);
 
@@ -972,15 +982,16 @@ namespace Tutorial
                 tutorialUI.HideHandGuide();
             }
 
-            // 보상 지급
+            // 보상 지급 (로컬 즉시, Firebase 백그라운드)
             if (step.reward != null && step.reward.HasReward)
             {
-                await GiveRewardAsync(step.reward);
+                GiveRewardAsync(step.reward);
             }
 
-            // 체크포인트면 Firebase 저장
+            // 체크포인트면 Firebase 저장 (백그라운드)
             bool isCheckpoint = step.isCheckpoint;
-            await DatabaseManager.Instance.UpdateTutorialStepAsync(currentStepIndex, isCheckpoint);
+            var stepSaveTask = DatabaseManager.Instance.UpdateTutorialStepAsync(currentStepIndex, isCheckpoint);
+            PendingSaveManager.Track(stepSaveTask);
 
             OnStepComplete?.Invoke(step);
 
@@ -998,14 +1009,16 @@ namespace Tutorial
         }
 
         /// <summary>
-        /// 보상 지급
+        /// 보상 지급 (로컬 즉시 + Firebase 백그라운드)
         /// </summary>
-        private async UniTask GiveRewardAsync(TutorialReward reward)
+        private void GiveRewardAsync(TutorialReward reward)
         {
+            UniTask firebaseTask = UniTask.CompletedTask;
+
             switch (reward.rewardType)
             {
                 case TutorialRewardType.Credit:
-                    // 인게임 크레딧 지급
+                    // 인게임 크레딧 지급 (로컬만)
                     if (GameEvents.PlayerGold != null)
                     {
                         GameEvents.PlayerGold.AddCredit(reward.amount);
@@ -1013,23 +1026,31 @@ namespace Tutorial
                     break;
 
                 case TutorialRewardType.Gold:
-                    await DatabaseManager.Instance.AddGoldAsync(reward.amount);
+                    PlayData.SetGoldImmediate(PlayData.Gold + reward.amount);
+                    firebaseTask = DatabaseManager.Instance.AddGoldAsync(reward.amount);
                     break;
 
                 case TutorialRewardType.EnhanceStone:
-                    await DatabaseManager.Instance.AddEnhanceStoneAsync(reward.amount);
+                    PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone + reward.amount);
+                    firebaseTask = DatabaseManager.Instance.AddEnhanceStoneAsync(reward.amount);
                     break;
 
                 case TutorialRewardType.SummonTicket:
                     // itemId가 지정되어 있으면 사용, 없으면 기본 일반 소환권(5102) 사용
                     int ticketId = reward.itemId > 0 ? reward.itemId : 5102;
-                    await DatabaseManager.Instance.AddItemAsync(ticketId, reward.amount);
+                    PlayData.SetItemCountImmediate(ticketId, PlayData.GetItemCount(ticketId) + reward.amount);
+                    firebaseTask = DatabaseManager.Instance.AddItemAsync(ticketId, reward.amount);
                     break;
 
                 case TutorialRewardType.Item:
-                    await DatabaseManager.Instance.AddItemAsync(reward.itemId, reward.amount);
+                    PlayData.SetItemCountImmediate(reward.itemId, PlayData.GetItemCount(reward.itemId) + reward.amount);
+                    firebaseTask = DatabaseManager.Instance.AddItemAsync(reward.itemId, reward.amount);
                     break;
             }
+
+            // Firebase 저장 추적
+            PendingSaveManager.Track(firebaseTask);
+            PlayData.NotifyCurrencyChanged();
 
             DebugLog($"보상 지급: {reward.rewardType} x{reward.amount}");
         }
@@ -1076,9 +1097,9 @@ namespace Tutorial
         }
 
         /// <summary>
-        /// 조건 만족 알림 (외부에서 호출)
+        /// 조건 만족 알림 (외부에서 호출) - 비동기 버전, 튜토리얼 시작을 기다림
         /// </summary>
-        public void NotifyConditionMet(string conditionKey)
+        public async UniTask NotifyConditionMetAsync(string conditionKey)
         {
             // 스텝 단위 조건 저장 (WaitCondition용)
             metConditions.Add(conditionKey);
@@ -1104,10 +1125,18 @@ namespace Tutorial
                     if (sequence.triggerStageId > 0 && sequence.triggerStageId != currentStageId)
                         continue;
 
-                    StartSequenceAsync(sequence).Forget();
+                    await StartSequenceAsync(sequence);
                     return;
                 }
             }
+        }
+
+        /// <summary>
+        /// 조건 만족 알림 (외부에서 호출) - 동기 버전, fire-and-forget
+        /// </summary>
+        public void NotifyConditionMet(string conditionKey)
+        {
+            NotifyConditionMetAsync(conditionKey).Forget();
         }
 
         /// <summary>

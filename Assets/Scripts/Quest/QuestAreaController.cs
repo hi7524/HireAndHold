@@ -291,36 +291,28 @@ public class QuestAreaController : MonoBehaviour
     }
 
 
-    private async void OnClaimAllClicked()
+    private void OnClaimAllClicked()
     {
         if (claimAllButton != null)
             claimAllButton.interactable = false;
 
-        // 현재 탭의 수령 가능한 퀘스트만 수령
-        IEnumerable<QuestData> quests;
+        // 낙관적 업데이트: 로컬 즉시 처리, Firebase는 백그라운드
+        int claimedCount;
         if (showingDaily)
-            quests = DataTableManager.QuestTable.GetDailyQuests();
+        {
+            claimedCount = QuestManager.ClaimAllDailyRewardsOptimistic(out var saveTask);
+        }
         else
-            quests = DataTableManager.QuestTable.GetWeeklyQuests();
-
-        // 수령 가능한 퀘스트 ID 목록 수집
-        var claimableTasks = new List<UniTask<bool>>();
-        foreach (var quest in quests)
         {
-            var progress = QuestManager.GetProgress(quest.Quest_ID);
-            if (progress != null && progress.isCompleted && !progress.isRewarded)
-            {
-                claimableTasks.Add(QuestManager.ClaimRewardAsync(quest.Quest_ID));
-            }
+            claimedCount = QuestManager.ClaimAllWeeklyRewardsOptimistic(out var saveTask);
         }
 
-        // 병렬로 모든 보상 수령
-        if (claimableTasks.Count > 0)
+        if (claimedCount > 0)
         {
-            await UniTask.WhenAll(claimableTasks);
+            Debug.Log($"[Quest] 일괄 수령 완료: {claimedCount}개");
         }
 
-        await UniTask.Yield();
+        // UI 즉시 갱신
         RefreshQuestList();
 
         if (claimAllButton != null)

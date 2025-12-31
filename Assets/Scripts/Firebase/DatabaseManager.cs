@@ -557,6 +557,38 @@ public class DatabaseManager : MonoBehaviour
         return success;
     }
 
+    /// <summary>
+    /// 캐릭터 추가 - 로컬 캐시만 업데이트 (Firebase 저장 없음)
+    /// </summary>
+    public bool AddCharacterLocal(string characterId, int star = 1)
+    {
+        if (CurrentUser.characters.ContainsKey(characterId))
+        {
+            // 이미 보유 - 조각으로 변환은 호출자가 처리
+            return false;
+        }
+
+        CurrentUser.characters[characterId] = new OwnedCharacter(characterId, star);
+        return true;
+    }
+
+    /// <summary>
+    /// 캐릭터 추가 - Firebase에만 저장 (로컬 캐시는 이미 업데이트된 상태)
+    /// </summary>
+    public async UniTask<bool> AddCharacterFirebaseAsync(string characterId, int star = 1)
+    {
+        bool success = await SaveCharacterAsync(characterId);
+
+        // 업적 연동: 유닛 수집 (백그라운드)
+        if (success)
+        {
+            int totalUnitCount = CurrentUser.characters.Count;
+            AchievementManager.UpdateUnitCollectCountAsync(totalUnitCount).Forget();
+        }
+
+        return success;
+    }
+
     public async UniTask<bool> LevelUpCharacterAsync(string characterId, int addExp)
     {
         if (!CurrentUser.characters.TryGetValue(characterId, out var character))
@@ -1031,86 +1063,119 @@ public class DatabaseManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 메일 보상 수령
+    /// 메일 보상 수령 (낙관적 업데이트)
     /// </summary>
-    public async UniTask<bool> ClaimMailRewardAsync(string mailId)
+    public UniTask<bool> ClaimMailRewardAsync(string mailId)
     {
         if (CurrentUser?.mails == null || !CurrentUser.mails.TryGetValue(mailId, out var mail))
         {
             Debug.LogWarning($"[Mail] 메일을 찾을 수 없음: {mailId}");
-            return false;
+            return UniTask.FromResult(false);
         }
 
         if (mail.isClaimed)
         {
             Debug.LogWarning($"[Mail] 이미 수령한 메일: {mailId}");
-            return false;
+            return UniTask.FromResult(false);
         }
 
         if (mail.IsExpired())
         {
             Debug.LogWarning($"[Mail] 만료된 메일: {mailId}");
-            return false;
+            return UniTask.FromResult(false);
         }
 
         var reward = mail.reward;
+
+        // 수령 완료 표시 (즉시)
+        mail.isClaimed = true;
+        mail.isRead = true;
+
         if (reward == null || !reward.HasReward())
         {
             Debug.LogWarning($"[Mail] 보상 없는 메일: {mailId}");
-            // 보상이 없어도 수령 처리
-            mail.isClaimed = true;
+            // Firebase 저장 백그라운드
             string claimPath = $"users/{UserId}/mails/{mailId}/isClaimed";
-            return await database.SetDataAsync(claimPath, true);
+            database.SetDataAsync(claimPath, true).Forget();
+            PlayData.NotifyMailsChanged();
+            return UniTask.FromResult(true);
         }
 
-        // 보상 지급
+        // 로컬 캐시 즉시 업데이트
         if (reward.gold > 0)
-            await AddGoldAsync(reward.gold);
+            PlayData.SetGoldImmediate(PlayData.Gold + reward.gold);
 
         if (reward.diamond > 0)
-            await AddDiamondAsync(reward.diamond);
+            PlayData.SetDiamondImmediate(PlayData.Diamond + reward.diamond);
 
         if (reward.stamina > 0)
-            await AddStaminaAsync(reward.stamina);
+            PlayData.SetStaminaImmediate(PlayData.Stamina + reward.stamina);
 
         if (reward.enhanceStone > 0)
-            await AddEnhanceStoneAsync(reward.enhanceStone);
+            PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone + reward.enhanceStone);
 
         if (reward.items != null && reward.items.Count > 0)
         {
             foreach (var item in reward.items)
             {
-                // 강화석(5201)은 currency.enhanceStone으로 처리
                 if (item.Key == ENHANCE_STONE_ITEM_ID)
                 {
-                    await AddEnhanceStoneAsync(item.Value);
+                    PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone + item.Value);
                 }
                 else
                 {
-                    await AddItemAsync(item.Key, item.Value);
+                    PlayData.SetItemCountImmediate(item.Key, PlayData.GetItemCount(item.Key) + item.Value);
                 }
             }
         }
 
-        // 수령 완료 표시
-        mail.isClaimed = true;
-        mail.isRead = true;
+        PlayData.NotifyMailsChanged();
+        PlayData.NotifyCurrencyChanged();
 
-        string path = $"users/{UserId}/mails/{mailId}";
-        bool success = await database.SetDataAsync(path, mail);
+        // Firebase 저장은 백그라운드로 병렬 처리
+        var saveTasks = new System.Collections.Generic.List<UniTask>();
 
-        if (success)
+        if (reward.gold > 0)
+            saveTasks.Add(AddGoldAsync(reward.gold));
+
+        if (reward.diamond > 0)
+            saveTasks.Add(AddDiamondAsync(reward.diamond));
+
+        if (reward.stamina > 0)
+            saveTasks.Add(AddStaminaAsync(reward.stamina));
+
+        if (reward.enhanceStone > 0)
+            saveTasks.Add(AddEnhanceStoneAsync(reward.enhanceStone));
+
+        if (reward.items != null && reward.items.Count > 0)
         {
-            PlayData.NotifyMailsChanged();
+            foreach (var item in reward.items)
+            {
+                if (item.Key == ENHANCE_STONE_ITEM_ID)
+                {
+                    saveTasks.Add(AddEnhanceStoneAsync(item.Value));
+                }
+                else
+                {
+                    saveTasks.Add(AddItemAsync(item.Key, item.Value));
+                }
+            }
         }
 
-        return success;
+        string path = $"users/{UserId}/mails/{mailId}";
+        saveTasks.Add(database.SetDataAsync(path, mail));
+
+        // 모든 Firebase 저장을 병렬로 백그라운드 처리
+        var saveTask = UniTask.WhenAll(saveTasks);
+        PendingSaveManager.Track(saveTask);
+
+        return UniTask.FromResult(true);
     }
 
     /// <summary>
-    /// 모든 메일 일괄 수령
+    /// 모든 메일 일괄 수령 (낙관적 업데이트 - 즉시 반환)
     /// </summary>
-    public async UniTask<int> ClaimAllMailRewardsAsync()
+    public UniTask<int> ClaimAllMailRewardsAsync()
     {
         var mails = GetValidMails();
         int claimedCount = 0;
@@ -1119,12 +1184,13 @@ public class DatabaseManager : MonoBehaviour
         {
             if (!mail.isClaimed && mail.reward != null && mail.reward.HasReward())
             {
-                bool success = await ClaimMailRewardAsync(mail.mailId);
-                if (success) claimedCount++;
+                // ClaimMailRewardAsync가 이제 동기적으로 로컬 캐시 업데이트 후 즉시 반환
+                ClaimMailRewardAsync(mail.mailId);
+                claimedCount++;
             }
         }
 
-        return claimedCount;
+        return UniTask.FromResult(claimedCount);
     }
 
     /// <summary>
@@ -1382,83 +1448,118 @@ public class DatabaseManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 전역 메일 보상 수령
+    /// 전역 메일 보상 수령 (낙관적 업데이트)
     /// </summary>
-    public async UniTask<bool> ClaimGlobalMailRewardAsync(string mailId)
+    public UniTask<bool> ClaimGlobalMailRewardAsync(string mailId)
     {
         if (!cachedGlobalMails.TryGetValue(mailId, out var globalMail))
         {
             Debug.LogWarning($"[GlobalMail] 메일을 찾을 수 없음: {mailId}");
-            return false;
+            return UniTask.FromResult(false);
         }
 
         if (IsGlobalMailClaimed(mailId))
         {
             Debug.LogWarning($"[GlobalMail] 이미 수령한 메일: {mailId}");
-            return false;
+            return UniTask.FromResult(false);
         }
 
         if (globalMail.IsExpired())
         {
             Debug.LogWarning($"[GlobalMail] 만료된 메일: {mailId}");
-            return false;
+            return UniTask.FromResult(false);
         }
 
-        var reward = globalMail.reward;
-        if (reward != null && reward.HasReward())
-        {
-            // 보상 지급
-            if (reward.gold > 0)
-                await AddGoldAsync(reward.gold);
-
-            if (reward.diamond > 0)
-                await AddDiamondAsync(reward.diamond);
-
-            if (reward.stamina > 0)
-                await AddStaminaAsync(reward.stamina);
-
-            if (reward.enhanceStone > 0)
-                await AddEnhanceStoneAsync(reward.enhanceStone);
-
-            if (reward.items != null && reward.items.Count > 0)
-            {
-                foreach (var item in reward.items)
-                {
-                    // 강화석(5201)은 currency.enhanceStone으로 처리
-                    if (item.Key == ENHANCE_STONE_ITEM_ID)
-                    {
-                        await AddEnhanceStoneAsync(item.Value);
-                    }
-                    else
-                    {
-                        await AddItemAsync(item.Key, item.Value);
-                    }
-                }
-            }
-        }
-
-        // 수령 기록 저장
+        // 수령 기록 즉시 저장 (로컬)
         if (CurrentUser.claimedGlobalMails == null)
             CurrentUser.claimedGlobalMails = new Dictionary<string, bool>();
 
         CurrentUser.claimedGlobalMails[mailId] = true;
 
-        string path = $"users/{UserId}/claimedGlobalMails/{mailId}";
-        bool success = await database.SetDataAsync(path, true);
-
-        if (success)
+        var reward = globalMail.reward;
+        if (reward != null && reward.HasReward())
         {
-            Debug.Log($"[GlobalMail] 전역 메일 수령 완료: {mailId}");
-            PlayData.NotifyMailsChanged();
+            // 로컬 캐시 즉시 업데이트
+            if (reward.gold > 0)
+                PlayData.SetGoldImmediate(PlayData.Gold + reward.gold);
+
+            if (reward.diamond > 0)
+                PlayData.SetDiamondImmediate(PlayData.Diamond + reward.diamond);
+
+            if (reward.stamina > 0)
+                PlayData.SetStaminaImmediate(PlayData.Stamina + reward.stamina);
+
+            if (reward.enhanceStone > 0)
+                PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone + reward.enhanceStone);
+
+            if (reward.items != null && reward.items.Count > 0)
+            {
+                foreach (var item in reward.items)
+                {
+                    if (item.Key == ENHANCE_STONE_ITEM_ID)
+                    {
+                        PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone + item.Value);
+                    }
+                    else
+                    {
+                        PlayData.SetItemCountImmediate(item.Key, PlayData.GetItemCount(item.Key) + item.Value);
+                    }
+                }
+            }
+
+            PlayData.NotifyCurrencyChanged();
         }
 
-        return success;
+        Debug.Log($"[GlobalMail] 전역 메일 수령 완료: {mailId}");
+        PlayData.NotifyMailsChanged();
+
+        // Firebase 저장은 백그라운드로 병렬 처리
+        var saveTasks = new System.Collections.Generic.List<UniTask>();
+
+        if (reward != null && reward.HasReward())
+        {
+            if (reward.gold > 0)
+                saveTasks.Add(AddGoldAsync(reward.gold));
+
+            if (reward.diamond > 0)
+                saveTasks.Add(AddDiamondAsync(reward.diamond));
+
+            if (reward.stamina > 0)
+                saveTasks.Add(AddStaminaAsync(reward.stamina));
+
+            if (reward.enhanceStone > 0)
+                saveTasks.Add(AddEnhanceStoneAsync(reward.enhanceStone));
+
+            if (reward.items != null && reward.items.Count > 0)
+            {
+                foreach (var item in reward.items)
+                {
+                    if (item.Key == ENHANCE_STONE_ITEM_ID)
+                    {
+                        saveTasks.Add(AddEnhanceStoneAsync(item.Value));
+                    }
+                    else
+                    {
+                        saveTasks.Add(AddItemAsync(item.Key, item.Value));
+                    }
+                }
+            }
+        }
+
+        string path = $"users/{UserId}/claimedGlobalMails/{mailId}";
+        saveTasks.Add(database.SetDataAsync(path, true));
+
+        // 모든 Firebase 저장을 병렬로 백그라운드 처리
+        var saveTask = UniTask.WhenAll(saveTasks);
+        PendingSaveManager.Track(saveTask);
+
+        return UniTask.FromResult(true);
     }
 
     /// <summary>
-    /// 모든 전역 메일 일괄 수령
+    /// 모든 전역 메일 일괄 수령 (낙관적 업데이트 - 즉시 반환)
     /// </summary>
-    public async UniTask<int> ClaimAllGlobalMailRewardsAsync()
+    public UniTask<int> ClaimAllGlobalMailRewardsAsync()
     {
         int claimedCount = 0;
 
@@ -1466,12 +1567,12 @@ public class DatabaseManager : MonoBehaviour
         {
             if (!mail.IsExpired() && !IsGlobalMailClaimed(mail.mailId))
             {
-                bool success = await ClaimGlobalMailRewardAsync(mail.mailId);
-                if (success) claimedCount++;
+                ClaimGlobalMailRewardAsync(mail.mailId);
+                claimedCount++;
             }
         }
 
-        return claimedCount;
+        return UniTask.FromResult(claimedCount);
     }
 
     /// <summary>
@@ -2347,12 +2448,12 @@ public class DatabaseManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 구매 기록 추가
+    /// 구매 기록 추가 (로컬 캐시만 - 낙관적 업데이트용)
     /// </summary>
-    public async UniTask<bool> AddPurchaseRecordAsync(int sellingId)
+    public void AddPurchaseRecordLocal(int sellingId)
     {
-        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
-            return false;
+        if (CurrentUser == null)
+            return;
 
         var record = GetPurchaseRecord(sellingId);
         string today = DateTime.Now.ToString("yyyy-MM-dd");
@@ -2382,6 +2483,19 @@ public class DatabaseManager : MonoBehaviour
         record.monthlyCount++;
         record.lastPurchaseDate = today;
 
+        Debug.Log($"[DB] 구매 기록 로컬 저장: {sellingId}, 전체: {record.totalCount}, 오늘: {record.dailyCount}");
+    }
+
+    /// <summary>
+    /// 구매 기록 추가 (Firebase 저장)
+    /// </summary>
+    public async UniTask<bool> AddPurchaseRecordAsync(int sellingId)
+    {
+        if (CurrentUser == null || string.IsNullOrEmpty(UserId))
+            return false;
+
+        var record = GetPurchaseRecord(sellingId);
+
         // Firebase 저장
         string key = sellingId.ToString();
         string path = $"users/{UserId}/purchaseRecords/{key}";
@@ -2389,7 +2503,7 @@ public class DatabaseManager : MonoBehaviour
 
         if (success)
         {
-            Debug.Log($"[DB] 구매 기록 저장: {sellingId}, 전체: {record.totalCount}, 오늘: {record.dailyCount}, 주간: {record.weeklyCount}, 월간: {record.monthlyCount}");
+            Debug.Log($"[DB] 구매 기록 Firebase 저장: {sellingId}");
         }
 
         return success;

@@ -169,7 +169,7 @@ public class DeckControl : MonoBehaviour
 
     void OnEnable()
     {
-        if (!isInitialized)
+        if (!isInitialized || presets == null)
             return;
 
         QuickRefresh();
@@ -540,6 +540,12 @@ public class DeckControl : MonoBehaviour
 
     public void LoadPresets()
     {
+        if (presets == null)
+        {
+            Debug.LogWarning("[DeckControl] LoadPresets: presets가 null - 초기화 대기 중");
+            return;
+        }
+
         for (int p = 0; p < 5; p++)
         {
             DeckPreset preset = presets[p];
