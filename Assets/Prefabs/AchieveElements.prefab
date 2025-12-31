@@ -30,7 +30,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2737028994516726825}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -43,7 +43,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 315.08, y: 133.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8035855088099445253
 CanvasRenderer:
@@ -197,9 +197,9 @@ MonoBehaviour:
   rewardIcon: {fileID: 0}
   rewardIconImage: {fileID: 6735029789194996170}
   rewardAmountText: {fileID: 8749428347239886861}
-  normalColor: {r: 0.84, g: 0.62, b: 0.37, a: 1}
-  claimableColor: {r: 0.4, g: 0.8, b: 0.4, a: 1}
-  completedColor: {r: 0.7, g: 0.7, b: 0.7, a: 0.5}
+  normalColor: {r: 0.7294118, g: 0.7294118, b: 0.7294118, a: 1}
+  claimableColor: {r: 1, g: 1, b: 1, a: 1}
+  completedColor: {r: 0.6301887, g: 0.6301887, b: 0.6301887, a: 0.5}
   goldIconKey: ItemIcon_Coin_Gold
   diamondIconKey: ItemIcon_Dia
   enhanceStoneIconKey: item_stone
@@ -253,8 +253,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.000015258789, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 2.75, y: 0}
+  m_SizeDelta: {x: -5.499994, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4511406139249477775
 CanvasRenderer:
@@ -319,7 +319,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -389,8 +389,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 1, y: 0}
-  m_SizeDelta: {x: 100, y: 50}
+  m_AnchoredPosition: {x: 0.9999962, y: 0}
+  m_SizeDelta: {x: 62.3, y: 16.4}
   m_Pivot: {x: 1, y: 0}
 --- !u!222 &6745185110337221699
 CanvasRenderer:
@@ -447,8 +447,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 11
+  m_fontSizeBase: 11
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -523,10 +523,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 640542362645226830}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 66.5, y: -37.2}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 121, y: 14.18}
+  m_SizeDelta: {x: 178.3, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1224687272146530096
 CanvasRenderer:
@@ -583,14 +583,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 12
+  m_fontSizeBase: 12
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -825,7 +825,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4061057545336249523, guid: b7c8b7084c27b4c38a38ad76e6c21682, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 11.2
+      value: 16.2
       objectReference: {fileID: 0}
     - target: {fileID: 4061057545336249523, guid: b7c8b7084c27b4c38a38ad76e6c21682, type: 3}
       propertyPath: m_LocalPosition.x
@@ -857,11 +857,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4061057545336249523, guid: b7c8b7084c27b4c38a38ad76e6c21682, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -37.11
+      value: -37.109985
       objectReference: {fileID: 0}
     - target: {fileID: 4061057545336249523, guid: b7c8b7084c27b4c38a38ad76e6c21682, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 39.3
+      value: 39.30005
       objectReference: {fileID: 0}
     - target: {fileID: 4061057545336249523, guid: b7c8b7084c27b4c38a38ad76e6c21682, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
