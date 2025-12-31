@@ -105,7 +105,25 @@ public class LobbyManager : MonoBehaviour
 
     public void OnClickedDungeonButton()
     {
-        windowManager.Open(Windows.Dungeon);
+        OnClickedDungeonButtonAsync().Forget();
+    }
+
+    private async UniTaskVoid OnClickedDungeonButtonAsync()
+    {
+        // 던전 튜토리얼이 완료되지 않았으면 튜토리얼 먼저 시작
+        bool isDungeonTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.DungeonTutorial);
+        if (!isDungeonTutorialCompleted && TutorialManager.Instance != null)
+        {
+            // 던전 패널 먼저 열기
+            windowManager.Open(Windows.Dungeon);
+
+            // 튜토리얼 시작 (완료될 때까지 대기)
+            await TutorialManager.Instance.NotifyConditionMetAsync(TutorialConditions.DUNGEON_TAB_FIRST_ENTER);
+        }
+        else
+        {
+            windowManager.Open(Windows.Dungeon);
+        }
     }
     public void OnClickedUnitButton()
     {

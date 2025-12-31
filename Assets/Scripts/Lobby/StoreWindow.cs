@@ -218,10 +218,17 @@ public class StoreWindow : GenericWindow
         if (swipeHintText != null)
             swipeHintText.SetActive(false);
 
-        if (doorAnimation != null)
-        {
-            await doorAnimation.PlayOnceAsync(ct);
-        }
+        // 문 열림 애니메이션과 Firebase 저장을 동시에 대기
+        // 애니메이션 중에 저장이 완료되므로 추가 대기 시간 없음
+        var animationTask = doorAnimation != null
+            ? doorAnimation.PlayOnceAsync(ct)
+            : UniTask.CompletedTask;
+
+        var saveTask = pendingResult != null
+            ? pendingResult.WaitForSaveAsync()
+            : UniTask.CompletedTask;
+
+        await UniTask.WhenAll(animationTask, saveTask);
 
         // 애니메이션 완료 후 문 패널 닫기
         if (doorPanel != null)
@@ -229,7 +236,7 @@ public class StoreWindow : GenericWindow
 
         isDoorActive = false;
 
-        Debug.Log("[StoreWindow] 문 열림 애니메이션 완료");
+        Debug.Log("[StoreWindow] 문 열림 애니메이션 + Firebase 저장 완료");
     }
 
     private async UniTask WaitForGachaResultAsync(CancellationToken ct)

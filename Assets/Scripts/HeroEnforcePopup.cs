@@ -46,6 +46,7 @@ public class HeroEnforcePopup : MonoBehaviour
 
     private int currentUnitId;
     private Unit currentPreviewUnit;
+    private bool isProcessing;
 
     private const int HERO_MAX = 4;
 
@@ -239,52 +240,65 @@ public class HeroEnforcePopup : MonoBehaviour
 
     private void OnConfirmClicked()
     {
+        if (isProcessing) return;
         _ = TryEnforceAsync();
     }
 
     private async UniTask TryEnforceAsync()
     {
-        var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
-        if (character == null)
+        if (isProcessing) return;
+        isProcessing = true;
+        confirmButton.interactable = false;
+
+        try
         {
-            popupManager?.ShowAlert("미보유 유닛입니다.");
-            return;
-        }
+            var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+            if (character == null)
+            {
+                popupManager?.ShowAlert("미보유 유닛입니다.");
+                return;
+            }
 
-        if (currentPreviewUnit == null || !currentPreviewUnit.IsInitialized)
+            if (currentPreviewUnit == null || !currentPreviewUnit.IsInitialized)
+            {
+                popupManager?.ShowAlert("유닛 데이터 준비 중입니다.");
+                return;
+            }
+
+            int beforeLv = character.heroEnforceLevel;
+
+            bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
+            if (!ok)
+            {
+                popupManager?.ShowAlert("재료 부족!");
+                return;
+            }
+
+            PlayData.SyncCharactersFromDatabase();
+            PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
+
+            mainUI?.RefreshUI();
+            RefreshUI();
+
+            var updatedChar = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+            int afterLv = updatedChar.heroEnforceLevel;
+
+            var ef = heroTable.Get(currentUnitId, afterLv);
+            var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
+            var desc = effectTable.FormatEffect(effData);
+
+            successEffect?.PlayEffect().Forget();
+
+            popupManager?.ShowSuccess(
+                "영웅 강화 성공!",
+                $"★{beforeLv} → ★{afterLv}\n효과: {desc}"
+            );
+        }
+        finally
         {
-            popupManager?.ShowAlert("유닛 데이터 준비 중입니다.");
-            return;
+            isProcessing = false;
+            confirmButton.interactable = true;
         }
-
-        int beforeLv = character.heroEnforceLevel;
-
-        bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
-        if (!ok)
-        {
-            popupManager?.ShowAlert("재료 부족!");
-            return;
-        }
-
-        PlayData.SyncCharactersFromDatabase();
-        PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
-
-        mainUI?.RefreshUI();
-        RefreshUI();
-
-        var updatedChar = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
-        int afterLv = updatedChar.heroEnforceLevel;
-
-        var ef = heroTable.Get(currentUnitId, afterLv);
-        var effData = effectTable.Get(ef.Hero_Enforce_EffectID);
-        var desc = effectTable.FormatEffect(effData);
-
-        successEffect?.PlayEffect().Forget();
-
-        popupManager?.ShowSuccess(
-            "영웅 강화 성공!",
-            $"★{beforeLv} → ★{afterLv}\n효과: {desc}"
-        );
     }
 
 

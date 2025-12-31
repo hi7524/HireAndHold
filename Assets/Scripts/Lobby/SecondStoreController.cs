@@ -151,7 +151,7 @@ public class SecondStoreController : MonoBehaviour
     }
 
     /// <summary>
-    /// 구매 처리
+    /// 구매 처리 (낙관적 업데이트 - 단, IAP는 동기 처리)
     /// </summary>
     private async UniTaskVoid PurchaseAsync(SellingData data)
     {
@@ -162,40 +162,185 @@ public class SecondStoreController : MonoBehaviour
             return;
         }
 
-        // 재화 차감
-        bool deductSuccess = await DeductCurrencyAsync(data.SELLING_MONEY, data.SELLING_PRICE);
-        if (!deductSuccess)
-        {
-            Debug.LogError("[SecondStore] 재화 차감 실패");
-            return;
-        }
+        // IAP 결제인 경우 (moneyType == 3): 동기 처리 필수
+        bool isIAP = data.SELLING_MONEY == 3;
 
-        // 아이템 지급
-        bool giveSuccess = await GiveItemAsync(data.SELLING_ITEM, data.SELLING_AMOUNT);
-        if (!giveSuccess)
+        if (isIAP)
         {
-            Debug.LogError("[SecondStore] 아이템 지급 실패");
-            return;
+            // IAP는 Firebase 저장 완료 후 아이템 지급 (데이터 손실 방지)
+            await PurchaseIAPAsync(data);
         }
+        else
+        {
+            // 인게임 재화: 낙관적 업데이트 (로컬 즉시, Firebase 백그라운드)
+            PurchaseInGameCurrency(data);
+        }
+    }
 
-        // 구매 기록 저장 (제한 상품인 경우)
+    /// <summary>
+    /// IAP 구매 처리 (Firebase 저장 완료 후 아이템 지급)
+    /// </summary>
+    private async UniTask PurchaseIAPAsync(SellingData data)
+    {
+        Debug.Log($"[SecondStore] IAP 구매 시작: {data.SELLING_ID}");
+
+        // 아이템 지급 Firebase (await로 완료 보장)
+        await GiveItemFirebaseAsync(data.SELLING_ITEM, data.SELLING_AMOUNT);
+
+        // 구매 기록 저장 Firebase
         if (data.SELLING_LIMIT > 0 && data.SELLING_NUM > 0)
         {
-            await SavePurchaseRecord(data.SELLING_ID);
+            await DatabaseManager.Instance.AddPurchaseRecordAsync(data.SELLING_ID);
         }
 
-        // ⭐ 캐시 동기화 - await 추가!
-        await UniTask.DelayFrame(1); // DB 업데이트 대기
+        // Firebase 저장 완료 후 로컬 캐시 업데이트
+        GiveItemLocal(data.SELLING_ITEM, data.SELLING_AMOUNT);
+
+        if (data.SELLING_LIMIT > 0 && data.SELLING_NUM > 0)
+        {
+            DatabaseManager.Instance.AddPurchaseRecordLocal(data.SELLING_ID);
+        }
+
         PlayData.SyncItemsFromDatabase();
-        await UniTask.DelayFrame(1); // 동기화 완료 대기
+        PlayData.NotifyCurrencyChanged();
+
+        Debug.Log($"[SecondStore] IAP 구매 완료: {data.SELLING_ID}");
+
+        OnPurchaseCompleted?.Invoke(data.SELLING_ID);
+        RefreshAllProductUI();
+    }
+
+    /// <summary>
+    /// 인게임 재화 구매 처리 (낙관적 업데이트)
+    /// </summary>
+    private void PurchaseInGameCurrency(SellingData data)
+    {
+        // 로컬 캐시 즉시 업데이트 (재화 차감)
+        DeductCurrencyLocal(data.SELLING_MONEY, data.SELLING_PRICE);
+
+        // 로컬 캐시 즉시 업데이트 (아이템 지급)
+        GiveItemLocal(data.SELLING_ITEM, data.SELLING_AMOUNT);
+
+        // 구매 기록 로컬 저장 (제한 상품인 경우)
+        if (data.SELLING_LIMIT > 0 && data.SELLING_NUM > 0)
+        {
+            DatabaseManager.Instance.AddPurchaseRecordLocal(data.SELLING_ID);
+        }
+
+        PlayData.SyncItemsFromDatabase();
+        PlayData.NotifyCurrencyChanged();
 
         Debug.Log($"[SecondStore] 구매 성공: {data.SELLING_ID}");
 
-        // 구매 완료 이벤트 발생
         OnPurchaseCompleted?.Invoke(data.SELLING_ID);
-
-        // 모든 상품 UI 갱신
         RefreshAllProductUI();
+
+        // Firebase 저장은 백그라운드로 처리
+        var saveTasks = new System.Collections.Generic.List<UniTask>();
+
+        saveTasks.Add(DeductCurrencyFirebaseAsync(data.SELLING_MONEY, data.SELLING_PRICE));
+        saveTasks.Add(GiveItemFirebaseAsync(data.SELLING_ITEM, data.SELLING_AMOUNT));
+
+        if (data.SELLING_LIMIT > 0 && data.SELLING_NUM > 0)
+        {
+            saveTasks.Add(DatabaseManager.Instance.AddPurchaseRecordAsync(data.SELLING_ID));
+        }
+
+        PendingSaveManager.Track(UniTask.WhenAll(saveTasks));
+    }
+
+    /// <summary>
+    /// 재화 차감 (로컬 캐시만)
+    /// </summary>
+    private void DeductCurrencyLocal(int moneyType, int price)
+    {
+        switch (moneyType)
+        {
+            case 1: // 골드
+                PlayData.SetGoldImmediate(PlayData.Gold - price);
+                break;
+            case 2: // 다이아
+                PlayData.SetDiamondImmediate(PlayData.Diamond - price);
+                break;
+            case 3: // 현금 (IAP)
+                Debug.Log("[SecondStore] IAP 결제 (테스트 모드 - 무료 통과)");
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 아이템 지급 (로컬 캐시만)
+    /// </summary>
+    private void GiveItemLocal(int itemId, int amount)
+    {
+        switch (itemId)
+        {
+            case 0:
+                // 골드 지급
+                PlayData.SetGoldImmediate(PlayData.Gold + amount);
+                break;
+            case 5107:
+                // 다이아 지급
+                PlayData.SetDiamondImmediate(PlayData.Diamond + amount);
+                break;
+            default:
+                // 패키지 아이템인지 확인
+                var itemData = DataTableManager.ItemTable?.Get(itemId);
+                if (itemData != null && itemData.PACKAGE_ID > 0)
+                {
+                    // 패키지는 우편으로 발송되므로 로컬 업데이트 불필요
+                    return;
+                }
+
+                // 일반 아이템 지급
+                PlayData.SetItemCountImmediate(itemId, PlayData.GetItemCount(itemId) + amount);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 재화 차감 (Firebase만)
+    /// </summary>
+    private UniTask DeductCurrencyFirebaseAsync(int moneyType, int price)
+    {
+        switch (moneyType)
+        {
+            case 1: // 골드
+                return DatabaseManager.Instance.AddGoldAsync(-price);
+            case 2: // 다이아
+                return DatabaseManager.Instance.AddDiamondAsync(-price);
+            case 3: // 현금 (IAP)
+                return UniTask.CompletedTask;
+            default:
+                return UniTask.CompletedTask;
+        }
+    }
+
+    /// <summary>
+    /// 아이템 지급 (Firebase만)
+    /// </summary>
+    private UniTask GiveItemFirebaseAsync(int itemId, int amount)
+    {
+        switch (itemId)
+        {
+            case 0:
+                // 골드 지급
+                return DatabaseManager.Instance.AddGoldAsync(amount);
+            case 5107:
+                // 다이아 지급
+                return DatabaseManager.Instance.AddDiamondAsync(amount);
+            default:
+                // 패키지 아이템인지 확인
+                var itemData = DataTableManager.ItemTable?.Get(itemId);
+                if (itemData != null && itemData.PACKAGE_ID > 0)
+                {
+                    // 패키지 내용물 우편 발송
+                    return DatabaseManager.Instance.SendPackageMailAsync(itemData.PACKAGE_ID, amount);
+                }
+
+                // 일반 아이템 지급
+                return DatabaseManager.Instance.AddItemAsync(itemId, amount);
+        }
     }
 
     /// <summary>
@@ -311,14 +456,6 @@ public class SecondStoreController : MonoBehaviour
     }
 
     /// <summary>
-    /// 구매 횟수 저장
-    /// </summary>
-    private async UniTask SavePurchaseRecord(int sellingId)
-    {
-        await DatabaseManager.Instance.AddPurchaseRecordAsync(sellingId);
-    }
-
-    /// <summary>
     /// 재화 보유량 확인
     /// </summary>
     public bool HasEnoughCurrency(int moneyType, int price)
@@ -334,72 +471,6 @@ public class SecondStoreController : MonoBehaviour
             default:
                 return false;
         }
-    }
-
-    /// <summary>
-    /// 재화 차감
-    /// </summary>
-    private async UniTask<bool> DeductCurrencyAsync(int moneyType, int price)
-    {
-        switch (moneyType)
-        {
-            case 1: // 골드
-                return await DatabaseManager.Instance.AddGoldAsync(-price);
-            case 2: // 다이아
-                return await DatabaseManager.Instance.AddDiamondAsync(-price);
-            case 3: // 현금 (IAP)
-                // TODO: 실제 IAP 결제 연동 시 여기에 구현
-                Debug.Log("[SecondStore] IAP 결제 (테스트 모드 - 무료 통과)");
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    /// <summary>
-    /// 아이템 지급
-    /// </summary>
-    private async UniTask<bool> GiveItemAsync(int itemId, int amount)
-    {
-        switch (itemId)
-        {
-            case 0:
-                // 골드 지급
-                return await DatabaseManager.Instance.AddGoldAsync(amount);
-            case 5107:
-                // 다이아 지급
-                return await DatabaseManager.Instance.AddDiamondAsync(amount);
-            default:
-                // 패키지 아이템인지 확인
-                var itemData = DataTableManager.ItemTable?.Get(itemId);
-                if (itemData != null && itemData.PACKAGE_ID > 0)
-                {
-                    // 패키지 내용물 지급
-                    return await GivePackageItemsAsync(itemData.PACKAGE_ID, amount);
-                }
-
-                // 일반 아이템 지급
-                return await DatabaseManager.Instance.AddItemAsync(itemId, amount);
-        }
-    }
-
-    /// <summary>
-    /// 패키지 내용물을 우편으로 발송
-    /// </summary>
-    private async UniTask<bool> GivePackageItemsAsync(int packageId, int packageAmount)
-    {
-        bool success = await DatabaseManager.Instance.SendPackageMailAsync(packageId, packageAmount);
-
-        if (success)
-        {
-            Debug.Log($"[SecondStore] 패키지 {packageId} 우편 발송 완료 (수량: {packageAmount})");
-        }
-        else
-        {
-            Debug.LogError($"[SecondStore] 패키지 {packageId} 우편 발송 실패");
-        }
-
-        return success;
     }
 
     /// <summary>

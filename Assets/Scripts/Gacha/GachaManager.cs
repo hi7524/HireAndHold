@@ -170,6 +170,11 @@ public class GachaManager : MonoBehaviour
 
         isExecuting = true;
 
+        // 재화 복구용 변수 (catch에서 접근 가능하도록)
+        int costItemId = 0;
+        int costAmount = 0;
+        bool costDeducted = false;
+
         try
         {
             // 가챠 데이터 확인
@@ -182,8 +187,8 @@ public class GachaManager : MonoBehaviour
             }
 
             // 비용 계산
-            int costItemId = GetCostItemId(type, count);
-            int costAmount = GetGachaCost(type, count);
+            costItemId = GetCostItemId(type, count);
+            costAmount = GetGachaCost(type, count);
 
 
 
@@ -206,12 +211,9 @@ public class GachaManager : MonoBehaviour
                 return null;
             }
 
-            // 재화 차감
-            bool deductSuccess = await DeductCostAsync(costItemId, costAmount, itemName);
-            if (!deductSuccess)
-            {
-                return null;
-            }
+            // 재화 로컬 즉시 차감
+            DeductCostLocal(costItemId, costAmount);
+            costDeducted = true;
 
             // 디버그!
             Debug.Log($"━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -237,7 +239,10 @@ public class GachaManager : MonoBehaviour
 
             if (results.Count == 0)
             {
-                Debug.LogError("[GachaManager] 뽑기 결과가 0개입니다!");
+                // 재화 복구 (로컬에서 이미 차감됨)
+                int restoredCount = PlayData.GetItemCount(costItemId);
+                PlayData.SetItemCountImmediate(costItemId, restoredCount + costAmount);
+                Debug.LogError("[GachaManager] 뽑기 결과가 0개입니다! 재화 복구됨.");
                 OnGachaError?.Invoke("뽑기 결과가 없습니다.");
                 return null;
             }
@@ -245,9 +250,12 @@ public class GachaManager : MonoBehaviour
             // 아이콘 미리 로드
             await PreloadResultIconsAsync(results);
 
-            // 캐릭터 DB 저장
+            // 캐릭터/조각 처리 - 로컬 즉시 업데이트, Firebase는 백그라운드
             HashSet<int> processedUnitsThisGacha = new HashSet<int>();
-            List<UniTask> saveTasks = new List<UniTask>();
+            List<UniTask> firebaseSaveTasks = new List<UniTask>();
+
+            // 재화 차감도 Firebase에 저장
+            firebaseSaveTasks.Add(DeductCostFirebaseAsync(costItemId, costAmount));
 
             foreach (var item in results)
             {
@@ -262,7 +270,10 @@ public class GachaManager : MonoBehaviour
                     item.isDuplicate = false;
                     item.isNew = true;
 
-                    saveTasks.Add(DatabaseManager.Instance.AddCharacterAsync(characterId, 1));
+                    // 로컬 캐시에 캐릭터 즉시 추가
+                    DatabaseManager.Instance.AddCharacterLocal(characterId, 1);
+                    // Firebase는 백그라운드
+                    firebaseSaveTasks.Add(DatabaseManager.Instance.AddCharacterFirebaseAsync(characterId, 1));
                     processedUnitsThisGacha.Add(unitId);
                 }
                 else
@@ -273,23 +284,41 @@ public class GachaManager : MonoBehaviour
                     var unitData = DataTableManager.UnitTable.Get(unitId);
                     if (unitData != null && unitData.FRAGMENT_ITEM_ID > 0)
                     {
-                        saveTasks.Add(DatabaseManager.Instance.AddItemAsync(unitData.FRAGMENT_ITEM_ID, 1));
+                        // 로컬 캐시에 조각 즉시 추가
+                        PlayData.SetItemCountImmediate(unitData.FRAGMENT_ITEM_ID,
+                            PlayData.GetItemCount(unitData.FRAGMENT_ITEM_ID) + 1);
+                        // Firebase는 백그라운드
+                        firebaseSaveTasks.Add(DatabaseManager.Instance.AddItemAsync(unitData.FRAGMENT_ITEM_ID, 1));
                     }
                 }
             }
 
-            await UniTask.WhenAll(saveTasks);
+            // Firebase 저장 작업 생성
+            var saveTask = UniTask.WhenAll(firebaseSaveTasks);
+
+            // PendingSaveManager로도 추적 (앱 종료 시 보장)
+            PendingSaveManager.Track(saveTask);
 
             PlayData.SyncCharactersFromDatabase();
 
             UpdateGachaAchievementsAsync(type, count, results).Forget();
 
             GachaResult result = new GachaResult(results, type);
+            // 저장 작업을 result에 첨부 (문 열림 애니메이션 중 대기용)
+            result.SaveTask = saveTask;
+
             OnGachaComplete?.Invoke(result);
             return result;
         }
         catch (Exception ex)
         {
+            // 재화 복구 (로컬에서 이미 차감된 경우)
+            if (costDeducted && costItemId > 0 && costAmount > 0)
+            {
+                int restoredCount = PlayData.GetItemCount(costItemId);
+                PlayData.SetItemCountImmediate(costItemId, restoredCount + costAmount);
+                Debug.LogWarning($"[GachaManager] 오류 발생으로 재화 복구: {costAmount}개");
+            }
             Debug.LogError($"[GachaManager] 가챠 실행 중 오류: {ex.Message}");
             OnGachaError?.Invoke("가챠 실행 중 오류가 발생했습니다.");
             return null;
@@ -320,22 +349,18 @@ public class GachaManager : MonoBehaviour
         }
     }
 
-    private async UniTask<bool> DeductCostAsync(int itemId, int amount, string itemName)
+    /// <summary>
+    /// 재화 차감 - 로컬 즉시 업데이트, Firebase는 백그라운드
+    /// </summary>
+    private void DeductCostLocal(int itemId, int amount)
     {
-        bool success = await DatabaseManager.Instance.AddItemAsync(itemId, -amount);
+        int currentCount = PlayData.GetItemCount(itemId);
+        PlayData.SetItemCountImmediate(itemId, currentCount - amount);
+    }
 
-        if (success)
-        {
-            int currentCount = PlayData.GetItemCount(itemId);
-            PlayData.SetItemCountImmediate(itemId, currentCount - amount);
-        }
-        else
-        {
-            Debug.LogError($"[GachaManager] {itemName} 차감 실패");
-            OnGachaError?.Invoke("아이템 차감에 실패했습니다.");
-        }
-
-        return success;
+    private UniTask DeductCostFirebaseAsync(int itemId, int amount)
+    {
+        return DatabaseManager.Instance.AddItemAsync(itemId, -amount);
     }
 
     public void ExecuteGacha(GachaType type, int count)

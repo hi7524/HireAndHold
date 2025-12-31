@@ -153,28 +153,28 @@ public class HeroEnforceSystem
 
         int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
 
-
-        await UniTask.WhenAll(
-            DatabaseManager.Instance.AddGoldAsync(-row.Gold_Cost),
-            DatabaseManager.Instance.AddItemAsync(fragmentItemId, -row.IngredientNum)
-        );
-
+        // 낙관적 업데이트: 로컬 캐시 먼저 갱신
+        PlayData.SetGoldImmediate(PlayData.Gold - row.Gold_Cost);
+        PlayData.SetItemCountImmediate(fragmentItemId, PlayData.GetItemCount(fragmentItemId) - row.IngredientNum);
         ch.heroEnforceLevel = nextLv;
-        await DatabaseManager.Instance.SaveCharacterAsync(ch.id);
 
+        // 효과 즉시 적용
         if (effectTable != null)
         {
             var effect = effectTable.Get(row.Hero_Enforce_EffectID);
             ApplyEffectToUnit(unit, effect, nextLv);
         }
-        else
-        {
-            Debug.LogWarning("[HeroEnforceSystem] TryEnforceAsync: effectTable is null");
-        }
 
+        // Firebase 저장은 백그라운드로 처리 (PendingSaveManager가 앱 종료 시 보장)
+        var saveTask = UniTask.WhenAll(
+            DatabaseManager.Instance.AddGoldAsync(-row.Gold_Cost),
+            DatabaseManager.Instance.AddItemAsync(fragmentItemId, -row.IngredientNum),
+            DatabaseManager.Instance.SaveCharacterAsync(ch.id)
+        );
+        PendingSaveManager.Track(saveTask);
+
+        // 업적/퀘스트는 백그라운드로 처리
         AchievementManager.AddHeroUpgradeSuccessAsync(1).Forget();
-
-        // 퀘스트 연동: 영웅 강화 성공
         QuestManager.AddHeroUpgradeSuccessAsync(1).Forget();
 
         if (nextLv >= MAX_LEVEL)

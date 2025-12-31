@@ -147,6 +147,104 @@ public static class AchievementManager
     }
 
     /// <summary>
+    /// 보상 지급 - 로컬만 (낙관적 업데이트용)
+    /// </summary>
+    private static void GiveRewardLocal(AchievementData data)
+    {
+        if (data.Reward_Type == 1)
+        {
+            // 골드 보상
+            PlayData.SetGoldImmediate(PlayData.Gold + data.Reward_Value);
+        }
+        else if (data.Reward_Type == 2)
+        {
+            switch (data.Reward_ID)
+            {
+                case 5102: // 다이아
+                    PlayData.SetDiamondImmediate(PlayData.Diamond + data.Reward_Value);
+                    break;
+                case 5201: // 강화석
+                    PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone + data.Reward_Value);
+                    break;
+                default:
+                    // 일반 아이템 (소환 티켓 등)
+                    PlayData.SetItemCountImmediate(data.Reward_ID,
+                        PlayData.GetItemCount(data.Reward_ID) + data.Reward_Value);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 보상 지급 - Firebase만 (낙관적 업데이트용)
+    /// </summary>
+    private static UniTask GiveRewardFirebaseAsync(AchievementData data)
+    {
+        if (data.Reward_Type == 1)
+        {
+            return DatabaseManager.Instance.AddGoldAsync(data.Reward_Value);
+        }
+        else if (data.Reward_Type == 2)
+        {
+            switch (data.Reward_ID)
+            {
+                case 5102:
+                    return DatabaseManager.Instance.AddDiamondAsync(data.Reward_Value);
+                case 5201:
+                    return DatabaseManager.Instance.AddEnhanceStoneAsync(data.Reward_Value);
+                default:
+                    return DatabaseManager.Instance.AddItemAsync(data.Reward_ID, data.Reward_Value);
+            }
+        }
+        return UniTask.CompletedTask;
+    }
+
+    /// <summary>
+    /// 일괄 보상 수령 (낙관적 업데이트)
+    /// </summary>
+    public static int ClaimAllRewardsOptimistic(out UniTask saveTask)
+    {
+        var claimable = GetClaimableAchievements();
+        if (claimable.Count == 0)
+        {
+            saveTask = UniTask.CompletedTask;
+            return 0;
+        }
+
+        var firebaseTasks = new List<UniTask>();
+
+        foreach (var data in claimable)
+        {
+            var progress = GetProgress(data.Achievements_ID);
+            if (progress == null) continue;
+
+            // 로컬 즉시 업데이트
+            GiveRewardLocal(data);
+            progress.isRewarded = true;
+            progress.rewardedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            // Firebase 작업 수집
+            firebaseTasks.Add(GiveRewardFirebaseAsync(data));
+            firebaseTasks.Add(DatabaseManager.Instance.SaveAchievementProgressAsync(data.Achievements_ID, progress));
+        }
+
+        // UI 갱신
+        PlayData.NotifyCurrencyChanged();
+
+        // 이벤트 발생
+        foreach (var data in claimable)
+        {
+            OnAchievementRewardClaimed?.Invoke(data.Achievements_ID);
+        }
+
+        // Firebase 저장 작업 반환
+        saveTask = UniTask.WhenAll(firebaseTasks);
+        PendingSaveManager.Track(saveTask);
+
+        return claimable.Count;
+    }
+
+    /// <summary>
     /// 업적 진행도 조회
     /// </summary>
     public static AchievementProgress GetProgress(int achievementId)

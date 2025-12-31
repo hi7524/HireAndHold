@@ -109,27 +109,37 @@ public class NormalEnforceSystem
 
         Debug.Log($"[NormalEnforceSystem] 강화 시도: Level {currentLevel} → {nextLevel}, 골드 차감: {data.Gold_Cost}, 강화석 차감: {data.IngredientNum}");
 
-        // PlayData를 통한 재화 차감 (내부에서 DB 동기화)
-        await DatabaseManager.Instance.AddGoldAsync(-data.Gold_Cost);
-        await DatabaseManager.Instance.AddEnhanceStoneAsync(-data.IngredientNum);
+        // 낙관적 업데이트: 로컬 캐시 먼저 갱신
+        PlayData.SetGoldImmediate(PlayData.Gold - data.Gold_Cost);
+        PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone - Mathf.RoundToInt(data.IngredientNum));
 
-        Debug.Log($"[NormalEnforceSystem] 재화 차감 완료 - 남은 골드: {PlayData.Gold}, 남은 강화석: {PlayData.EnhanceStone}");
+        // 캐릭터 강화 레벨도 즉시 갱신
+        string characterId = unit.UnitID.ToString();
+        var character = DatabaseManager.Instance.GetCharacter(characterId);
+        if (character != null)
+        {
+            character.enforceLevel = nextLevel;
+        }
 
-        // 유닛에 강화 적용
+        // 유닛에 강화 효과 즉시 적용
         ApplyEnforceToUnit(unit, data);
-        await SaveUnitEnforceLevel(unit, nextLevel);
 
         Debug.Log($"[NormalEnforceSystem] 강화 완료: {unit.UnitID} Level {nextLevel}");
 
-        // 업적 연동: 일반 강화 성공
-        await AchievementManager.AddNormalUpgradeSuccessAsync(1);
+        // Firebase 저장은 백그라운드로 처리 (PendingSaveManager가 앱 종료 시 보장)
+        var saveTask = UniTask.WhenAll(
+            DatabaseManager.Instance.AddGoldAsync(-data.Gold_Cost),
+            DatabaseManager.Instance.AddEnhanceStoneAsync(-data.IngredientNum),
+            DatabaseManager.Instance.SaveCharacterAsync(characterId)
+        );
+        PendingSaveManager.Track(saveTask);
 
-        // 퀘스트 연동: 일반 강화 성공
-        await QuestManager.AddNormalUpgradeSuccessAsync(1);
+        // 업적/퀘스트는 백그라운드로 처리
+        AchievementManager.AddNormalUpgradeSuccessAsync(1).Forget();
+        QuestManager.AddNormalUpgradeSuccessAsync(1).Forget();
 
-        // 최대 레벨 달성 시 업적
         if (nextLevel >= MAX_ENFORCE_LEVEL)
-            await AchievementManager.CompleteNormalUpgradeMaxAsync();
+            AchievementManager.CompleteNormalUpgradeMaxAsync().Forget();
 
         return true;
     }
@@ -152,17 +162,6 @@ public class NormalEnforceSystem
         }
     }
 
-    private async UniTask SaveUnitEnforceLevel(Unit unit, int newLevel)
-    {
-        string characterId = unit.UnitID.ToString();
-        var character = DatabaseManager.Instance.GetCharacter(characterId);
-
-        if (character != null)
-        {
-            character.enforceLevel = newLevel;
-            await DatabaseManager.Instance.SaveCharacterAsync(characterId);
-        }
-    }
 
     public (long gold, int stone) GetNextEnforceCost(Unit unit)
     {
