@@ -29,7 +29,7 @@ public class StoreProductElementUI : MonoBehaviour
     [SerializeField] private Image priceIcon;
 
     [Header("Popup")]
-    [SerializeField] private UIPopupManager popupManager; 
+    [SerializeField] private UIPopupManager popupManager;
 
     private SecondStoreController storeController;
     private SellingData productData;
@@ -39,9 +39,15 @@ public class StoreProductElementUI : MonoBehaviour
 
     private void Awake()
     {
+        // UIPopupManager가 없으면 찾기 시도
         if (popupManager == null)
         {
-            Debug.LogError("[StoreProductElementUI] UIPopupManager가 연결되지 않았습니다.");
+            popupManager = FindObjectOfType<UIPopupManager>();
+
+            if (popupManager == null)
+            {
+                Debug.LogWarning("[StoreProductElementUI] UIPopupManager를 찾을 수 없습니다. 팝업 기능이 제한됩니다.");
+            }
         }
 
         if (buyButton != null)
@@ -71,7 +77,7 @@ public class StoreProductElementUI : MonoBehaviour
             buyButton.onClick.RemoveListener(OnBuyClicked);
     }
 
- 
+
 
     public void Setup(int id)
     {
@@ -88,7 +94,7 @@ public class StoreProductElementUI : MonoBehaviour
         UpdateUI();
     }
 
-   
+
     public void UpdateUI()
     {
         if (productData == null) return;
@@ -144,7 +150,7 @@ public class StoreProductElementUI : MonoBehaviour
             soldOutOverlay.SetActive(isSoldOut);
     }
 
-   
+
     private Sprite GetPriceIcon()
     {
         return productData.SELLING_MONEY switch
@@ -193,7 +199,7 @@ public class StoreProductElementUI : MonoBehaviour
             int remaining = storeController.GetRemainingPurchaseCount(sellingId);
             if (remaining <= 0)
             {
-                popupManager?.ShowAlert("구매 불가\n구매 가능 횟수를 초과했습니다.");
+                ShowPopup("구매 불가\n구매 가능 횟수를 초과했습니다.");
                 return;
             }
         }
@@ -205,8 +211,6 @@ public class StoreProductElementUI : MonoBehaviour
 
     private void ShowInsufficientCurrencyPopup()
     {
-        if (popupManager == null) return;
-
         string currencyName = productData.SELLING_MONEY switch
         {
             1 => "골드",
@@ -215,9 +219,22 @@ public class StoreProductElementUI : MonoBehaviour
             _ => "재화"
         };
 
-        popupManager.ShowAlert(
-            $"{currencyName}가 부족합니다.\n 충전 후 다시 시도해주세요."
-        );
+        ShowPopup($"{currencyName}가 부족합니다.\n 충전 후 다시 시도해주세요.");
+    }
+
+    /// <summary>
+    /// 팝업 표시 (UIPopupManager가 있으면 사용, 없으면 로그만 출력)
+    /// </summary>
+    private void ShowPopup(string message)
+    {
+        if (popupManager != null)
+        {
+            popupManager.ShowAlert(message);
+        }
+        else
+        {
+            Debug.LogWarning($"[StoreProductElementUI] {message}");
+        }
     }
 
 
