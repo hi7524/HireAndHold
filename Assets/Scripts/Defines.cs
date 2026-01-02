@@ -79,6 +79,7 @@ public static class TutorialConditions
     public const string ENHANCE_TUTORIAL = "ENHANCE_TUTORIAL"; // 로비: 강화 튜토리얼 시작
     public const string DUNGEON_TAB_FIRST_ENTER = "DUNGEON_TAB_FIRST_ENTER";
     public const string DUNGEON_STAGE_FIRST_ENTER = "DUNGEON_STAGE_FIRST_ENTER";
+    public const string UNIT_TAB_FIRST_ENTER = "UNIT_TAB_FIRST_ENTER";
 }
 
 /// <summary>

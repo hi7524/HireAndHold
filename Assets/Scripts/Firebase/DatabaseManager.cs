@@ -2272,6 +2272,25 @@ public class DatabaseManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 튜토리얼 시퀀스 완료 상태 취소 (완료 목록에서 제거)
+    /// </summary>
+    public async UniTask<bool> UncompleteSequenceAsync(string sequenceId)
+    {
+        if (CurrentUser?.tutorial == null)
+            return false;
+
+        if (CurrentUser.tutorial.completedSequences != null &&
+            CurrentUser.tutorial.completedSequences.Contains(sequenceId))
+        {
+            CurrentUser.tutorial.completedSequences.Remove(sequenceId);
+            Debug.Log($"[DatabaseManager] 튜토리얼 시퀀스 완료 취소: {sequenceId}");
+            return await SaveTutorialProgressAsync();
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// 전체 튜토리얼 완료 처리
     /// </summary>
     public async UniTask<bool> CompleteTutorialAsync()

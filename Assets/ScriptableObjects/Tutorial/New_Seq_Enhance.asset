@@ -18,7 +18,7 @@ MonoBehaviour:
   triggerType: 4
   triggerStageId: 0
   triggerLevel: 0
-  triggerConditionKey: ENHANCE_TUTORIAL
+  triggerConditionKey: UNIT_TAB_FIRST_ENTER
   steps:
   - stringId: 103127
     voiceKey: Tut_27
@@ -29,15 +29,22 @@ MonoBehaviour:
     dialogAnchor: 0
     dialogPosition: {x: 0, y: 0}
     showCharacter: 1
-    highlightTarget: UnitTabButton
+    highlightTarget: 
     highlightUnitId: 0
     highlightTilePositions: []
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
+    highlightTarget2: 
+    highlightTilePositions2: []
+    highlightOffset2: {x: 0, y: 0}
+    highlightSize2: {x: 0, y: 0}
     showHandGuide: 1
     handGuideOffset: {x: 0, y: 0}
-    actionType: 1
-    targetButtonName: UnitTabButton
+    showDragGuide: 0
+    dragGuideOffset1: {x: 0, y: 0}
+    dragGuideOffset2: {x: 0, y: 0}
+    actionType: 0
+    targetButtonName: 
     dragSourceName: 
     dragTargetName: 
     allowedTiles: []
@@ -46,7 +53,7 @@ MonoBehaviour:
     pauseGame: 1
     isCheckpoint: 1
     allowedUnitIds: 
-    delayBeforeStep: 0.5
+    delayBeforeStep: 0
   - stringId: 103128
     voiceKey: Tut_28
     reward:
@@ -61,8 +68,15 @@ MonoBehaviour:
     highlightTilePositions: []
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
+    highlightTarget2: 
+    highlightTilePositions2: []
+    highlightOffset2: {x: 0, y: 0}
+    highlightSize2: {x: 0, y: 0}
     showHandGuide: 0
     handGuideOffset: {x: 0, y: 0}
+    showDragGuide: 0
+    dragGuideOffset1: {x: 0, y: 0}
+    dragGuideOffset2: {x: 0, y: 0}
     actionType: 0
     targetButtonName: 
     dragSourceName: 
@@ -88,8 +102,15 @@ MonoBehaviour:
     highlightTilePositions: []
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
+    highlightTarget2: 
+    highlightTilePositions2: []
+    highlightOffset2: {x: 0, y: 0}
+    highlightSize2: {x: 0, y: 0}
     showHandGuide: 0
     handGuideOffset: {x: 0, y: 0}
+    showDragGuide: 0
+    dragGuideOffset1: {x: 0, y: 0}
+    dragGuideOffset2: {x: 0, y: 0}
     actionType: 0
     targetButtonName: 
     dragSourceName: 
@@ -115,8 +136,15 @@ MonoBehaviour:
     highlightTilePositions: []
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
-    showHandGuide: 1
+    highlightTarget2: 
+    highlightTilePositions2: []
+    highlightOffset2: {x: 0, y: 0}
+    highlightSize2: {x: 0, y: 0}
+    showHandGuide: 0
     handGuideOffset: {x: 0, y: 0}
+    showDragGuide: 0
+    dragGuideOffset1: {x: 0, y: 0}
+    dragGuideOffset2: {x: 0, y: 0}
     actionType: 1
     targetButtonName: UnitCard_11101
     dragSourceName: 
@@ -142,8 +170,15 @@ MonoBehaviour:
     highlightTilePositions: []
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
+    highlightTarget2: 
+    highlightTilePositions2: []
+    highlightOffset2: {x: 0, y: 0}
+    highlightSize2: {x: 0, y: 0}
     showHandGuide: 1
     handGuideOffset: {x: 0, y: 0}
+    showDragGuide: 0
+    dragGuideOffset1: {x: 0, y: 0}
+    dragGuideOffset2: {x: 0, y: 0}
     actionType: 1
     targetButtonName: NormalEnhanceButton
     dragSourceName: 
@@ -154,7 +189,7 @@ MonoBehaviour:
     pauseGame: 1
     isCheckpoint: 0
     allowedUnitIds: 
-    delayBeforeStep: 0
+    delayBeforeStep: 0.3
   - stringId: 103131
     voiceKey: Tut_31
     reward:
@@ -169,8 +204,15 @@ MonoBehaviour:
     highlightTilePositions: []
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
+    highlightTarget2: 
+    highlightTilePositions2: []
+    highlightOffset2: {x: 0, y: 0}
+    highlightSize2: {x: 0, y: 0}
     showHandGuide: 1
     handGuideOffset: {x: 0, y: 0}
+    showDragGuide: 0
+    dragGuideOffset1: {x: 0, y: 0}
+    dragGuideOffset2: {x: 0, y: 0}
     actionType: 1
     targetButtonName: EnhanceButton
     dragSourceName: 
@@ -181,7 +223,7 @@ MonoBehaviour:
     pauseGame: 1
     isCheckpoint: 0
     allowedUnitIds: 
-    delayBeforeStep: 0
+    delayBeforeStep: 0.3
   - stringId: 103132
     voiceKey: Tut_32
     reward:
@@ -196,8 +238,15 @@ MonoBehaviour:
     highlightTilePositions: []
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
+    highlightTarget2: 
+    highlightTilePositions2: []
+    highlightOffset2: {x: 0, y: 0}
+    highlightSize2: {x: 0, y: 0}
     showHandGuide: 0
     handGuideOffset: {x: 0, y: 0}
+    showDragGuide: 0
+    dragGuideOffset1: {x: 0, y: 0}
+    dragGuideOffset2: {x: 0, y: 0}
     actionType: 0
     targetButtonName: 
     dragSourceName: 
@@ -223,8 +272,15 @@ MonoBehaviour:
     highlightTilePositions: []
     highlightOffset: {x: 0, y: 0}
     highlightSize: {x: 0, y: 0}
+    highlightTarget2: 
+    highlightTilePositions2: []
+    highlightOffset2: {x: 0, y: 0}
+    highlightSize2: {x: 0, y: 0}
     showHandGuide: 0
     handGuideOffset: {x: 0, y: 0}
+    showDragGuide: 0
+    dragGuideOffset1: {x: 0, y: 0}
+    dragGuideOffset2: {x: 0, y: 0}
     actionType: 0
     targetButtonName: 
     dragSourceName: 

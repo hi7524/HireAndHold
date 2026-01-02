@@ -39,6 +39,8 @@ public class LoginUI : MonoBehaviour
 
     [SerializeField] private GameInitializer gameInitializer;
 
+    private bool isProcessing = false;
+
     private void Start()
     {
         if (loginButton != null)
@@ -108,9 +110,10 @@ public class LoginUI : MonoBehaviour
             return;
         }
 
-        if (password.Length < 6)
+        var (isValid, errorMessage) = ValidatePassword(password);
+        if (!isValid)
         {
-            ShowValidationMessage(signupPasswordValidationText, "비밀번호는 6글자 이상");
+            ShowValidationMessage(signupPasswordValidationText, errorMessage);
         }
         else
         {
@@ -163,6 +166,24 @@ public class LoginUI : MonoBehaviour
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// 비밀번호 검증 (영어, 숫자만 허용, 6자 이상)
+    /// </summary>
+    private (bool isValid, string errorMessage) ValidatePassword(string password)
+    {
+        if (string.IsNullOrEmpty(password))
+            return (false, "비밀번호를 입력해주세요");
+
+        // 영어와 숫자만 허용 (특수문자 제외)
+        if (!Regex.IsMatch(password, @"^[a-zA-Z0-9]+$"))
+            return (false, "영어와 숫자만 입력 가능");
+
+        if (password.Length < 6)
+            return (false, "비밀번호는 6자 이상");
+
+        return (true, "");
     }
 
     /// <summary>
@@ -226,6 +247,8 @@ public class LoginUI : MonoBehaviour
 
     private async UniTaskVoid OnLoginButtonClick()
     {
+        if (isProcessing) return;
+
         string email = loginEmailInput.text.Trim();
         string password = loginPasswordInput.text;
 
@@ -235,13 +258,11 @@ public class LoginUI : MonoBehaviour
             return;
         }
 
+        isProcessing = true;
         SetUIInteractable(false);
         ShowLoading(true);
 
         var (success, error) = await AuthManager.Instance.SighInWithEmailAsync(email, password);
-
-        SetUIInteractable(true);
-        ShowLoading(false);
 
         if (success)
         {
@@ -254,6 +275,9 @@ public class LoginUI : MonoBehaviour
         }
         else
         {
+            isProcessing = false;
+            SetUIInteractable(true);
+            ShowLoading(false);
             ShowFeedback(GetFriendlyErrorMessage(error), false);
         }
     }
@@ -263,6 +287,8 @@ public class LoginUI : MonoBehaviour
     /// </summary>
     private async UniTaskVoid OnSignupButtonClick()
     {
+        if (isProcessing) return;
+
         string email = signupEmailInput.text.Trim();
         string password = signupPasswordInput.text;
         string passwordConfirm = signupPasswordConfirmInput.text;
@@ -280,9 +306,10 @@ public class LoginUI : MonoBehaviour
             return;
         }
 
-        if (password.Length < 6)
+        var (isValidPassword, passwordError) = ValidatePassword(password);
+        if (!isValidPassword)
         {
-            ShowFeedback("비밀번호는 6자 이상이어야 합니다.", false);
+            ShowFeedback(passwordError, false);
             return;
         }
 
@@ -292,13 +319,11 @@ public class LoginUI : MonoBehaviour
             return;
         }
 
+        isProcessing = true;
         SetUIInteractable(false);
         ShowLoading(true);
 
         var (success, error) = await AuthManager.Instance.CreateUserWithEmailAsync(email, password);
-
-        SetUIInteractable(true);
-        ShowLoading(false);
 
         if (success)
         {
@@ -311,19 +336,22 @@ public class LoginUI : MonoBehaviour
         }
         else
         {
+            isProcessing = false;
+            SetUIInteractable(true);
+            ShowLoading(false);
             ShowFeedback(GetFriendlyErrorMessage(error), false);
         }
     }
 
     private async UniTaskVoid OnGuestLoginButtonClick()
     {
+        if (isProcessing) return;
+
+        isProcessing = true;
         SetUIInteractable(false);
         ShowLoading(true);
 
         var (success, error) = await AuthManager.Instance.SingInAnonymouslyAsync();
-
-        SetUIInteractable(true);
-        ShowLoading(false);
 
         if (success)
         {
@@ -339,6 +367,9 @@ public class LoginUI : MonoBehaviour
         }
         else
         {
+            isProcessing = false;
+            SetUIInteractable(true);
+            ShowLoading(false);
             ShowFeedback(GetFriendlyErrorMessage(error), false);
         }
     }

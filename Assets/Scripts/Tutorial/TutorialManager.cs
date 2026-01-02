@@ -348,9 +348,20 @@ namespace Tutorial
                     }
                     else
                     {
-                        // 복원하지 않는 경우 진행 상태 취소 (다음에 조건 발생 시 새로 시작)
+                        // 복원하지 않는 경우 진행 상태 취소
                         Debug.Log($"[Tutorial] 튜토리얼 복원 취소: {sequence.sequenceId}");
                         await DatabaseManager.Instance.CancelTutorialSequenceAsync(sequence.sequenceId);
+
+                        // 1스테이지 튜토리얼이 로비에서 중단된 경우, 로비 튜토리얼부터 다시 시작
+                        if (sequence.sequenceId == TutorialSequenceIds.Stage1Tutorial && currentScene == "02_Lobby")
+                        {
+                            // 로비 튜토리얼 완료 상태도 취소 (완료 목록에서 제거)
+                            await DatabaseManager.Instance.UncompleteSequenceAsync(TutorialSequenceIds.LobbyTutorial);
+                            Debug.Log("[Tutorial] 1스테이지 튜토리얼 중단 → 로비 튜토리얼부터 다시 시작");
+
+                            // 로비 튜토리얼 바로 시작
+                            await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
+                        }
                     }
                 }
                 else
@@ -1218,6 +1229,38 @@ namespace Tutorial
         public void DebugResetTutorial()
         {
             DatabaseManager.Instance.ResetTutorialProgressAsync().Forget();
+        }
+
+        /// <summary>
+        /// 로그아웃 시 호출 - 튜토리얼 매니저 상태 초기화
+        /// </summary>
+        public void ResetForLogout()
+        {
+            // 현재 진행 중인 튜토리얼 중지
+            if (isPlaying)
+            {
+                isPlaying = false;
+                isWaitingForAction = false;
+                currentSequence = null;
+                currentStepIndex = 0;
+            }
+
+            // 조건 플래그 초기화
+            metConditions.Clear();
+
+            // UI 숨기기
+            if (tutorialUI != null)
+            {
+                tutorialUI.Hide();
+            }
+
+            // 블로커 해제
+            if (tutorialBlocker != null)
+            {
+                tutorialBlocker.Unblock();
+            }
+
+            DebugLog("튜토리얼 매니저 상태 초기화됨 (로그아웃)");
         }
 
         /// <summary>
