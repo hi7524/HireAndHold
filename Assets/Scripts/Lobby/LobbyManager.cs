@@ -127,7 +127,25 @@ public class LobbyManager : MonoBehaviour
     }
     public void OnClickedUnitButton()
     {
-        windowManager.Open(Windows.Unit);
+        OnClickedUnitButtonAsync().Forget();
+    }
+
+    private async UniTaskVoid OnClickedUnitButtonAsync()
+    {
+        // 강화 튜토리얼이 완료되지 않았으면 튜토리얼 먼저 시작
+        bool isEnhanceTutorialCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.EnhanceTutorial);
+        if (!isEnhanceTutorialCompleted && TutorialManager.Instance != null)
+        {
+            // 유닛 패널 먼저 열기
+            windowManager.Open(Windows.Unit);
+
+            // 튜토리얼 시작 (완료될 때까지 대기)
+            await TutorialManager.Instance.NotifyConditionMetAsync(TutorialConditions.UNIT_TAB_FIRST_ENTER);
+        }
+        else
+        {
+            windowManager.Open(Windows.Unit);
+        }
     }
     public void OnClickedStageButton()
     {
