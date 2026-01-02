@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Tutorial;
 
 public class SkillSelectUi : MonoBehaviour
 {
@@ -52,11 +53,21 @@ public class SkillSelectUi : MonoBehaviour
 
     private void OnEnable()
     {
+        // 튜토리얼 타겟 등록
+        if (confirmButton != null)
+            TutorialTargetRegistry.Register("SkillConfirm", confirmButton.gameObject);
+        if (cardContainer != null)
+            TutorialTargetRegistry.Register("SkillCards", cardContainer.gameObject);
+
         Show();
     }
 
     private void OnDisable()
     {
+        // 튜토리얼 타겟 해제
+        TutorialTargetRegistry.Unregister("SkillConfirm");
+        TutorialTargetRegistry.Unregister("SkillCards");
+
         // 선택 상태 초기화
         if (selectedSkillCard != null)
         {

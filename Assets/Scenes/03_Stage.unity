@@ -6778,7 +6778,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1836563974628538893, guid: d9d91bb36e82d42779696dd75cf6bcea, type: 3}
       propertyPath: m_Name
-      value: ConfirmButton
+      value: SkillConfirm
       objectReference: {fileID: 0}
     - target: {fileID: 1836563975108096512, guid: d9d91bb36e82d42779696dd75cf6bcea, type: 3}
       propertyPath: m_text
@@ -6811,14 +6811,17 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1836563974628538893, guid: d9d91bb36e82d42779696dd75cf6bcea, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1025735571}
   m_SourcePrefab: {fileID: 100100000, guid: d9d91bb36e82d42779696dd75cf6bcea, type: 3}
 --- !u!114 &1025735568 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1836563974628538894, guid: d9d91bb36e82d42779696dd75cf6bcea, type: 3}
   m_PrefabInstance: {fileID: 1025735567}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1025735570}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
@@ -6829,6 +6832,25 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1836563974628538892, guid: d9d91bb36e82d42779696dd75cf6bcea, type: 3}
   m_PrefabInstance: {fileID: 1025735567}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1025735570 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1836563974628538893, guid: d9d91bb36e82d42779696dd75cf6bcea, type: 3}
+  m_PrefabInstance: {fileID: 1025735567}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1025735571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1025735570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f925834f8e8b9b144a851188dde7ea86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetKey: SkillConfirm
+  useGameObjectName: 1
 --- !u!1 &1026080700
 GameObject:
   m_ObjectHideFlags: 0
@@ -11299,8 +11321,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1537346731}
   - component: {fileID: 1537346732}
+  - component: {fileID: 1537346733}
   m_Layer: 5
-  m_Name: GameObject
+  m_Name: SkillCards
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11351,6 +11374,20 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &1537346733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1537346730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f925834f8e8b9b144a851188dde7ea86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetKey: SkillCards
+  useGameObjectName: 1
 --- !u!1 &1540230932
 GameObject:
   m_ObjectHideFlags: 0

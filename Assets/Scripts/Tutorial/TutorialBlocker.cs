@@ -155,6 +155,32 @@ namespace Tutorial
 
             Debug.Log($"[TutorialBlocker] OnPointerClick - clickedName: {clickedName}, targetButtonName: {targetButtonName}, allowedButtons: {string.Join(", ", allowedButtonNames)}");
 
+            // 사이드 패널 클릭 시 두 번째 구멍 영역 체크
+            if (IsSidePanel(clickedName) && blockerHole != null)
+            {
+                Vector2 screenPoint = eventData.position;
+                Camera eventCamera = eventData.pressEventCamera;
+
+                // 두 번째 구멍 영역 안이면 targetButtonName으로 처리
+                if (!blockerHole.IsRaycastLocationValid(screenPoint, eventCamera))
+                {
+                    if (!string.IsNullOrEmpty(targetButtonName) && allowedButtonNames.Contains(targetButtonName))
+                    {
+                        // 실제 버튼 클릭 실행
+                        var targetObj = TutorialTargetRegistry.Get(targetButtonName);
+                        if (targetObj != null)
+                        {
+                            var button = targetObj.GetComponent<Button>();
+                            button?.onClick.Invoke();
+                        }
+
+                        lastTouchedButton = targetButtonName;
+                        targetTouchSource?.TrySetResult();
+                        return;
+                    }
+                }
+            }
+
             // 허용된 버튼인지 확인
             if (allowedButtonNames.Contains(clickedName))
             {
@@ -166,6 +192,11 @@ namespace Tutorial
                     targetTouchSource?.TrySetResult();
                 }
             }
+        }
+
+        private bool IsSidePanel(string name)
+        {
+            return name == "TopPanel" || name == "BottomPanel" || name == "LeftPanel" || name == "RightPanel";
         }
 
         /// <summary>
