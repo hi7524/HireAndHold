@@ -172,6 +172,12 @@ public class DeckControl : MonoBehaviour
         if (!isInitialized || presets == null)
             return;
 
+        OnEnableAsync().Forget();
+    }
+
+    async UniTask OnEnableAsync()
+    {
+        await CreateNewUnitCards();
         QuickRefresh();
     }
 
