@@ -1221,6 +1221,38 @@ namespace Tutorial
         }
 
         /// <summary>
+        /// 로그아웃 시 호출 - 튜토리얼 매니저 상태 초기화
+        /// </summary>
+        public void ResetForLogout()
+        {
+            // 현재 진행 중인 튜토리얼 중지
+            if (isPlaying)
+            {
+                isPlaying = false;
+                isWaitingForAction = false;
+                currentSequence = null;
+                currentStepIndex = 0;
+            }
+
+            // 조건 플래그 초기화
+            metConditions.Clear();
+
+            // UI 숨기기
+            if (tutorialUI != null)
+            {
+                tutorialUI.Hide();
+            }
+
+            // 블로커 해제
+            if (tutorialBlocker != null)
+            {
+                tutorialBlocker.Unblock();
+            }
+
+            DebugLog("튜토리얼 매니저 상태 초기화됨 (로그아웃)");
+        }
+
+        /// <summary>
         /// 디버그: 특정 시퀀스 강제 시작
         /// </summary>
         public void DebugStartSequence(string sequenceId)

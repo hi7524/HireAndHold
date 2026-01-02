@@ -143,6 +143,9 @@ public class LobbyManager : MonoBehaviour
     }
     public async void OnClickedLogOutButton()
     {
+        // 튜토리얼 매니저 상태 초기화
+        TutorialManager.Instance?.ResetForLogout();
+
         await AuthManager.Instance.SignOutAsync();
         SceneManager.LoadScene("01_Title");
     }
