@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using DG.Tweening;
+using Tutorial;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -20,7 +21,7 @@ public class GridUnit : MonoBehaviour, IDraggable
     public bool canPlaceInInventory = true; // 인벤토리에 보관 가능하게 할 지 여부
 
     // 드래그
-    public bool IsDraggable => true;
+    public bool IsDraggable => IsUnitDragAllowed();
     public bool RequireDropZone => true;
     public GameObject GameObject => gameObject;
 
@@ -396,6 +397,32 @@ public class GridUnit : MonoBehaviour, IDraggable
     public void OnDropSuccess()
     {
         //
+    }
+
+    // 배치된 유닛 드래그 허용 여부 (2레벨 합성 튜토리얼(103109) 이후부터 허용)
+    private const int MergeTutorialStringId = 103109;  // 2레벨 합성 튜토리얼 스텝 ID
+
+    private bool IsUnitDragAllowed()
+    {
+        // 튜토리얼 매니저가 없으면 허용
+        if (TutorialManager.Instance == null)
+            return true;
+
+        // 튜토리얼 진행 중이 아니면 허용
+        if (!TutorialManager.Instance.IsPlaying)
+            return true;
+
+        // 현재 스텝 확인
+        var currentStep = TutorialManager.Instance.CurrentStep;
+        if (currentStep == null)
+            return true;
+
+        // 합성 튜토리얼(103109) 이후 스텝이면 허용
+        if (currentStep.stringId > MergeTutorialStringId)
+            return true;
+
+        // 그 외의 경우 (합성 튜토리얼 이전) 드래그 불가
+        return false;
     }
 
     private void OnDestroy()

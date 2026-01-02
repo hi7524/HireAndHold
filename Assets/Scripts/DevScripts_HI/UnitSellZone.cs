@@ -23,6 +23,7 @@ public class UnitSellZone : MonoBehaviour, IDroppable
 
     private const string RewardUnitBlockedMsg = "레벨업 보상 유닛은 즉시 배치해야 합니다!";
     private const string MinUnitRequiredMsg = "최소 1개의 유닛은 배치되어야 합니다!";
+    private const int SellTutorialStringId = 103112;  // 판매 튜토리얼 스텝 ID
     private const int Star1SellPrice = 25;
     private const int Star2SellPrice = 50;
     private const int Star3SellPrice = 100;
@@ -192,6 +193,13 @@ public class UnitSellZone : MonoBehaviour, IDroppable
             return false;
         }
 
+        // 판매 튜토리얼 전에는 판매 불가 (튜토리얼 중 해당 스텝이 아니면 차단)
+        if (!IsSellAllowed())
+        {
+            PlayFailSound();
+            return false;
+        }
+
         // 방금 획득한 유닛은 인벤토리에 올릴 수 없음
         if (!unit.canPlaceInInventory)
         {
@@ -295,5 +303,29 @@ public class UnitSellZone : MonoBehaviour, IDroppable
         {
             audioSource.PlayOneShot(unitSellFailedClip);
         }
+    }
+
+    // 판매가 허용되는지 확인 (튜토리얼 진행 상태 체크)
+    private bool IsSellAllowed()
+    {
+        // 튜토리얼 매니저가 없으면 허용
+        if (TutorialManager.Instance == null)
+            return true;
+
+        // 튜토리얼 진행 중이 아니면 허용
+        if (!TutorialManager.Instance.IsPlaying)
+            return true;
+
+        // 현재 스텝 확인
+        var currentStep = TutorialManager.Instance.CurrentStep;
+        if (currentStep == null)
+            return true;
+
+        // 판매 튜토리얼 스텝(103112)이면 허용
+        if (currentStep.stringId == SellTutorialStringId)
+            return true;
+
+        // 그 외의 튜토리얼 스텝에서는 판매 불가
+        return false;
     }
 }
