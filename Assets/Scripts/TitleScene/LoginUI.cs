@@ -89,6 +89,21 @@ public class LoginUI : MonoBehaviour
             return;
         }
 
+        // 한글 체크 추가
+        if (ContainsKorean(email))
+        {
+            ShowValidationMessage(signupEmailValidationText, "이메일에 한글을 사용할 수 없습니다");
+            return;
+        }
+
+        // 허용되지 않는 특수문자 체크 추가
+        var (hasInvalidChars, invalidCharMsg) = CheckInvalidEmailCharacters(email);
+        if (hasInvalidChars)
+        {
+            ShowValidationMessage(signupEmailValidationText, invalidCharMsg);
+            return;
+        }
+
         if (!IsValidEmail(email))
         {
             ShowValidationMessage(signupEmailValidationText, "이메일 형식으로 입력");
@@ -149,7 +164,42 @@ public class LoginUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 이메일 형식 검증
+    /// 한글 포함 여부 체크
+    /// </summary>
+    private bool ContainsKorean(string text)
+    {
+        return Regex.IsMatch(text, @"[\u3131-\u318E\uAC00-\uD7A3]");
+    }
+
+    /// <summary>
+    /// 이메일에 허용되지 않는 특수문자 체크
+    /// </summary>
+    private (bool hasInvalid, string message) CheckInvalidEmailCharacters(string email)
+    {
+        // 이메일에서 허용되는 문자: 영문, 숫자, . _ % + - @
+        // 그 외의 특수문자는 불허
+        string invalidChars = "";
+        foreach (char c in email)
+        {
+            if (!char.IsLetterOrDigit(c) &&
+                c != '.' && c != '_' && c != '%' &&
+                c != '+' && c != '-' && c != '@')
+            {
+                if (!invalidChars.Contains(c.ToString()))
+                    invalidChars += c;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(invalidChars))
+        {
+            return (true, $"사용할 수 없는 특수문자: {invalidChars}");
+        }
+
+        return (false, "");
+    }
+
+    /// <summary>
+    /// 이메일 형식 검증 (개선됨)
     /// </summary>
     private bool IsValidEmail(string email)
     {
@@ -158,7 +208,11 @@ public class LoginUI : MonoBehaviour
 
         try
         {
-            // 간단한 이메일 정규식 패턴
+            // 한글이 포함되어 있으면 무조건 false
+            if (ContainsKorean(email))
+                return false;
+
+            // 이메일 형식 검증 (영문, 숫자, 일부 특수문자만 허용)
             string pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
             return Regex.IsMatch(email, pattern);
         }
@@ -283,7 +337,7 @@ public class LoginUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 회원가입 버튼 클릭
+    /// 회원가입 버튼 클릭 (개선됨)
     /// </summary>
     private async UniTaskVoid OnSignupButtonClick()
     {
@@ -297,6 +351,21 @@ public class LoginUI : MonoBehaviour
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
             ShowFeedback("이메일과 비밀번호를 입력해주세요.", false);
+            return;
+        }
+
+        // 한글 체크
+        if (ContainsKorean(email))
+        {
+            ShowFeedback("이메일에 한글을 사용할 수 없습니다.", false);
+            return;
+        }
+
+        // 허용되지 않는 특수문자 체크
+        var (hasInvalidChars, invalidCharMsg) = CheckInvalidEmailCharacters(email);
+        if (hasInvalidChars)
+        {
+            ShowFeedback(invalidCharMsg, false);
             return;
         }
 
@@ -325,10 +394,15 @@ public class LoginUI : MonoBehaviour
 
         var (success, error) = await AuthManager.Instance.CreateUserWithEmailAsync(email, password);
 
+        // 성공/실패 여부와 관계없이 항상 UI 상태를 복원하고 로딩을 숨김
+        SetUIInteractable(true);
+        ShowLoading(false);
+
         if (success)
         {
             ShowFeedback("회원가입 성공!", true);
 
+            // 성공 시에만 isProcessing을 유지하여 중복 요청 방지
             if (gameInitializer != null)
             {
                 gameInitializer.OnLoginSuccess();
@@ -336,10 +410,15 @@ public class LoginUI : MonoBehaviour
         }
         else
         {
+            // 실패 시 isProcessing을 false로 설정하여 재시도 가능하게 함
             isProcessing = false;
-            SetUIInteractable(true);
-            ShowLoading(false);
-            ShowFeedback(GetFriendlyErrorMessage(error), false);
+
+            // 에러 메시지 표시 (개선된 에러 처리)
+            string errorMessage = GetFriendlyErrorMessage(error);
+            ShowFeedback(errorMessage, false);
+
+            // 디버그 로그 (개발 시 확인용)
+            Debug.LogError($"[LoginUI] 회원가입 실패: {error}");
         }
     }
 
@@ -477,25 +556,44 @@ public class LoginUI : MonoBehaviour
 
         string lowerError = error.ToLower();
 
-        if (lowerError.Contains("email") && lowerError.Contains("already"))
+        // 이메일 중복 (가장 흔한 케이스)
+        if (lowerError.Contains("email") && (lowerError.Contains("already") || lowerError.Contains("in use")))
             return "이미 사용 중인 이메일입니다.";
 
+        // 잘못된 이메일 형식
         if (lowerError.Contains("invalid") && lowerError.Contains("email"))
             return "유효하지 않은 이메일 형식입니다.";
 
+        // 잘못된 이메일 (Firebase 서버 측 검증 실패)
+        if (lowerError.Contains("badly") && lowerError.Contains("formatted"))
+            return "이메일 형식이 올바르지 않습니다.";
+
+        // 약한 비밀번호
         if (lowerError.Contains("weak") && lowerError.Contains("password"))
             return "비밀번호가 너무 약합니다. (최소 6자 이상)";
 
+        // 잘못된 비밀번호 (로그인 시)
         if (lowerError.Contains("wrong") && lowerError.Contains("password"))
             return "잘못된 비밀번호입니다.";
 
+        // 사용자를 찾을 수 없음
         if (lowerError.Contains("user") && lowerError.Contains("not") && lowerError.Contains("found"))
             return "등록되지 않은 사용자입니다.";
 
+        // 네트워크 오류
         if (lowerError.Contains("network"))
             return "네트워크 연결을 확인해주세요.";
 
-        return $"오류: {error}";
+        // 잘못된 자격 증명
+        if (lowerError.Contains("invalid") && lowerError.Contains("credential"))
+            return "이메일 또는 비밀번호가 올바르지 않습니다.";
+
+        // 너무 많은 요청
+        if (lowerError.Contains("too") && lowerError.Contains("many") && lowerError.Contains("request"))
+            return "너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.";
+
+        // 기본 오류 메시지 (원본 오류 포함)
+        return $"오류가 발생했습니다: {error}";
     }
 
     #endregion
