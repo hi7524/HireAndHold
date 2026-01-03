@@ -216,6 +216,20 @@ namespace Tutorial
                 }
             }
 
+            // 1스테이지 클리어 전에 로비로 돌아온 경우 로비 튜토리얼부터 다시 시작
+            if (scene.name == "02_Lobby")
+            {
+                bool stage1ClearCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.Stage1Clear);
+                if (!stage1ClearCompleted)
+                {
+                    // 로비 튜토리얼 완료 상태 취소 (다시 시작하도록)
+                    DatabaseManager.Instance.UncompleteSequenceAsync(TutorialSequenceIds.LobbyTutorial).Forget();
+                    // 1스테이지 튜토리얼 완료 상태도 취소 (다시 시작하도록)
+                    DatabaseManager.Instance.UncompleteSequenceAsync(TutorialSequenceIds.Stage1Tutorial).Forget();
+                    DebugLog("1스테이지 클리어 전 로비 복귀 - 로비 튜토리얼부터 다시 시작");
+                }
+            }
+
             FindTutorialUI();
 
             // 씬 로드 후 튜토리얼 자동 체크
