@@ -584,11 +584,8 @@ namespace Tutorial
         /// </summary>
         public void ShowHighlightAtTilePositions2(Vector2Int[] tilePositions, Vector2 offset, Vector2 size)
         {
-            Debug.Log($"[TutorialUI] ShowHighlightAtTilePositions2 호출 - tilePositions: {tilePositions?.Length ?? 0}개");
-
             if (tilePositions == null || tilePositions.Length == 0)
             {
-                Debug.LogWarning("[TutorialUI] tilePositions가 비어있음");
                 return;
             }
 
@@ -631,19 +628,11 @@ namespace Tutorial
                     minWorld = Vector3.Min(minWorld, cellMin);
                     maxWorld = Vector3.Max(maxWorld, cellMax);
                     validCellCount++;
-                    Debug.Log($"[TutorialUI] GridCell 찾음: {tilePos} -> worldPos: {cellPos}");
-                }
-                else
-                {
-                    Debug.LogWarning($"[TutorialUI] GridCell을 찾을 수 없음: {tilePos}");
                 }
             }
 
-            Debug.Log($"[TutorialUI] 유효한 GridCell 개수: {validCellCount}/{tilePositions.Length}");
-
             if (validCellCount == 0)
             {
-                Debug.LogWarning("[TutorialUI] 유효한 GridCell을 찾을 수 없음");
                 return;
             }
 
@@ -683,8 +672,6 @@ namespace Tutorial
                     screenSize.x / canvasScale.x,
                     screenSize.y / canvasScale.y);
             }
-
-            Debug.Log($"[TutorialUI] Highlight2 최종 위치: {highlightRect2.anchoredPosition}, 크기: {highlightRect2.sizeDelta}");
 
             highlightObject2.SetActive(true);
 

@@ -39,6 +39,7 @@ public static class AudioMixerParams
     public static readonly string Master = "Master";
     public static readonly string Bgm = "BGM";
     public static readonly string Sfx = "SFX";
+    public static readonly string Voice = "Voice";
 }
 
 public static class AnimParams

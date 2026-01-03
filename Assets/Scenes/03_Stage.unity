@@ -576,8 +576,8 @@ MonoBehaviour:
   m_FillRect: {fileID: 579152038}
   m_HandleRect: {fileID: 0}
   m_Direction: 0
-  m_MinValue: -80
-  m_MaxValue: 0
+  m_MinValue: 0
+  m_MaxValue: 1
   m_WholeNumbers: 0
   m_Value: 0
   m_OnValueChanged:
@@ -7238,8 +7238,7 @@ MonoBehaviour:
   voiceSource: {fileID: 0}
   audioMixer: {fileID: 24100000, guid: 9cd25b4508f69db4da06551b1d604ff8, type: 2}
   sfxMixerGroup: {fileID: 0}
-  bgmVolume: 1
-  sfxVolume: 1
+  voiceMixerGroup: {fileID: 0}
 --- !u!4 &1054146661
 Transform:
   m_ObjectHideFlags: 0
@@ -12006,8 +12005,8 @@ MonoBehaviour:
   m_FillRect: {fileID: 447319733}
   m_HandleRect: {fileID: 0}
   m_Direction: 0
-  m_MinValue: -80
-  m_MaxValue: 0
+  m_MinValue: 0
+  m_MaxValue: 1
   m_WholeNumbers: 0
   m_Value: 0
   m_OnValueChanged:
@@ -16260,6 +16259,7 @@ MonoBehaviour:
   sfxSlider: {fileID: 1543154817}
   bgmSlider: {fileID: 75029991}
   masterSlider: {fileID: 0}
+  voiceSlider: {fileID: 0}
 --- !u!1 &2051779903
 GameObject:
   m_ObjectHideFlags: 0

@@ -153,8 +153,6 @@ namespace Tutorial
 
             string clickedName = clickedObject.name;
 
-            Debug.Log($"[TutorialBlocker] OnPointerClick - clickedName: {clickedName}, targetButtonName: {targetButtonName}, allowedButtons: {string.Join(", ", allowedButtonNames)}");
-
             // 사이드 패널 클릭 시 두 번째 구멍 영역 체크
             if (IsSidePanel(clickedName) && blockerHole != null)
             {
