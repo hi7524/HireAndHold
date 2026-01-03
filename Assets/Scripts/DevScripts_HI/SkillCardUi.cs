@@ -84,6 +84,9 @@ public class SkillCardUi : BaseCardUi
         currentSkillId = skillId;
         goldAmount = 0;
         ShowStars(false);
+        // 플레이어 스킬도 설명 표시
+        if (descriptionText != null)
+            descriptionText.gameObject.SetActive(true);
         UpdatePlayerSkillUI();
         SetFocus(false);
     }
@@ -203,6 +206,14 @@ public class SkillCardUi : BaseCardUi
         // 스킬 이름 설정 (StringTable에서 가져오기)
         if (text != null)
             text.text = GetLocalizedString(skillData.SKILL_NAME);
+
+        // 스킬 설명 설정 (패시브처럼 EffectData에서 가져오기)
+        if (descriptionText != null)
+        {
+            EffectData effectData = DataTableManager.EffectTable.Get(skillData.SKILL_EFFECT1_ID);
+            if (effectData != null)
+                descriptionText.text = GetLocalizedString(effectData.EFFECT_DESCRIPTION);
+        }
 
         // PlayerSkill은 별 레벨이 없으므로 별 UI 숨김 (0개)
         UpdateStarUI(0);
