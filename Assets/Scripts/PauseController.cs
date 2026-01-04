@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
@@ -25,6 +25,12 @@ public class PauseController : MonoBehaviour
     [SerializeField] private Transform ownedItemsContent;
     [SerializeField] private GameObject ownedItemSlotPrefab;
 
+    [Header("Exit Confirm Popup")]
+    [SerializeField] private GameObject exitConfirmPanel;
+    [SerializeField] private Button exitConfirmYesButton;
+    [SerializeField] private Button exitConfirmNoButton;
+
+
     private int currentStageId;
     private int currentStars;
     private int currentGold;
@@ -35,9 +41,19 @@ public class PauseController : MonoBehaviour
     {
         if (lobbbyButton != null)
         {
-            lobbbyButton.onClick.AddListener(OnConfirmButtonClick);
+            lobbbyButton.onClick.AddListener(OnLobbyButtonClick);
         }
+
+        if (exitConfirmYesButton != null)
+            exitConfirmYesButton.onClick.AddListener(OnExitConfirmYes);
+
+        if (exitConfirmNoButton != null)
+            exitConfirmNoButton.onClick.AddListener(OnExitConfirmNo);
+
+        if (exitConfirmPanel != null)
+            exitConfirmPanel.SetActive(false);
     }
+
 
     private void OnEnable()
     {
@@ -237,18 +253,51 @@ public class PauseController : MonoBehaviour
     private void OnDestroy()
     {
         if (lobbbyButton != null)
-        {
-            lobbbyButton.onClick.RemoveListener(OnConfirmButtonClick);
-        }
+            lobbbyButton.onClick.RemoveListener(OnLobbyButtonClick);
+
+        if (exitConfirmYesButton != null)
+            exitConfirmYesButton.onClick.RemoveListener(OnExitConfirmYes);
+
+        if (exitConfirmNoButton != null)
+            exitConfirmNoButton.onClick.RemoveListener(OnExitConfirmNo);
     }
 
-    private async void OnConfirmButtonClick()
+
+    private void OnLobbyButtonClick()
     {
+        if (exitConfirmPanel != null)
+            exitConfirmPanel.SetActive(true);
+    }
+
+    private void OnExitConfirmNo()
+    {
+        if (exitConfirmPanel != null)
+            exitConfirmPanel.SetActive(false);
+    }
+
+    private async void OnExitConfirmYes()
+    {
+        if (exitConfirmPanel != null)
+            exitConfirmPanel.SetActive(false);
+
         Hide();
         Time.timeScale = 1f;
 
-        // 로비로 이동 (로딩씬 사용)
+        // 로비로 이동
         LoadingRequest request = new("Lobby");
         await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
     }
+
+
+
+
+    //private async void OnConfirmButtonClick()
+    //{
+    //    Hide();
+    //    Time.timeScale = 1f;
+
+    //    // 로비로 이동 (로딩씬 사용)
+    //    LoadingRequest request = new("Lobby");
+    //    await LoadingSceneManager.Instance.LoadSceneWithLoading(request);
+    //}
 }
