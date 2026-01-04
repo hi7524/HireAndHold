@@ -31,7 +31,7 @@ public class NormalEnforcePopup : MonoBehaviour
     [SerializeField] private Button closeButton;
 
     [Header("Success Effect")]
-    [SerializeField] private EnforceSuccessEffect successEffect; // ⭐ 추가
+    [SerializeField] private EnforceSuccessEffect successEffect;
 
     private NormalEnforceSystem enforceSystem;
     private UnitInfoUI mainUI;
@@ -41,6 +41,7 @@ public class NormalEnforcePopup : MonoBehaviour
     private int currentUnitId;
     private Unit currentPreviewUnit;
     private bool isProcessing;
+    private bool isInitialized;
 
     private const int NORMAL_MAX = 20;
 
@@ -51,6 +52,8 @@ public class NormalEnforcePopup : MonoBehaviour
 
     private void SetupPopup()
     {
+        if (isInitialized) return;
+
         if (popupRoot != null && !popupRoot.activeSelf)
             popupRoot.SetActive(false);
 
@@ -62,9 +65,11 @@ public class NormalEnforcePopup : MonoBehaviour
 
         if (confirmButton != null)
         {
-            confirmButton.onClick.RemoveAllListeners();
+            confirmButton.onClick.RemoveListener(OnConfirmClicked);
             confirmButton.onClick.AddListener(OnConfirmClicked);
         }
+
+        isInitialized = true;
     }
 
     public void SetPopupManager(UIPopupManager manager)
@@ -84,9 +89,6 @@ public class NormalEnforcePopup : MonoBehaviour
 
     public void Open(int unitId, Unit previewUnit)
     {
-        if (closeButton != null && closeButton.onClick.GetPersistentEventCount() == 0)
-            SetupPopup();
-
         if (previewUnit == null || !previewUnit.IsInitialized)
         {
             Debug.LogError("[NormalEnforcePopup] previewUnit not ready");
@@ -140,10 +142,6 @@ public class NormalEnforcePopup : MonoBehaviour
     private void OnConfirmClicked()
     {
         if (isProcessing) return;
-
-        // 튜토리얼에 버튼 클릭 알림 (TutorialTarget 리스너가 RemoveAllListeners로 삭제되므로 여기서 직접 호출)
-        TutorialManager.Instance?.NotifyButtonTouched("EnhanceButton");
-
         _ = TryEnforceAsync();
     }
 
@@ -155,29 +153,43 @@ public class NormalEnforcePopup : MonoBehaviour
 
         try
         {
+            // ⭐ 팝업 매니저 null 체크
+            if (popupManager == null)
+            {
+                Debug.LogError("[NormalEnforcePopup] popupManager is null!");
+                return;
+            }
+
             if (currentPreviewUnit == null || !currentPreviewUnit.IsInitialized)
             {
-                popupManager?.ShowAlert("유닛 데이터 준비 중입니다.");
+                Debug.LogWarning("[NormalEnforcePopup] 유닛 데이터 준비 중");
+                await popupManager.ShowAlertAsync("유닛 데이터 준비 중입니다."); // ⭐ await 추가
                 return;
             }
 
             var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
             if (character == null)
             {
-                popupManager?.ShowAlert("미보유 유닛입니다.");
+                Debug.LogWarning("[NormalEnforcePopup] 미보유 유닛");
+                await popupManager.ShowAlertAsync("미보유 유닛입니다."); // ⭐ await 추가
                 return;
             }
 
             int beforeLv = character.enforceLevel;
             int beforeAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
 
+            Debug.Log($"[NormalEnforcePopup] 강화 시도: 레벨 {beforeLv}, 공격력 {beforeAtk}");
+
             bool ok = await enforceSystem.TryEnforceAsync(currentPreviewUnit);
+
             if (!ok)
             {
-                popupManager?.ShowAlert("재료가 부족합니다.");
+                Debug.LogWarning("[NormalEnforcePopup] 재료 부족");
+                await popupManager.ShowAlertAsync("재료가 부족합니다."); // ⭐ await 추가
                 return;
             }
 
+            // ⭐ 강화 성공 처리
             PlayData.SyncCharactersFromDatabase();
             PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
 
@@ -186,15 +198,27 @@ public class NormalEnforcePopup : MonoBehaviour
             int afterLv = character.enforceLevel;
             int afterAtk = Mathf.RoundToInt(currentPreviewUnit.GetAttackDamageStat().Value);
 
-            successEffect?.PlayEffect().Forget();
+            Debug.Log($"[NormalEnforcePopup] 강화 성공: 레벨 {afterLv}, 공격력 {afterAtk}");
 
-            popupManager?.ShowSuccess(
+            // ⭐ 이펙트 재생
+            if (successEffect != null)
+            {
+                successEffect.PlayEffect().Forget();
+            }
+
+            // ⭐ 성공 팝업 표시 (await 추가)
+            await popupManager.ShowSuccessAsync(
                 "강화 성공",
                 $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}"
             );
 
+            // ⭐ UI 갱신
             mainUI?.RefreshUI();
             RefreshUI();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[NormalEnforcePopup] TryEnforceAsync 예외: {ex.Message}\n{ex.StackTrace}");
         }
         finally
         {

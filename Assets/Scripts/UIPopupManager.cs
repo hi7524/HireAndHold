@@ -41,9 +41,10 @@ public class UIPopupManager : MonoBehaviour
         if (alertRoot != null)
             alertRoot.SetActive(false);
 
+        // ⭐ TutorialTarget 호환: RemoveListener + AddListener 패턴
         if (alertOk != null)
         {
-            alertOk.onClick.RemoveAllListeners();
+            alertOk.onClick.RemoveListener(OnAlertOkClicked);
             alertOk.onClick.AddListener(OnAlertOkClicked);
         }
 
@@ -52,12 +53,8 @@ public class UIPopupManager : MonoBehaviour
 
         if (successOk != null)
         {
-            successOk.onClick.RemoveAllListeners();
-            successOk.onClick.AddListener(() =>
-            {
-                if (successRoot != null)
-                    successRoot.SetActive(false);
-            });
+            successOk.onClick.RemoveListener(OnSuccessOkClicked);
+            successOk.onClick.AddListener(OnSuccessOkClicked);
         }
 
         if (confirmRoot != null)
@@ -65,13 +62,13 @@ public class UIPopupManager : MonoBehaviour
 
         if (confirmYes != null)
         {
-            confirmYes.onClick.RemoveAllListeners();
+            confirmYes.onClick.RemoveListener(OnConfirmYesClicked);
             confirmYes.onClick.AddListener(OnConfirmYesClicked);
         }
 
         if (confirmNo != null)
         {
-            confirmNo.onClick.RemoveAllListeners();
+            confirmNo.onClick.RemoveListener(OnConfirmNoClicked);
             confirmNo.onClick.AddListener(OnConfirmNoClicked);
         }
 
@@ -94,6 +91,8 @@ public class UIPopupManager : MonoBehaviour
         if (!isInitialized)
             Initialize();
 
+        Debug.Log($"[UIPopupManager] ShowAlertAsync: {message}");
+
         currentAlertCallback = onOk;
 
         if (alertMessage != null)
@@ -110,6 +109,8 @@ public class UIPopupManager : MonoBehaviour
 
     private void OnAlertOkClicked()
     {
+        Debug.Log("[UIPopupManager] OnAlertOkClicked");
+
         if (alertRoot != null)
             alertRoot.SetActive(false);
 
@@ -127,6 +128,8 @@ public class UIPopupManager : MonoBehaviour
         if (!isInitialized)
             Initialize();
 
+        Debug.Log($"[UIPopupManager] ShowSuccessAsync: {title} - {detail}");
+
         if (successTitle != null)
             successTitle.text = title;
 
@@ -140,6 +143,15 @@ public class UIPopupManager : MonoBehaviour
         }
 
         await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
+    }
+
+    // ⭐ 분리된 메서드로 변경
+    private void OnSuccessOkClicked()
+    {
+        Debug.Log("[UIPopupManager] OnSuccessOkClicked");
+
+        if (successRoot != null)
+            successRoot.SetActive(false);
     }
 
 
@@ -156,6 +168,8 @@ public class UIPopupManager : MonoBehaviour
     {
         if (!isInitialized)
             Initialize();
+
+        Debug.Log($"[UIPopupManager] ShowConfirmAsync: {title} - {message}");
 
         if (confirmRoot == null)
         {
@@ -179,6 +193,8 @@ public class UIPopupManager : MonoBehaviour
 
     private void OnConfirmYesClicked()
     {
+        Debug.Log("[UIPopupManager] OnConfirmYesClicked");
+
         if (confirmRoot != null)
             confirmRoot.SetActive(false);
 
@@ -188,6 +204,8 @@ public class UIPopupManager : MonoBehaviour
 
     private void OnConfirmNoClicked()
     {
+        Debug.Log("[UIPopupManager] OnConfirmNoClicked");
+
         if (confirmRoot != null)
             confirmRoot.SetActive(false);
 

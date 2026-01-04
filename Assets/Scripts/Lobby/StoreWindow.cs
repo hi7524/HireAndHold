@@ -13,8 +13,8 @@ public class StoreWindow : GenericWindow
 
     [Header("UI Panels")]
     [SerializeField] private GameObject gachaResultPanel;
-    [SerializeField] private GameObject insufficientCurrencyPanel; // 재화 부족 패널
-    [SerializeField] private TMPro.TextMeshProUGUI insufficientMessageText; // 재화 부족 메시지
+    [SerializeField] private GameObject insufficientCurrencyPanel;
+    [SerializeField] private TMPro.TextMeshProUGUI insufficientMessageText;
 
     [Header("Result UI")]
     [SerializeField] private Transform resultContainer;
@@ -23,7 +23,22 @@ public class StoreWindow : GenericWindow
     [Header("Buttons")]
     [SerializeField] private UnityEngine.UI.Button skipButton;
     [SerializeField] private UnityEngine.UI.Button closeButton;
-    [SerializeField] private UnityEngine.UI.Button insufficientCloseButton; // 재화 부족 패널 닫기 버튼
+    [SerializeField] private UnityEngine.UI.Button retryButton; // 다시 뽑기 버튼
+    [SerializeField] private UnityEngine.UI.Button insufficientCloseButton;
+
+    [Header("Currency Display")]
+    [SerializeField] private TMPro.TextMeshProUGUI normalSingleCurrencyText;
+    [SerializeField] private TMPro.TextMeshProUGUI normalTenCurrencyText;
+    [SerializeField] private TMPro.TextMeshProUGUI premiumSingleCurrencyText;
+    [SerializeField] private TMPro.TextMeshProUGUI premiumTenCurrencyText;
+
+    [Header("Currency Settings")]
+    [SerializeField] private int normalDiceItemId = 5102;
+    [SerializeField] private int premiumDiceItemId = 5103;
+    [SerializeField] private int normalSingleCost = 1;
+    [SerializeField] private int normalTenCost = 10;
+    [SerializeField] private int premiumSingleCost = 1;
+    [SerializeField] private int premiumTenCost = 10;
 
     [Header("Animation Settings")]
     [SerializeField] private float cardAppearDelay = 0.3f;
@@ -55,6 +70,10 @@ public class StoreWindow : GenericWindow
 
     private GachaResult pendingResult = null;
 
+    // 마지막으로 실행한 가챠 정보 저장
+    private GachaType lastGachaType;
+    private int lastGachaCount;
+
     private void Start()
     {
         isPlaying = false;
@@ -75,6 +94,11 @@ public class StoreWindow : GenericWindow
             closeButton.onClick.AddListener(OnClickClose);
         }
 
+        if (retryButton != null)
+        {
+            retryButton.onClick.AddListener(OnClickRetry);
+        }
+
         if (insufficientCloseButton != null)
         {
             insufficientCloseButton.onClick.AddListener(OnClickInsufficientClose);
@@ -85,7 +109,50 @@ public class StoreWindow : GenericWindow
             cheatButton.onClick.AddListener(OnClickCheat);
         }
 
+        // 재화 표시 초기화
+        UpdateAllCurrencyDisplays();
+
         Time.timeScale = 1f;
+    }
+
+    private void OnEnable()
+    {
+        // 창이 활성화될 때마다 재화 표시 업데이트
+        UpdateAllCurrencyDisplays();
+    }
+
+    /// <summary>
+    /// 모든 뽑기 버튼의 재화 표시를 업데이트
+    /// </summary>
+    private void UpdateAllCurrencyDisplays()
+    {
+        UpdateCurrencyDisplay(normalSingleCurrencyText, normalDiceItemId, normalSingleCost);
+        UpdateCurrencyDisplay(normalTenCurrencyText, normalDiceItemId, normalTenCost);
+        UpdateCurrencyDisplay(premiumSingleCurrencyText, premiumDiceItemId, premiumSingleCost);
+        UpdateCurrencyDisplay(premiumTenCurrencyText, premiumDiceItemId, premiumTenCost);
+    }
+
+    /// <summary>
+    /// 개별 버튼의 재화 표시 업데이트 (형식: "보유재화/필요재화")
+    /// </summary>
+    private void UpdateCurrencyDisplay(TMPro.TextMeshProUGUI currencyText, int itemId, int cost)
+    {
+        if (currencyText == null) return;
+
+        int currentAmount = PlayData.GetItemCount(itemId);
+
+        // "보유재화/필요재화" 형식으로 표시
+        currencyText.text = $"{currentAmount}/{cost}";
+
+        // 재화가 부족하면 빨간색으로 표시
+        if (currentAmount < cost)
+        {
+            currencyText.color = Color.red;
+        }
+        else
+        {
+            currencyText.color = Color.white;
+        }
     }
 
     public void OnClickNormalSingle()
@@ -93,6 +160,9 @@ public class StoreWindow : GenericWindow
         if (isPlaying) return;
 
         currentGachaCount = 1;
+        lastGachaType = GachaType.Normal;
+        lastGachaCount = 1;
+
         isPlaying = true;
 
         cts?.Cancel();
@@ -109,6 +179,9 @@ public class StoreWindow : GenericWindow
         if (isPlaying) return;
 
         currentGachaCount = 10;
+        lastGachaType = GachaType.Normal;
+        lastGachaCount = 10;
+
         isPlaying = true;
 
         cts?.Cancel();
@@ -125,6 +198,9 @@ public class StoreWindow : GenericWindow
         if (isPlaying) return;
 
         currentGachaCount = 1;
+        lastGachaType = GachaType.Premium;
+        lastGachaCount = 1;
+
         isPlaying = true;
 
         cts?.Cancel();
@@ -141,6 +217,9 @@ public class StoreWindow : GenericWindow
         if (isPlaying) return;
 
         currentGachaCount = 10;
+        lastGachaType = GachaType.Premium;
+        lastGachaCount = 10;
+
         isPlaying = true;
 
         cts?.Cancel();
@@ -156,24 +235,19 @@ public class StoreWindow : GenericWindow
     {
         try
         {
-            // 1. 문을 정지 상태로 표시 (애니메이션 없이)
             ShowDoorStatic();
-
-            // 2. 가챠 결과 대기
             await WaitForGachaResultAsync(ct);
-
-            // 3. 스와이프 대기 (문은 정지 상태)
             await WaitForSwipeAsync(ct);
-
-            // 4. 스와이프 완료 시 문 열림 애니메이션 재생
             await PlayDoorOpenAnimationAsync(ct);
 
-            // 5. 결과 표시
             if (pendingResult != null)
             {
                 await ShowResultCardsAsync(pendingResult, ct);
                 pendingResult = null;
             }
+
+            // 결과 표시 후 재화 업데이트
+            UpdateAllCurrencyDisplays();
         }
         catch (OperationCanceledException)
         {
@@ -186,9 +260,6 @@ public class StoreWindow : GenericWindow
         }
     }
 
-    /// <summary>
-    /// 문을 정지 상태로 표시 (애니메이션 재생 없음)
-    /// </summary>
     private void ShowDoorStatic()
     {
         if (doorPanel != null)
@@ -196,7 +267,6 @@ public class StoreWindow : GenericWindow
             doorPanel.SetActive(true);
         }
 
-        // 애니메이션은 재생하지 않고 첫 프레임만 표시
         if (doorAnimation != null)
         {
             doorAnimation.Stop();
@@ -208,9 +278,6 @@ public class StoreWindow : GenericWindow
         Debug.Log("[StoreWindow] 문 정지 상태로 표시 완료");
     }
 
-    /// <summary>
-    /// 스와이프 시 문 열림 애니메이션 재생
-    /// </summary>
     private async UniTask PlayDoorOpenAnimationAsync(CancellationToken ct)
     {
         Debug.Log("[StoreWindow] 문 열림 애니메이션 시작");
@@ -218,8 +285,6 @@ public class StoreWindow : GenericWindow
         if (swipeHintText != null)
             swipeHintText.SetActive(false);
 
-        // 문 열림 애니메이션과 Firebase 저장을 동시에 대기
-        // 애니메이션 중에 저장이 완료되므로 추가 대기 시간 없음
         var animationTask = doorAnimation != null
             ? doorAnimation.PlayOnceAsync(ct)
             : UniTask.CompletedTask;
@@ -230,7 +295,6 @@ public class StoreWindow : GenericWindow
 
         await UniTask.WhenAll(animationTask, saveTask);
 
-        // 애니메이션 완료 후 문 패널 닫기
         if (doorPanel != null)
             doorPanel.SetActive(false);
 
@@ -283,6 +347,10 @@ public class StoreWindow : GenericWindow
         if (skipButton != null)
             skipButton.gameObject.SetActive(currentGachaCount > 1);
 
+        // 다시 뽑기 버튼 활성화
+        if (retryButton != null)
+            retryButton.gameObject.SetActive(true);
+
         try
         {
             if (gachaResultPanel != null)
@@ -325,14 +393,10 @@ public class StoreWindow : GenericWindow
         }
     }
 
-    /// <summary>
-    /// 가챠 에러 핸들러 - 애니메이션 즉시 중단!
-    /// </summary>
     private void OnGachaError(string errorMessage)
     {
         Debug.LogWarning($"[StoreWindow] 가챠 에러: {errorMessage}");
 
-        // ⭐ 애니메이션 즉시 중단
         cts?.Cancel();
 
         isPlaying = false;
@@ -340,7 +404,6 @@ public class StoreWindow : GenericWindow
         isDoorActive = false;
         isWaitingForSwipe = false;
 
-        // 문 패널 즉시 닫기
         if (doorPanel != null)
             doorPanel.SetActive(false);
         if (swipeHintText != null)
@@ -348,13 +411,12 @@ public class StoreWindow : GenericWindow
         if (gachaResultPanel != null)
             gachaResultPanel.SetActive(false);
 
-        // ⭐ 재화 부족 패널 표시
         ShowInsufficientCurrencyPanel(errorMessage);
+
+        // 에러 후 재화 표시 업데이트
+        UpdateAllCurrencyDisplays();
     }
 
-    /// <summary>
-    /// 재화 부족 패널 표시
-    /// </summary>
     private void ShowInsufficientCurrencyPanel(string message)
     {
         if (insufficientCurrencyPanel != null)
@@ -368,9 +430,6 @@ public class StoreWindow : GenericWindow
         }
     }
 
-    /// <summary>
-    /// 재화 부족 패널 닫기
-    /// </summary>
     private void OnClickInsufficientClose()
     {
         if (insufficientCurrencyPanel != null)
@@ -494,7 +553,44 @@ public class StoreWindow : GenericWindow
         if (insufficientCurrencyPanel != null)
             insufficientCurrencyPanel.SetActive(false);
 
+        if (retryButton != null)
+            retryButton.gameObject.SetActive(false);
+
         ClearResultCards();
+
+        // 창 닫을 때 재화 표시 업데이트
+        UpdateAllCurrencyDisplays();
+    }
+
+    /// <summary>
+    /// 다시 뽑기 버튼 클릭
+    /// </summary>
+    private void OnClickRetry()
+    {
+        if (isPlaying) return;
+
+        Debug.Log($"[StoreWindow] 다시 뽑기 - Type: {lastGachaType}, Count: {lastGachaCount}");
+
+        // 결과 패널 닫기
+        if (gachaResultPanel != null)
+            gachaResultPanel.SetActive(false);
+
+        if (retryButton != null)
+            retryButton.gameObject.SetActive(false);
+
+        ClearResultCards();
+
+        // 마지막 가챠 정보로 다시 실행
+        currentGachaCount = lastGachaCount;
+        isPlaying = true;
+
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = new CancellationTokenSource();
+
+        ShowDoorImmediately(cts.Token).Forget();
+
+        gachaManager.ExecuteGacha(lastGachaType, lastGachaCount);
     }
 
     private async void OnClickCheat()
@@ -505,6 +601,9 @@ public class StoreWindow : GenericWindow
         if (normalSuccess && premiumSuccess)
         {
             PlayData.SyncItemsFromDatabase();
+
+            // 치트 사용 후 재화 표시 업데이트
+            UpdateAllCurrencyDisplays();
         }
         else
         {
@@ -528,32 +627,27 @@ public class StoreWindow : GenericWindow
     {
         hasShownSwipeHint = false;
 
-        // 스와이프 힌트 텍스트 표시
         if (swipeHintText != null)
             swipeHintText.SetActive(true);
 
-        // 펄스 애니메이션 시작
         PlaySwipeHintPulseAsync(ct).Forget();
 
-        float autoSkipTime = 5f; // 자동 스킵 시간 증가 (사용자가 읽을 시간 제공)
+        float autoSkipTime = 5f;
         float elapsed = 0f;
 
         while (isWaitingForSwipe && elapsed < autoSkipTime)
         {
             ct.ThrowIfCancellationRequested();
 
-            // 터치 입력 처리
             if (Touchscreen.current != null)
             {
                 var touch = Touchscreen.current.primaryTouch;
 
-                // 터치 시작
                 if (touch.press.wasPressedThisFrame)
                 {
                     swipeStartPos = touch.position.ReadValue();
                 }
 
-                // 터치 종료 시 스와이프 거리 계산
                 if (touch.press.wasReleasedThisFrame)
                 {
                     Vector2 currentPos = touch.position.ReadValue();
