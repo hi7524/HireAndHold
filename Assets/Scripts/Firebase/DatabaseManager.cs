@@ -141,13 +141,12 @@ public class DatabaseManager : MonoBehaviour
             },
             currency = new UserCurrency
             {
-                gold = 10000,
-                diamond = 100,
-                stamina = 120,
+                gold = 0,
+                diamond = 0,
+                stamina = 50,
                 maxStamina = 120,
                 lastStaminaTime = now,
-                summonTicket = 10,
-                enhanceStone = 1000,
+                enhanceStone = 0,
                 skillPoint = 0
             },
             activePresetIndex = 0,

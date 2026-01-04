@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using TMPro;
 using Tutorial;
 
 
@@ -22,7 +23,7 @@ public class RewardPanelController : MonoBehaviour
     [Header("워닝 타임 보상 (패시브 1개)")]
     [SerializeField] private GameObject warningRewardSection;
     [SerializeField] private SkillCardUi warningRewardSlot;
-    
+
     [Header("보스 보상 (패시브 3개 + 플레이어 스킬 선택)")]
     [SerializeField] private GameObject bossRewardSection;
     [SerializeField] private SkillCardUi[] passiveRewardSlots; // 3개
@@ -37,6 +38,7 @@ public class RewardPanelController : MonoBehaviour
 
     [Header("골드 보상")]
     [SerializeField] private int defaultGoldReward = 50;
+    [SerializeField] private TextMeshProUGUI goldRewardText;  // WARNING_RE 골드 표시
 
     private List<int> currentRewardSkillIds = new List<int>();
     private List<int> goldRewardSlotIndices = new List<int>();  // 골드 카드로 대체된 슬롯 인덱스
@@ -143,6 +145,9 @@ public class RewardPanelController : MonoBehaviour
             }
         }
 
+        // 골드 보상 텍스트 업데이트
+        UpdateGoldRewardText();
+
         ShowBox();
     }
 
@@ -181,7 +186,32 @@ public class RewardPanelController : MonoBehaviour
             }
         }
 
+        // 골드 보상 텍스트 업데이트
+        UpdateGoldRewardText();
+
         ShowBox();
+    }
+
+    // 골드 보상 텍스트 업데이트
+    private void UpdateGoldRewardText()
+    {
+        if (goldRewardText == null) return;
+
+        int rewardGold = 0;
+        if (stageManager != null && stageManager.CurrentStageData != null)
+        {
+            rewardGold = stageManager.CurrentStageData.WARNING_RE;
+        }
+
+        if (rewardGold > 0)
+        {
+            goldRewardText.gameObject.SetActive(true);
+            goldRewardText.text = $"+{rewardGold:N0}G";
+        }
+        else
+        {
+            goldRewardText.gameObject.SetActive(false);
+        }
     }
 
     // 상자 표시
@@ -261,6 +291,16 @@ public class RewardPanelController : MonoBehaviour
         // 보스 보상이면 SkillSelectUi 열기
         if (currentRewardType == RewardType.Boss)
         {
+            // 중간 보스 처치 시 테이블의 WARNING_RE 골드 지급
+            if (stageManager != null && stageManager.CurrentStageData != null)
+            {
+                int bossGold = stageManager.CurrentStageData.WARNING_RE;
+                if (bossGold > 0)
+                {
+                    stageManager.AddBonusGold(bossGold);
+                }
+            }
+
             rewardDisplayPanel.SetActive(false);
 
             if (skillSelectUi != null)
@@ -271,6 +311,16 @@ public class RewardPanelController : MonoBehaviour
         }
         else
         {
+            // 워닝 타임 보상: 테이블의 WARNING_RE 골드 지급
+            if (stageManager != null && stageManager.CurrentStageData != null)
+            {
+                int warningGold = stageManager.CurrentStageData.WARNING_RE;
+                if (warningGold > 0)
+                {
+                    stageManager.AddBonusGold(warningGold);
+                }
+            }
+
             // 워닝 타임은 바로 패널 닫기
             rewardDisplayPanel.SetActive(false);
             boxRoot.SetActive(false);

@@ -35,7 +35,6 @@ public static class PlayData
     private static int cachedDiamond = 0;
     private static int cachedStamina = 0;
     private static int cachedEnhanceStone = 0;
-    private static int cachedSummonTicket = 0;
 
     //유저 프로필 캐싱
     private static int cachedLevel = 1;
@@ -60,7 +59,6 @@ public static class PlayData
     public static int Diamond => cachedDiamond;
     public static int Stamina => cachedStamina;
     public static int EnhanceStone => cachedEnhanceStone;
-    public static int SummonTicket => cachedSummonTicket;
 
     // 유저 프로필 프로퍼티
     public static int Level => cachedLevel;
@@ -123,7 +121,6 @@ public static class PlayData
         cachedDiamond = user.currency.diamond;
         cachedStamina = user.currency.stamina;
         cachedEnhanceStone = user.currency.enhanceStone;
-        cachedSummonTicket = user.currency.summonTicket;
         LastClearedStageId = user.profile.highestStage;
 
         cachedLevel = user.profile.level;
@@ -382,7 +379,6 @@ public static class PlayData
         cachedDiamond = 0;
         cachedStamina = 0;
         cachedEnhanceStone = 0;
-        cachedSummonTicket = 0;
         cachedLevel = 1;
         cachedExp = 0;
         cachedNickname = "";

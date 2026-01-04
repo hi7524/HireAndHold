@@ -1031,13 +1031,6 @@ namespace Tutorial
                     firebaseTask = DatabaseManager.Instance.AddEnhanceStoneAsync(reward.amount);
                     break;
 
-                case TutorialRewardType.SummonTicket:
-                    // itemId가 지정되어 있으면 사용, 없으면 기본 일반 소환권(5102) 사용
-                    int ticketId = reward.itemId > 0 ? reward.itemId : 5102;
-                    PlayData.SetItemCountImmediate(ticketId, PlayData.GetItemCount(ticketId) + reward.amount);
-                    firebaseTask = DatabaseManager.Instance.AddItemAsync(ticketId, reward.amount);
-                    break;
-
                 case TutorialRewardType.Item:
                     PlayData.SetItemCountImmediate(reward.itemId, PlayData.GetItemCount(reward.itemId) + reward.amount);
                     firebaseTask = DatabaseManager.Instance.AddItemAsync(reward.itemId, reward.amount);

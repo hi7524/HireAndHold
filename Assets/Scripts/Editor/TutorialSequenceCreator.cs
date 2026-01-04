@@ -214,7 +214,7 @@ public class TutorialSequenceCreator : EditorWindow
             // 103120: "이번 계약서는 제가 드릴게요. 1회 뽑기를 돌려봐요."
             Step(103120, TutorialActionType.TouchTarget, DialogAnchor.Top,
                 targetButton: "GachaSingleButton", highlight: "GachaSingleButton", showHand: true,
-                rewardType: TutorialRewardType.SummonTicket, rewardAmount: 1, isCheckpoint: true),
+                rewardType: TutorialRewardType.Item, rewardItemId: 5102, rewardAmount: 1, isCheckpoint: true),
         };
 
         SaveAsset(sequence, "New_Seq_Stage1_Clear");
@@ -402,6 +402,7 @@ public class TutorialSequenceCreator : EditorWindow
         bool isCheckpoint = false,
         float delayBefore = 0f,
         TutorialRewardType rewardType = TutorialRewardType.None,
+        int rewardItemId = 0,
         int rewardAmount = 0,
         bool pauseGame = true)
     {
@@ -429,6 +430,7 @@ public class TutorialSequenceCreator : EditorWindow
             reward = new TutorialReward
             {
                 rewardType = rewardType,
+                itemId = rewardItemId,
                 amount = rewardAmount
             }
         };
