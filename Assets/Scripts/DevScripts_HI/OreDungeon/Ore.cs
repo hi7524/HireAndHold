@@ -23,6 +23,11 @@ public class Ore : MonoBehaviour, IPointerDownHandler
     // 광석 비활성화 이벤트
     public event Action<Ore> OnOreDeactivated;
 
+    private void OnEnable()
+    {
+        isDestroyed = false;
+    }
+
     public void SetOreType(int id, DataTable_Ore oreTable, OreDungeonManager dungeonManager, Canvas canvasRef, Camera camera, ObjectPoolManager poolMgr, Transform tailTarget)
     {
         oresID = id;
@@ -49,6 +54,20 @@ public class Ore : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        // 이미 파괴되었거나 터치할 HP가 없으면 무시
+        if (isDestroyed || touchCount <= 0) return;
+
+        // 터치 처리
+        touchCount--;
+
+        // HP가 0 이하면 즉시 파괴 플래그 설정
+        if (touchCount <= 0)
+        {
+            isDestroyed = true;
+        }
+
+        manager?.OnOreTouched();
+
         // 사운드 재생
         if (SoundManager.Instance != null && AddressablePreloader.Instance != null)
         {
@@ -62,29 +81,21 @@ public class Ore : MonoBehaviour, IPointerDownHandler
         // 터치 위치에서 이펙트 재생
         PlayEffectAtTouchPosition(eventData.position);
 
-        // 기존 로직
-        OnClick();
-    }
-
-    public void OnClick()
-    {
-        touchCount--;
-        manager?.OnOreTouched();
-
-        // 광석이 파괴될 예정이라면 애니메이션 후 비활성화
-        if (touchCount <= 0)
+        // 파괴 애니메이션
+        if (isDestroyed)
         {
-            isDestroyed = true;
-
-            // Punch 애니메이션 후 비활성화
             transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f)
                 .OnComplete(() =>
                 {
                     gameObject.SetActive(false);
-                    // 비활성화 이벤트 발생
                     OnOreDeactivated?.Invoke(this);
                 });
         }
+    }
+
+    public void OnClick()
+    {
+        // Button 컴포넌트 호환용 - OnPointerDown에서 모든 처리를 하므로 비워둠
     }
 
     private void PlayEffectAtTouchPosition(Vector2 screenPosition)
@@ -144,6 +155,8 @@ public class Ore : MonoBehaviour, IPointerDownHandler
                     ParticleImage particleImage = particleEffect.GetComponent<ParticleImage>();
                     if (particleImage != null)
                     {
+                        // 터치를 가로채지 않도록 raycastTarget 비활성화
+                        particleImage.raycastTarget = false;
                         particleImage.attractorTarget = tailEffectTarget;
 
                         // 파티클 시작 알림
