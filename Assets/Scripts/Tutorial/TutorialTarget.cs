@@ -48,7 +48,6 @@ namespace Tutorial
 
         private void OnButtonClicked()
         {
-            Debug.Log($"[TutorialTarget] OnButtonClicked - TargetKey: {TargetKey}");
             // 튜토리얼 매니저에 버튼 터치 알림
             TutorialManager.Instance?.NotifyButtonTouched(TargetKey);
         }

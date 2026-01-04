@@ -224,6 +224,7 @@ public class GachaManager : MonoBehaviour
             Debug.Log($"현재 보유량: {currentCount}");
             Debug.Log($"검사 결과: {(currentCount >= costAmount ? "✅ 충분" : "❌ 부족")}");
             Debug.Log($"━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
             // 뽑기 실행
             List<GachaItem> results = new List<GachaItem>();
             for (int i = 0; i < count; i++)
@@ -368,13 +369,30 @@ public class GachaManager : MonoBehaviour
         ExecuteGachaAsync(type, count).Forget();
     }
 
-    private GachaItem GachaSingle(GachaType gachaType = GachaType.Normal)
+    private GachaItem GachaSingle(GachaType gachaType)
     {
         List<GachaItem> source = GetGachaItemsByType(gachaType);
-        int totalWeight = GetTotalWeightByType(gachaType);
+
+        // 튜토리얼 중이면 보유하지 않은 유닛만 필터링
+        bool isGachaTutorial = !DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.GachaTutorial);
+        if (isGachaTutorial)
+        {
+            var filtered = GetUnownedGachaItems(source);
+            if (filtered.Count > 0)
+            {
+                source = filtered;
+            }
+        }
+
+        // 가중치 계산
+        int totalWeight = 0;
+        foreach (var item in source)
+        {
+            totalWeight += item.weight;
+        }
 
         int randomWeight = UnityEngine.Random.Range(1, totalWeight + 1);
-        var origin = GetItemByWeight(randomWeight, source);
+        var origin = GetItemByWeightSimple(randomWeight, source);
 
         if (origin == null) return null;
 
@@ -390,11 +408,45 @@ public class GachaManager : MonoBehaviour
         };
     }
 
+    /// <summary>
+    /// 보유하지 않은 유닛만 필터링
+    /// </summary>
+    private List<GachaItem> GetUnownedGachaItems(List<GachaItem> source)
+    {
+        List<GachaItem> unownedItems = new List<GachaItem>();
+        foreach (var item in source)
+        {
+            string characterId = item.unitId.ToString();
+            if (!PlayData.HasCharacter(characterId))
+            {
+                unownedItems.Add(item);
+            }
+        }
+        return unownedItems;
+    }
+
     private GachaItem GetItemByWeight(int randomWeight, List<GachaItem> gachaItems)
     {
         foreach (var item in gachaItems)
         {
             if (randomWeight <= item.cumulativeWeight)
+            {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 필터링된 리스트용 - 누적 가중치 대신 개별 가중치로 계산
+    /// </summary>
+    private GachaItem GetItemByWeightSimple(int randomWeight, List<GachaItem> gachaItems)
+    {
+        int cumulative = 0;
+        foreach (var item in gachaItems)
+        {
+            cumulative += item.weight;
+            if (randomWeight <= cumulative)
             {
                 return item;
             }

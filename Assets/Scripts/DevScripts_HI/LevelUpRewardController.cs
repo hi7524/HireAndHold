@@ -111,7 +111,7 @@ public class LevelUpRewardController : MonoBehaviour
         }
         else
         {
-            confirmBtn.interactable = true;
+            confirmBtn.interactable = IsSkipAllowed();
         }
     }
 
@@ -211,9 +211,9 @@ public class LevelUpRewardController : MonoBehaviour
         // 리롤 버튼 상태 갱신
         UpdateRerollBtn();
 
-        // 레벨업 시에는 확인 버튼 항상 활성화 (보상 패스 가능)
+        // 레벨업 시에는 확인 버튼 활성화 (단, 튜토리얼 중이면 건너뛰기 튜토리얼 스텝에서만 활성화)
         if (confirmBtn != null)
-            confirmBtn.interactable = true;
+            confirmBtn.interactable = IsSkipAllowed();
 
         gameManager.PauseGame();
     }
@@ -853,4 +853,24 @@ public class LevelUpRewardController : MonoBehaviour
             }
         }
     }
+
+    // 건너뛰기(확인 버튼)가 허용되는지 확인 (튜토리얼 진행 상태 체크)
+    private bool IsSkipAllowed()
+    {
+        // 튜토리얼 매니저가 없으면 허용
+        if (TutorialManager.Instance == null)
+            return true;
+
+        // 튜토리얼 진행 중이 아니면 허용
+        if (!TutorialManager.Instance.IsPlaying)
+            return true;
+
+        // 플레이어 레벨 4 이상이면 허용
+        if (playerExp != null && playerExp.Level >= 4)
+            return true;
+
+        // 그 외의 경우 건너뛰기 불가
+        return false;
+    }
+
 }

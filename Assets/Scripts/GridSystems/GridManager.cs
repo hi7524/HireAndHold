@@ -388,8 +388,8 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        // 전체 그리드 버프 체크
-        if (buffName == "FullGrid")
+        // 전체 그리드 버프 체크 (컴플리트 또는 FullGrid)
+        if (buffName == "FullGrid" || buffName == "컴플리트")
         {
             for (int x = 0; x < LayoutData.width; x++)
             {

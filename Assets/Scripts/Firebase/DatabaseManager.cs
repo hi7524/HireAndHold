@@ -141,13 +141,12 @@ public class DatabaseManager : MonoBehaviour
             },
             currency = new UserCurrency
             {
-                gold = 10000,
-                diamond = 100,
-                stamina = 120,
+                gold = 0,
+                diamond = 0,
+                stamina = 50,
                 maxStamina = 120,
                 lastStaminaTime = now,
-                summonTicket = 10,
-                enhanceStone = 1000,
+                enhanceStone = 0,
                 skillPoint = 0
             },
             activePresetIndex = 0,
@@ -1862,34 +1861,36 @@ public class DatabaseManager : MonoBehaviour
         // 자정 체크 및 리셋
         await CheckAndResetDungeonEntriesAsync(dungeonId);
 
-        if (!HasEnoughDungeonEntries(dungeonId, amount))
+        // 입장권 아이템 기준으로 체크 (구매한 열쇠도 포함)
+        var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungeonId);
+        int entryItemId = dungeonSetting?.Conditions_Of_Entry_ItemID ?? 0;
+
+        if (entryItemId <= 0 || !HasEnoughItem(entryItemId, amount))
         {
-            Debug.LogWarning($"[DB] 던전 입장권 부족: {dungeonId}");
+            Debug.LogWarning($"[DB] 던전 입장권 부족: {dungeonId}, 아이템ID: {entryItemId}");
             return false;
         }
 
         string dungeonKey = dungeonId.ToString();
-        var entryData = CurrentUser.dungeonEntries[dungeonKey];
 
-        entryData.currentEntries -= amount;
-
-        // Firebase에 저장
-        bool saved = await SaveDungeonEntryAsync(dungeonId);
-
-        if (saved)
+        // dungeonEntries 데이터가 있으면 같이 차감 (선택적)
+        if (CurrentUser.dungeonEntries != null && CurrentUser.dungeonEntries.ContainsKey(dungeonKey))
         {
-            Debug.Log($"[DB] 던전 {dungeonId} 입장권 소모: {amount}개, 남은 개수: {entryData.currentEntries}");
-
-            // 던전 설정에서 입장권 아이템 ID 가져오기
-            var dungeonSetting = DataTableManager.DungeonSettingTable?.Get(dungeonId);
-            if (dungeonSetting != null && dungeonSetting.Conditions_Of_Entry_ItemID > 0)
-            {
-                // 입장권 아이템도 함께 소모
-                await ConsumeItemAsync(dungeonSetting.Conditions_Of_Entry_ItemID, amount);
-            }
+            var entryData = CurrentUser.dungeonEntries[dungeonKey];
+            entryData.currentEntries -= amount;
+            await SaveDungeonEntryAsync(dungeonId);
+            Debug.Log($"[DB] 던전 {dungeonId} dungeonEntries 소모: {amount}개, 남은 개수: {entryData.currentEntries}");
         }
 
-        return saved;
+        // 입장권 아이템 소모 (핵심)
+        bool itemConsumed = await ConsumeItemAsync(entryItemId, amount);
+
+        if (itemConsumed)
+        {
+            Debug.Log($"[DB] 던전 {dungeonId} 입장권 아이템 {entryItemId} 소모: {amount}개");
+        }
+
+        return itemConsumed;
     }
 
     /// <summary>

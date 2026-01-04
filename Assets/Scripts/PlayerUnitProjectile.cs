@@ -175,7 +175,8 @@ public class PlayerUnitProjectile : MonoBehaviour, ISkillProjectile
 
             if (clip != null)
             {
-                SoundManager.Instance.PlaySFX(clip);
+                // 유닛 공격 소리는 4배 볼륨으로 재생
+                SoundManager.Instance.PlaySFX(clip, 4f);
             }
         }
     }

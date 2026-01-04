@@ -35,7 +35,6 @@ namespace Tutorial
         Gold,
         Item,
         EnhanceStone,
-        SummonTicket,
     }
 
     /// <summary>

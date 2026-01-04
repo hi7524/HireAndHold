@@ -216,6 +216,20 @@ namespace Tutorial
                 }
             }
 
+            // 1스테이지 클리어 전에 로비로 돌아온 경우 로비 튜토리얼부터 다시 시작
+            if (scene.name == "02_Lobby")
+            {
+                bool stage1ClearCompleted = DatabaseManager.Instance.IsTutorialSequenceCompleted(TutorialSequenceIds.Stage1Clear);
+                if (!stage1ClearCompleted)
+                {
+                    // 로비 튜토리얼 완료 상태 취소 (다시 시작하도록)
+                    DatabaseManager.Instance.UncompleteSequenceAsync(TutorialSequenceIds.LobbyTutorial).Forget();
+                    // 1스테이지 튜토리얼 완료 상태도 취소 (다시 시작하도록)
+                    DatabaseManager.Instance.UncompleteSequenceAsync(TutorialSequenceIds.Stage1Tutorial).Forget();
+                    DebugLog("1스테이지 클리어 전 로비 복귀 - 로비 튜토리얼부터 다시 시작");
+                }
+            }
+
             FindTutorialUI();
 
             // 씬 로드 후 튜토리얼 자동 체크
@@ -292,16 +306,12 @@ namespace Tutorial
             var progress = DatabaseManager.Instance.GetTutorialProgress();
             string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
 
-            Debug.Log($"[Tutorial] InitializeAsync - currentScene: {currentScene}, currentSequenceId: {progress.currentSequenceId}, lastCheckpointIndex: {progress.lastCheckpointIndex}");
-
             // 진행 중인 시퀀스가 있으면 복원
             if (!string.IsNullOrEmpty(progress.currentSequenceId))
             {
                 var sequence = GetSequenceById(progress.currentSequenceId);
                 if (sequence != null)
                 {
-                    Debug.Log($"[Tutorial] 시퀀스 찾음: {sequence.sequenceId}, triggerType: {sequence.triggerType}");
-
                     // 현재 씬과 시퀀스 triggerType이 맞는지 확인
                     bool shouldRestore = false;
 
@@ -338,18 +348,14 @@ namespace Tutorial
                             break;
                     }
 
-                    Debug.Log($"[Tutorial] shouldRestore: {shouldRestore}");
-
                     if (shouldRestore)
                     {
-                        Debug.Log($"[Tutorial] 튜토리얼 복원 시작: {sequence.sequenceId}, 스텝: {progress.lastCheckpointIndex}");
                         int startIndex = progress.lastCheckpointIndex;
                         await StartSequenceFromStepAsync(sequence, startIndex);
                     }
                     else
                     {
                         // 복원하지 않는 경우 진행 상태 취소
-                        Debug.Log($"[Tutorial] 튜토리얼 복원 취소: {sequence.sequenceId}");
                         await DatabaseManager.Instance.CancelTutorialSequenceAsync(sequence.sequenceId);
 
                         // 1스테이지 튜토리얼이 로비에서 중단된 경우, 로비 튜토리얼부터 다시 시작
@@ -357,21 +363,12 @@ namespace Tutorial
                         {
                             // 로비 튜토리얼 완료 상태도 취소 (완료 목록에서 제거)
                             await DatabaseManager.Instance.UncompleteSequenceAsync(TutorialSequenceIds.LobbyTutorial);
-                            Debug.Log("[Tutorial] 1스테이지 튜토리얼 중단 → 로비 튜토리얼부터 다시 시작");
 
                             // 로비 튜토리얼 바로 시작
                             await CheckAndStartTutorialAsync(TutorialTriggerType.OnLobbyEnter);
                         }
                     }
                 }
-                else
-                {
-                    Debug.LogWarning($"[Tutorial] 시퀀스를 찾을 수 없음: {progress.currentSequenceId}");
-                }
-            }
-            else
-            {
-                Debug.Log("[Tutorial] 복원할 진행 중인 시퀀스 없음");
             }
         }
 
@@ -434,34 +431,23 @@ namespace Tutorial
         /// </summary>
         public async UniTask<bool> CheckAndStartTutorialAsync(TutorialTriggerType triggerType, int stageId = 0, int level = 0)
         {
-            Debug.Log($"[Tutorial] CheckAndStartTutorialAsync - triggerType: {triggerType}, stageId: {stageId}, level: {level}, isPlaying: {isPlaying}, sequences.Count: {sequences.Count}");
-
             if (isPlaying)
             {
-                Debug.Log("[Tutorial] 튜토리얼 진행 중이라 스킵");
                 return false;
             }
 
             // 전체 튜토리얼 완료됐으면 스킵
             if (DatabaseManager.Instance.IsTutorialCompleted())
             {
-                Debug.Log("[Tutorial] 전체 튜토리얼 완료됨, 스킵");
                 return false;
             }
 
             var sequence = FindSequenceByTrigger(triggerType, stageId, level);
             if (sequence == null)
             {
-                Debug.Log($"[Tutorial] triggerType: {triggerType}, stageId: {stageId}에 맞는 시퀀스 없음. 등록된 시퀀스:");
-                foreach (var seq in sequences)
-                {
-                    bool completed = DatabaseManager.Instance.IsTutorialSequenceCompleted(seq.sequenceId);
-                    Debug.Log($"  - {seq.sequenceId}: triggerType={seq.triggerType}, stageId={seq.triggerStageId}, completed={completed}");
-                }
                 return false;
             }
 
-            Debug.Log($"[Tutorial] 시퀀스 찾음: {sequence.sequenceId}");
             await StartSequenceAsync(sequence);
             return true;
         }
@@ -600,7 +586,6 @@ namespace Tutorial
         private async UniTask PlayCurrentStepAsync()
         {
             var step = CurrentStep;
-            Debug.Log($"[Tutorial] PlayCurrentStepAsync - stepIndex: {currentStepIndex}, stringId: {step?.stringId}, actionType: {step?.actionType}, conditionKey: {step?.conditionKey}, timeScale: {Time.timeScale}");
 
             if (step == null)
             {
@@ -1044,13 +1029,6 @@ namespace Tutorial
                 case TutorialRewardType.EnhanceStone:
                     PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone + reward.amount);
                     firebaseTask = DatabaseManager.Instance.AddEnhanceStoneAsync(reward.amount);
-                    break;
-
-                case TutorialRewardType.SummonTicket:
-                    // itemId가 지정되어 있으면 사용, 없으면 기본 일반 소환권(5102) 사용
-                    int ticketId = reward.itemId > 0 ? reward.itemId : 5102;
-                    PlayData.SetItemCountImmediate(ticketId, PlayData.GetItemCount(ticketId) + reward.amount);
-                    firebaseTask = DatabaseManager.Instance.AddItemAsync(ticketId, reward.amount);
                     break;
 
                 case TutorialRewardType.Item:

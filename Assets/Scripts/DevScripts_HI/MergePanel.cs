@@ -69,13 +69,13 @@ public class MergePanel : MonoBehaviour
             dialogueText.text = unitData.StringVoiceText;
         }
 
-        // 보이스 재생
+        // 보이스 재생 (2배 볼륨)
         if (!string.IsNullOrEmpty(unitData.VOICE) && unitData.VOICE != "0")
         {
             var voiceClip = AddressablePreloader.Instance.GetCachedVoice(unitData.VOICE);
             if (voiceClip != null && SoundManager.Instance != null)
             {
-                SoundManager.Instance.PlaySFX(voiceClip);
+                SoundManager.Instance.PlayVoice(voiceClip, 5f);
                 Debug.Log($"[MergePanel] 보이스 재생: {unitData.VOICE}");
             }
             else if (voiceClip == null)

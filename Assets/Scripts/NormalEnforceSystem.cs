@@ -109,27 +109,43 @@ public class NormalEnforceSystem
 
         Debug.Log($"[NormalEnforceSystem] 강화 시도: Level {currentLevel} → {nextLevel}, 골드 차감: {data.Gold_Cost}, 강화석 차감: {data.IngredientNum}");
 
-        // PlayData를 통한 재화 차감 (내부에서 DB 동기화)
-        await DatabaseManager.Instance.AddGoldAsync(-data.Gold_Cost);
-        await DatabaseManager.Instance.AddEnhanceStoneAsync(-data.IngredientNum);
+        // 낙관적 업데이트: 로컬 캐시 먼저 갱신
+        PlayData.SetGoldImmediate(PlayData.Gold - data.Gold_Cost);
+        PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone - Mathf.RoundToInt(data.IngredientNum));
 
-        Debug.Log($"[NormalEnforceSystem] 재화 차감 완료 - 남은 골드: {PlayData.Gold}, 남은 강화석: {PlayData.EnhanceStone}");
-
-        // 유닛에 강화 적용
+        // 유닛에 강화 적용 (로컬)
+        string characterId = unit.UnitID.ToString();
+        var character = DatabaseManager.Instance.GetCharacter(characterId);
+        if (character != null)
+        {
+            character.enforceLevel = nextLevel;
+        }
         ApplyEnforceToUnit(unit, data);
-        await SaveUnitEnforceLevel(unit, nextLevel);
+
+        Debug.Log($"[NormalEnforceSystem] 로컬 업데이트 완료 - 남은 골드: {PlayData.Gold}, 남은 강화석: {PlayData.EnhanceStone}");
+
+        // Firebase 저장은 백그라운드로 처리
+        var saveTask = UniTask.WhenAll(
+            DatabaseManager.Instance.AddGoldAsync(-data.Gold_Cost),
+            DatabaseManager.Instance.AddEnhanceStoneAsync(-data.IngredientNum),
+            DatabaseManager.Instance.SaveCharacterAsync(characterId)
+        );
+        PendingSaveManager.Track(saveTask);
 
         Debug.Log($"[NormalEnforceSystem] 강화 완료: {unit.UnitID} Level {nextLevel}");
 
-        // 업적 연동: 일반 강화 성공
-        await AchievementManager.AddNormalUpgradeSuccessAsync(1);
-
-        // 퀘스트 연동: 일반 강화 성공
-        await QuestManager.AddNormalUpgradeSuccessAsync(1);
+        // 업적/퀘스트 연동도 백그라운드로 처리
+        var achievementTask = UniTask.WhenAll(
+            AchievementManager.AddNormalUpgradeSuccessAsync(1),
+            QuestManager.AddNormalUpgradeSuccessAsync(1)
+        );
+        PendingSaveManager.Track(achievementTask);
 
         // 최대 레벨 달성 시 업적
         if (nextLevel >= MAX_ENFORCE_LEVEL)
-            await AchievementManager.CompleteNormalUpgradeMaxAsync();
+        {
+            PendingSaveManager.Track(AchievementManager.CompleteNormalUpgradeMaxAsync());
+        }
 
         return true;
     }
@@ -152,17 +168,6 @@ public class NormalEnforceSystem
         }
     }
 
-    private async UniTask SaveUnitEnforceLevel(Unit unit, int newLevel)
-    {
-        string characterId = unit.UnitID.ToString();
-        var character = DatabaseManager.Instance.GetCharacter(characterId);
-
-        if (character != null)
-        {
-            character.enforceLevel = newLevel;
-            await DatabaseManager.Instance.SaveCharacterAsync(characterId);
-        }
-    }
 
     public (long gold, int stone) GetNextEnforceCost(Unit unit)
     {

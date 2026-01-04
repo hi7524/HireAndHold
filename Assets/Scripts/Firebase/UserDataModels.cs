@@ -78,7 +78,6 @@ namespace GameData
         public int stamina;
         public int maxStamina;
         public long lastStaminaTime;
-        public int summonTicket;
         public int enhanceStone;
         public int skillPoint;          // 스킬 포인트
     }

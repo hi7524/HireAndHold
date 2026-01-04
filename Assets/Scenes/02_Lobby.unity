@@ -1211,6 +1211,7 @@ MonoBehaviour:
   sfxSlider: {fileID: 299070062}
   bgmSlider: {fileID: 1410942528}
   masterSlider: {fileID: 309725365}
+  voiceSlider: {fileID: 0}
 --- !u!1 &70963488
 GameObject:
   m_ObjectHideFlags: 0
@@ -2093,9 +2094,8 @@ MonoBehaviour:
   sfxSource: {fileID: 94024818}
   voiceSource: {fileID: 94024820}
   audioMixer: {fileID: 24100000, guid: 9cd25b4508f69db4da06551b1d604ff8, type: 2}
-  sfxMixerGroup: {fileID: 0}
-  bgmVolume: 1
-  sfxVolume: 1
+  sfxMixerGroup: {fileID: 61129053315686764, guid: 9cd25b4508f69db4da06551b1d604ff8, type: 2}
+  voiceMixerGroup: {fileID: -4119665043092283137, guid: 9cd25b4508f69db4da06551b1d604ff8, type: 2}
 --- !u!4 &94024817
 Transform:
   m_ObjectHideFlags: 0
@@ -10303,8 +10303,8 @@ MonoBehaviour:
   m_FillRect: {fileID: 868772966}
   m_HandleRect: {fileID: 0}
   m_Direction: 0
-  m_MinValue: -80
-  m_MaxValue: 0
+  m_MinValue: 0
+  m_MaxValue: 1
   m_WholeNumbers: 0
   m_Value: 0
   m_OnValueChanged:
@@ -10857,8 +10857,8 @@ MonoBehaviour:
   m_FillRect: {fileID: 1457163577}
   m_HandleRect: {fileID: 0}
   m_Direction: 0
-  m_MinValue: -80
-  m_MaxValue: 0
+  m_MinValue: 0
+  m_MaxValue: 1
   m_WholeNumbers: 0
   m_Value: 0
   m_OnValueChanged:
@@ -39607,7 +39607,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchorMin.x
@@ -39615,7 +39615,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_SizeDelta.x
@@ -39655,11 +39655,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 107
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -117.15
       objectReference: {fileID: 0}
     - target: {fileID: 4077606137274170139, guid: 2339d77f1e02340759154f6ab2efd1c8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -49246,8 +49246,8 @@ MonoBehaviour:
   m_FillRect: {fileID: 1496688320}
   m_HandleRect: {fileID: 0}
   m_Direction: 0
-  m_MinValue: -80
-  m_MaxValue: 0
+  m_MinValue: 0
+  m_MaxValue: 1
   m_WholeNumbers: 0
   m_Value: 0
   m_OnValueChanged:
