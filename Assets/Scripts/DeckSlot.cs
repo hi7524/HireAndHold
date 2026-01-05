@@ -133,31 +133,6 @@ public class DeckSlot : MonoBehaviour
         ApplyPendingToUI();
     }
 
-    //public void ClearPending()
-    //{
-    //    if (pending != null)
-    //    {
-    //        deck.NotifyUnitCleared(pending);
-    //    }
-    //    pending = null;
-    //    ApplyPendingToUI();
-    //}
-
-    //public void CommitPending()
-    //{
-    //    if (committed != null)
-    //    {
-    //        deck.NotifyUnitCleared(committed);
-    //    }
-    //    committed = pending;
-    //    pending = null;
-    //    if (committed != null)
-    //    {
-    //        committed.FixMissingAddress();
-    //    }
-    //    ApplyCommittedToUI();
-    //}
-
     public void ClearPending()
     {
         pending = null;

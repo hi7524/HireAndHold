@@ -26,6 +26,10 @@ public class NormalEnforcePopup : MonoBehaviour
     [SerializeField] private TextMeshProUGUI goldHave;
     [SerializeField] private TextMeshProUGUI goldNeed;
 
+    [Header("Cost Colors")]
+    [SerializeField] private Color normalColor = Color.white;
+    [SerializeField] private Color lackColor = Color.red;
+
     [Header("Buttons")]
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button closeButton;
@@ -132,10 +136,40 @@ public class NormalEnforcePopup : MonoBehaviour
 
         var (goldCost, stoneCost) = enforceSystem.GetNextEnforceCost(currentPreviewUnit);
 
-        goldHave.text = PlayData.Gold.ToString();
+        long currentGold = PlayData.Gold;
+        int currentStone = PlayData.EnhanceStone;
+
+        goldHave.text = currentGold.ToString();
         goldNeed.text = goldCost.ToString();
-        stoneHave.text = PlayData.EnhanceStone.ToString();
+        stoneHave.text = currentStone.ToString();
         stoneNeed.text = stoneCost.ToString();
+
+        // 재화 부족 체크 및 색상 변경
+        UpdateCostColors(currentGold, goldCost, currentStone, stoneCost);
+    }
+
+    private void UpdateCostColors(long currentGold, long goldCost, int currentStone, int stoneCost)
+    {
+        // 골드 색상 체크
+        if (goldHave != null)
+            goldHave.color = currentGold >= goldCost ? normalColor : lackColor;
+
+        if (goldNeed != null)
+            goldNeed.color = currentGold >= goldCost ? normalColor : lackColor;
+
+        // 강화석 색상 체크
+        if (stoneHave != null)
+            stoneHave.color = currentStone >= stoneCost ? normalColor : lackColor;
+
+        if (stoneNeed != null)
+            stoneNeed.color = currentStone >= stoneCost ? normalColor : lackColor;
+
+        // 확인 버튼 활성화 상태
+        if (confirmButton != null)
+        {
+            bool canEnforce = currentGold >= goldCost && currentStone >= stoneCost;
+            confirmButton.interactable = canEnforce && !isProcessing;
+        }
     }
 
 
@@ -153,7 +187,6 @@ public class NormalEnforcePopup : MonoBehaviour
 
         try
         {
-            // ⭐ 팝업 매니저 null 체크
             if (popupManager == null)
             {
                 Debug.LogError("[NormalEnforcePopup] popupManager is null!");
@@ -163,7 +196,7 @@ public class NormalEnforcePopup : MonoBehaviour
             if (currentPreviewUnit == null || !currentPreviewUnit.IsInitialized)
             {
                 Debug.LogWarning("[NormalEnforcePopup] 유닛 데이터 준비 중");
-                await popupManager.ShowAlertAsync("유닛 데이터 준비 중입니다."); // ⭐ await 추가
+                await popupManager.ShowAlertAsync("유닛 데이터 준비 중입니다.");
                 return;
             }
 
@@ -171,7 +204,7 @@ public class NormalEnforcePopup : MonoBehaviour
             if (character == null)
             {
                 Debug.LogWarning("[NormalEnforcePopup] 미보유 유닛");
-                await popupManager.ShowAlertAsync("미보유 유닛입니다."); // ⭐ await 추가
+                await popupManager.ShowAlertAsync("미보유 유닛입니다.");
                 return;
             }
 
@@ -185,11 +218,10 @@ public class NormalEnforcePopup : MonoBehaviour
             if (!ok)
             {
                 Debug.LogWarning("[NormalEnforcePopup] 재료 부족");
-                await popupManager.ShowAlertAsync("재료가 부족합니다."); // ⭐ await 추가
+                await popupManager.ShowAlertAsync("재료가 부족합니다.");
                 return;
             }
 
-            // ⭐ 강화 성공 처리
             PlayData.SyncCharactersFromDatabase();
             PlayData.NotifyCharacterUpdated(currentUnitId.ToString());
 
@@ -200,19 +232,16 @@ public class NormalEnforcePopup : MonoBehaviour
 
             Debug.Log($"[NormalEnforcePopup] 강화 성공: 레벨 {afterLv}, 공격력 {afterAtk}");
 
-            // ⭐ 이펙트 재생
             if (successEffect != null)
             {
                 successEffect.PlayEffect().Forget();
             }
 
-            // ⭐ 성공 팝업 표시 (await 추가)
             await popupManager.ShowSuccessAsync(
                 "강화 성공",
                 $"레벨 {beforeLv} → {afterLv}\n전투력 {beforeAtk} → {afterAtk}"
             );
 
-            // ⭐ UI 갱신
             mainUI?.RefreshUI();
             RefreshUI();
         }
@@ -223,7 +252,13 @@ public class NormalEnforcePopup : MonoBehaviour
         finally
         {
             isProcessing = false;
-            confirmButton.interactable = true;
+            if (confirmButton != null)
+            {
+                // 재화 체크 후 버튼 활성화 결정
+                var (goldCost, stoneCost) = enforceSystem.GetNextEnforceCost(currentPreviewUnit);
+                bool canEnforce = PlayData.Gold >= goldCost && PlayData.EnhanceStone >= stoneCost;
+                confirmButton.interactable = canEnforce;
+            }
         }
     }
 
@@ -254,6 +289,9 @@ public class NormalEnforcePopup : MonoBehaviour
 
         if (stoneNeed != null)
             stoneNeed.text = stoneCost.ToString();
+
+        // 재화 부족 체크 및 색상 업데이트
+        UpdateCostColors(currentGold, goldCost, currentStone, stoneCost);
     }
 
     private void OnEnable()

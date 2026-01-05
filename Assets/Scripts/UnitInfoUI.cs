@@ -207,13 +207,6 @@ public class UnitInfoUI : MonoBehaviour
 
         if (equipUI != null)
             equipUI.SetCurrentUnit(displayUnitId, unitData);
-
-        // UnitGridPreview 업데이트
-        var gridPreview = GetComponent<UnitGridPreview>();
-        if (gridPreview != null)
-        {
-            gridPreview.UpdateGridPreview().Forget();
-        }
     }
 
     public Unit GetPreviewUnit() => previewUnit;

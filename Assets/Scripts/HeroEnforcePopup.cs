@@ -22,6 +22,10 @@ public class HeroEnforcePopup : MonoBehaviour
     [SerializeField] private TextMeshProUGUI goldHave;
     [SerializeField] private TextMeshProUGUI goldNeed;
 
+    [Header("Cost Colors")]
+    [SerializeField] private Color normalColor = Color.white;
+    [SerializeField] private Color lackColor = Color.red;
+
     [Header("Effect List")]
     [SerializeField] private Transform effectListParent;
     [SerializeField] private GameObject effectItemPrefab;
@@ -35,7 +39,7 @@ public class HeroEnforcePopup : MonoBehaviour
     [SerializeField] private Button closeButton;
 
     [Header("Success Effect")]
-    [SerializeField] private EnforceSuccessEffect successEffect; 
+    [SerializeField] private EnforceSuccessEffect successEffect;
 
     private HeroEnforceSystem enforceSystem;
     private DataTable_Unit unitTable;
@@ -129,23 +133,8 @@ public class HeroEnforcePopup : MonoBehaviour
             return;
         }
 
-        //LoadUnitIconAsync().Forget();
         RefreshUI();
     }
-
-    //private async UniTaskVoid LoadUnitIconAsync()
-    //{
-    //    if (unitImage == null || unitTable == null)
-    //        return;
-
-    //    var data = unitTable.Get(currentUnitId);
-    //    if (data == null)
-    //        return;
-
-    //    var sprite = await SpriteCache.Instance.LoadSpriteAsync(data.UNIT_ICON);
-    //    if (unitImage != null && sprite != null)
-    //        unitImage.sprite = sprite;
-    //}
 
     private void RefreshUI()
     {
@@ -175,6 +164,8 @@ public class HeroEnforcePopup : MonoBehaviour
 
         int havePieces = PlayData.GetItemCount(fragmentItemId);
         int needPieces = (int)(next?.IngredientNum ?? 0);
+        long currentGold = PlayData.Gold;
+        long needGold = next?.Gold_Cost ?? 0;
 
         if (pieceHave != null)
             pieceHave.text = havePieces.ToString();
@@ -183,12 +174,39 @@ public class HeroEnforcePopup : MonoBehaviour
             pieceNeed.text = needPieces.ToString();
 
         if (goldHave != null)
-            goldHave.text = PlayData.Gold.ToString();
+            goldHave.text = currentGold.ToString();
 
         if (goldNeed != null)
-            goldNeed.text = (next?.Gold_Cost ?? 0).ToString();
+            goldNeed.text = needGold.ToString();
+
+        // 재화 부족 체크 및 색상 변경
+        UpdateCostColors(currentGold, needGold, havePieces, needPieces);
 
         RefreshEffectList(heroLv);
+    }
+
+    private void UpdateCostColors(long currentGold, long needGold, int havePieces, int needPieces)
+    {
+        // 골드 색상 체크
+        if (goldHave != null)
+            goldHave.color = currentGold >= needGold ? normalColor : lackColor;
+
+        if (goldNeed != null)
+            goldNeed.color = currentGold >= needGold ? normalColor : lackColor;
+
+        // 조각 색상 체크
+        if (pieceHave != null)
+            pieceHave.color = havePieces >= needPieces ? normalColor : lackColor;
+
+        if (pieceNeed != null)
+            pieceNeed.color = havePieces >= needPieces ? normalColor : lackColor;
+
+        // 확인 버튼 활성화 상태
+        if (confirmButton != null)
+        {
+            bool canEnforce = currentGold >= needGold && havePieces >= needPieces;
+            confirmButton.interactable = canEnforce && !isProcessing;
+        }
     }
 
     private void RefreshEffectList(int heroLv)
@@ -297,7 +315,23 @@ public class HeroEnforcePopup : MonoBehaviour
         finally
         {
             isProcessing = false;
-            confirmButton.interactable = true;
+
+            // 재화 체크 후 버튼 활성화 결정
+            var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
+            if (character != null && confirmButton != null)
+            {
+                int heroLv = character.heroEnforceLevel;
+                var next = heroTable.Get(currentUnitId, heroLv + 1);
+
+                var unitData = unitTable.Get(currentUnitId);
+                int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
+                int havePieces = PlayData.GetItemCount(fragmentItemId);
+                int needPieces = (int)(next?.IngredientNum ?? 0);
+                long needGold = next?.Gold_Cost ?? 0;
+
+                bool canEnforce = PlayData.Gold >= needGold && havePieces >= needPieces;
+                confirmButton.interactable = canEnforce;
+            }
         }
     }
 
@@ -310,9 +344,6 @@ public class HeroEnforcePopup : MonoBehaviour
         if (currentPreviewUnit == null)
             return;
 
-        if (goldHave != null)
-            goldHave.text = PlayData.Gold.ToString();
-
         var character = DatabaseManager.Instance.GetCharacter(currentUnitId.ToString());
         if (character == null)
             return;
@@ -320,17 +351,29 @@ public class HeroEnforcePopup : MonoBehaviour
         int heroLv = character.heroEnforceLevel;
         var next = heroTable.Get(currentUnitId, heroLv + 1);
 
+        long currentGold = PlayData.Gold;
+        long needGold = next?.Gold_Cost ?? 0;
+
+        if (goldHave != null)
+            goldHave.text = currentGold.ToString();
+
         if (goldNeed != null)
-            goldNeed.text = (next?.Gold_Cost ?? 0).ToString();
+            goldNeed.text = needGold.ToString();
 
         var unitData = unitTable.Get(currentUnitId);
         int fragmentItemId = unitData.FRAGMENT_ITEM_ID;
 
+        int havePieces = PlayData.GetItemCount(fragmentItemId);
+        int needPieces = (int)(next?.IngredientNum ?? 0);
+
         if (pieceHave != null)
-            pieceHave.text = PlayData.GetItemCount(fragmentItemId).ToString();
+            pieceHave.text = havePieces.ToString();
 
         if (pieceNeed != null)
-            pieceNeed.text = ((int)(next?.IngredientNum ?? 0)).ToString();
+            pieceNeed.text = needPieces.ToString();
+
+        // 재화 부족 체크 및 색상 업데이트
+        UpdateCostColors(currentGold, needGold, havePieces, needPieces);
     }
 
     private void OnEnable()
