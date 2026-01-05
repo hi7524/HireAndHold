@@ -1066,6 +1066,14 @@ public class DatabaseManager : MonoBehaviour
     /// </summary>
     public UniTask<bool> ClaimMailRewardAsync(string mailId)
     {
+        return ClaimMailRewardInternal(mailId, notifyEvents: true);
+    }
+
+    /// <summary>
+    /// 메일 보상 수령 내부 구현 (이벤트 알림 여부 선택 가능)
+    /// </summary>
+    private UniTask<bool> ClaimMailRewardInternal(string mailId, bool notifyEvents)
+    {
         if (CurrentUser?.mails == null || !CurrentUser.mails.TryGetValue(mailId, out var mail))
         {
             Debug.LogWarning($"[Mail] 메일을 찾을 수 없음: {mailId}");
@@ -1096,7 +1104,7 @@ public class DatabaseManager : MonoBehaviour
             // Firebase 저장 백그라운드
             string claimPath = $"users/{UserId}/mails/{mailId}/isClaimed";
             database.SetDataAsync(claimPath, true).Forget();
-            PlayData.NotifyMailsChanged();
+            if (notifyEvents) PlayData.NotifyMailsChanged();
             return UniTask.FromResult(true);
         }
 
@@ -1128,8 +1136,11 @@ public class DatabaseManager : MonoBehaviour
             }
         }
 
-        PlayData.NotifyMailsChanged();
-        PlayData.NotifyCurrencyChanged();
+        if (notifyEvents)
+        {
+            PlayData.NotifyMailsChanged();
+            PlayData.NotifyCurrencyChanged();
+        }
 
         // Firebase 저장은 백그라운드로 병렬 처리
         var saveTasks = new System.Collections.Generic.List<UniTask>();
@@ -1183,10 +1194,17 @@ public class DatabaseManager : MonoBehaviour
         {
             if (!mail.isClaimed && mail.reward != null && mail.reward.HasReward())
             {
-                // ClaimMailRewardAsync가 이제 동기적으로 로컬 캐시 업데이트 후 즉시 반환
-                ClaimMailRewardAsync(mail.mailId);
+                // 개별 이벤트 알림 없이 처리 (일괄 수령 완료 후 한 번만 알림)
+                ClaimMailRewardInternal(mail.mailId, notifyEvents: false);
                 claimedCount++;
             }
+        }
+
+        // 일괄 수령 완료 후 한 번만 이벤트 발생
+        if (claimedCount > 0)
+        {
+            PlayData.NotifyMailsChanged();
+            PlayData.NotifyCurrencyChanged();
         }
 
         return UniTask.FromResult(claimedCount);
@@ -1451,6 +1469,14 @@ public class DatabaseManager : MonoBehaviour
     /// </summary>
     public UniTask<bool> ClaimGlobalMailRewardAsync(string mailId)
     {
+        return ClaimGlobalMailRewardInternal(mailId, notifyEvents: true);
+    }
+
+    /// <summary>
+    /// 전역 메일 보상 수령 내부 구현 (이벤트 알림 여부 선택 가능)
+    /// </summary>
+    private UniTask<bool> ClaimGlobalMailRewardInternal(string mailId, bool notifyEvents)
+    {
         if (!cachedGlobalMails.TryGetValue(mailId, out var globalMail))
         {
             Debug.LogWarning($"[GlobalMail] 메일을 찾을 수 없음: {mailId}");
@@ -1506,11 +1532,11 @@ public class DatabaseManager : MonoBehaviour
                 }
             }
 
-            PlayData.NotifyCurrencyChanged();
+            if (notifyEvents) PlayData.NotifyCurrencyChanged();
         }
 
         Debug.Log($"[GlobalMail] 전역 메일 수령 완료: {mailId}");
-        PlayData.NotifyMailsChanged();
+        if (notifyEvents) PlayData.NotifyMailsChanged();
 
         // Firebase 저장은 백그라운드로 병렬 처리
         var saveTasks = new System.Collections.Generic.List<UniTask>();
@@ -1566,9 +1592,17 @@ public class DatabaseManager : MonoBehaviour
         {
             if (!mail.IsExpired() && !IsGlobalMailClaimed(mail.mailId))
             {
-                ClaimGlobalMailRewardAsync(mail.mailId);
+                // 개별 이벤트 알림 없이 처리 (일괄 수령 완료 후 한 번만 알림)
+                ClaimGlobalMailRewardInternal(mail.mailId, notifyEvents: false);
                 claimedCount++;
             }
+        }
+
+        // 일괄 수령 완료 후 한 번만 이벤트 발생
+        if (claimedCount > 0)
+        {
+            PlayData.NotifyMailsChanged();
+            PlayData.NotifyCurrencyChanged();
         }
 
         return UniTask.FromResult(claimedCount);

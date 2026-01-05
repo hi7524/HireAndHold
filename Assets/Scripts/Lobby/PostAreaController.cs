@@ -23,6 +23,7 @@ public class PostAreaController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI unreadCountText;
 
     private List<PostElementUI> postElements = new List<PostElementUI>();
+    private bool isBatchClaiming = false;
 
     private void Awake()
     {
@@ -69,6 +70,7 @@ public class PostAreaController : MonoBehaviour
     public void RefreshMailList()
     {
         if (DatabaseManager.Instance == null) return;
+        if (isBatchClaiming) return; // 일괄 수령 중에는 갱신 무시
 
         // 기존 요소 정리
         ClearPostElements();
@@ -108,7 +110,7 @@ public class PostAreaController : MonoBehaviour
         foreach (var element in postElements)
         {
             if (element != null && element.gameObject != null)
-                DestroyImmediate(element.gameObject);
+                Destroy(element.gameObject);
         }
         postElements.Clear();
     }
@@ -140,11 +142,15 @@ public class PostAreaController : MonoBehaviour
         if (claimAllButton != null)
             claimAllButton.interactable = false;
 
+        isBatchClaiming = true;
+
         // 개인 메일과 전역 메일 병렬로 일괄 수령
         var (personalClaimedCount, globalClaimedCount) = await UniTask.WhenAll(
             DatabaseManager.Instance.ClaimAllMailRewardsAsync(),
             DatabaseManager.Instance.ClaimAllGlobalMailRewardsAsync()
         );
+
+        isBatchClaiming = false;
 
         // 다음 프레임까지 대기 후 UI 갱신
         await UniTask.Yield();

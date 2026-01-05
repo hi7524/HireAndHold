@@ -49,6 +49,7 @@ public class QuestAreaController : MonoBehaviour
     private List<QuestElementUI> dailyQuestElements = new List<QuestElementUI>();
     private List<QuestElementUI> weeklyQuestElements = new List<QuestElementUI>();
     private bool showingDaily = true; // true = 일일, false = 주간
+    private bool isBatchClaiming = false;
 
     private void Awake()
     {
@@ -146,6 +147,7 @@ public class QuestAreaController : MonoBehaviour
 
     private void OnQuestChanged(int questId)
     {
+        if (isBatchClaiming) return; // 일괄 수령 중에는 갱신 무시
         RefreshQuestList();
     }
 
@@ -296,6 +298,8 @@ public class QuestAreaController : MonoBehaviour
         if (claimAllButton != null)
             claimAllButton.interactable = false;
 
+        isBatchClaiming = true;
+
         // 낙관적 업데이트: 로컬 즉시 처리, Firebase는 백그라운드
         int claimedCount;
         if (showingDaily)
@@ -306,6 +310,8 @@ public class QuestAreaController : MonoBehaviour
         {
             claimedCount = QuestManager.ClaimAllWeeklyRewardsOptimistic(out var saveTask);
         }
+
+        isBatchClaiming = false;
 
         if (claimedCount > 0)
         {
