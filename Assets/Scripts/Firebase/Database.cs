@@ -74,37 +74,70 @@ public class Database
 
     #region Write
 
-    public async UniTask<bool> SetDataAsync<T>(string path, T data)
+    private const int DEFAULT_MAX_RETRIES = 3;
+    private const float INITIAL_RETRY_DELAY_SECONDS = 1f;
+
+    public async UniTask<bool> SetDataAsync<T>(string path, T data, int maxRetries = DEFAULT_MAX_RETRIES)
     {
-        try
+        string json = JsonConvert.SerializeObject(data);
+
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
-            string json = JsonConvert.SerializeObject(data);
-            await root.Child(path).SetRawJsonValueAsync(json).AsUniTask();
-            return true;
+            try
+            {
+                await root.Child(path).SetRawJsonValueAsync(json).AsUniTask();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                bool isLastAttempt = attempt >= maxRetries - 1;
+
+                if (isLastAttempt)
+                {
+                    Debug.LogError($"[Database] SetData 최종 실패 ({path}): {ex.Message}");
+                    return false;
+                }
+
+                // 지수 백오프: 1초 → 2초 → 4초
+                float delaySeconds = INITIAL_RETRY_DELAY_SECONDS * Mathf.Pow(2, attempt);
+                Debug.LogWarning($"[Database] SetData 재시도 {attempt + 1}/{maxRetries} ({path}), {delaySeconds}초 후 재시도...");
+                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds));
+            }
         }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[Database] SetData 오류 ({path}): {ex.Message}");
-            return false;
-        }
+
+        return false;
     }
 
     #endregion
 
     #region Delete
 
-    public async UniTask<bool> DeleteDataAsync(string path)
+    public async UniTask<bool> DeleteDataAsync(string path, int maxRetries = DEFAULT_MAX_RETRIES)
     {
-        try
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
-            await root.Child(path).RemoveValueAsync().AsUniTask();
-            return true;
+            try
+            {
+                await root.Child(path).RemoveValueAsync().AsUniTask();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                bool isLastAttempt = attempt >= maxRetries - 1;
+
+                if (isLastAttempt)
+                {
+                    Debug.LogError($"[Database] DeleteData 최종 실패 ({path}): {ex.Message}");
+                    return false;
+                }
+
+                float delaySeconds = INITIAL_RETRY_DELAY_SECONDS * Mathf.Pow(2, attempt);
+                Debug.LogWarning($"[Database] DeleteData 재시도 {attempt + 1}/{maxRetries} ({path}), {delaySeconds}초 후 재시도...");
+                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds));
+            }
         }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[Database] DeleteData 오류 ({path}): {ex.Message}");
-            return false;
-        }
+
+        return false;
     }
 
     #endregion
