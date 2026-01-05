@@ -185,21 +185,19 @@ public class SecondStoreController : MonoBehaviour
         Debug.Log($"[SecondStore] IAP 구매 시작: {data.SELLING_ID}");
 
         // 아이템 지급 Firebase (await로 완료 보장)
+        // GiveItemFirebaseAsync 내부에서 로컬 캐시도 업데이트됨
         await GiveItemFirebaseAsync(data.SELLING_ITEM, data.SELLING_AMOUNT);
 
         // 구매 기록 저장 Firebase
         if (data.SELLING_LIMIT > 0 && data.SELLING_NUM > 0)
         {
             await DatabaseManager.Instance.AddPurchaseRecordAsync(data.SELLING_ID);
-        }
-
-        // Firebase 저장 완료 후 로컬 캐시 업데이트
-        GiveItemLocal(data.SELLING_ITEM, data.SELLING_AMOUNT);
-
-        if (data.SELLING_LIMIT > 0 && data.SELLING_NUM > 0)
-        {
+            // AddPurchaseRecordAsync는 로컬 캐시를 업데이트하지 않으므로 별도 처리
             DatabaseManager.Instance.AddPurchaseRecordLocal(data.SELLING_ID);
         }
+
+        // GiveItemFirebaseAsync에서 이미 로컬 캐시가 업데이트되므로
+        // GiveItemLocal 호출 제거 (중복 지급 방지)
 
         PlayData.SyncItemsFromDatabase();
         PlayData.NotifyCurrencyChanged();

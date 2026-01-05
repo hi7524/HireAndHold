@@ -142,18 +142,20 @@ public class BattleUnitManager : MonoBehaviour
             modifiers.Add(damageMod);
         }
 
-        // 치명타 확률 증가
+        // 치명타 확률 증가 (% 포인트 추가이므로 Flat 사용)
+        // 예: 기본 5%, 패시브 +10% → 15%
         if (effects.critRateBonus > 0)
         {
-            var critRateMod = new StatModifier(effects.critRateBonus / 100f, ModifierType.PercentAdd);
+            var critRateMod = new StatModifier(effects.critRateBonus, ModifierType.Flat);
             unit.GetCriticalRateStat()?.AddModifier(critRateMod);
             modifiers.Add(critRateMod);
         }
 
-        // 치명타 데미지 증가
+        // 치명타 데미지 증가 (% 포인트 추가이므로 Flat 사용)
+        // 예: 기본 1.5(150%), 패시브 +30% → 1.8(180%)
         if (effects.critDamageBonus > 0)
         {
-            var critDamageMod = new StatModifier(effects.critDamageBonus / 100f, ModifierType.PercentAdd);
+            var critDamageMod = new StatModifier(effects.critDamageBonus / 100f, ModifierType.Flat);
             unit.GetCriticalDamageStat()?.AddModifier(critDamageMod);
             modifiers.Add(critDamageMod);
         }

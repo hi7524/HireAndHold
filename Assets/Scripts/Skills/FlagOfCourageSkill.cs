@@ -47,6 +47,7 @@ public class FlagOfCourageSkill : PlayerSkillBase, IUnitManagerInjectable
         }
 
         List<Unit> units = battleUnitManager.GetAllUnits();
+        Debug.Log($"[FlagOfCourage] 버프 적용 시작 - 유닛 수: {units.Count}");
 
         foreach (Unit unit in units)
         {
@@ -58,14 +59,21 @@ public class FlagOfCourageSkill : PlayerSkillBase, IUnitManagerInjectable
                 statusEffectManager.AddStatusEffect(StatusEffectType.AttackUp, buffEffect);
             }
 
-            // 공격력 버프 적용
+            // 공격력 버프 적용 (현재 공격력 기준 % 증가 = PercentMult 사용)
             Stat attackStat = unit.GetAttackDamageStat();
             if (attackStat != null)
             {
-                StatModifier attackModifier = new StatModifier(attackUpPercent / 100f, ModifierType.PercentAdd);
+                float beforeValue = attackStat.Value;
+                StatModifier attackModifier = new StatModifier(attackUpPercent / 100f, ModifierType.PercentMult);
                 attackStat.AddModifier(attackModifier);
+                float afterValue = attackStat.Value;
+                Debug.Log($"[FlagOfCourage] {unit.name} 공격력: {beforeValue} -> {afterValue} (버프 {attackUpPercent}%)");
 
                 buffedUnits.Add(new BuffedUnitInfo(unit, attackStat, attackModifier));
+            }
+            else
+            {
+                Debug.LogWarning($"[FlagOfCourage] {unit.name}의 attackStat이 null입니다!");
             }
         }
 

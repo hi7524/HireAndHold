@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6266743259424503086}
   - component: {fileID: 8564051668780969774}
   - component: {fileID: 6908712333835450721}
-  - component: {fileID: 8619368926878524676}
+  - component: {fileID: -5445185484713979629}
   m_Layer: 0
   m_Name: UnitSkillProjectile_22
   m_TagString: Untagged
@@ -98,7 +98,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
---- !u!114 &8619368926878524676
+--- !u!114 &-5445185484713979629
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -107,14 +107,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 7012860003763290146}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9306028b82f153a4e8e808f2ef2a6972, type: 3}
+  m_Script: {fileID: 11500000, guid: 2002eca1e4e44864790e186134ed4ff8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lifeTime: 3
-  launchSpeed: 7
-  mainProjectile: {fileID: 0}
-  hitEffect: {fileID: 7017972838538767232, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
-  rotationOffset: 0
+  lifeTime: 2
+  damageDelay: 0
+  effect: {fileID: 7017972838538767232, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+  vfxEffect: {fileID: 0}
 --- !u!1001 &1195404756264227144
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -123,6 +122,38 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6266743259424503086}
     m_Modifications:
+    - target: {fileID: 1064773211, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 381857531608063968, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972838219737923, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972838243004857, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972838538767232, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972838538767235, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972838538767235, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972838538767235, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 7017972838538767235, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -166,6 +197,26 @@ PrefabInstance:
     - target: {fileID: 7017972838538767246, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
       propertyPath: m_Name
       value: HCFX_MagicCircle_02
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972839009547374, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972839475475038, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972839602904680, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972839619530315, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7017972839764061044, guid: 3f1557e38f9a7674ba50d5f57677ae65, type: 3}
+      propertyPath: playOnAwake
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

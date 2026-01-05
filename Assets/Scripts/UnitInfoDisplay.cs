@@ -347,9 +347,9 @@ public class UnitInfoDisplay : MonoBehaviour
         if (skillListParent == null)
             return;
 
-        while (skillListParent.childCount > 0)
+        for (int i = skillListParent.childCount - 1; i >= 0; i--)
         {
-            DestroyImmediate(skillListParent.GetChild(0).gameObject);
+            Destroy(skillListParent.GetChild(i).gameObject);
         }
 
         if (currentDisplayStar == 1)
@@ -419,9 +419,9 @@ public class UnitInfoDisplay : MonoBehaviour
         if (heroEffectListParent == null)
             return;
 
-        while (heroEffectListParent.childCount > 0)
+        for (int i = heroEffectListParent.childCount - 1; i >= 0; i--)
         {
-            DestroyImmediate(heroEffectListParent.GetChild(0).gameObject);
+            Destroy(heroEffectListParent.GetChild(i).gameObject);
         }
 
         var heroTable = DataTableManager.heroEnforceTable;

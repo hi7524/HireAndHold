@@ -28,6 +28,7 @@ public class AchievementAreaController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI claimableCountText;
 
     private List<AchievementElementUI> achievementElements = new List<AchievementElementUI>();
+    private bool isBatchClaiming = false;
 
     private void Awake()
     {
@@ -76,6 +77,7 @@ public class AchievementAreaController : MonoBehaviour
 
     private void OnAchievementChanged(int achievementId)
     {
+        if (isBatchClaiming) return; // 일괄 수령 중에는 갱신 무시
         RefreshAchievementList();
     }
 
@@ -156,7 +158,7 @@ public class AchievementAreaController : MonoBehaviour
         foreach (var element in achievementElements)
         {
             if (element != null && element.gameObject != null)
-                DestroyImmediate(element.gameObject);
+                Destroy(element.gameObject);
         }
         achievementElements.Clear();
     }
@@ -196,8 +198,12 @@ public class AchievementAreaController : MonoBehaviour
         if (claimAllButton != null)
             claimAllButton.interactable = false;
 
+        isBatchClaiming = true;
+
         // 낙관적 업데이트: 로컬 즉시 처리, Firebase는 백그라운드
         int claimedCount = AchievementManager.ClaimAllRewardsOptimistic(out var saveTask);
+
+        isBatchClaiming = false;
 
         if (claimedCount > 0)
         {

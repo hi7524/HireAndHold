@@ -60,22 +60,22 @@ public class FlagOfVictorySkill : PlayerSkillBase, IUnitManagerInjectable
                 statusEffectManager.AddStatusEffect(StatusEffectType.AttackUp, buffEffect);
             }
 
-            // 공격력 버프 적용
+            // 공격력 버프 적용 (현재 공격력 기준 % 증가)
             Stat attackStat = unit.GetAttackDamageStat();
             if (attackStat != null)
             {
-                StatModifier attackModifier = new StatModifier(attackUpPercent / 100f, ModifierType.PercentAdd);
+                StatModifier attackModifier = new StatModifier(attackUpPercent / 100f, ModifierType.PercentMult);
                 attackStat.AddModifier(attackModifier);
                 buffedUnits.Add(new BuffedUnitInfo(unit, attackStat, attackModifier));
             }
 
-            // 공격속도 버프 적용 (쿨타임 감소)
+            // 공격속도 버프 적용 (쿨타임 감소, 현재 쿨타임 기준)
             // 공격속도 30% 증가 = 쿨타임 약 23% 감소 (1 / 1.3 ≈ 0.77)
             Stat cooldownStat = unit.GetAttackCooltimeStat();
             if (cooldownStat != null)
             {
                 float cooldownReduction = -1f * (1f - (1f / (1f + attackSpeedUpPercent / 100f)));
-                StatModifier speedModifier = new StatModifier(cooldownReduction, ModifierType.PercentAdd);
+                StatModifier speedModifier = new StatModifier(cooldownReduction, ModifierType.PercentMult);
                 cooldownStat.AddModifier(speedModifier);
                 buffedUnits.Add(new BuffedUnitInfo(unit, cooldownStat, speedModifier));
             }
