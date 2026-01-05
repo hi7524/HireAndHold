@@ -4,6 +4,7 @@ using TMPro;
 using Cysharp.Threading.Tasks;
 using System;
 
+
 /// <summary>
 /// SecondStoreWindow 컨트롤러
 /// 기존 UI 버튼에 직접 연결해서 사용
@@ -17,6 +18,17 @@ public class SecondStoreController : MonoBehaviour
     [SerializeField] private Image confirmProductIcon;
     [SerializeField] private Button confirmBuyButton;
     [SerializeField] private Button confirmCancelButton;
+    [SerializeField] private UIPopupManager popupManager;
+
+    private bool isPurchasing = false;
+
+
+    private enum PurchaseFailReason
+    {
+        None,
+        PurchaseLimit,
+        NotEnoughCurrency
+    }
 
     /// <summary>
     /// 구매 완료 이벤트 (sellingId)
@@ -30,24 +42,21 @@ public class SecondStoreController : MonoBehaviour
 
     private void Awake()
     {
-        // 확인 버튼 이벤트 연결
         if (confirmBuyButton != null)
         {
+            confirmBuyButton.onClick.RemoveAllListeners();
             confirmBuyButton.onClick.AddListener(OnConfirmPurchase);
         }
 
-        // 취소 버튼 이벤트 연결
         if (confirmCancelButton != null)
         {
+            confirmCancelButton.onClick.RemoveAllListeners();
             confirmCancelButton.onClick.AddListener(OnCancelPurchase);
         }
 
-        // 초기에는 확인 패널 숨김
-        if (purchaseConfirmPanel != null)
-        {
-            purchaseConfirmPanel.SetActive(false);
-        }
+        purchaseConfirmPanel?.SetActive(false);
     }
+
 
     /// <summary>
     /// 상품 구매 버튼 클릭 (Button OnClick에서 호출)
@@ -62,16 +71,26 @@ public class SecondStoreController : MonoBehaviour
             return;
         }
 
-        // 구매 가능 여부 먼저 확인
-        if (!CanPurchase(product))
+        if (!CanPurchase(product, out var reason))
         {
-            Debug.LogWarning("[SecondStore] 구매 불가 (재화 부족 또는 제한 초과)");
+            switch (reason)
+            {
+                case PurchaseFailReason.PurchaseLimit:
+                    popupManager?.ShowAlertAsync("구매 제한 아이템입니다.").Forget();
+                    break;
+
+                case PurchaseFailReason.NotEnoughCurrency:
+                    popupManager?.ShowAlertAsync("재화가 부족합니다.").Forget();
+                    break;
+            }
             return;
         }
 
-        // 확인 팝업 표시
+
+
         ShowConfirmPanel(product);
     }
+
 
     /// <summary>
     /// 구매 확인 패널 표시
@@ -80,54 +99,31 @@ public class SecondStoreController : MonoBehaviour
     {
         pendingProduct = product;
 
-        if (purchaseConfirmPanel != null)
-        {
-            // 상품 정보 표시
-            if (confirmProductNameText != null)
-            {
-                confirmProductNameText.text = GetProductName(product.SELLING_ID);
-            }
+        confirmBuyButton.interactable = true;
+        isPurchasing = false;
 
-            if (confirmPriceText != null)
-            {
-                confirmPriceText.text = GetPriceText(product.SELLING_ID);
-            }
-
-            if (confirmProductIcon != null)
-            {
-                // 아이콘 로드 (Addressable 캐시에서)
-                var itemData = DataTableManager.ItemTable?.Get(product.SELLING_ITEM);
-                if (itemData != null && AddressablePreloader.Instance != null)
-                {
-                    var iconSprite = AddressablePreloader.Instance.GetCachedSprite(itemData.ITEM_ICON);
-                    if (iconSprite != null)
-                    {
-                        confirmProductIcon.sprite = iconSprite;
-                    }
-                }
-            }
-
-            purchaseConfirmPanel.SetActive(true);
-        }
-        else
-        {
-            // 확인 패널이 없으면 바로 구매 진행
-            PurchaseAsync(product).Forget();
-        }
+        purchaseConfirmPanel.SetActive(true);
     }
+
 
     /// <summary>
     /// 확인 버튼 클릭 - 실제 구매 진행
     /// </summary>
     private void OnConfirmPurchase()
     {
+        if (isPurchasing)
+            return;
+
         if (pendingProduct != null)
         {
+            isPurchasing = true;
+            confirmBuyButton.interactable = false;
             PurchaseAsync(pendingProduct).Forget();
         }
 
         HideConfirmPanel();
     }
+
 
     /// <summary>
     /// 취소 버튼 클릭
@@ -155,27 +151,28 @@ public class SecondStoreController : MonoBehaviour
     /// </summary>
     private async UniTaskVoid PurchaseAsync(SellingData data)
     {
-        // 구매 가능 여부 확인
-        if (!CanPurchase(data))
+        if (!CanPurchase(data, out _))
         {
-            Debug.LogWarning("[SecondStore] 재화가 부족합니다.");
+            ResetPurchaseState();
             return;
         }
 
-        // IAP 결제인 경우 (moneyType == 3): 동기 처리 필수
         bool isIAP = data.SELLING_MONEY == 3;
 
         if (isIAP)
-        {
-            // IAP는 Firebase 저장 완료 후 아이템 지급 (데이터 손실 방지)
             await PurchaseIAPAsync(data);
-        }
         else
-        {
-            // 인게임 재화: 낙관적 업데이트 (로컬 즉시, Firebase 백그라운드)
             PurchaseInGameCurrency(data);
-        }
+
+        ResetPurchaseState();
     }
+    private void ResetPurchaseState()
+    {
+        isPurchasing = false;
+        if (confirmBuyButton != null)
+            confirmBuyButton.interactable = true;
+    }
+
 
     /// <summary>
     /// IAP 구매 처리 (Firebase 저장 완료 후 아이템 지급)
@@ -274,27 +271,22 @@ public class SecondStoreController : MonoBehaviour
         switch (itemId)
         {
             case 0:
-                // 골드 지급
                 PlayData.SetGoldImmediate(PlayData.Gold + amount);
                 break;
             case 5107:
-                // 다이아 지급
                 PlayData.SetDiamondImmediate(PlayData.Diamond + amount);
                 break;
+            case 5201: 
+                PlayData.SetEnhanceStoneImmediate(PlayData.EnhanceStone + amount);
+                break;
             default:
-                // 패키지 아이템인지 확인
                 var itemData = DataTableManager.ItemTable?.Get(itemId);
-                if (itemData != null && itemData.PACKAGE_ID > 0)
-                {
-                    // 패키지는 우편으로 발송되므로 로컬 업데이트 불필요
-                    return;
-                }
-
-                // 일반 아이템 지급
+                if (itemData != null && itemData.PACKAGE_ID > 0) return;
                 PlayData.SetItemCountImmediate(itemId, PlayData.GetItemCount(itemId) + amount);
                 break;
         }
     }
+
 
     /// <summary>
     /// 재화 차감 (Firebase만)
@@ -322,24 +314,20 @@ public class SecondStoreController : MonoBehaviour
         switch (itemId)
         {
             case 0:
-                // 골드 지급
                 return DatabaseManager.Instance.AddGoldAsync(amount);
             case 5107:
-                // 다이아 지급
                 return DatabaseManager.Instance.AddDiamondAsync(amount);
+            case 5201: 
+                return DatabaseManager.Instance.AddEnhanceStoneAsync(amount);
             default:
-                // 패키지 아이템인지 확인
                 var itemData = DataTableManager.ItemTable?.Get(itemId);
                 if (itemData != null && itemData.PACKAGE_ID > 0)
-                {
-                    // 패키지 내용물 우편 발송
                     return DatabaseManager.Instance.SendPackageMailAsync(itemData.PACKAGE_ID, amount);
-                }
 
-                // 일반 아이템 지급
                 return DatabaseManager.Instance.AddItemAsync(itemId, amount);
         }
     }
+
 
     /// <summary>
     /// 모든 상품 UI 갱신
@@ -356,15 +344,26 @@ public class SecondStoreController : MonoBehaviour
     /// <summary>
     /// 구매 가능 여부 확인
     /// </summary>
-    public bool CanPurchase(SellingData data)
+    private bool CanPurchase(SellingData data, out PurchaseFailReason reason)
     {
-        if (data == null) return false;
+        reason = PurchaseFailReason.None;
 
-        // 구매 제한 체크
-        if (!CheckPurchaseLimit(data)) return false;
+        if (data == null)
+            return false;
 
-        // 재화 체크
-        return HasEnoughCurrency(data.SELLING_MONEY, data.SELLING_PRICE);
+        if (!CheckPurchaseLimit(data))
+        {
+            reason = PurchaseFailReason.PurchaseLimit;
+            return false;
+        }
+
+        if (!HasEnoughCurrency(data.SELLING_MONEY, data.SELLING_PRICE))
+        {
+            reason = PurchaseFailReason.NotEnoughCurrency;
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>

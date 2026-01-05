@@ -142,9 +142,8 @@ public class StoreProductElementUI : MonoBehaviour
             int remaining = storeController.GetRemainingPurchaseCount(sellingId);
             isSoldOut = remaining <= 0;
         }
-
         if (buyButton != null)
-            buyButton.interactable = !isSoldOut;
+            buyButton.interactable = true;
 
         if (soldOutOverlay != null)
             soldOutOverlay.SetActive(isSoldOut);
@@ -186,27 +185,10 @@ public class StoreProductElementUI : MonoBehaviour
         if (storeController == null || productData == null)
             return;
 
-        if (!storeController.HasEnoughCurrency(
-            productData.SELLING_MONEY,
-            productData.SELLING_PRICE))
-        {
-            ShowInsufficientCurrencyPopup();
-            return;
-        }
-
-        if (productData.SELLING_LIMIT > 0 && productData.SELLING_NUM > 0)
-        {
-            int remaining = storeController.GetRemainingPurchaseCount(sellingId);
-            if (remaining <= 0)
-            {
-                ShowPopup("구매 불가\n구매 가능 횟수를 초과했습니다.");
-                return;
-            }
-        }
 
         storeController.OnClickBuyProduct(sellingId);
-        Invoke(nameof(UpdateUI), 0.5f);
     }
+
 
 
     private void ShowInsufficientCurrencyPopup()

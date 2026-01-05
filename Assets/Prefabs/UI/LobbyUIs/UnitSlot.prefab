@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2624181566024468071}
   - component: {fileID: 881237789248739115}
   - component: {fileID: -5548903982779090740}
-  - component: {fileID: -7194665956143375956}
+  - component: {fileID: 2665431908649524781}
   m_Layer: 5
   m_Name: UnitSlot
   m_TagString: Untagged
@@ -135,7 +135,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: -7194665956143375956}
+      - m_Target: {fileID: 2665431908649524781}
         m_TargetAssemblyTypeName: UnityEngine.AudioSource, UnityEngine
         m_MethodName: Play
         m_Mode: 1
@@ -164,7 +164,7 @@ MonoBehaviour:
   lockOverlay: {fileID: 0}
   slotButton: {fileID: 881237789248739115}
   slotIndex: 0
---- !u!82 &-7194665956143375956
+--- !u!82 &2665431908649524781
 AudioSource:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -176,7 +176,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 61129053315686764, guid: 9cd25b4508f69db4da06551b1d604ff8, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 0dc9e00510e59ee4c9fae04b87cbb42e, type: 3}
-  m_PlayOnAwake: 0
+  m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
