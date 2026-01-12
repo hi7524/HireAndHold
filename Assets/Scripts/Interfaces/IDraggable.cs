@@ -11,3 +11,7 @@ public interface IDraggable
     void OnDropSuccess();
     void OnDropFailed();
 }
+
+
+
+

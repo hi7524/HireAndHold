@@ -6,7 +6,8 @@ public class Stat
     private float baseValue;           // 설계상 기본값
     private float upgradeValue;        // 영구 강화값 (메타 진행도)
     private List<StatModifier> modifiers = new List<StatModifier>();
-    private float? cachedValue;
+    private float cachedValue;
+    private bool isDirty = true;
 
     public Stat(float baseValue)
     {
@@ -17,36 +18,39 @@ public class Stat
     {
         get
         {
-            if (cachedValue == null)
+            if (isDirty)
+            {
                 cachedValue = CalculateFinalValue();
-            return cachedValue.Value;
+                isDirty = false;
+            }
+            return cachedValue;
         }
     }
 
-    // 영구 강화 설정 (게임 시작 시 한 번만)
+    // 영구 강화 설정
     public void SetUpgradeValue(float value)
     {
         upgradeValue = value;
-        cachedValue = null;
+        isDirty = true;
     }
 
     // 기본값 변경 (합성 시 모디파이어 보존용)
     public void SetBaseValue(float value)
     {
         baseValue = value;
-        cachedValue = null;
+        isDirty = true;
     }
 
     public void AddModifier(StatModifier modifier)
     {
         modifiers.Add(modifier);
-        cachedValue = null;
+        isDirty = true;
     }
 
     public void RemoveModifier(StatModifier modifier)
     {
         modifiers.Remove(modifier);
-        cachedValue = null;
+        isDirty = true;
     }
 
     public void RemoveModifiersBySource(string sourceId)
@@ -55,6 +59,7 @@ public class Stat
             return;
 
         modifiers.RemoveAll(m => m.SourceId == sourceId);
+        isDirty = true;
     }
 
     private float CalculateFinalValue()
@@ -101,7 +106,6 @@ public class StatModifier
         SourceId = sourceId;
     }
 }
-
 
 public enum ModifierType
 {
