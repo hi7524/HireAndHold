@@ -44,6 +44,9 @@ public class SkillCardUi : BaseCardUi
     // SkillSelectUi용 콜백
     public Action OnCardClickedCallback;
 
+    // 캐싱된 Tween (별 애니메이션용)
+    private Sequence starSequenceCache;
+
     public void SetFocus(bool value)
     {
         isSelected = value;
@@ -261,7 +264,7 @@ public class SkillCardUi : BaseCardUi
             // 별 사운드 재생
             PlayStarSound(starLevel);
 
-            // 별 색칠 애니메이션
+            // 별 색칠 애니메이션 - 기존 Tween 정리
             starIcons[nextStarIndex].transform.DOKill();
 
             // 파티클 이펙트를 별 위치로 이동 및 재생
@@ -283,16 +286,19 @@ public class SkillCardUi : BaseCardUi
                 starEffect.Play();
             }
 
+            // 기존 시퀀스 정리
+            starSequenceCache?.Kill();
+
             // 시퀀스로 스케일과 색칠 동시에 처리
-            Sequence starSequence = DOTween.Sequence();
-            starSequence.SetUpdate(true);
+            starSequenceCache = DOTween.Sequence();
 
             // 색칠과 동시에 커지기 시작
-            starSequence.AppendCallback(() => SetIconColor(starIcons[nextStarIndex], filledColor));
-            starSequence.Join(starIcons[nextStarIndex].transform.DOScale(1.5f, 0.2f).SetEase(Ease.OutQuad));
+            var targetStar = starIcons[nextStarIndex];
+            starSequenceCache.AppendCallback(() => SetIconColor(targetStar, filledColor));
+            starSequenceCache.Join(targetStar.transform.DOScale(1.5f, 0.2f).SetEase(Ease.OutQuad));
 
             // 원래 크기로 돌아오기
-            starSequence.Append(starIcons[nextStarIndex].transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
+            starSequenceCache.Append(targetStar.transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
 
             return true;
         }
@@ -539,5 +545,8 @@ public class SkillCardUi : BaseCardUi
         {
             Addressables.Release(goldIconHandle);
         }
+
+        // 캐싱된 Tween 정리
+        starSequenceCache?.Kill();
     }
 }

@@ -51,6 +51,11 @@ public class LevelUpRewardController : MonoBehaviour
     private bool skillActived = false;
     private Tween autoConfirmTween = null; // 자동 확인 딜레이 트윈
 
+    // 캐싱된 Tween 배열 (재사용)
+    private Tween[] unitCardScaleTweens;
+    private Tween[] skillCardScaleTweens;
+    private Tween rerollBtnTween;
+
     // 애니메이션 상수
     private const float CardAnimDuration = 0.25f; // 카드 스케일 애니메이션 시간
     private const float CardAnimDelayInterval = 0.08f; // 카드 애니메이션 간격
@@ -69,6 +74,9 @@ public class LevelUpRewardController : MonoBehaviour
 
         // Layout Group 캐싱
         layoutGroup = GetComponent<HorizontalLayoutGroup>();
+
+        // Tween 배열 초기화
+        InitializeTweens();
 
         playerExp.OnLevelUp += DrawLevelUpReward;
         playerCredit.OnChangeGold += UpdateRerollBtn;
@@ -164,9 +172,67 @@ public class LevelUpRewardController : MonoBehaviour
             }
         }
 
+        // 캐싱된 Tween 정리
+        KillCachedTweens();
+
         // 캐시 클리어 (AddressablePreloader가 관리하므로 Release 불필요)
         gridDataCache.Clear();
         spriteCache.Clear();
+    }
+
+    // Tween 초기화 (재사용을 위해 미리 생성)
+    private void InitializeTweens()
+    {
+        // Unit 카드 Tween 초기화
+        unitCardScaleTweens = new Tween[unitCardUIs.Length];
+        for (int i = 0; i < unitCardUIs.Length; i++)
+        {
+            int index = i;
+            unitCardScaleTweens[i] = unitCardUIs[i].transform
+                .DOScale(Vector3.one, CardAnimDuration)
+                .SetAutoKill(false)
+                .Pause();
+        }
+
+        // Skill 카드 Tween 초기화
+        skillCardScaleTweens = new Tween[skillCardUIs.Length];
+        for (int i = 0; i < skillCardUIs.Length; i++)
+        {
+            int index = i;
+            skillCardScaleTweens[i] = skillCardUIs[i].transform
+                .DOScale(Vector3.one, CardAnimDuration)
+                .SetAutoKill(false)
+                .Pause();
+        }
+
+        // 리롤 버튼 Tween 초기화
+        if (reRollBtn != null)
+        {
+            rerollBtnTween = reRollBtn.transform
+                .DOScale(0.9f, 0.1f)
+                .SetAutoKill(false)
+                .SetEase(Ease.OutQuad)
+                .Pause();
+        }
+    }
+
+    // 캐싱된 Tween 정리
+    private void KillCachedTweens()
+    {
+        if (unitCardScaleTweens != null)
+        {
+            foreach (var tween in unitCardScaleTweens)
+                tween?.Kill();
+        }
+
+        if (skillCardScaleTweens != null)
+        {
+            foreach (var tween in skillCardScaleTweens)
+                tween?.Kill();
+        }
+
+        rerollBtnTween?.Kill();
+        autoConfirmTween?.Kill();
     }
 
     // 레벨업 보상 유닛이 생성되었을 때 호출
@@ -306,7 +372,6 @@ public class LevelUpRewardController : MonoBehaviour
 
                 // 시퀀스로 애니메이션 체이닝
                 Sequence selectedSequence = DOTween.Sequence();
-                selectedSequence.SetUpdate(true); // TimeScale 무시
 
                 selectedSequence.Append(card.transform.DOLocalMoveY(originalPos.y + SelectedCardMoveY, CardAnimDuration).SetEase(Ease.OutQuad));
                 selectedSequence.Join(card.transform.DOScale(SelectedCardScale, CardAnimDuration).SetEase(Ease.OutQuad));
@@ -339,7 +404,6 @@ public class LevelUpRewardController : MonoBehaviour
             card.transform.DOScale(Vector3.zero, CardAnimDuration)
                 .SetDelay(reverseIndex * CardAnimDelayInterval)
                 .SetEase(Ease.InBack)
-                .SetUpdate(true) // TimeScale 무시
                 .OnComplete(() => card.gameObject.SetActive(false));
         }
 
@@ -382,7 +446,6 @@ public class LevelUpRewardController : MonoBehaviour
                 Vector3 originalPos = card.transform.localPosition;
 
                 Sequence selectedSequence = DOTween.Sequence();
-                selectedSequence.SetUpdate(true);
 
                 selectedSequence.Append(card.transform.DOLocalMoveY(originalPos.y + SelectedCardMoveY, CardAnimDuration).SetEase(Ease.OutQuad));
                 selectedSequence.Join(card.transform.DOScale(SelectedCardScale, CardAnimDuration).SetEase(Ease.OutQuad));
@@ -408,7 +471,6 @@ public class LevelUpRewardController : MonoBehaviour
             card.transform.DOScale(Vector3.zero, CardAnimDuration)
                 .SetDelay(reverseIndex * CardAnimDelayInterval)
                 .SetEase(Ease.InBack)
-                .SetUpdate(true)
                 .OnComplete(() => card.gameObject.SetActive(false));
         }
 
@@ -623,19 +685,14 @@ public class LevelUpRewardController : MonoBehaviour
     {
         if (playerCredit.UseCredit(rerollCost))
         {
-            // 버튼 스케일 애니메이션 (기존 애니메이션 정리 후 실행)
-            if (reRollBtn != null)
+            // 버튼 스케일 애니메이션 (캐싱된 Tween 사용)
+            if (rerollBtnTween != null)
             {
-                reRollBtn.transform.DOKill();
-                reRollBtn.transform.DOScale(0.9f, 0.1f)
-                    .SetEase(Ease.OutQuad)
-                    .SetUpdate(true)
-                    .OnComplete(() =>
-                    {
-                        reRollBtn.transform.DOScale(1f, 0.1f)
-                            .SetEase(Ease.OutQuad)
-                            .SetUpdate(true);
-                    });
+                rerollBtnTween.OnComplete(() =>
+                {
+                    reRollBtn.transform.DOScale(1f, 0.1f)
+                        .SetEase(Ease.OutQuad);
+                }).Restart();
             }
 
             // 선택된 스킬 카드 초기화
@@ -718,8 +775,7 @@ public class LevelUpRewardController : MonoBehaviour
                 // 순차적으로 스케일 애니메이션
                 card.transform.DOScale(Vector3.one, CardAnimDuration)
                     .SetDelay(i * CardAnimDelayInterval)
-                    .SetEase(Ease.OutBack)
-                    .SetUpdate(true); // TimeScale 무시
+                    .SetEase(Ease.OutBack);
             }
         }
         else
@@ -743,7 +799,6 @@ public class LevelUpRewardController : MonoBehaviour
                 card.transform.DOScale(Vector3.zero, CardAnimDuration)
                     .SetDelay(reverseIndex * CardAnimDelayInterval)
                     .SetEase(Ease.InBack)
-                    .SetUpdate(true) // TimeScale 무시
                     .OnComplete(() =>
                     {
                         card.gameObject.SetActive(false);
@@ -769,7 +824,7 @@ public class LevelUpRewardController : MonoBehaviour
                 {
                     OnClickConfirmBtn();
                     autoConfirmTween = null; // 실행 후 null로 설정
-                }).SetUpdate(true); // ignoreTimeScale = true
+                });
             }
         }
     }
